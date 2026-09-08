@@ -12,7 +12,16 @@ function mm(a,b){let o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;
 function trans(x,y,z){let a=ident();a[12]=x;a[13]=y;a[14]=z;return a}function scaling(x,y=x,z=x){let a=ident();a[0]=x;a[5]=y;a[10]=z;return a}
 function rx(t){let a=ident(),c=Math.cos(t),s=Math.sin(t);a[5]=c;a[6]=s;a[9]=-s;a[10]=c;return a}function ry(t){let a=ident(),c=Math.cos(t),s=Math.sin(t);a[0]=c;a[2]=-s;a[8]=s;a[10]=c;return a}function rz(t){let a=ident(),c=Math.cos(t),s=Math.sin(t);a[0]=c;a[1]=s;a[4]=-s;a[5]=c;return a}
 function transform(p,m){return[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]]}
-function normalTransform(n,m){let a=V(m[0],m[1],m[2]),b=V(m[4],m[5],m[6]),c=V(m[8],m[9],m[10]);return norm(add(add(mul(cross(b,c),n[0]),mul(cross(c,a),n[1])),mul(cross(a,b),n[2])))}
+function normalCofactors(m){
+ // Keep these as JS doubles: Float32 would round before normalization and
+ // change the emitted normals under nonuniform scale or nested transforms.
+ return[m[5]*m[10]-m[6]*m[9],m[6]*m[8]-m[4]*m[10],m[4]*m[9]-m[5]*m[8],m[9]*m[2]-m[10]*m[1],m[10]*m[0]-m[8]*m[2],m[8]*m[1]-m[9]*m[0],m[1]*m[6]-m[2]*m[5],m[2]*m[4]-m[0]*m[6],m[0]*m[5]-m[1]*m[4]];
+}
+function normalTransform(n,m,c=normalCofactors(m)){
+ // Preserve the original cross-product sum order and reciprocal length.
+ const x=(c[0]*n[0]+c[3]*n[1])+c[6]*n[2],y=(c[1]*n[0]+c[4]*n[1])+c[7]*n[2],z=(c[2]*n[0]+c[5]*n[1])+c[8]*n[2],s=1/(Math.hypot(x,y,z)||1);
+ return[x*s,y*s,z*s];
+}
 function lookAt(eye,target){let z=norm(sub(eye,target)),x=norm(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1])}
 function perspective(fov,aspect,near,far){let f=1/Math.tan(fov/2),nf=1/(near-far);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0])}
 function ortho(l,r,b,t,n,f){return new Float32Array([2/(r-l),0,0,0,0,2/(t-b),0,0,0,0,-2/(f-n),0,-(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1])}
@@ -21,11 +30,11 @@ function hash(x,z){let a=Math.sin(x*127.1+z*311.7)*43758.5453123;return a-Math.f
 function noise(x,z){let ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return mix(mix(hash(ix,iz),hash(ix+1,iz),fx),mix(hash(ix,iz+1),hash(ix+1,iz+1),fx),fz)}
 function fbm(x,z){return .56*noise(x,z)+.28*noise(x*2.03,z*2.03)+.16*noise(x*4.07,z*4.07)}
 class Builder{
- constructor(){this.data=[];this.m=ident();this.stack=[]}
- push(x=0,y=0,z=0,ax=0,ay=0,az=0,sx=1,sy=sx,sz=sx){this.stack.push(this.m);this.m=mm(this.m,mm(trans(x,y,z),mm(ry(ay),mm(rx(ax),mm(rz(az),scaling(sx,sy,sz))))));return this}
- matrix(m){this.stack.push(this.m);this.m=mm(this.m,m);return this}pop(){this.m=this.stack.pop()||ident();return this}
- vertex(p,n,c,mat=0,uv=[0,0]){let q=transform(p,this.m),nn=normalTransform(n,this.m);this.data.push(...q,...nn,...col(c),mat,...uv)}
- tri(a,b,c,color,mat=0,ns=null,uv=null){let n=norm(cross(sub(b,a),sub(c,a)));this.vertex(a,ns?ns[0]:n,color,mat,uv?uv[0]:[0,0]);this.vertex(b,ns?ns[1]:n,color,mat,uv?uv[1]:[0,0]);this.vertex(c,ns?ns[2]:n,color,mat,uv?uv[2]:[0,0])}
+ constructor(){this.data=[];this.m=ident();this.stack=[];this.normalMatrix=null;this.normalStack=[]}
+ push(x=0,y=0,z=0,ax=0,ay=0,az=0,sx=1,sy=sx,sz=sx){this.stack.push(this.m);this.normalStack.push(this.normalMatrix);this.normalMatrix=null;this.m=mm(this.m,mm(trans(x,y,z),mm(ry(ay),mm(rx(ax),mm(rz(az),scaling(sx,sy,sz))))));return this}
+ matrix(m){this.stack.push(this.m);this.normalStack.push(this.normalMatrix);this.normalMatrix=null;this.m=mm(this.m,m);return this}pop(){this.m=this.stack.pop()||ident();this.normalMatrix=this.normalStack.pop()||null;return this}
+ vertex(p,n,c,mat=0,uv=[0,0]){let q=transform(p,this.m),nn=normalTransform(n,this.m,this.normalMatrix||(this.normalMatrix=normalCofactors(this.m)));this.data.push(...q,...nn,...col(c),mat,...uv)}
+ tri(a,b,c,color,mat=0,ns=null,uv=null){let n=ns?null:norm(cross(sub(b,a),sub(c,a)));this.vertex(a,ns?ns[0]:n,color,mat,uv?uv[0]:[0,0]);this.vertex(b,ns?ns[1]:n,color,mat,uv?uv[1]:[0,0]);this.vertex(c,ns?ns[2]:n,color,mat,uv?uv[2]:[0,0])}
  quad(a,b,c,d,color,mat=0,n=null,uv=null){this.tri(a,b,c,color,mat,n?[n,n,n]:null,uv?[uv[0],uv[1],uv[2]]:null);this.tri(a,c,d,color,mat,n?[n,n,n]:null,uv?[uv[0],uv[2],uv[3]]:null)}
  box(x,y,z,w,h,d,color,mat=0){let X=w/2,Y=h/2,Z=d/2;this.push(x,y,z);this.quad([-X,-Y,Z],[X,-Y,Z],[X,Y,Z],[-X,Y,Z],color,mat);this.quad([X,-Y,-Z],[-X,-Y,-Z],[-X,Y,-Z],[X,Y,-Z],shade(color,.91),mat);this.quad([X,-Y,Z],[X,-Y,-Z],[X,Y,-Z],[X,Y,Z],color,mat);this.quad([-X,-Y,-Z],[-X,-Y,Z],[-X,Y,Z],[-X,Y,-Z],color,mat);this.quad([-X,Y,Z],[X,Y,Z],[X,Y,-Z],[-X,Y,-Z],shade(color,1.04),mat);this.quad([-X,-Y,-Z],[X,-Y,-Z],[X,-Y,Z],[-X,-Y,Z],shade(color,.75),mat);this.pop();return this}
  cylinder(x,y,z,r1,r2,h,color,mat=0,segs=12,ax=0,az=0){this.push(x,y,z,ax,0,az);for(let i=0;i<segs;i++){let a=i*TAU/segs,b=(i+1)*TAU/segs,pa=[Math.cos(a)*r1,-h/2,Math.sin(a)*r1],pb=[Math.cos(b)*r1,-h/2,Math.sin(b)*r1],pc=[Math.cos(b)*r2,h/2,Math.sin(b)*r2],pd=[Math.cos(a)*r2,h/2,Math.sin(a)*r2],na=norm([Math.cos(a),(r1-r2)/h,Math.sin(a)]),nb=norm([Math.cos(b),(r1-r2)/h,Math.sin(b)]);this.tri(pa,pd,pc,color,mat,[na,na,nb]);this.tri(pa,pc,pb,color,mat,[na,nb,nb]);if(r2>0)this.tri([0,h/2,0],pc,pd,shade(color,1.05),mat);if(r1>0)this.tri([0,-h/2,0],pa,pb,color,mat)}this.pop();return this}
@@ -260,7 +269,7 @@ function drawSteam(){let total=steam.length+roomDust.length;let data=new Float32
 let audio=null,toastTimer=0,frame=0,lastTime=0,uiTime=0,currentPlace='',hidden=false,dragMoved=false;
 let orbit={yaw:.40,pitch:.48,distance:124,target:[0,-2,0]},drag=null,pointers=new Map(),pinchStart=null,returnHelpFocus=null;
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3600)}
-function savePrefs(){try{localStorage.setItem('alder-valley-grand-prefs-v1',JSON.stringify({throttle:typeof hobby==='object'&&hobby.cinema&&hobby.saved?hobby.saved.throttle:throttle,mood:lightingMoodForNight(targetNight),night:targetNight,roomLamps:roomLampTarget,route:chosenRoute}))}catch{}}
+function savePrefs(){try{localStorage.setItem('alder-valley-grand-prefs-v1',JSON.stringify({throttle:typeof hobby==='object'&&hobby.cinema&&hobby.saved?hobby.saved.throttle:throttle,lightingMode,mood:lightingMoodForNight(targetNight),night:targetNight,roomLamps:roomLampTarget,route:chosenRoute}))}catch{}}
 class RailwayAudio{
  constructor(){const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();this.master=this.ctx.createGain();this.master.gain.value=.48;this.master.connect(this.ctx.destination);let length=this.ctx.sampleRate*2;this.noise=this.ctx.createBuffer(1,length,this.ctx.sampleRate);let data=this.noise.getChannelData(0),last=0;for(let i=0;i<length;i++){last=(last+(Math.random()*2-1)*.03)/1.03;data[i]=last*6}this.rolling=this.ctx.createBufferSource();this.rolling.buffer=this.noise;this.rolling.loop=true;let filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=460;this.rollGain=this.ctx.createGain();this.rollGain.gain.value=0;this.rolling.connect(filter).connect(this.rollGain).connect(this.master);this.rolling.start();this.active=true;this.lastChuff=-99;this.lastJoint=-99;this.nextBird=5;this.panner=this.ctx.createStereoPanner();this.panner.connect(this.master);}
  enable(on){this.active=on;if(on)this.ctx.resume();this.master.gain.setTargetAtTime(on?.48:0,this.ctx.currentTime,.12)}
@@ -335,22 +344,41 @@ function beginManualOrbit(){
  viewMode='overview';for(let b of document.querySelectorAll('[data-camera]')){let active=b.dataset.camera===viewMode;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));}$('cabMark').classList.remove('show');
 }
 const LIGHT_MOODS={day:{night:0,lamps:.40,label:'Afternoon'},evening:{night:.62,lamps:1,label:'Lamplight'},night:{night:1,lamps:.38,label:'Night run'}};
+let lightingMode='auto',lightingClockTimer=null,lightingClockListening=false;
 function lightingMoodForNight(value){return value<.2?'day':value>.85?'night':'evening';}
+function localLightingMood(date=new Date()){const hour=date.getHours();return hour>=19||hour<7?'night':'day';}
+function scheduleLocalLighting(){
+ if(!lightingClockListening){document.addEventListener('visibilitychange',syncLocalLighting);lightingClockListening=true;}
+ clearTimeout(lightingClockTimer);lightingClockTimer=null;
+ if(lightingMode==='auto'&&!document.hidden)lightingClockTimer=setTimeout(syncLocalLighting,60000);
+}
+function syncLocalLighting(){
+ if(lightingMode==='auto'&&!document.hidden&&lightingMoodForNight(targetNight)!==localLightingMood())setMood('auto',{persist:false});
+ else scheduleLocalLighting();
+}
 function toggleLight(){setMood(lightingMoodForNight(targetNight)==='day'?'evening':'day');}
 function setMood(mood,options={}){
+ lightingMode=mood==='auto'?'auto':'manual';if(lightingMode==='auto')mood=localLightingMood();
  if(!Object.hasOwn(LIGHT_MOODS,mood))mood='evening';
  const preset=LIGHT_MOODS[mood];targetNight=preset.night;roomLampTarget=Number.isFinite(options.lamps)?clamp(options.lamps):preset.lamps;
  if(options.immediate){night=targetNight;roomLampLevel=roomLampTarget;}
  $('lightBtn').querySelector('span').textContent=preset.label;$('lightBtn').querySelector('use').setAttribute('href',mood==='day'?'#i-sun':'#i-moon');
+ $('lightBtn').setAttribute('aria-label',preset.label+(lightingMode==='auto'?', matching local time':'')+'. Change lighting.');
+ $('lightBtn').title=preset.label+(lightingMode==='auto'?' · Matching local time':' · Change lighting');
  $('roomDimmer').value=Math.round(roomLampTarget*100);$('roomDimmer').style.setProperty('--fill',Math.round(roomLampTarget*100)+'%');$('lampValue').textContent=Math.round(roomLampTarget*100)+'%';
- for(const button of document.querySelectorAll('[data-mood]'))button.setAttribute('aria-pressed',String(button.dataset.mood===mood));
+ for(const button of document.querySelectorAll('[data-mood]'))button.setAttribute('aria-pressed',String(button.dataset.mood===(lightingMode==='auto'?'auto':mood)));
+ scheduleLocalLighting();
  if(options.persist!==false)savePrefs();
 }
 function restoreLightingPrefs(saved){
- const valid=saved&&typeof saved==='object'&&!Array.isArray(saved),mood=valid&&Object.hasOwn(LIGHT_MOODS,saved.mood)?saved.mood:valid&&Number.isFinite(saved.night)?lightingMoodForNight(clamp(saved.night)):'evening';
- // Old saves used a continuous night value and omitted the lamp dimmer.
- // Restore a complete preset before another preference setter can save it.
- setMood(mood,{immediate:true,persist:false,lamps:valid&&Number.isFinite(saved.roomLamps)?saved.roomLamps:undefined});
+ const valid=saved&&typeof saved==='object'&&!Array.isArray(saved);
+ const previous=valid&&Object.hasOwn(LIGHT_MOODS,saved.mood)?saved.mood:valid&&Number.isFinite(saved.night)?lightingMoodForNight(clamp(saved.night)):null;
+ // Untagged saved moods predate automatic lighting; retain those existing choices.
+ // Automatic throttle/route saves must never turn the current hour into a preset.
+ const manual=valid&&(saved.lightingMode==='manual'||saved.lightingMode===undefined&&previous);
+ const mood=manual&&previous?previous:'auto',resolved=mood==='auto'?localLightingMood():mood;
+ const lamps=valid&&(manual||previous===resolved)&&Number.isFinite(saved.roomLamps)?saved.roomLamps:undefined;
+ setMood(mood,{immediate:true,persist:false,lamps});
 }
 function workshopUpdateUI(){
  updateBaseUI();
@@ -362,7 +390,7 @@ function workshopUpdateUI(){
 function capturePhoto(){
  render();try{const a=document.createElement('a');a.download='whistlevale-'+(typeof hobby==='object'?hobby.room:'valley')+'.png';a.href=canvas.toDataURL('image/png');a.click();toast('Your railway room, photographed.');}catch{toast('This browser could not save the photograph.');}
 }
-function toggleDiagram(){let show=$('layoutPanel').hidden;$('layoutPanel').hidden=!show;$('ambiencePanel').hidden=true;$('mapBtn').setAttribute('aria-expanded',String(show));$('diagramToggle').setAttribute('aria-pressed',String(show));$('ambienceBtn').setAttribute('aria-expanded','false');}
+function toggleDiagram(){let show=$('layoutPanel').hidden;$('layoutPanel').hidden=!show;$('ambiencePanel').hidden=true;$('mapBtn').setAttribute('aria-expanded',String(show));$('diagramToggle').setAttribute('aria-pressed',String(show));$('ambienceBtn').setAttribute('aria-expanded','false');if(show)drawMap();}
 function workshopBindControls(){
  $('playBtn').onclick=togglePause;$('throttle').oninput=e=>setThrottle(e.target.value);$('whistleBtn').onclick=whistle;$('routeBtn').onclick=switchRoute;$('map').onclick=switchRoute;$('stopBtn').onclick=toggleStop;$('lightBtn').onclick=toggleLight;$('audioBtn').onclick=()=>enableSound();$('helpBtn').onclick=()=>{$('ambiencePanel').hidden=true;showHelp()};$('helpClose').onclick=closeHelp;$('restore').onclick=hideUI;$('photoBtn').onclick=capturePhoto;
  $('mobilePhotoBtn').onclick=capturePhoto;$('immerseBtn').onclick=()=>{$('ambiencePanel').hidden=true;hideUI();};
@@ -888,8 +916,8 @@ function workshopGetTemplate(o){
 function objectY(o){return terrainH(o.x,o.z)+(o.yoff||0);}
 function objectMatrix(o){return mm(trans(o.x,objectY(o),o.z),mm(ry(o.angle),scaling(o.scale)));}
 function appendInstance(dst,src,m){
- const a=dst.data;
- for(let i=0;i<src.length;i+=12){const x=src[i],y=src[i+1],z=src[i+2],nx=src[i+3],ny=src[i+4],nz=src[i+5],s=Math.hypot(m[0],m[1],m[2])||1;
+ const a=dst.data,s=Math.hypot(m[0],m[1],m[2])||1;
+ for(let i=0;i<src.length;i+=12){const x=src[i],y=src[i+1],z=src[i+2],nx=src[i+3],ny=src[i+4],nz=src[i+5];
   a.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],(m[0]*nx+m[4]*ny+m[8]*nz)/s,(m[1]*nx+m[5]*ny+m[9]*nz)/s,(m[2]*nx+m[6]*ny+m[10]*nz)/s,src[i+6],src[i+7],src[i+8],src[i+9],src[i+10],src[i+11]);
  }
 }
@@ -1111,8 +1139,12 @@ function drawWorkshop(p=mainProgram,shadow=false){
  if(ghost){uf(p,'uPreview',1);uf(p,'uInvalid',ghostCheck.ok?0:1);if(ghost.type==='hill')draw(getTemplate(ghost).mesh,objectMatrix(ghost),p);else renderObject(ghost,p);uf(p,'uPreview',0);}
 }
 function overlayClear(){ectx.clearRect(0,0,overlay.width,overlay.height);}
+let editorOverlayWasActive=false;
 function updateEditorOverlay(){
- if(overlay.width!==innerWidth*devicePixelRatio||overlay.height!==innerHeight*devicePixelRatio){overlay.width=Math.round(innerWidth*devicePixelRatio);overlay.height=Math.round(innerHeight*devicePixelRatio);overlay.style.width=innerWidth+'px';overlay.style.height=innerHeight+'px';}
+ const width=Math.round(innerWidth*devicePixelRatio),height=Math.round(innerHeight*devicePixelRatio),resized=overlay.width!==width||overlay.height!==height;
+ if(resized){overlay.width=width;overlay.height=height;overlay.style.width=innerWidth+'px';overlay.style.height=innerHeight+'px';}
+ if(!building&&!editorOverlayWasActive&&!resized)return;
+ editorOverlayWasActive=building;
  ectx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ectx.clearRect(0,0,innerWidth,innerHeight);if(!building)return;
  if(trackEditing)drawTrackOverlay();
  const o=ghost||getSelected();if(!o)return;
@@ -1261,14 +1293,52 @@ function bindWorkshop(){
   else if(['arrowleft','arrowright','arrowup','arrowdown'].includes(k)){e.preventDefault();mutateSelected(o=>{o.x+=k==='arrowleft'?-.5:k==='arrowright'?.5:0;o.z+=k==='arrowup'?-.5:k==='arrowdown'?.5:0;o.x=clamp(o.x,-54,54);o.z=clamp(o.z,-33,33);});}
  },true);
 }
+// Bump this version when factory placements, tracks, stock/services or seeded
+// generation changes. Only a validated pristine snapshot can skip factory capture;
+// the cache contains editable layout data, never GPU meshes or generated artwork.
+const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-1',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
+let workshopStartup=null;
+function workshopFactoryChecksum(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return(hash>>>0).toString(16);}
+function readWorkshopStartupLayout(){
+ try{
+  const embedded=JSON.parse($('embeddedLayout').textContent||'null');
+  const saved=embedded||JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+  return saved?validateProject(saved):null;
+ }catch(error){console.warn('Stored layout was not loaded:',error.message);return null;}
+}
+function validateWorkshopFactory(value){
+ validateProject(value);
+ if(value.division!=='grand-v2'||value.flat!==false||value.livery!=='green'||value.coaches!==6||value.name!=='Alder Valley Grand Division'||!value.objects.length||value.services?.freight!==true||value.services?.mountain!==true||JSON.stringify(value.tracks)!==JSON.stringify(divisionDesign()))throw new Error('The cached layout is not the current factory railway.');
+ return value;
+}
+function cacheWorkshopFactory(){
+ try{
+  validateWorkshopFactory(factorySnapshot);const text=JSON.stringify(factorySnapshot);
+  localStorage.setItem(WORKSHOP_FACTORY_CACHE_KEY,JSON.stringify({version:WORKSHOP_FACTORY_CACHE_VERSION,checksum:workshopFactoryChecksum(text),snapshot:factorySnapshot}));
+ }catch{} // Storage is optional; an uncached visit follows the original build path.
+}
+function prepareWorkshopStartup(){
+ const saved=readWorkshopStartupLayout();workshopStartup={saved,preloaded:false};
+ if(!saved)return;
+ let factory;
+ try{
+  const cached=JSON.parse(localStorage.getItem(WORKSHOP_FACTORY_CACHE_KEY)||'null');
+  if(cached?.version!==WORKSHOP_FACTORY_CACHE_VERSION||cached.checksum!==workshopFactoryChecksum(JSON.stringify(cached.snapshot)))return;
+  factory=clone(validateWorkshopFactory(cached.snapshot));
+ }catch{return;}
+ // Keep capture disabled exactly as it was for the old second (saved-world)
+ // build. buildWorld resets/restores its own seed, so skipped factory geometry
+ // cannot change the saved world's procedural sequence or the room shell.
+ applySnapshot(saved,true);factorySnapshot=factory;captureScenery=false;workshopStartup.preloaded=true;
+}
 function initializeWorkshop(){
  captureScenery=false;
- // Additional collection pieces start in railway-safe, hand-chosen positions.
- 
- setCoachOffsets(6);factorySnapshot=snapshot();
- let loaded=false;
- try{let embedded=JSON.parse($('embeddedLayout').textContent||'null');let saved=embedded||JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved){const s=validateProject(saved);applySnapshot(s,true);loaded=true;}}catch(e){console.warn('Stored layout was not loaded:',e.message);}
- if(loaded){for(let m of[staticMesh,groundMesh,waterMesh,signalGreenMesh,signalRedMesh,crossingMesh])disposeMesh(m);buildWorld();}
+ if(!workshopStartup?.preloaded){
+  setCoachOffsets(6);factorySnapshot=snapshot();cacheWorkshopFactory();
+  const saved=workshopStartup?workshopStartup.saved:readWorkshopStartupLayout();
+  if(saved){applySnapshot(saved,true);for(let m of[staticMesh,groundMesh,waterMesh,signalGreenMesh,signalRedMesh,crossingMesh])disposeMesh(m);buildWorld();}
+ }
+ workshopStartup=null;
  rebuildScenery();buildSetDetails();rebuildGrid();bindWorkshop();updateTrainControls();updateUndo();
  window.WORKSHOP={get state(){return{building,selectedId,placing:draft?.type,objects:objects.length,name:layoutTitle,trackEditing,undo:undoStack.length,redo:redoStack.length,rebuilding,livery,coaches:offsets.length-2};},enter:enterBuild,snapshot,validate:validateProject,select:selectObject,arm:armAsset,undo:undoBuild,redo:redoBuild,editTrack:toggleTrackEditing,split:splitTrack,project:project,screenToGround:groundAtScreen,check:placementCheck,save:exportProject,exportHTML:exportPlayable,selectKnot:k=>{chosenKnot=k;editRoute=k.route;renderCatalog();},add:(type,x,z)=>{pushUndo();const o=registerObject(type,x,z);rebuildScenery();saveProjectSoon();return o.id;},remove:removeSelected,rebuild:queueWorldRebuild,load:s=>{const v=validateProject(s);pushUndo();applySnapshot(v);saveProjectSoon();}};
 }
@@ -1414,7 +1484,7 @@ function terrainH(x,z){
  }
  return h;
 }
-function createGround(){
+function createGroundUncached(){
  let b=new Builder();b.box(0,FLOOR-.18,1,330,.3,300,'#88704b',21);disposeMesh(groundMesh);groundMesh=b.mesh();b=new Builder();
  slab(b,112.5,72.5,1.28,-1.05,3.3,'#59422f',22);slab(b,112.7,72.7,.11,-.395,3.4,'#ad8855',22);slab(b,112.1,72.1,.14,-1.74,3.2,'#342e23',22);slab(b,112.25,72.25,.035,-1.55,3.2,'#c8a873',41);
  const outline=roundRect(110,70,2.6,18);for(let i=0;i<outline.length;i++){const p=outline[i],q=outline[(i+1)%outline.length];b.quad([p[0],-.33,p[1]],[q[0],-.33,q[1]],[q[0],terrainH(...q),q[1]],[p[0],terrainH(...p),p[1]],'#7d7051',4);}
@@ -1436,6 +1506,26 @@ function createGround(){
   if(near.edge&&near.dist<1.06&&inTunnel(near.edge,near.d,1.6)&&mid[1]<near.p[1]+2.28)continue;
   for(const k of ids)b.vertex(positions[k],normals[k],colors[k],3);
  }}return b;
+}
+function createGround(){
+ // Track cells cannot change during this synchronous terrain build. Reuse the
+ // same ordered neighbors for nearby height/normal/triangle samples, then drop
+ // the entire cache before any editor or simulation work can run.
+ const previousNearestTrack=nearestTrack,neighbors=new Map();
+ nearestTrack=function(x,z){
+  const gx=Math.floor(x/2),gz=Math.floor(z/2),key=`${gx},${gz}`;let candidates=neighbors.get(key);
+  if(!candidates){
+   candidates=[];
+   for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
+    const cell=trackGrid.get(`${gx+i},${gz+j}`);if(cell)for(const a of cell)candidates.push(a);
+   }
+   neighbors.set(key,candidates);
+  }
+  let best={dist:99,p:[0,1.06,0],edge:null,d:0};
+  for(const a of candidates){const d=Math.hypot(x-a.p[0],z-a.p[2]);if(d<best.dist)best={...a,dist:d};}
+  return best;
+ };
+ try{return createGroundUncached();}finally{nearestTrack=previousNearestTrack;}
 }
 function createWater(){
  const b=new Builder();for(let j=0;j<350;j++){const z0=-18.2+j*52.9/350,z1=-18.2+(j+1)*52.9/350;for(let i=0;i<12;i++){const u=i/12,v=(i+1)/12,x=(z,t)=>riverX(z)+(t*2-1)*(riverWidth(z)+.30);b.quad([x(z0,u),.13,z0],[x(z1,u),.13,z1],[x(z1,v),.13,z1],[x(z0,v),.13,z0],'#448b84',7,[0,1,0],[[u,j/350],[u,(j+1)/350],[v,(j+1)/350],[v,j/350]]);}}
@@ -1815,6 +1905,7 @@ function updateCamera(dt){
 }
 function renderCatalog(){workshopRenderCatalog();}
 function drawMap(){
+ if($('layoutPanel').hidden)return;
  const c=mapctx,w=c.canvas.width,h=c.canvas.height;c.clearRect(0,0,w,h);const tx=x=>26+(x+55)/110*(w-52),tz=z=>21+(z+35)/70*(h-42);
  c.lineCap='round';c.lineJoin='round';c.fillStyle='#adcab015';c.beginPath();for(let z=-18;z<=34;z++){const x=riverX(z)-riverWidth(z);z===-18?c.moveTo(tx(x),tz(z)):c.lineTo(tx(x),tz(z));}for(let z=34;z>=-18;z--)c.lineTo(tx(riverX(z)+riverWidth(z)),tz(z));c.closePath();c.fill();
  function path(edge,color,width){if(!edge)return;c.strokeStyle=color;c.lineWidth=width;c.beginPath();for(let d=0;d<=edge.length;d+=.7){const p=edge.at(d).p;d===0?c.moveTo(tx(p[0]),tz(p[2])):c.lineTo(tx(p[0]),tz(p[2]));}let p=edge.at(edge.length).p;c.lineTo(tx(p[0]),tz(p[2]));c.stroke();}
@@ -1846,4 +1937,4 @@ function bindControls(){
  window.DIVISION={visit:visitDistrict,get state(){return{alignments:edges.length,length:edges.reduce((a,e)=>a+e.length,0),tunnels:tunnelRanges.length,freightDistance,mountainDistance,freightRunning,mountainRunning,turntableAngle,objects:objects.length,board:{...BOARD}}},get routes(){return Object.fromEntries(edges.map(e=>[e.name,{length:e.length,curves:e.curves.length}]));},turn:()=>{indexTurntable();},setServices:(f,m)=>{freightRunning=!!f;mountainRunning=!!m;}};
 }
 
-function start(){try{initGL();buildWorld();createRoom();initializeWorkshop();buildTrains();initJourney();initSteam();setView('room',false);cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);cameraTarget=orbit.target.slice();let savedPrefs=null;try{savedPrefs=JSON.parse(localStorage.getItem('alder-valley-grand-prefs-v1')||'null');}catch{}restoreLightingPrefs(savedPrefs);if(savedPrefs&&typeof savedPrefs==='object'&&!Array.isArray(savedPrefs)){if(savedPrefs.route==='lowline'){chosenRoute='lowline';$('routeLabel').textContent='The riverside ↗';$('routeButtonLabel').textContent='Riverside';$('routeBtn').classList.add('active')}setThrottle(savedPrefs.throttle??42);}bindControls();document.querySelector('.engine-medallion').onclick=()=>setView('engine');document.querySelector('.engine-medallion').style.cursor='pointer';for(let i=0;i<14;i++){emitSteam();steam[steam.length-1].age=i*.13;steam[steam.length-1].p[1]+=i*.10;steam[steam.length-1].size+=i*.035}updateCamera(1);updateUI();render();$('loader').classList.add('done');window.RAILWAY={get state(){return{route:chosenRoute,edge:leadInfo.edge.name,d:leadInfo.d,travel,speed,throttle,paused,stopRequested,atStation,laps:completedLaps,view:viewMode,night,mood:lightingMoodForNight(targetNight),targetNight,roomLightTarget:roomLampTarget,geometry:staticMesh.count/3,roomGeometry:roomFurnitureMesh.count/3,msaa:msaaFbo?msaaSamples:0,roomLights:roomLampLevel,rain:rainAmount,cam:cameraPos.slice()}},setMood,setView,setThrottle,switchRoute,toggleStop,togglePause,toggleLight,step:seconds=>{for(let t=0;t<seconds;t+=1/60)updateSimulation(1/60);updateUI()},inspect:()=>({common:common.length,highline:highline.length,lowline:lowline.length,tunnel:[tunnelStart,tunnelEnd],vehicles:offsets.map(o=>where(travel-o).edge.name)}),render};window.READY=true;window.RAILWAY.orbitTo=(yaw,pitch,distance,target)=>{viewMode='room';orbit.yaw=yaw;orbit.pitch=pitch;orbit.distance=distance;if(target)orbit.target=target;};requestAnimationFrame(animate)}catch(e){console.error(e);$('loader').classList.add('done');$('error').style.display='block';$('error').textContent=e.message||String(e)}}
+function start(){try{initGL();prepareWorkshopStartup();buildWorld();createRoom();initializeWorkshop();buildTrains();initJourney();initSteam();setView('room',false);cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);cameraTarget=orbit.target.slice();let savedPrefs=null;try{savedPrefs=JSON.parse(localStorage.getItem('alder-valley-grand-prefs-v1')||'null');}catch{}restoreLightingPrefs(savedPrefs);if(savedPrefs&&typeof savedPrefs==='object'&&!Array.isArray(savedPrefs)){if(savedPrefs.route==='lowline'){chosenRoute='lowline';$('routeLabel').textContent='The riverside ↗';$('routeButtonLabel').textContent='Riverside';$('routeBtn').classList.add('active')}setThrottle(savedPrefs.throttle??42);}bindControls();document.querySelector('.engine-medallion').onclick=()=>setView('engine');document.querySelector('.engine-medallion').style.cursor='pointer';for(let i=0;i<14;i++){emitSteam();steam[steam.length-1].age=i*.13;steam[steam.length-1].p[1]+=i*.10;steam[steam.length-1].size+=i*.035}updateCamera(1);updateUI();render();$('loader').classList.add('done');window.RAILWAY={get state(){return{route:chosenRoute,edge:leadInfo.edge.name,d:leadInfo.d,travel,speed,throttle,paused,stopRequested,atStation,laps:completedLaps,view:viewMode,night,lightingMode,mood:lightingMoodForNight(targetNight),targetNight,roomLightTarget:roomLampTarget,geometry:staticMesh.count/3,roomGeometry:roomFurnitureMesh.count/3,msaa:msaaFbo?msaaSamples:0,roomLights:roomLampLevel,rain:rainAmount,cam:cameraPos.slice()}},setMood,setView,setThrottle,switchRoute,toggleStop,togglePause,toggleLight,step:seconds=>{for(let t=0;t<seconds;t+=1/60)updateSimulation(1/60);updateUI()},inspect:()=>({common:common.length,highline:highline.length,lowline:lowline.length,tunnel:[tunnelStart,tunnelEnd],vehicles:offsets.map(o=>where(travel-o).edge.name)}),render};window.READY=true;window.RAILWAY.orbitTo=(yaw,pitch,distance,target)=>{viewMode='room';orbit.yaw=yaw;orbit.pitch=pitch;orbit.distance=distance;if(target)orbit.target=target;};requestAnimationFrame(animate)}catch(e){console.error(e);$('loader').classList.add('done');$('error').style.display='block';$('error').textContent=e.message||String(e)}}

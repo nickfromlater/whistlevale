@@ -46,6 +46,16 @@ for(let ch=0;ch<2;ch++){
  assert.ok(Math.abs(output[84]-input[84])<1e-7,'overlap returns smoothly to the original head');
  assert.ok(Math.abs(output[0]-output.at(-1))<.08,'no large artificial discontinuity at the wrap');
 }
+const retained=new HouseSoundscape(new Context());
+for(const id of ['town','coast','forest','workshop','steam']){
+ const expected=retained.loopBuffer(raw,id);retained.buffers.set(id,raw);retained.createLayer(id);
+ const played=retained.layers.get(id).source.buffer;
+ assert.equal(retained.buffers.get(id),played,'loop cache retains the exact AudioBuffer already playing');
+ assert.notEqual(played,raw,'the redundant decoded original can be released');
+ for(let channel=0;channel<raw.numberOfChannels;channel++)assert.deepEqual(played.getChannelData(channel),expected.getChannelData(channel),'retained loop output is sample-for-sample unchanged');
+}
+retained.buffers.set('the-long-way-home',raw);retained.createLayer('the-long-way-home');
+assert.equal(retained.buffers.get('the-long-way-home'),raw,'music retains its complete original samples');
 
 for(const [id,duration]of[['the-long-way-home',150],['lamplight-nocturne',120]]){house.buffers.set(id,c.createBuffer(2,duration*100,100));house.createLayer(id);house.scheduleScore(id);}
 assert.equal(house.scoreSources.length,2);assert.equal(house.nextScore.get('the-long-way-home'),142.1);
@@ -143,3 +153,17 @@ partial.update();await partial.loadPromise;partial.update();assert.deepEqual(cat
 assert.equal(partial.failed.length,0);assert.equal(partial.layers.get('coast-gallery').gain.gain.target,.66);assert.equal(vm.runInContext('playlistAvailableTracks().length',context),1);
 assert.deepEqual([...vm.runInContext('AUDIO_ASSETS.filter(houseRecordingAvailable)',context)],['steam','coast-gallery'],'partial export includes exactly the available recordings');
 console.log('Optional audio QA passed: null/empty catalogs, zero missing-file probes, procedural fallback, truthful empty shelf, embedded precedence, partial catalog loading/fallback, and export asset selection.');
+
+// Built URLs and portable recordings share one resolver; development paths stay unchanged.
+sandbox.window.HOUSE_AUDIO_AVAILABLE=['town','arrival'];sandbox.window.HOUSE_AUDIO_URLS={town:'immutable/assets/audio/town.0123456789abcdef.mp3',arrival:'immutable/assets/audio/arrival.fedcba9876543210.mp3'};sandbox.window.HOUSE_EMBEDDED_AUDIO={};catalogRequests.length=0;
+const versioned=new HouseSoundscape(new Context());await versioned.load(['town']);
+assert.deepEqual(catalogRequests,['immutable/assets/audio/town.0123456789abcdef.mp3'],'normal playback requests its content-versioned recording');
+assert.equal(vm.runInContext('houseRecordingURL("arrival")',context),sandbox.window.HOUSE_AUDIO_URLS.arrival,'arrival uses the same versioned URL manifest');
+sandbox.window.HOUSE_EMBEDDED_AUDIO={town:'data:audio/mp3;base64,AA==',arrival:'data:audio/mp3;base64,AQ=='};
+assert.equal(vm.runInContext('houseRecordingURL("town")',context),sandbox.window.HOUSE_EMBEDDED_AUDIO.town,'embedded audio overrides a stale deployed URL');
+assert.equal(vm.runInContext('houseRecordingURL("arrival")',context),sandbox.window.HOUSE_EMBEDDED_AUDIO.arrival,'embedded greeting survives portable re-export');
+assert.equal(vm.runInContext('houseRecordingURL("steam")',context),'assets/audio/steam.mp3','unmapped development paths are unchanged');
+const hobbySource=await readFile(new URL('../src/hobby.js',import.meta.url),'utf8');
+const exportIds=hobbySource.match(/const exportAudioIds=([^;]+);/)[1];
+assert.deepEqual([...vm.runInContext(exportIds,context)],['town','arrival'],'portable export includes an available greeting alongside room audio');
+console.log('Lossless delivery audio QA passed: identical retained loop samples, shared buffer identity, versioned playback, dev fallback, embedded precedence, and portable arrival inclusion.');

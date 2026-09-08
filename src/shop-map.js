@@ -5,8 +5,8 @@
 const shopMap={open:false,active:false,loading:false,selected:'valley',saved:null,revision:-1,token:0,entry:null,pointers:new Map(),drag:null,orbit:null};
 const shopBase={draw,static:drawHobbyStatic,trains:drawHobbyTrains,particles:drawHobbyParticles,camera:updateCamera,simulation:updateSimulation,audio:updateHobbyAudio};
 const shopBaseProject=project,shopBaseRailwayAudio=RailwayAudio.prototype.update;
-let shopRoomModel=null;
-draw=function(mesh,model=I,p=mainProgram){shopBase.draw(mesh,shopRoomModel?mm(shopRoomModel,model):model,p);};
+let shopRoomModel=null,shopLightCache=new WeakMap();
+draw=function(mesh,model=I,p=mainProgram){if(mesh)shopBase.draw(mesh,shopRoomModel?(model===I?shopRoomModel:mm(shopRoomModel,model)):model,p);};
 project=function(point){return shopBaseProject(shopRoomModel?transform(point,shopRoomModel):point);};
 RailwayAudio.prototype.update=function(dt){
  const run=()=>{
@@ -37,8 +37,10 @@ function shopWallVisible(w,entry){
 }
 function shopRoomLights(entry,p){
  if(p!==mainProgram)return;
- gl.uniform3fv(uniform(p,'uRoomLights[0]'),new Float32Array(houseRoomLights(entry.key).map(point=>transform(point,entry.model)).flat()));
- gl.uniform3fv(uniform(p,'uLamps[0]'),new Float32Array(lampPositions.slice(0,8).map(point=>transform(point,entry.model)).flat()));
+ let lights=shopLightCache.get(entry);
+ if(!lights){lights={room:new Float32Array(houseRoomLights(entry.key).map(point=>transform(point,entry.model)).flat()),layout:new Float32Array(lampPositions.slice(0,8).map(point=>transform(point,entry.model)).flat())};shopLightCache.set(entry,lights);}
+ gl.uniform3fv(uniform(p,'uRoomLights[0]'),lights.room);
+ gl.uniform3fv(uniform(p,'uLamps[0]'),lights.layout);
  uv3(p,'uHead',transform(transform([0,1.3,1.7],hobbyTrainMatrix()),entry.model));uv3(p,'uForward',hobbyTrainInfo().f);
 }
 drawHobbyStatic=function(p,shadow){
@@ -102,7 +104,7 @@ updateCamera=function(dt){
   const blend=reduceMotion?1:1-Math.exp(-dt*6);
   cameraPos=lerpV(cameraPos,shopCameraPosition(shopMap.orbit),blend);cameraTarget=lerpV(cameraTarget,shopMap.orbit.target,blend);shopProjection();
  }
- ShopMapUI.setMarkerPositions(SHOP_HOUSE_LAYOUT.rooms.map(entry=>({key:entry.key,...project(entry.labelAnchor),visible:!shopMap.entry&&project(entry.labelAnchor).visible})));
+ ShopMapUI.setMarkerPositions(SHOP_HOUSE_LAYOUT.rooms.map(entry=>{const point=project(entry.labelAnchor);return{key:entry.key,...point,visible:!shopMap.entry&&point.visible};}));
 };
 function shopMapSelect(key){
  if(!SHOP_HOUSE_LAYOUT.byKey[key]||shopMap.loading||shopMap.entry)return;
@@ -124,7 +126,7 @@ async function openHouseMap(){
  if(!hobby.ready||shopMap.open||hobby.transition)return;
  if(building)enterBuild(false);if(hobby.cinema)leaveCinema(false);
  shopMap.saved={view:viewMode,orbit:{...orbit,target:orbit.target.slice()},eye:cameraPos.slice(),target:cameraTarget.slice(),light:lightVP,lens:lensAmount};
- shopMap.open=true;shopMap.loading=true;shopMap.selected=hobby.room;const token=++shopMap.token;
+ shopMap.open=true;shopMap.loading=true;shopMap.selected=hobby.room;shopLightCache=new WeakMap();const token=++shopMap.token;
  for(const id of['soundPanel','playlistPanel','ambiencePanel','layoutPanel','trainInspector'])if($(id))$(id).hidden=true;
  document.body.classList.remove('hidden-ui');hidden=false;document.body.classList.add('shop-map-open');ShopMapUI.show(hobby.room);
  try{

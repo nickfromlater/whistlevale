@@ -9,6 +9,7 @@ const audioAmplitude=db=>Math.pow(10,db/20);
 // The preview/build supplies the optional recordings present in this edition.
 // A source-only checkout still has the procedural railway, without 404 probes.
 function houseRecordingAvailable(id){return !!window.HOUSE_EMBEDDED_AUDIO?.[id]||(Array.isArray(window.HOUSE_AUDIO_AVAILABLE)&&window.HOUSE_AUDIO_AVAILABLE.includes(id));}
+function houseRecordingURL(id){return window.HOUSE_EMBEDDED_AUDIO?.[id]||window.HOUSE_AUDIO_URLS?.[id]||'assets/audio/'+id+'.mp3';}
 const HOUSE_ROOM_AUDIO={
  valley:{recording:'town',high:75,low:780,air:.029,pan:-.10,nature:[18,34]},
  coast:{recording:'coast',high:80,low:1100,air:.080,pan:.12,nature:[42,70]},
@@ -134,7 +135,7 @@ class HouseSoundscape{
   if(!this.canLoad(id))return;
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
   try{
-   const source=window.HOUSE_EMBEDDED_AUDIO?.[id]||'assets/audio/'+id+'.mp3';
+   const source=houseRecordingURL(id);
    const response=await fetch(source,{signal:controller.signal});if(!response.ok)throw new Error('Audio file unavailable');
    const buffer=await this.ctx.decodeAudioData(await response.arrayBuffer());this.buffers.set(id,buffer);
    if(id!=='whistle')this.createLayer(id);if(SCORE_ASSETS.includes(id))this.scheduleScore(id);
@@ -170,7 +171,12 @@ class HouseSoundscape{
   const score=SCORE_ASSETS.includes(id),bus=score?'music':id==='steam'?'train':'ambience';
   gain.connect(filter).connect(pan).connect(trim).connect(this.buses[bus]);
   const layer={gain,filter,pan,trim,source:null};this.layers.set(id,layer);
-  if(!score){const source=this.ctx.createBufferSource();source.buffer=this.loopBuffer(this.buffers.get(id),id);source.loop=true;source.connect(gain);source.start(0,Math.random()*source.buffer.duration);layer.source=source;}
+  if(!score){
+   const source=this.ctx.createBufferSource();source.buffer=this.loopBuffer(this.buffers.get(id),id);
+   // Retain the repaired buffer that actually plays, releasing the unused PCM
+   // original. Music and one-shot buffers keep their complete original samples.
+   this.buffers.set(id,source.buffer);source.loop=true;source.connect(gain);source.start(0,Math.random()*source.buffer.duration);layer.source=source;
+  }
  }
  scheduleScore(id){
   const buffer=this.buffers.get(id),layer=this.layers.get(id);if(!buffer||!layer)return;

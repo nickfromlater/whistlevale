@@ -52,6 +52,10 @@ Direct room links use `?room=valley`, `?room=coast`, `?room=alpine`, or
 `?room=studio`. Alder Valley also includes a layout editor, route controls,
 train liveries, save/import, and a portable HTML export.
 
+Automatic lighting follows the viewer’s local clock: night from 19:00 until
+07:00, daylight otherwise. Choose a manual atmosphere to keep that lighting
+across visits; switching back to automatic follows local time again.
+
 ## Sound and optional music
 
 A fresh clone includes procedural railway sounds and ambience. Sound is enabled
@@ -90,6 +94,18 @@ A deployment from this repository uses procedural sound until you supply
 recordings through your own asset workflow. Keep `.vercelignore` alongside
 `.gitignore`: they control different upload paths.
 
+JavaScript, styles, the favicon, and recordings receive content-hashed URLs in
+the build. Their bytes stay unchanged. Vercel caches these versioned assets as
+immutable for a year and revalidates HTML, so a new build references new files
+while unchanged assets remain reusable. There is no per-visitor application
+server; simulation, rendering, and audio run on the visitor’s device.
+
+For local performance inspection, add `?profile` (or `&profile` to a room URL).
+The opt-in panel reports frame timing, draw calls, geometry and decoded-audio
+memory estimates; GPU timing appears when supported. It sends no telemetry and
+does no diagnostic work on ordinary visits. Measurements describe the device
+and view being inspected, rather than a traffic-capacity guarantee.
+
 ## Source
 
 | File | Purpose |
@@ -105,12 +121,17 @@ recordings through your own asset workflow. Keep `.vercelignore` alongside
 | `src/hobby.js` / `.css` | Room navigation, cinema, controls, and portable export |
 | `src/soundscape.js` | Procedural and recorded sound, mixer buses, transitions |
 | `src/playlist.js` | Record shelf and automatic score selection |
+| `src/performance.js` | Opt-in local performance diagnostics |
 
 ## Check and contribute
 
 ```sh
 npm run check
 npm run test:audio
+npm run test:delivery
+npm run test:geometry
+npm run test:lighting
+npm run test:startup
 npm run test:rooms
 npm run test:map
 npm run build
@@ -121,6 +142,12 @@ room transitions, mixer routing, and missing-file behavior with a simulated
 audio context. Room tests exercise fifth/sixth-room registration, dynamic house
 geometry, cache invalidation, default/custom shells and train stock selection
 without a browser or GPU. Visual and playback changes also need a real-browser check.
+Delivery tests cover source-only builds, exact asset bytes and cache versioning.
+Geometry tests compare uploaded Float32 bytes against the original builder;
+normal CI uses primitive/transform and track-query checks. Run
+`npm run test:geometry:full` for all room and train meshes after geometry changes.
+Lighting tests cover local-time boundaries and saved manual choices.
+Startup tests cover saved layouts, portable-layout precedence, recovery and undo.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for room design and development guidance.
 
 Code and repository artwork are available under the [MIT license](LICENSE).
