@@ -1,0 +1,14 @@
+.env
+.env.*
+evidence
+alder-valley-grand-division(1).html
+assets/audio/generation-receipts.json
+assets/audio/manifest.json
+__pycache__
+.DS_Store
+
+.git
+design
+AGENTS.local.md
+.claude
+.github

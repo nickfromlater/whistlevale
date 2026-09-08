@@ -1,0 +1,17 @@
+{
+  "name": "whistlevale",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A house of little worlds. An immersive miniature railway hobby shop.",
+  "scripts": {
+    "dev": "python3 scripts/serve.py",
+    "start": "python3 scripts/serve.py",
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test:audio": "node scripts/audio-qa.mjs"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  }
+}
