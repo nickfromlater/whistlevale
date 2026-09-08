@@ -1,0 +1,20 @@
+import {mkdir,rm,readFile,writeFile,cp,readdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const out=path.join(root,'dist');
+await rm(out,{recursive:true,force:true});
+await mkdir(out,{recursive:true});
+const audioFiles=await readdir(path.join(root,'assets','audio'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return[];throw error;});
+const audioIds=audioFiles.filter(file=>file.isFile()&&!file.name.startsWith('.')&&file.name.endsWith('.mp3')).map(file=>file.name.slice(0,-4)).sort();
+const catalog=`<script id="audioCatalog">window.HOUSE_AUDIO_AVAILABLE=${JSON.stringify(audioIds).replace(/</g,'\\u003c')};</script>`;
+const html=await readFile(path.join(root,'index.html'),'utf8');
+if(!/<script id="audioCatalog">[\s\S]*?<\/script>/.test(html))throw new Error('The optional audio catalog placeholder is missing.');
+await writeFile(path.join(out,'index.html'),html.replace(/<script id="audioCatalog">[\s\S]*?<\/script>/,()=>catalog));
+await cp(path.join(root,'src'),path.join(out,'src'),{recursive:true,filter:p=>!path.basename(p).startsWith('.')});
+await cp(path.join(root,'assets'),path.join(out,'assets'),{recursive:true,filter:p=>!path.basename(p).startsWith('.')&&!p.endsWith('.json')});
+const walk=async dir=>(await Promise.all((await readdir(dir,{withFileTypes:true})).map(async p=>p.isDirectory()?walk(path.join(dir,p.name)):path.join(dir,p.name)))).flat();
+const files=await walk(out);
+if(files.some(f=>path.basename(f).startsWith('.')))throw new Error('A private file reached the public build.');
+console.log(`Whistlevale: ${files.length} public files built in dist/, with ${audioIds.length} optional recordings. No runtime dependencies or API keys.`);
