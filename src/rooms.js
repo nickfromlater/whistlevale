@@ -8,14 +8,34 @@ const HOUSE_ROOMS={
 };
 const roomScenes=new Map();
 const ROOM_SHELLS={};
+const HOUSE_ROOM_BUILDERS=new Map();
+let houseRoomRevision=0;
+function houseRoomLights(key){return HOUSE_ROOMS[key]?.lights||roomLightPositions;}
+
+// Register a room once; navigation, the 3D house and scene loading discover it.
+function registerHouseRoom(key,definition){
+ if(!/^[a-z][a-z0-9-]*$/.test(key))throw new Error('Room keys must be lowercase URL-safe names.');
+ if(!definition||typeof definition.build!=='function')throw new Error('A room needs a build(scene, builder) function.');
+ const {build,shell,...metadata}=definition;
+ HOUSE_ROOMS[key]={number:String(Object.keys(HOUSE_ROOMS).length+1).padStart(2,'0'),name:key,layout:key,tag:'A LITTLE WORLD',description:'A railway waiting to be explored.',color:'#99ad83',distance:150,target:[0,0,0],pitch:.65,yaw:.35,ambient:'forest',...HOUSE_ROOMS[key],...metadata};
+ HOUSE_ROOM_BUILDERS.set(key,build);if(shell)ROOM_SHELLS[key]=shell;
+ const cached=roomScenes.get(key);
+ if(cached){for(const mesh of[cached.mesh,cached.lifeDetails?.mesh,...cached.walls.map(w=>w.mesh)])disposeMesh(mesh);roomScenes.delete(key);}
+ houseRoomRevision++;
+ return HOUSE_ROOMS[key];
+}
 
 function initHouseArt(){
+ let omittedPlaques=0;
  for(const [i,room]of Object.values(HOUSE_ROOMS).entries()){
-  artSlot('house-'+i,1100+i*742,1610,730,180,(c,w,h)=>{
+  const column=i<4?i:(i-4)%4,x=1100+column*742,y=i<4?1610:2048+Math.floor((i-4)/4)*200;
+  if(x+730>roomArt.width||y+180>roomArt.height){delete roomLabels['house-'+i];omittedPlaques++;continue;}
+  artSlot('house-'+i,x,y,730,180,(c,w,h)=>{
    c.fillStyle=i===1?'#254a51':i===2?'#414a4e':'#273e35';c.fillRect(0,0,w,h);c.strokeStyle='#c2a672';c.lineWidth=2;c.strokeRect(9,9,w-18,h-18);
    c.textAlign='center';c.fillStyle='#e6d6b2';c.font='38px Georgia';c.fillText(room.name.toUpperCase(),w/2,83);c.font='15px Arial';c.fillText('WHISTLEVALE  /  HOBBY HOUSE  /  ROOM '+room.number,w/2,130);
   });
  }
+ if(omittedPlaques)console.warn(`Whistlevale: ${omittedPlaques} room plaques omitted because the illustration atlas is full. Register rooms before startup; runtime additions need a full atlas and scene rebuild.`);
  const signs=[['shop-sign','WHISTLEVALE','A HOUSE OF LITTLE WORLDS'],['kits-sign','LITTLE WORLDS','LOCOMOTIVES  ·  KITS  ·  SCENERY'],['coast-sign','TIDEWATER BAY','THE COASTAL RAILWAY'],['mountain-sign','BERGWALD','THE MOUNTAIN RAILWAY']];
  signs.forEach(([key,title,sub],i)=>artSlot(key,1100+i*742,1810,730,180,(c,w,h)=>{c.fillStyle='#ede0c2';c.fillRect(0,0,w,h);c.strokeStyle='#877048';c.strokeRect(8,8,w-16,h-16);c.textAlign='center';c.fillStyle='#37524a';c.font='46px Georgia';c.fillText(title,w/2,83);c.font='16px Arial';c.fillText(sub,w/2,131);}));
  const smallSigns=[['bay-station','TIDEWATER BAY','HARBOUR LINE  ·  PLATFORM 1'],['alpine-station','BERGWALD','1,240 METRES ABOVE THE EVERYDAY'],['fresh-fish','THE FISH SHED','THE MORNING CATCH'],['sea-cafe','SALT & BUTTER','COFFEE  ·  FRESH BREAD'],['workshop-class','THE SATURDAY WORKSHOP','MAKE SOMETHING SMALL.'],['shop-counter','GOOD THINGS TAKE TIME','ASK US ABOUT YOUR NEXT LITTLE WORLD']];
@@ -45,7 +65,7 @@ function roomShell(kind,b){
   if(back){
    roomSign(w,'window',0,12,.8,43,28,0,33);for(const x of[-22,-11,0,11,22])w.box(x,12,1,.45,29,.65,'#c4b590',22);for(const y of[-2.3,12,26.3])w.box(0,y,1,44,.5,.7,'#c4b590',22);
    w.box(0,-2.8,1.6,46,.60,3.0,'#b59a72',22);roomFrame(w,'clock',26.3,12,1,5.4,5.4);
-   roomFrame(w,'house-'+(['valley','coast','alpine','studio'].indexOf(kind)),-49,20,1,41,10);
+   const plaqueKey='house-'+Object.keys(HOUSE_ROOMS).indexOf(kind);if(roomLabels[plaqueKey])roomFrame(w,plaqueKey,-49,20,1,41,10);
    roomFrame(w,kind==='studio'?'kits-sign':kind==='coast'?'coast-sign':'mountain-sign',49,19,1,37,10);
   }else if(!front){roomFrame(w,coast?'poster':'blueprint',-28,10,1,25,17);roomFrame(w,'slow',29,9,1,15,21);}
   if(front){w.box(0,-3,1,19,42,1,'#79674a',22);w.box(0,-3,1.6,16,39,.2,panel,22);w.cylinder(6,-4,1.95,.35,.35,.5,'#c6ae71',41,14,PI/2);roomFrame(w,'shop-sign',0,23,1,35,8);}
@@ -149,30 +169,38 @@ function houseStation(scene,b,x,y,z,key,alpine=false,angle=0){
 
 function getHouseScene(key){
  if(roomScenes.has(key))return roomScenes.get(key);
+ const build=HOUSE_ROOM_BUILDERS.get(key);
+ if(!build)throw new Error('No scene builder is registered for '+key+'.');
  const oldSeed=seed;seed=1783+Object.keys(HOUSE_ROOMS).indexOf(key)*3721;
  const scene={key,mesh:null,walls:[],routes:[],trains:[],actors:[],population:0,spots:[],height:()=>1},b=new Builder();
- scene.walls=(ROOM_SHELLS[key]||((b)=>roomShell(key,b)))(b);
- ({coast:coastRoom,alpine:alpineRoom,studio:studioRoom}[key])(scene,b);
- scene.mesh=b.mesh();roomScenes.set(key,scene);seed=oldSeed;return scene;
+ try{
+  scene.walls=(ROOM_SHELLS[key]||((builder)=>roomShell(key,builder)))(b);
+  build(scene,b);
+  if(!Array.isArray(scene.trains)||!scene.trains.length)throw new Error('Room "'+key+'" needs at least one train.');
+  for(const [i,train]of scene.trains.entries()){
+   if(!train?.edge||typeof train.edge.at!=='function'||!Number.isFinite(train.edge.length)||train.edge.length<=0)
+    throw new Error('Room "'+key+'", train '+(i+1)+' needs a route edge with at(distance) and a positive finite length.');
+   if(!Number.isFinite(train.distance)||!Number.isFinite(train.speed))
+    throw new Error('Room "'+key+'", train '+(i+1)+' needs finite distance and speed values.');
+  }
+  scene.mesh=b.mesh();
+  scene.lifeDetails=buildRoomLifeDetails(key,scene);scene.population+=scene.lifeDetails.population;
+  roomScenes.set(key,scene);return scene;
+ }catch(error){
+  // Shell walls may already be uploaded when a scene builder or its train
+  // contract fails. Release those buffers; a partial room never enters the cache.
+  const owned=[scene.mesh,scene.lifeDetails?.mesh,...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
+  for(const mesh of new Set(owned))if(mesh)disposeMesh(mesh);
+  throw error;
+ }finally{seed=oldSeed;}
 }
 
 function drawHouseRoom(scene,p,shadow=false){
- draw(scene.mesh,I,p);
+ draw(scene.mesh,I,p);draw(scene.lifeDetails?.mesh,I,p);
  if(!shadow)for(const wall of scene.walls){const visible=wall.which==='back'?cameraPos[2]>-63.4:wall.which==='front'?cameraPos[2]<63.4:wall.which==='left'?cameraPos[0]>-77.4:cameraPos[0]<77.4;if(visible)draw(wall.mesh,I,p);}
 }
 
 function houseTrainAt(train,offset=0){return circuitAt(train.edge,train.distance-offset);}
 function drawHouseTrains(scene,p){
- for(const train of scene.trains){
-  for(let i=0;i<train.cars+2;i++){
-   const off=train.type==='mountain'?i*2.7:i===0?0:i===1?2.75:5.21+(i-2)*3.26,m=circuitMatrix(train.edge,train.distance-off);
-   if(train.type==='mountain'){
-    if(i>train.cars)continue;draw(i===0?railcarMesh:railcarTrailer,m,p);for(const z of[-.79,.79])draw(bogieMesh,mm(m,mm(trans(0,0,z),scaling(.85))),p);
-   }else{
-    draw(i===0?locoMesh:i===1?tenderMesh:coachMesh,m,p);
-    if(i>1){draw(coachRoofMesh,m,p);for(const z of[-.91,.91])draw(bogieMesh,mm(m,trans(0,0,z)),p);}
-    if(i===0)for(const z of[-.70,-.15,.40])draw(wheelMesh,mm(m,mm(trans(0,.325,z),rx(-train.distance/.304))),p);
-   }
-  }
- }
+ for(const train of scene.trains)drawHouseTrainFormation(scene,train,p);
 }

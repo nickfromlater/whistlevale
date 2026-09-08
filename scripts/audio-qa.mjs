@@ -86,14 +86,14 @@ assert.equal(vm.runInContext('AUDIO_ASSETS.length',context),17,'portable export 
 const downloaded=[];sandbox.fetch=async url=>{downloaded.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};};
 const playlistContext=new Context(),mixer=new HouseSoundscape(playlistContext);await mixer.load();
 assert.equal(downloaded.length,7,'initial load is six room effects and the selected piece');assert.equal(mixer.buffers.size,7);
-assert.ok(mixer.buffers.has('village-fete-band'));assert.ok(!mixer.buffers.has('the-long-way-home'));assert.ok(!mixer.buffers.has('lamplight-nocturne'));assert.ok(!mixer.buffers.has('toy-shop-waltz'));
+assert.ok(mixer.buffers.has('toy-shop-waltz'));assert.ok(!mixer.buffers.has('the-long-way-home'));assert.ok(!mixer.buffers.has('lamplight-nocturne'));assert.ok(!mixer.buffers.has('village-fete-band'));
 const scheduled=[];const schedule=mixer.scheduleScore.bind(mixer);mixer.scheduleScore=id=>{scheduled.push(id);return schedule(id);};
-mixer.update();const selectedGain=mixer.layers.get('village-fete-band').gain.gain;
+mixer.update();const selectedGain=mixer.layers.get('toy-shop-waltz').gain.gain;
 assert.equal(selectedGain.target,0,'automatic music is silent outside slow cinema');assert.equal(scheduled.length,0,'operating mode does not keep scheduling silent music');
 sandbox.hobby.cinema=true;mixer.update();assert.equal(selectedGain.target,.66,'slow cinema starts the room score');const automationCount=selectedGain.events.length;
 for(let i=0;i<100;i++){playlistContext.currentTime+=1/60;mixer.update();}
 assert.equal(selectedGain.events.length,automationCount,'base mixer and playlist do not fight over score gain each frame');
-assert.deepEqual([...new Set(scheduled)],['village-fete-band'],'only the selected score is scheduled');assert.equal(downloaded.length,7,'idle playback does not fetch the rest of the library');
+assert.deepEqual([...new Set(scheduled)],['toy-shop-waltz'],'only the selected score is scheduled');assert.equal(downloaded.length,7,'idle playback does not fetch the rest of the library');
 
 let finishCoast;
 sandbox.fetch=url=>{downloaded.push(url);return new Promise(resolve=>{finishCoast=()=>resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});});};
@@ -108,11 +108,11 @@ sandbox.night=1;mixer.update();await mixer.loadPromise;mixer.update();assert.equ
 const afterFailure=downloaded.length;for(let i=0;i<10;i++)mixer.update();assert.equal(downloaded.length,afterFailure,'failed music does not trigger a per-frame retry storm');
 failNight=false;await mixer.retry();mixer.update();assert.equal(mixer.layers.get('waltz-after-hours').gain.gain.target,.66);assert.equal(mixer.failed.length,0);
 
-sandbox.night=0;sandbox.hobby={room:'valley',cinema:true,scene:null};let failVillage=true;
-sandbox.fetch=async url=>{downloaded.push(url);return{ok:!(failVillage&&url.includes('village-fete-band')),arrayBuffer:async()=>new ArrayBuffer(1)};};
+sandbox.night=0;sandbox.hobby={room:'valley',cinema:true,scene:null};let failValley=true;
+sandbox.fetch=async url=>{downloaded.push(url);return{ok:!(failValley&&url.includes('toy-shop-waltz')),arrayBuffer:async()=>new ArrayBuffer(1)};};
 const fallback=new HouseSoundscape(new Context());await fallback.load();const beforeFallback=downloaded.length;
-fallback.update();await fallback.loadPromise;fallback.update();assert.equal(downloaded.length,beforeFallback+1,'initial score failure downloads one fallback');assert.equal(fallback.layers.get('toy-shop-waltz').gain.gain.target,.66);
-failVillage=false;await fallback.retry();fallback.update();assert.equal(fallback.layers.get('village-fete-band').gain.gain.target,.66,'retry restores the requested score');
+fallback.update();await fallback.loadPromise;fallback.update();assert.equal(downloaded.length,beforeFallback+1,'initial score failure downloads one fallback');assert.equal(fallback.layers.get('waltz-woodwind-warm').gain.gain.target,.66);
+failValley=false;await fallback.retry();fallback.update();assert.equal(fallback.layers.get('toy-shop-waltz').gain.gain.target,.66,'retry restores the requested score');
 
 sandbox.hobby.cinema=false;mixer.update();assert.equal(mixer.layers.get('waltz-after-hours').gain.gain.target,0,'leaving cinema fades out automatic music');
 sandbox.playlistTest=mixer;vm.runInContext('soundscape=playlistTest; audio={active:false}; enableSound=force=>{globalThis.playlistEnableArgument=force;audio.active=true;}; playlistSelect("workbench-sunday");',context);

@@ -9,11 +9,17 @@ const audioAmplitude=db=>Math.pow(10,db/20);
 // The preview/build supplies the optional recordings present in this edition.
 // A source-only checkout still has the procedural railway, without 404 probes.
 function houseRecordingAvailable(id){return !!window.HOUSE_EMBEDDED_AUDIO?.[id]||(Array.isArray(window.HOUSE_AUDIO_AVAILABLE)&&window.HOUSE_AUDIO_AVAILABLE.includes(id));}
+const HOUSE_ROOM_AUDIO={
+ valley:{recording:'town',high:75,low:780,air:.029,pan:-.10,nature:[18,34]},
+ coast:{recording:'coast',high:80,low:1100,air:.080,pan:.12,nature:[42,70]},
+ alpine:{recording:'forest',high:110,low:980,air:.055,pan:-.18,nature:[29,52]},
+ studio:{recording:'workshop',high:45,low:390,air:.025,pan:.03,nature:null}
+};
 let soundscape=null;
 class HouseSoundscape{
  constructor(ctx){
   this.ctx=ctx;this.buffers=new Map();this.layers=new Map();this.scoreSources=[];this.nextScore=new Map();this.failed=[];this.loading=false;this.loaded=false;this.loadPromise=null;
-  this.music=.40;this.ambience=.47;this.train=.42;this.on=true;this.lastWhistle=-Infinity;this.paramTargets=new WeakMap();
+  this.roomSound=null;this.music=.40;this.ambience=.47;this.train=.42;this.on=true;this.lastWhistle=-Infinity;this.paramTargets=new WeakMap();
   this.output=ctx.createGain();this.output.gain.value=0;
   const compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=18;compressor.ratio.value=3;compressor.attack.value=.035;compressor.release.value=.65;
   this.output.connect(compressor).connect(ctx.destination);
@@ -37,6 +43,92 @@ class HouseSoundscape{
    const trainPan=railway.panner;railway.panner=this.birdPan;
    try{return originalTone.call(railway,frequency,...args);}finally{railway.panner=trainPan;}
   };
+  // Each room now owns its nature cues. Suppress the original identical bird
+  // phrase before it runs, and suppress steam at the electric engine itself.
+  const originalUpdate=railway.update;
+  if(typeof originalUpdate==='function')railway.update=function(dt){
+   this.nextBird=Infinity;
+   if(hobby.room!=='valley'&&hobby.scene?.trains[0]?.type!=='steam')this.lastChuff=Math.floor(travel/.45);
+   return originalUpdate.call(this,dt);
+  };
+  this.prepareRoomSound();
+ }
+ prepareRoomSound(){
+  if(this.roomSound||typeof this.ctx.createOscillator!=='function')return;
+  const c=this.ctx,rate=c.sampleRate||44100,noise=c.createBuffer(1,Math.round(rate*5),rate),data=noise.getChannelData(0);let slow=0,soft=0;
+  // A soft, correlated noise bed has considerably less high-frequency energy
+  // than white noise. It is shared by the four filtered room textures.
+  for(let i=0;i<data.length;i++){const n=Math.random()*2-1;slow=slow*.997+n*.021;soft=soft*.96+n*.045;data[i]=slow*.74+soft*.32+n*.014;}
+  const texture=this.loopBuffer(noise,'room-air'),rooms={};
+  for(const [key,p]of Object.entries(HOUSE_ROOM_AUDIO)){
+   const source=c.createBufferSource(),high=c.createBiquadFilter(),filter=c.createBiquadFilter(),gain=c.createGain(),pan=c.createStereoPanner(),mix=c.createGain();
+   source.buffer=texture;source.loop=true;high.type='highpass';high.frequency.value=p.high;filter.type='lowpass';filter.frequency.value=p.low;if(filter.Q)filter.Q.value=.35;
+   gain.gain.value=0;mix.gain.value=0;pan.pan.value=p.pan;
+   source.connect(high).connect(filter).connect(gain).connect(pan).connect(mix).connect(this.buses.ambience);source.start(0,Math.random()*texture.duration);rooms[key]={source,high,filter,gain,pan,mix};
+  }
+  // A low motor hum belongs only to the electric mountain train. Its wheels
+  // still come from RailwayAudio and every part follows the train slider.
+  const motor=c.createGain(),motorFilter=c.createBiquadFilter();motor.gain.value=0;motorFilter.type='lowpass';motorFilter.frequency.value=460;motor.connect(motorFilter).connect(this.buses.train);
+  const motors=[1,2.01].map((ratio,i)=>{const source=c.createOscillator(),gain=c.createGain();source.type=i?'sine':'triangle';source.frequency.value=84*ratio;gain.gain.value=i?.16:1;source.connect(gain).connect(motor);source.start();return {source,ratio};});
+  this.roomSound={rooms,texture,motor,motors,room:null,nextUpdate:0,nextNature:Infinity,nextMaterial:Infinity};
+ }
+ roomTone(room,start,frequency,endFrequency,duration,level,pan=0,type='sine'){
+  const bed=this.roomSound?.rooms[room];if(!bed||!this.on)return;
+  const c=this.ctx,source=c.createOscillator(),gain=c.createGain(),filter=c.createBiquadFilter(),panner=c.createStereoPanner(),curve=new Float32Array(33);
+  source.type=type;source.frequency.setValueAtTime(frequency,start);source.frequency.linearRampToValueAtTime(endFrequency,start+duration*.82);
+  filter.type='lowpass';filter.frequency.value=room==='coast'?1550:room==='studio'?1100:2350;panner.pan.value=pan;
+  for(let i=0;i<curve.length;i++){const t=i/(curve.length-1);curve[i]=Math.sin(Math.PI*t)**2*level*(1-.48*t);}
+  gain.gain.setValueCurveAtTime(curve,start,duration);source.connect(filter).connect(gain).connect(panner).connect(bed.mix);
+  source.start(start);source.stop(start+duration+.04);source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();panner.disconnect();};
+ }
+ roomNature(room,strength){
+  const c=this.ctx,start=c.currentTime+.04,pan=(Math.random()-.5)*1.12;
+  if(room==='coast'){
+   // One distant, soft falling call, with none of a close gull's harsh attack.
+   this.roomTone(room,start,840,610,1.05,.0060*strength,pan);
+   this.roomTone(room,start+.28,990,765,.60,.0011*strength,pan);
+  }else if(room==='alpine'){
+   const f=1050+Math.random()*240;
+   this.roomTone(room,start,f,f*1.18,.19,.0048*strength,pan);
+   this.roomTone(room,start+.38,f*.92,f*1.07,.24,.0039*strength,pan);
+  }else if(room==='valley'){
+   const f=1250+Math.random()*320;
+   this.roomTone(room,start,f,f*1.16,.17,.0054*strength,pan);
+   this.roomTone(room,start+.25,f*1.23,f*.97,.21,.0044*strength,pan);
+   if(Math.random()>.55)this.roomTone(room,start+.60,f*.94,f*1.03,.16,.0030*strength,pan);
+  }
+ }
+ roomMaterial(strength){
+  const now=this.ctx.currentTime+.03,pan=(Math.random()-.5)*.75,frequency=220+Math.random()*140;
+  // A short, rounded wooden contact, occasionally followed by setting a tool
+  // down. The little pauses are more important than the sound itself.
+  this.roomTone('studio',now,frequency,frequency*.76,.105,.0040*strength,pan,'triangle');
+  if(Math.random()>.60)this.roomTone('studio',now+.19,frequency*.86,frequency*.69,.075,.0022*strength,pan,'triangle');
+ }
+ updateRoomSound(room,isSteam,visibleSpeed,distance){
+  if(!HOUSE_ROOM_AUDIO[room])room=({coast:'coast',forest:'alpine',workshop:'studio',town:'valley'}[HOUSE_ROOMS[room]?.ambient]||'valley');
+  const sound=this.roomSound;if(!sound)return;const now=this.ctx.currentTime,p=HOUSE_ROOM_AUDIO[room]||HOUSE_ROOM_AUDIO.valley;
+  if(sound.room!==room){sound.room=room;sound.nextUpdate=0;sound.nextNature=now+10+Math.random()*12;sound.nextMaterial=now+13+Math.random()*15;}
+  if(now<sound.nextUpdate)return;sound.nextUpdate=now+.16;
+  const recorded=this.buffers.has(p.recording),support=recorded?.12:1,day=1-smooth(.20,.88,night);
+  for(const [key,bed]of Object.entries(sound.rooms)){
+   this.target(bed.mix.gain,key===room?1:0,1.5);
+   if(key!==room)continue;
+   let swell=1,cutoff=p.low;
+   if(room==='coast'){const wave=(Math.sin(now*.37-.9)+1)*.5;swell=.42+.58*wave*wave;cutoff=560+650*wave;}
+   else if(room==='alpine'){const breath=(Math.sin(now*.18)+Math.sin(now*.071+1.6)+2)*.25;swell=.42+.58*breath;cutoff=650+480*breath;}
+   else if(room==='valley'){swell=.80+.20*Math.sin(now*.12+.4);cutoff=780;}
+   this.target(bed.gain.gain,p.air*support*swell,1.4);this.target(bed.filter.frequency,cutoff,2.6);
+  }
+  const proximity=hobby.cinema?.75:clamp(20/(distance+20),.08,.65),motorLevel=!paused&&!isSteam?.0042*Math.sqrt(clamp(visibleSpeed/1.5,0,1))*proximity:0;
+  this.target(sound.motor.gain,motorLevel,.85);for(const motor of sound.motors)this.target(motor.source.frequency,(78+clamp(visibleSpeed,0,3)*38)*motor.ratio,1.8);
+  // Existing recordings remain the primary soundscape. Procedural cues become
+  // both rarer and quieter when a room recording is available.
+  if(now>=sound.nextNature){
+   const interval=p.nature||[60,90];sound.nextNature=now+interval[0]+Math.random()*(interval[1]-interval[0])+(recorded?24:0);
+   if(room!=='studio'&&day>.13&&this.ambience>.01)this.roomNature(room,(recorded?.20:1)*day);
+  }
+  if(room==='studio'&&now>=sound.nextMaterial){sound.nextMaterial=now+20+Math.random()*25+(recorded?20:0);if(this.ambience>.01)this.roomMaterial(recorded?.18:1);}
  }
  async loadAsset(id){
   if(!this.canLoad(id))return;
@@ -73,7 +165,7 @@ class HouseSoundscape{
  createLayer(id){
   if(this.layers.has(id))return;
   const gain=this.ctx.createGain();gain.gain.value=0;
-  const filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=id==='steam'?2200:9500;
+  const filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=id==='steam'?2200:({town:3500,coast:2400,forest:3000,workshop:1700}[id]||9500);
   const pan=this.ctx.createStereoPanner(),trim=this.ctx.createGain();trim.gain.value=audioAmplitude(AUDIO_TRIM_DB[id]||0);
   const score=SCORE_ASSETS.includes(id),bus=score?'music':id==='steam'?'train':'ambience';
   gain.connect(filter).connect(pan).connect(trim).connect(this.buses[bus]);
@@ -99,7 +191,7 @@ class HouseSoundscape{
  }
  setEnabled(on){
   this.on=on;this.target(this.output.gain,on?.70:0,on?.7:.08);
-  if(on){this.ctx.resume().catch(()=>this.status('Tap Enable sound to reopen the soundscape'));this.load();}
+  if(on){if(this.roomSound)this.roomSound.room=null;this.ctx.resume().catch(()=>this.status('Tap Enable sound to reopen the soundscape'));this.load();}
  }
  retry(){if(!this.failed.length||this.loading)return this.loadPromise;return this.load(this.failed.slice());}
  whistle(){
@@ -123,12 +215,12 @@ class HouseSoundscape{
   for(const key of['music','ambience','train'])this.target(this.buses[key].gain,clamp(this[key],0,1),.18);
   const position=hobby.cinema?hobbyTrainInfo().p:cameraTarget,room=hobby.room;
   const near=(x,z,r)=>Math.exp(-((position[0]-x)**2+(position[2]-z)**2)/(r*r));
-  const town=room==='valley'?.12+.65*near(-21,10,27):room==='coast'?.12:0;
+  const town=room==='valley'?.12+.65*near(-21,10,27):room==='coast'?.035:0;
   const coast=room==='coast'?.70:room==='valley'?.45*near(8,1,18):0;
   const forest=room==='alpine'?.62:room==='valley'?.14+.28*near(-8,-24,22):0;
-  const workshop=room==='studio'?.70:(!hobby.cinema&&viewMode==='room'?.17:.025);
+  const workshop=room==='studio'?.65:room==='valley'&&(!hobby.cinema&&viewMode==='room')?.14:room==='coast'&&viewMode==='room'?.035:0;
   const p=hobbyTrainInfo().p,dist=len(sub(cameraPos,p)),exhibitTrain=hobby.scene?.trains[0];
-  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed||1),isSteam=room==='valley'||exhibitTrain?.type==='steam';
+  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed??1),isSteam=room==='valley'||exhibitTrain?.type==='steam';
   const trainLevel=paused||!isSteam?0:Math.sqrt(Math.min(visibleSpeed/1.5,1))*(hobby.cinema?.52:clamp(18/(dist+12),.06,.5));
   const targets={...score,town:town*.55,coast:coast*.62,forest:forest*.40,workshop:workshop*.46,steam:trainLevel*.90};
   for(const [id,layer]of this.layers){
@@ -145,6 +237,7 @@ class HouseSoundscape{
    this.railway.master.gain.setTargetAtTime(this.buffers.has('steam')?.22:.48,this.ctx.currentTime,.6);
    if(!isSteam)this.railway.lastChuff=Math.floor(travel/.45);
   }
+  this.updateRoomSound(room,isSteam,visibleSpeed,dist);
   if(this.loaded)this.updateStatus();
  }
 }

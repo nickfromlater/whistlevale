@@ -30,9 +30,15 @@ The preview server serves only the app and public assets.
 
 ## Explore
 
-Open the illustrated **shop map** to choose a room. Drag to orbit, scroll or
-pinch to get closer, and use each room’s place buttons to explore its details.
-**Slow cinema** calmly follows the train and hides the operating controls.
+Open the **3D shop map** to explore a cutaway of the whole hobby house. Its rooms
+contain the actual miniature landscapes and moving trains. Select a room and
+enter its railway, then drag to orbit, scroll or pinch to get closer, and use
+the room’s place buttons to explore its details. **Slow cinema** calmly follows
+the train and hides the operating controls.
+
+The house grows from a room registry. Additional rooms get their own place in
+the building, connecting corridors, room selection and camera framing; see
+[Adding a room](CONTRIBUTING.md#adding-a-room) for the registration contract.
 
 | Key | Action |
 | --- | --- |
@@ -48,9 +54,10 @@ train liveries, save/import, and a portable HTML export.
 
 ## Sound and optional music
 
-A fresh clone includes procedural railway sounds and ambience. Enable sound
-with a sound or cinema control; nothing starts before a user gesture. The
-mixer controls music, surroundings, and trains separately.
+A fresh clone includes procedural railway sounds and ambience. Sound is enabled
+by default and starts after the first user gesture, respecting browser playback
+rules. Use the sound control to mute it. The mixer controls music, surroundings,
+and trains separately.
 
 Generated recordings are **not included in the source repository** and are
 not covered by the source license. You can add your own recordings to
@@ -91,8 +98,10 @@ recordings through your own asset workflow. Keep `.vercelignore` alongside
 | `src/people.js` | Miniature figures, vignettes, and animated walkers |
 | `src/rooms.js` | Shared room registry, materials, and geometry helpers |
 | `src/rooms/` | Distinct coastal, alpine, and studio landscapes and room shells |
-| `src/house-map-art.js` | Illustrated hobby shop |
-| `src/house-map.js` / `.css` | Map navigation and room selection |
+| `src/trains.js` | Room-specific rolling stock, formations and working motion |
+| `src/shop-house.js` | Extensible 3D house layout, architecture and room transforms |
+| `src/shop-map.js` | Live room rendering, map camera, picking and navigation |
+| `src/shop-map-ui.js` / `src/shop-map.css` | Accessible room selection and map controls |
 | `src/hobby.js` / `.css` | Room navigation, cinema, controls, and portable export |
 | `src/soundscape.js` | Procedural and recorded sound, mixer buses, transitions |
 | `src/playlist.js` | Record shelf and automatic score selection |
@@ -102,12 +111,16 @@ recordings through your own asset workflow. Keep `.vercelignore` alongside
 ```sh
 npm run check
 npm run test:audio
+npm run test:rooms
+npm run test:map
 npm run build
 ```
 
 Checks work without optional recordings. Audio tests exercise scheduling,
 room transitions, mixer routing, and missing-file behavior with a simulated
-audio context. Visual and playback changes also need a real-browser check.
+audio context. Room tests exercise fifth/sixth-room registration, dynamic house
+geometry, cache invalidation, default/custom shells and train stock selection
+without a browser or GPU. Visual and playback changes also need a real-browser check.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for room design and development guidance.
 
 Code and repository artwork are available under the [MIT license](LICENSE).

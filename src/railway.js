@@ -34,7 +34,7 @@ class Builder{
  mesh(){return upload(this.data)}
 }
 const canvas=$('world');let gl,mainProgram,shadowProgram,postProgram,particleProgram,staticMesh,groundMesh,waterMesh,atlasTexture,whiteTexture,sceneFbo,sceneTex,sceneDepth,shadowFbo,shadowTex,shadowSize=3072,shadowCacheFbo,shadowCacheTex,shadowDirty=true,screenW=0,screenH=0;
-const I=ident();let VP=ident(),lightVP=ident(),cameraPos=[38,44,62],cameraTarget=[0,1,0],sunDir=norm([-48,74,-25]);let clock=0,night=.35,targetNight=.35,viewMode='room',reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const I=ident();let VP=ident(),lightVP=ident(),cameraPos=[38,44,62],cameraTarget=[0,1,0],sunDir=norm([-48,74,-25]);let clock=0,night=.62,targetNight=.62,viewMode='room',reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const VS=`#version 300 es
 precision highp float;
 layout(location=0)in vec3 aPosition;layout(location=1)in vec3 aNormal;layout(location=2)in vec3 aColor;layout(location=3)in float aMat;layout(location=4)in vec2 aUV;
@@ -50,16 +50,17 @@ float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float shadow(vec3 n){vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;float bias=max(.00024,.00064*(1.-dot(n,uSun)));float s=0.;vec2 texel=1./vec2(textureSize(uShadow,0));for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){float w=(x==0?2.:1.)*(y==0?2.:1.);s+=w*(p.z-bias<texture(uShadow,p.xy+vec2(x,y)*texel*1.05).r?1.:0.);}return s/16.;}
 void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
+ float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
  if(m==1.||m==11.){rough=.3;metal=.72;}
  if(m==2.){float w=noise(vec3(p.x*.75,p.y*12.,p.z*8.));base*=.87+.21*w;rough=.55;}
  if(m==3.){float textureN=noise(p*4.5);base*=.87+.18*textureN;rough=.97;}
  if(m==4.){float row=floor(p.y*4.2);vec2 brick=vec2(fract((abs(n.z)>.7?p.x:p.z)*2.2+mod(row,2.)*.5),fract(p.y*4.2));float mortar=1.-smoothstep(.018,.048,min(brick.x,brick.y));base*=mix(.9+.1*noise(p*8.),.70,mortar*.65);rough=.92;}
  if(m==5.){float r=fract(p.y*8.);base*=.86+.14*smoothstep(.02,.13,r);rough=.74;}
- if(m==6.){base=mix(base,vec3(1.,.66,.28),uNight*.94);em=uNight*1.4;rough=.19;metal=.24;}
+ if(m==6.){base=mix(base,vec3(1.,.68,.34),dusk*.94);em=dusk*1.25;rough=.19;metal=.24;}
  if(m==8.){base*=.87+.23*noise(p*19.);rough=.95;}
  if(m==44.){float streak=sin(p.x*33.+p.y*5.+uTime*5.5)*.06+sin(p.z*42.-uTime*4.)*.04;base*=.89+streak;em=.12;rough=.22;}
  if(m==9.){base*=.77+.37*noise(p*26.);rough=.96;}
- if(m==10.){em=mix(.38,3.5,uNight);rough=.3;}
+ if(m==10.){em=mix(.38,3.0,dusk);rough=.3;}
  if(m==15.){base=texture(uAtlas,vUV).rgb;rough=.79;}
  if(m==20.){base*=.955+.06*noise(p*1.4);rough=.95;}
  if(m==21.){
@@ -76,33 +77,38 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==42.){rough=.65;metal=.16;}
  if(m==43.){rough=.10;metal=.36;base=mix(base,vec3(.8,.85,.72),pow(1.-max(dot(n,normalize(uEye-p)),0.),4.)*.55);}
  vec3 v=normalize(uEye-p),l=uSun,h=normalize(l+v);float nl=max(dot(n,l),0.),nv=max(dot(n,v),.02);float sh=shadow(n);
- vec3 lightColor=mix(vec3(1.85,1.61,1.19),vec3(.23,.36,.53),uNight);vec3 ambient=mix(vec3(.33,.37,.31),vec3(.12,.17,.19),uNight);float hemi=dot(n,vec3(0,1,0))*.5+.5;
+ // Sunset removes direct daylight before the workshop lamps take over.
+ // Cool sky fill preserves the shape of unlit scenery and the room corners.
+ vec3 lightColor=vec3(1.85,1.61,1.19)*sunlight+vec3(.035,.055,.095)*dusk;
+ vec3 eveningAmbient=mix(vec3(.075,.105,.16),vec3(.040,.060,.10),deepNight);
+ vec3 ambient=mix(vec3(.33,.37,.31),eveningAmbient,dusk);float hemi=dot(n,vec3(0,1,0))*.5+.5;
  vec3 albedo=pow(max(base,vec3(0)),vec3(2.2));float ao=1.;
  if(p.y< -9.){float under=(1.-smoothstep(49.,60.,abs(p.x)))*(1.-smoothstep(30.,40.,abs(p.z)));ao*=1.-under*.57*(1.-smoothstep(-24.,-8.,p.y));}
  vec3 lit=albedo*(ambient*(.44+.62*hemi)*ao+lightColor*nl*sh);
  float spec=pow(max(dot(n,h),0.),mix(10.,145.,1.-rough))*mix(.045,.67,metal);lit+=lightColor*spec*sh*mix(vec3(1),albedo,.48*metal);
- lit+=albedo*.04*(1.-hemi)*ao;lit+=albedo*vec3(.10,.082,.055)*max(n.z,0.)*ao;
+ lit+=albedo*ambient*.13*(1.-hemi)*ao;lit+=albedo*vec3(.10,.082,.055)*max(n.z,0.)*ao*mix(1.,.18,dusk);
  if(m==8.||m==24.)lit+=albedo*lightColor*max(dot(-n,l),0.)*.16*sh;
- // Warm practical lighting. It is independent of the view and the outdoor clock.
+ // Warm practical lights keep their own dimmer, independent of the sun. The
+ // pendants have broad central pools; task lamps fall off more locally.
  for(int i=0;i<6;i++){
-  vec3 lp=uRoomLights[i]-p;float ld=dot(lp,lp);vec3 ll=normalize(lp);float fall=1./(1.+ld*(i<2?.0011:.013));float diff=max(dot(n,ll),0.);
+  vec3 lp=uRoomLights[i]-p;float ld=dot(lp,lp);vec3 ll=normalize(lp);float fall=1./(1.+ld*(i<2?.0018:.018));float diff=max(dot(n,ll),0.);
   float blocker=1.;if(i<2&&p.y< -5.)blocker=1.-.74*(1.-smoothstep(50.,57.,abs(p.x)))*(1.-smoothstep(33.,38.,abs(p.z)));
-  float strength=i<2?1.25:.85;vec3 warm=vec3(1.,.70,.36)*fall*strength*uRoomLevel*blocker;
+  float strength=i<2?1.40:1.02;vec3 warm=vec3(1.,.65,.31)*fall*strength*uRoomLevel*blocker;
   lit+=albedo*warm*(diff+.08)*ao;
   vec3 rh=normalize(ll+v);lit+=warm*pow(max(dot(n,rh),0.),mix(12.,140.,1.-rough))*mix(.025,.22,metal);
  }
- if(uNight>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*.65);lit+=albedo*vec3(1.,.63,.25)*max(dot(n,normalize(lp)),.08)*uNight*fall*3.;}}
- vec3 toHead=uHead-p;float hd=length(toHead);float cone=pow(max(dot(-normalize(toHead),uForward),0.),18.);lit+=albedo*vec3(1.,.69,.32)*cone*max(dot(n,normalize(toHead)),.1)*(uNight*.9+.08)*4./(1.+hd*hd*.15);
+ if(dusk>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*.65);lit+=albedo*vec3(1.,.66,.31)*max(dot(n,normalize(lp)),.08)*dusk*fall*3.;}}
+ vec3 toHead=uHead-p;float hd=length(toHead);float cone=pow(max(dot(-normalize(toHead),uForward),0.),18.);lit+=albedo*vec3(1.,.69,.32)*cone*max(dot(n,normalize(toHead)),.1)*(dusk*.9+.08)*4./(1.+hd*hd*.15);
  if(m==7.){
   float w1=sin(p.z*13.+p.x*6.-uTime*.95),w2=sin(p.x*23.-p.z*8.+uTime*.67);n=normalize(vec3(w1*.037,1.,w2*.028));float fres=pow(1.-max(dot(n,v),0.),3.);vec3 wh=normalize(l+v);float sparkle=pow(max(dot(n,wh),0.),260.);
-  vec3 water=pow(base,vec3(2.2))*.48+vec3(.008,.030,.028);lit=water*mix(.7,.42,uNight)*(.75+.25*sh)+mix(vec3(.30,.43,.37),vec3(.08,.14,.17),uNight)*fres*.7;
+  vec3 water=pow(base,vec3(2.2))*.48+vec3(.008,.030,.028);lit=water*mix(.7,mix(.25,.16,deepNight),dusk)*(.75+.25*sh)+mix(vec3(.30,.43,.37),vec3(.035,.07,.10),dusk)*fres*.7;
   lit+=lightColor*sparkle*sh*.8;for(int i=0;i<2;i++){vec3 lp=normalize(uRoomLights[i]-p);float ss=pow(max(dot(n,normalize(lp+v)),0.),240.);lit+=vec3(1.,.68,.29)*ss*.65*uRoomLevel;}
  }
  lit+=pow(max(base,vec3(0)),vec3(1.6))*em;
- if(m==33.){vec3 sky=pow(base,vec3(2.2));lit=mix(sky*1.28,sky*vec3(.14,.29,.48)+vec3(.012,.026,.045),uNight);if(uRain>.01){vec2 q=vUV*vec2(160.,54.);float cell=floor(q.x);float h=hash(vec3(cell,0.,2.));float y=fract(q.y+uTime*(.09+h*.13));float x=fract(q.x);float drop=exp(-pow((x-.5)*14.,2.)-pow((y-.5)*9.,2.));float tail=exp(-pow((x-.5)*22.,2.))*smoothstep(.10,.5,y)*(1.-smoothstep(.5,.97,y));lit=mix(lit,lit*.88+vec3(.06,.075,.085)*(drop+tail*.28),uRain);}}
+ if(m==33.){vec3 sky=pow(base,vec3(2.2));vec3 exterior=mix(sky*vec3(.075,.16,.28)+vec3(.008,.018,.030),sky*vec3(.015,.036,.075)+vec3(.003,.007,.015),deepNight);lit=mix(sky*1.28,exterior,dusk);if(uRain>.01){vec2 q=vUV*vec2(160.,54.);float cell=floor(q.x);float h=hash(vec3(cell,0.,2.));float y=fract(q.y+uTime*(.09+h*.13));float x=fract(q.x);float drop=exp(-pow((x-.5)*14.,2.)-pow((y-.5)*9.,2.));float tail=exp(-pow((x-.5)*22.,2.))*smoothstep(.10,.5,y)*(1.-smoothstep(.5,.97,y));lit=mix(lit,lit*.88+vec3(.06,.075,.085)*(drop+tail*.28),uRain);}}
  // The window softly paints the oak, rather than illuminating an outdoor void.
- if(m==21.&&p.y< -23.){vec2 patchCoord=vec2(p.x+p.z*.16,(p.z+30.)*.65);float inside=(1.-smoothstep(19.,22.,abs(patchCoord.x-3.)))*(1.-smoothstep(14.,17.,abs(patchCoord.y)));float mull=step(.17,abs(sin((patchCoord.x+17.)/10.5*3.14159)));lit+=vec3(.09,.067,.033)*inside*mull*(1.-uNight)*sh;}
- lit=mix(lit,uInvalid>.5?vec3(.48,.12,.06):vec3(.12,.42,.22),uPreview*.25);float dist=length(uEye-p);vec3 fog=mix(vec3(.07,.077,.062),vec3(.028,.035,.033),uNight);float fogF=1.-exp(-dist*dist*.0000010);lit=mix(lit,fog,clamp(fogF,0.,.25));frag=vec4(lit,1.);
+ if(m==21.&&p.y< -23.){vec2 patchCoord=vec2(p.x+p.z*.16,(p.z+30.)*.65);float inside=(1.-smoothstep(19.,22.,abs(patchCoord.x-3.)))*(1.-smoothstep(14.,17.,abs(patchCoord.y)));float mull=step(.17,abs(sin((patchCoord.x+17.)/10.5*3.14159)));lit+=vec3(.09,.067,.033)*inside*mull*sunlight*sh;}
+ lit=mix(lit,uInvalid>.5?vec3(.48,.12,.06):vec3(.12,.42,.22),uPreview*.25);float dist=length(uEye-p);vec3 fog=mix(vec3(.07,.077,.062),mix(vec3(.018,.027,.044),vec3(.011,.019,.033),deepNight),dusk);float fogF=1.-exp(-dist*dist*.0000010);lit=mix(lit,fog,clamp(fogF,0.,.25));frag=vec4(lit,1.);
 }`;
 const SHVS=`#version 300 es
 precision highp float;layout(location=0)in vec3 aPosition;uniform mat4 uModel,uVP;void main(){gl_Position=uVP*uModel*vec4(aPosition,1.);}`;
@@ -254,7 +260,7 @@ function drawSteam(){let total=steam.length+roomDust.length;let data=new Float32
 let audio=null,toastTimer=0,frame=0,lastTime=0,uiTime=0,currentPlace='',hidden=false,dragMoved=false;
 let orbit={yaw:.40,pitch:.48,distance:124,target:[0,-2,0]},drag=null,pointers=new Map(),pinchStart=null,returnHelpFocus=null;
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3600)}
-function savePrefs(){try{localStorage.setItem('alder-valley-grand-prefs-v1',JSON.stringify({throttle:typeof hobby==='object'&&hobby.cinema&&hobby.saved?hobby.saved.throttle:throttle,night:targetNight,route:chosenRoute}))}catch{}}
+function savePrefs(){try{localStorage.setItem('alder-valley-grand-prefs-v1',JSON.stringify({throttle:typeof hobby==='object'&&hobby.cinema&&hobby.saved?hobby.saved.throttle:throttle,mood:lightingMoodForNight(targetNight),night:targetNight,roomLamps:roomLampTarget,route:chosenRoute}))}catch{}}
 class RailwayAudio{
  constructor(){const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();this.master=this.ctx.createGain();this.master.gain.value=.48;this.master.connect(this.ctx.destination);let length=this.ctx.sampleRate*2;this.noise=this.ctx.createBuffer(1,length,this.ctx.sampleRate);let data=this.noise.getChannelData(0),last=0;for(let i=0;i<length;i++){last=(last+(Math.random()*2-1)*.03)/1.03;data[i]=last*6}this.rolling=this.ctx.createBufferSource();this.rolling.buffer=this.noise;this.rolling.loop=true;let filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=460;this.rollGain=this.ctx.createGain();this.rollGain.gain.value=0;this.rolling.connect(filter).connect(this.rollGain).connect(this.master);this.rolling.start();this.active=true;this.lastChuff=-99;this.lastJoint=-99;this.nextBird=5;this.panner=this.ctx.createStereoPanner();this.panner.connect(this.master);}
  enable(on){this.active=on;if(on)this.ctx.resume();this.master.gain.setTargetAtTime(on?.48:0,this.ctx.currentTime,.12)}
@@ -279,7 +285,7 @@ function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.rou
 function render(){gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
- gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyTrainInfo().f);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(lampPositions.slice(0,8).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(roomLightPositions.flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley')for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawHobbyParticles();
+ gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyTrainInfo().f);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(lampPositions.slice(0,8).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawHobbyParticles();
  if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
 function animate(now){if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
 function showHelp(){returnHelpFocus=document.activeElement;$('help').hidden=false;$('helpClose').focus()}function closeHelp(){$('help').hidden=true;if(returnHelpFocus&&returnHelpFocus.focus)returnHelpFocus.focus()}
@@ -328,11 +334,23 @@ function beginManualOrbit(){
  let delta=sub(cameraPos,cameraTarget),r=len(delta);orbit.target=cameraTarget.slice();orbit.distance=r;orbit.pitch=Math.asin(clamp(delta[1]/r,-.95,.95));orbit.yaw=Math.atan2(delta[0],delta[2]);
  viewMode='overview';for(let b of document.querySelectorAll('[data-camera]')){let active=b.dataset.camera===viewMode;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));}$('cabMark').classList.remove('show');
 }
-function toggleLight(){setMood(targetNight>.2?'day':'evening');}
-function setMood(mood){
- targetNight=mood==='day'?0:mood==='evening'?.62:1;roomLampTarget=mood==='night'?.38:1;
- $('lightBtn').querySelector('span').textContent=mood==='day'?'Afternoon':mood==='evening'?'Lamplight':'Night run';$('lightBtn').querySelector('use').setAttribute('href',mood==='day'?'#i-sun':'#i-moon');
- $('roomDimmer').value=Math.round(roomLampTarget*100);$('roomDimmer').style.setProperty('--fill',Math.round(roomLampTarget*100)+'%');$('lampValue').textContent=Math.round(roomLampTarget*100)+'%';savePrefs();
+const LIGHT_MOODS={day:{night:0,lamps:.40,label:'Afternoon'},evening:{night:.62,lamps:1,label:'Lamplight'},night:{night:1,lamps:.38,label:'Night run'}};
+function lightingMoodForNight(value){return value<.2?'day':value>.85?'night':'evening';}
+function toggleLight(){setMood(lightingMoodForNight(targetNight)==='day'?'evening':'day');}
+function setMood(mood,options={}){
+ if(!Object.hasOwn(LIGHT_MOODS,mood))mood='evening';
+ const preset=LIGHT_MOODS[mood];targetNight=preset.night;roomLampTarget=Number.isFinite(options.lamps)?clamp(options.lamps):preset.lamps;
+ if(options.immediate){night=targetNight;roomLampLevel=roomLampTarget;}
+ $('lightBtn').querySelector('span').textContent=preset.label;$('lightBtn').querySelector('use').setAttribute('href',mood==='day'?'#i-sun':'#i-moon');
+ $('roomDimmer').value=Math.round(roomLampTarget*100);$('roomDimmer').style.setProperty('--fill',Math.round(roomLampTarget*100)+'%');$('lampValue').textContent=Math.round(roomLampTarget*100)+'%';
+ for(const button of document.querySelectorAll('[data-mood]'))button.setAttribute('aria-pressed',String(button.dataset.mood===mood));
+ if(options.persist!==false)savePrefs();
+}
+function restoreLightingPrefs(saved){
+ const valid=saved&&typeof saved==='object'&&!Array.isArray(saved),mood=valid&&Object.hasOwn(LIGHT_MOODS,saved.mood)?saved.mood:valid&&Number.isFinite(saved.night)?lightingMoodForNight(clamp(saved.night)):'evening';
+ // Old saves used a continuous night value and omitted the lamp dimmer.
+ // Restore a complete preset before another preference setter can save it.
+ setMood(mood,{immediate:true,persist:false,lamps:valid&&Number.isFinite(saved.roomLamps)?saved.roomLamps:undefined});
 }
 function workshopUpdateUI(){
  updateBaseUI();
@@ -350,7 +368,7 @@ function workshopBindControls(){
  $('mobilePhotoBtn').onclick=capturePhoto;$('immerseBtn').onclick=()=>{$('ambiencePanel').hidden=true;hideUI();};
  $('mapBtn').onclick=toggleDiagram;$('diagramToggle').onclick=toggleDiagram;
  $('ambienceBtn').onclick=()=>{let show=$('ambiencePanel').hidden;$('ambiencePanel').hidden=!show;$('layoutPanel').hidden=true;$('ambienceBtn').setAttribute('aria-expanded',String(show));$('mapBtn').setAttribute('aria-expanded','false');};
- $('roomDimmer').oninput=e=>{roomLampTarget=Number(e.target.value)/100;e.target.style.setProperty('--fill',e.target.value+'%');$('lampValue').textContent=e.target.value+'%';};
+ $('roomDimmer').oninput=e=>{roomLampTarget=clamp(Number(e.target.value)/100);e.target.style.setProperty('--fill',Math.round(roomLampTarget*100)+'%');$('lampValue').textContent=Math.round(roomLampTarget*100)+'%';savePrefs();};
  $('lensBtn').onclick=()=>{lensAmount=lensAmount?0:.65;$('lensBtn').setAttribute('aria-pressed',String(lensAmount>0));};
  $('rainBtn').onclick=()=>{rainTarget=rainTarget?0:1;$('rainBtn').setAttribute('aria-pressed',String(rainTarget>0));};
  for(const b of document.querySelectorAll('[data-camera]'))b.onclick=()=>setView(b.dataset.camera);
@@ -395,10 +413,24 @@ const roomDisplays=[], roomDust=[], FLOOR=-23.97;
 const roomLightPositions=[[-22,26,-7],[21,27,0],[-46,5,5],[-39,13,-43],[42,6,-43],[42,-7,23]];
 const roomArt=document.createElement('canvas');roomArt.width=4096;roomArt.height=2048;
 const rctx=roomArt.getContext('2d'),roomLabels={};
-function artSlot(key,x,y,w,h,paint){rctx.save();rctx.translate(x,y);rctx.beginPath();rctx.rect(0,0,w,h);rctx.clip();paint(rctx,w,h);rctx.restore();roomLabels[key]={u0:x/4096,v0:1-(y+h)/2048,u1:(x+w)/4096,v1:1-y/2048};}
+function artSlot(key,x,y,w,h,paint){
+ if(![x,y,w,h].every(Number.isFinite)||x<0||y<0||w<=0||h<=0||x+w>roomArt.width||y+h>roomArt.height){delete roomLabels[key];return null;}
+ rctx.save();try{rctx.translate(x,y);rctx.beginPath();rctx.rect(0,0,w,h);rctx.clip();paint(rctx,w,h);}finally{rctx.restore();}
+ return roomLabels[key]={u0:x/roomArt.width,v0:1-(y+h)/roomArt.height,u1:(x+w)/roomArt.width,v1:1-y/roomArt.height};
+}
 function roomSign(b,key,x,y,z,w,h,angle=0,mat=32){const q=roomLabels[key];b.push(x,y,z,0,angle);b.quad([-w/2,-h/2,0],[w/2,-h/2,0],[w/2,h/2,0],[-w/2,h/2,0],'#ffffff',mat,[0,0,1],[[q.u0,q.v0],[q.u1,q.v0],[q.u1,q.v1],[q.u0,q.v1]]);b.pop();}
 function onTop(b,key,x,y,z,w,d){b.push(x,y,z,-PI/2);roomSign(b,key,0,0,0,w,d);b.pop();}
 function initRoomArt(){
+ // Register room modules before startup. Changing this height changes every UV;
+ // runtime additions require the whole atlas and all geometry using it to rebuild.
+ const roomCount=typeof HOUSE_ROOMS==='object'?Object.keys(HOUSE_ROOMS).length:4;
+ const textureLimit=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+ if(textureLimit<roomArt.width||textureLimit<2048)throw new Error('This device cannot load the hobby house illustration atlas.');
+ const requestedHeight=2048+Math.ceil(Math.max(0,roomCount-4)/4)*200;
+ const atlasHeight=Math.min(requestedHeight,textureLimit,4096); // Bound canvas and GPU memory even for a very large registry.
+ if(roomArt.height!==atlasHeight)roomArt.height=atlasHeight;
+ rctx.clearRect(0,0,roomArt.width,roomArt.height);
+ for(const key of Object.keys(roomLabels))delete roomLabels[key];
  artSlot('poster',4,4,600,840,(c,w,h)=>{
   c.fillStyle='#e7d8b6';c.fillRect(0,0,w,h);c.fillStyle='#264d46';c.fillRect(26,26,w-52,h-52);c.fillStyle='#b6c8ad';c.fillRect(38,38,w-76,548);
   c.fillStyle='#e3c27e';c.beginPath();c.arc(403,168,72,0,TAU);c.fill();
@@ -1358,9 +1390,9 @@ function baseNaturalH(x,z){
 // editor stamps, tunnel ranges, and saved object positions stay authoritative.
 const valleyFields=[
  {id:'west-paddock',kind:'pasture',a:'#5a7843',b:'#7f9256',points:[[-52.5,25.2],[-46,23.5],[-38,26.9],[-36.5,32.8],[-50.8,33.6]]},
- {id:'barley-close',kind:'arable',a:'#9b9558',b:'#bab077',points:[[-35.5,28.2],[-22.3,28.3],[-21.4,33.8],[-35.2,33.8]]},
- {id:'riverside-meadow',kind:'pasture',a:'#466d41',b:'#718c51',points:[[-20.2,28.1],[-7.8,28.1],[-4.1,33.8],[-20.7,33.8]]},
- {id:'east-hayfield',kind:'hay',a:'#869454',b:'#a5ab6b',points:[[16.5,28.8],[26,28.6],[35.7,28],[39,32.7],[29,34],[17.8,33.7]]},
+ {id:'station-meadow',kind:'pasture',a:'#587641',b:'#7e9254',points:[[-35.5,28.2],[-22.3,28.3],[-21.4,33.8],[-35.2,33.8]]},
+ {id:'riverside-meadow',kind:'pasture',a:'#53723f',b:'#7b9152',points:[[-20.2,28.1],[-7.8,28.1],[-4.1,33.8],[-20.7,33.8]]},
+ {id:'east-meadow',kind:'pasture',a:'#617e46',b:'#8b995c',points:[[16.5,28.8],[26,28.6],[35.7,28],[39,32.7],[29,34],[17.8,33.7]]},
  {id:'orchard-pasture',kind:'pasture',a:'#507440',b:'#819456',points:[[40.5,24.5],[48.8,22],[53,28.6],[51.3,33.6],[41.8,33.7]]},
  {id:'mill-paddock',kind:'pasture',a:'#728948',b:'#9da563',points:[[-45.1,-.6],[-40.3,-1.1],[-38.8,7.7],[-42.0,12],[-46,9.2]]}
 ];
@@ -1392,7 +1424,7 @@ function createGround(){
   let x=-54.9+i*109.8/nx,z=-34.9+j*69.8/nz;const ax=Math.abs(x),az=Math.abs(z);if(ax>52.3&&az>32.3){const a=ax-52.3,c=az-32.3,l=Math.hypot(a,c);if(l>2.6){x=Math.sign(x)*(52.3+a/l*2.6);z=Math.sign(z)*(32.3+c/l*2.6);}}
   const y=terrainH(x,z),n=norm([terrainH(x-.16,z)-terrainH(x+.16,z),.32,terrainH(x,z-.16)-terrainH(x,z+.16)]),v=fbm(x*.63,z*.63);
   let grass=lerpV(col('#3f6639'),col('#879356'),v*.88),stone=lerpV(col('#657767'),col('#a9b097'),v*.69),r=clamp(smooth(.18,.50,1-n[1])*smooth(2,4,y)+smooth(9,15,y)*.5);
-  const field=valleyFieldAt(x,z);if(field){const stripes=(Math.sin((field.kind==='arable'?z*12:x*.86+z*.17))* .5+.5);grass=lerpV(col(field.a),col(field.b),v*.51+stripes*(field.kind==='arable'?.34:.18));}
+  const field=valleyFieldAt(x,z);if(field){const meadow=.50*noise(x*.09,z*.09)+.30*noise(x*.22,z*.22)+.20*v;grass=lerpV(col(field.a),col(field.b),.24+meadow*.54);}
   // Moorland keeps warm limestone ledges and green seams, rather than a
   // pale, uniformly dusted mountain surface behind the station town.
   if(y>5){const ledge=Math.sin(y*1.55+x*.19+z*.13)*.5+.5;stone=lerpV(stone,col('#bac0a4'),smooth(.83,.98,ledge)*.27);}
@@ -1557,7 +1589,7 @@ function seedDivisionScenery(){
   if(x>-39&&x<-6&&z>-10&&z<18&&rand()<.83)continue;
   if(x>-4&&x<20&&z>-20&&z<-9)continue;
   if(z>27&&rand()<.73)continue;
-  const field=valleyFieldAt(x,z);if(field&&(field.kind==='arable'||hash(x,z)>.075))continue;
+  const field=valleyFieldAt(x,z);if(field)continue;
   const high=z<-17||x<-44||x>46,typ=high?(rand()<.31?'fir':'pine'):(rand()<.48?'pine':rand()<.2?'autumn':'oak');
   addO(typ,x,z,rand()*TAU,high?rnd(.62,1.12):rnd(.58,.95));trees++;
  }
@@ -1622,25 +1654,24 @@ function buildValleyCountryside(b){
  if(flatTerrain)return;
  const buildings=objects.filter(o=>!['pine','fir','oak','autumn','willow','orchard','rock','boulder','flowers','fence','sheep','lamp','bench','picnic'].includes(o.type));
  const clear=(x,z,margin=.6)=>nearestTrack(x,z).dist>1.70&&roadDistance(x,z)>1.05&&!(z>-19&&Math.abs(x-riverX(z))-riverWidth(z)<.65)&&!buildings.some(o=>{const a=assetById[o.type];return a&&Math.hypot(x-o.x,z-o.z)<Math.hypot(a.w,a.d)*o.scale*.50+margin;});
- // Mixed hawthorn hedges and low dry-stone boundaries make each pasture
- // an actual place. Gate gaps are intentional and all rails remain clear.
+ // Quiet grass fields are framed by low hawthorn hedges. Their open centres
+ // give the town and passing trains space, with no livestock enclosures.
  for(const f of valleyFields){
   for(let i=0;i<f.points.length;i++){
-   const a=f.points[i],q=f.points[(i+1)%f.points.length],length=Math.hypot(q[0]-a[0],q[1]-a[1]),n=Math.ceil(length/.38),stone=f.id==='riverside-meadow'||f.id==='orchard-pasture';
+   const a=f.points[i],q=f.points[(i+1)%f.points.length],length=Math.hypot(q[0]-a[0],q[1]-a[1]),n=Math.ceil(length/.38);
    for(let j=0;j<n;j++){const t=j/n;if(i===0&&Math.abs(t-.5)*length<.78)continue;const x=mix(a[0],q[0],t),z=mix(a[1],q[1],t);if(!clear(x,z))continue;const y=terrainH(x,z);
-    if(stone){b.sphere(x,y+.13,z,.26,.15,.18,'#859371',4,7,4,true);b.sphere(x+.07,y+.33,z,.23,.12,.17,'#adb697',4,7,4,true);}
-    else{const h=.40+hash(j,i)*.16;b.sphere(x,y+h*.47,z,.34,h*.60,.31,j%4?'#52743f':'#789151',8,7,5,true);if(j%7===0)b.sphere(x+.08,y+h*.9,z+.1,.09,.11,.09,'#c0bb81',8,6,4);}
+    const h=.34+hash(j,i)*.12;b.sphere(x,y+h*.47,z,.34,h*.60,.31,j%4?'#52743f':'#738b4f',8,7,5,true);
    }
    if(i===0){const x=(a[0]+q[0])/2,z=(a[1]+q[1])/2,dx=(q[0]-a[0])/length,dz=(q[1]-a[1])/length,y=terrainH(x,z);if(clear(x,z,1)){for(const s of[-1,1])b.beam([x+dx*s*.72,y,z+dz*s*.72],[x+dx*s*.72,y+.70,z+dz*s*.72],.044,'#99865d',22,6);for(const h of[.16,.39,.62])b.beam([x-dx*.68,y+h,z-dz*.68],[x+dx*.68,y+h,z+dz*.68],.021,'#b3a272',22,5);b.beam([x-dx*.65,y+.17,z-dz*.65],[x+dx*.65,y+.62,z+dz*.65],.019,'#a18e63',22,5);}}
   }
  }
- // Mown hay and one small flock, grounded in the new fields rather than
- // distributed across open scenery or the busy station approach.
- for(let row=0;row<7;row++)for(let j=0;j<15;j++){const x=21.2+j*.75,z=30+row*.35;if(valleyFieldAt(x,z)?.id!=='east-hayfield'||!clear(x,z,.2))continue;const y=terrainH(x,z);b.beam([x-.26,y+.04,z],[x+.29,y+.045,z+.05],.025,'#b8ac74',3,4);}
- for(const [x,z,a]of[[-18.1,30,.3],[-16.5,31.5,1.4],[-13.8,30.2,-.4],[-11.7,32.1,.7],[-9.5,30.7,1.8]]){
-  if(!clear(x,z,.35))continue;const y=terrainH(x,z);b.push(x,y,z,0,a);b.sphere(0,.23,0,.21,.21,.33,'#c8c9ab',23,9,6);b.sphere(0,.33,.33,.115,.12,.14,'#737f63',23,8,5);for(const s of[-1,1])for(const zz of[-.22,.21])b.beam([s*.12,.20,zz],[s*.12,.01,zz],.021,'#7c8467',23,5);b.pop();
+ // Three small boundary oaks, each sited at a field edge, replace scattered
+ // farm activity. A saved layout's nearby trees take precedence.
+ const oldFieldSeed=seed;seed=91073;
+ for(const [x,z,h]of[[-34.1,31.7,2.55],[-19.0,32.4,2.35],[35.0,30.7,2.65]]){
+  if(clear(x,z,1.3)&&!objects.some(o=>['oak','pine','fir','autumn','willow','orchard'].includes(o.type)&&Math.hypot(x-o.x,z-o.z)<3.1))baseTree(b,x,z,h);
  }
- for(const [x,z,a]of[[-19.0,29.2,.4],[-18.3,29.4,1.8],[29.7,31.7,1.0]])if(clear(x,z,.5))person(b,x,terrainH(x,z)+.05,z,'#af9870',a,.94);
+ seed=oldFieldSeed;
  // Reeds and sedges occupy sheltered stretches, away from the harbour's quays.
  for(const [center,side,count]of[[-9,-1,18],[12,1,16],[19,-1,23],[28,1,24],[32,-1,18]]){
   for(let i=0;i<count;i++){const z=center+(i-count/2)*.15,x=riverX(z)+side*(riverWidth(z)+.16+hash(i,center)*.21),y=terrainH(x,z);if(nearestTrack(x,z).dist<1.25||roadDistance(x,z)<1.15)continue;for(let j=0;j<3;j++){const tip=[x+side*(.08+j*.055),y+.38+hash(i,j)*.29,z+(j-1)*.07];b.beam([x,y+.015,z],tip,.009,j%2?'#759455':'#a2a56c',8,4);if(j===1)b.cylinder(tip[0],tip[1],tip[2],.019,.016,.11,'#806e48',8,6);}}
@@ -1661,9 +1692,7 @@ function buildValleyDetails(b){
  for(let i=0;i<25;i++)wb.sphere(9.7+rnd(-1.1,1.1),.21+rnd(0,.06),-13.3+rnd(-.9,.8),rnd(.13,.36),.045,rnd(.16,.35),'#c1d5c6',44,9,4);
  for(const s of[-1,1])for(let i=0;i<9;i++){const z=-18.5+i*.59,y=4.5-i*.45;b.sphere(9+s*rnd(1.1,1.7),y,z,rnd(.5,.95),rnd(.5,.9),rnd(.6,1.0),'#929e8b',4,8,5,true);}
  disposeMesh(waterfallMesh);waterfallMesh=wb.mesh();
- // Farms: genuinely modeled rows, rails and a few small animals.
- for(let i=0;i<17;i++){const z=28.7+i*.23;b.box(-29,.75,z,11,.055,.14,i%2?'#8e8852':'#657f42',3);for(let j=0;j<21;j++){const x=-34+j*.49;b.tri([x-.05,.77,z],[x,.77+rnd(.12,.26),z+.05],[x+.05,.77,z],'#a39d60',8);}}
- fence(b,[-35,0,28.1],[-22,0,28.1],.60);fence(b,[-22,0,28.1],[-22,0,33.0],.60);fence(b,[-44,0,1],[-42,0,10],.60);
+ fence(b,[-44,0,1],[-42,0,10],.60);
  buildValleyCountryside(b);
  for(let i=0;i<75;i++){const x=rnd(-39,-5),z=rnd(-8,17);if(roadDistance(x,z)>.9||nearestTrack(x,z).dist<1.0)continue;person(b,x,terrainH(x,z)+.09,z,['#a9815c','#486c5c','#b9b799','#977163'][i%4],rand()*TAU,rnd(.8,1.05));}
  // Telegraph poles carry real catenaries along the long outer main line.
@@ -1817,4 +1846,4 @@ function bindControls(){
  window.DIVISION={visit:visitDistrict,get state(){return{alignments:edges.length,length:edges.reduce((a,e)=>a+e.length,0),tunnels:tunnelRanges.length,freightDistance,mountainDistance,freightRunning,mountainRunning,turntableAngle,objects:objects.length,board:{...BOARD}}},get routes(){return Object.fromEntries(edges.map(e=>[e.name,{length:e.length,curves:e.curves.length}]));},turn:()=>{indexTurntable();},setServices:(f,m)=>{freightRunning=!!f;mountainRunning=!!m;}};
 }
 
-function start(){try{initGL();buildWorld();createRoom();initializeWorkshop();buildTrains();initJourney();initSteam();setView('room',false);cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);cameraTarget=orbit.target.slice();try{let saved=JSON.parse(localStorage.getItem('alder-valley-grand-prefs-v1')||'null');if(saved){setThrottle(saved.throttle??42);if(saved.route==='lowline'){chosenRoute='lowline';$('routeLabel').textContent='The riverside ↗';$('routeButtonLabel').textContent='Riverside';$('routeBtn').classList.add('active')}if(typeof saved.night==='number'){targetNight=night=saved.night;$('lightBtn').querySelector('span').textContent=night>.1?'Lamplight':'Afternoon';$('lightBtn').querySelector('use').setAttribute('href','#i-moon');}}}catch{}bindControls();document.querySelector('.engine-medallion').onclick=()=>setView('engine');document.querySelector('.engine-medallion').style.cursor='pointer';for(let i=0;i<14;i++){emitSteam();steam[steam.length-1].age=i*.13;steam[steam.length-1].p[1]+=i*.10;steam[steam.length-1].size+=i*.035}updateCamera(1);updateUI();render();$('loader').classList.add('done');window.RAILWAY={get state(){return{route:chosenRoute,edge:leadInfo.edge.name,d:leadInfo.d,travel,speed,throttle,paused,stopRequested,atStation,laps:completedLaps,view:viewMode,night,geometry:staticMesh.count/3,roomGeometry:roomFurnitureMesh.count/3,msaa:msaaFbo?msaaSamples:0,roomLights:roomLampLevel,rain:rainAmount,cam:cameraPos.slice()}},setMood,setView,setThrottle,switchRoute,toggleStop,togglePause,toggleLight,step:seconds=>{for(let t=0;t<seconds;t+=1/60)updateSimulation(1/60);updateUI()},inspect:()=>({common:common.length,highline:highline.length,lowline:lowline.length,tunnel:[tunnelStart,tunnelEnd],vehicles:offsets.map(o=>where(travel-o).edge.name)}),render};window.READY=true;window.RAILWAY.orbitTo=(yaw,pitch,distance,target)=>{viewMode='room';orbit.yaw=yaw;orbit.pitch=pitch;orbit.distance=distance;if(target)orbit.target=target;};requestAnimationFrame(animate)}catch(e){console.error(e);$('loader').classList.add('done');$('error').style.display='block';$('error').textContent=e.message||String(e)}}
+function start(){try{initGL();buildWorld();createRoom();initializeWorkshop();buildTrains();initJourney();initSteam();setView('room',false);cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);cameraTarget=orbit.target.slice();let savedPrefs=null;try{savedPrefs=JSON.parse(localStorage.getItem('alder-valley-grand-prefs-v1')||'null');}catch{}restoreLightingPrefs(savedPrefs);if(savedPrefs&&typeof savedPrefs==='object'&&!Array.isArray(savedPrefs)){if(savedPrefs.route==='lowline'){chosenRoute='lowline';$('routeLabel').textContent='The riverside ↗';$('routeButtonLabel').textContent='Riverside';$('routeBtn').classList.add('active')}setThrottle(savedPrefs.throttle??42);}bindControls();document.querySelector('.engine-medallion').onclick=()=>setView('engine');document.querySelector('.engine-medallion').style.cursor='pointer';for(let i=0;i<14;i++){emitSteam();steam[steam.length-1].age=i*.13;steam[steam.length-1].p[1]+=i*.10;steam[steam.length-1].size+=i*.035}updateCamera(1);updateUI();render();$('loader').classList.add('done');window.RAILWAY={get state(){return{route:chosenRoute,edge:leadInfo.edge.name,d:leadInfo.d,travel,speed,throttle,paused,stopRequested,atStation,laps:completedLaps,view:viewMode,night,mood:lightingMoodForNight(targetNight),targetNight,roomLightTarget:roomLampTarget,geometry:staticMesh.count/3,roomGeometry:roomFurnitureMesh.count/3,msaa:msaaFbo?msaaSamples:0,roomLights:roomLampLevel,rain:rainAmount,cam:cameraPos.slice()}},setMood,setView,setThrottle,switchRoute,toggleStop,togglePause,toggleLight,step:seconds=>{for(let t=0;t<seconds;t+=1/60)updateSimulation(1/60);updateUI()},inspect:()=>({common:common.length,highline:highline.length,lowline:lowline.length,tunnel:[tunnelStart,tunnelEnd],vehicles:offsets.map(o=>where(travel-o).edge.name)}),render};window.READY=true;window.RAILWAY.orbitTo=(yaw,pitch,distance,target)=>{viewMode='room';orbit.yaw=yaw;orbit.pitch=pitch;orbit.distance=distance;if(target)orbit.target=target;};requestAnimationFrame(animate)}catch(e){console.error(e);$('loader').classList.add('done');$('error').style.display='block';$('error').textContent=e.message||String(e)}}

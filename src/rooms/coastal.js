@@ -167,7 +167,7 @@ function coastRoom(scene,b){
  // Chalk layers are exposed only at the headland's steeper seaward face.
  for(let i=0;i<28;i++){const z=-11+hash(i,854)*22,x=east(z)+.6+hash(i,263)*1.0,y=land(x,z);if(y<1.6||near(x,z).dist<2)continue;b.push(x,y-.18,z,0,.2+hash(i,991));b.sphere(0,0,0,.70+hash(i,375)*.60,.31+hash(i,852)*.30,.62,'#cacbb3',4,7,4,true);b.pop();}
  for(const [i,x,z]of[[0,30.5,10.4],[1,33.0,11.0],[2,30.0,13.0],[3,32.3,13.4],[4,29.6,15.1]]){
-  if(near(x,z).dist<2.25||shore(x,z)<1.0)continue;const y=land(x,z)+.07;b.push(x,y,z,0,.10+i*.2);b.box(0,0,0,.82,.017,1.45,['#b99679','#a3bbb1','#cdbb8a'][i%3],23);scenePerson(scene,b,0,.045,0,'sit',.3,i%3===0?.72:1);if(i%2===0){b.cylinder(0,.80,0,.018,.018,1.6,'#c7b585',41,6);for(let j=0;j<12;j++){const a=j*TAU/12,q=(j+1)*TAU/12;b.tri([0,1.85,0],[Math.sin(a),1.45,Math.cos(a)],[Math.sin(q),1.45,Math.cos(q)],j%2?'#e2d6b3':'#b89276',23);}}b.pop();
+  if(near(x,z).dist<2.25||shore(x,z)<1.0)continue;const y=land(x,z)+.07;b.push(x,y,z,0,.10+i*.2);b.box(0,0,0,.82,.017,1.45,['#b99679','#a3bbb1','#cdbb8a'][i%3],23);scenePerson(scene,b,0,.015,0,'sitGround',.3,i%3===0?.72:1);if(i%2===0){b.cylinder(0,.80,0,.018,.018,1.6,'#c7b585',41,6);for(let j=0;j<12;j++){const a=j*TAU/12,q=(j+1)*TAU/12;b.tri([0,1.85,0],[Math.sin(a),1.45,Math.cos(a)],[Math.sin(q),1.45,Math.cos(q)],j%2?'#e2d6b3':'#b89276',23);}}b.pop();
  }
  // Wind-pruned maritime pines occur in authored groves, never a forest carpet.
  for(const [cx,cz,count,spread]of[[-42,-24,7,4.0],[-32,-26,5,3.7],[-15,-28,7,3.1],[8,-28,6,3.3],[25,-29,6,3.0],[42,-20,5,3.2],[-44,16,5,2.7]])for(let i=0;i<count;i++){
@@ -187,3 +187,10 @@ function coastRoom(scene,b){
  b.box(0,-1.52,33.64,24,2.3,.12,'#567c70',22);roomSign(b,'coast-sign',0,-1.5,33.73,22,1.9);
  scene.spots=[{name:'The working harbor',detail:'Crab pots on the jetty. Coffee at Salt & Butter. A train waiting by the quay.',target:[-19,2,0],distance:42,yaw:.72,pitch:.49},{name:'Chalk & lamplight',detail:'Above the tide, the keeper’s path finds a little light at the edge of the world.',target:[27.5,7,-1.2],distance:35,yaw:.66,pitch:.47},{name:'Across the tide',detail:'A long, low causeway carries the little train out over the open water.',target:[5,2.5,23],distance:42,yaw:.24,pitch:.49},{name:'The sea-glass room',detail:'Pale stone, brass lanterns, and windows full of salt air.',target:[0,-2,-10],distance:145,yaw:.34,pitch:.58}];
 }
+
+registerHouseRoom('coast',{build:coastRoom,lights:[
+ // The two suspended lantern bulbs provide the broad exhibition light.
+ [-22,26.5675,-7],[21,26.5675,0],
+ // Door lanterns, the breakwater lamp, and the lighthouse lantern.
+ [-20,7.934,59.2],[20,7.934,59.2],[-3.2,3.42,20.1],[27.5,13.48,-1.2]
+]});

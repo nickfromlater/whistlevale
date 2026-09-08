@@ -15,4 +15,6 @@ jobs:
           node-version: 24
       - run: npm run check
       - run: npm run test:audio
+      - run: npm run test:rooms
+      - run: npm run test:map
       - run: npm run build

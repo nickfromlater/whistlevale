@@ -8,7 +8,9 @@
     "start": "python3 scripts/serve.py",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "test:audio": "node scripts/audio-qa.mjs"
+    "test:audio": "node scripts/audio-qa.mjs",
+    "test:rooms": "node scripts/rooms-qa.mjs",
+    "test:map": "node scripts/shop-map-qa.mjs"
   },
   "license": "MIT",
   "engines": {
