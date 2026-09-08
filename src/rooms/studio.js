@@ -203,3 +203,10 @@ ROOM_SHELLS.studio=b=>{
  for(const x of[-54,36]){b.beam([x,10,-55],[x,10,-47],.10,'#677b68',41,9);b.cylinder(x,9.5,-47,1.35,.50,1.4,'#6c8170',41,20);b.cylinder(x,8.79,-47,1.21,1.21,.03,'#f1d7a2',25,20);}
  return walls;
 };
+
+registerHouseRoom('studio',{build:studioRoom,lights:[
+ // Two points along the suspended light strips illuminate both workboards.
+ [-28,25.03,-8.3],[24,25.03,-1.7],
+ // Wall task lights, then the transformed undersides of the two desk lamps.
+ [-54,8.79,-47],[36,8.79,-47],[-49.1511,-.4067,-46],[38.6367,-2.23,-47]
+]});

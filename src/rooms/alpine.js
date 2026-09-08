@@ -183,7 +183,7 @@ function alpineRoom(scene,b){
  // Jetty and boat house: small stories belong to specific shore locations.
  const jettyX=-20.8;for(let i=0;i<18;i++)b.box(jettyX,2.15,7.4+i*.19,1.18,.13,.17,'#a79061',22);for(const side of[-1,1])for(const z of[7.65,10.50])b.cylinder(jettyX+side*.46,1.87,z,.067,.067,.89,'#7f7454',22,7);
  for(let i=0;i<17;i++)b.box(-24.0+i*.2,2.15,7.45,.18,.13,.83,'#a79061',22);
- for(let i=0;i<2;i++)scenePerson(scene,b,jettyX-.23+i*.48,2.25,10.44,'sit',0,i?.75:1);
+ for(let i=0;i<2;i++)scenePerson(scene,b,jettyX-.23+i*.48,2.225,10.68,'perch',0,i?.75:1);
  b.push(-17.5,1.96,10.4,0,.7);b.sphere(0,0,0,.43,.17,1.08,'#a78155',22,14,7);b.sphere(0,.11,0,.34,.025,.94,'#d1b889',22,12,5);b.box(0,.17,-.17,.61,.05,.13,'#7d7752',22);b.beam([-.74,.25,.25],[.74,.25,-.31],.02,'#cbb181',22,6);b.pop();
  alpineChalet(b,-22.6,height(-22.6,5.4),5.4,2.4,2.9,2.2,PI/2);
  // Irregular shore stones, reeds on the sheltered edge, and a picnic clearing.
@@ -223,3 +223,10 @@ function alpineRoom(scene,b){
  b.box(0,-3.2,34.7,29,4.1,.62,'#444e3d',22);roomSign(b,'mountain-sign',0,-3.15,35.04,27,3.45);
  scene.spots=[{name:'The lakeside hamlet',detail:'A village gathered around its station and mountain water.',target:[-29,5,7],distance:45,yaw:.26,pitch:.60},{name:'The high traverse',detail:'A red train above the valley, crossing its own long way home.',target:[10,9,13],distance:47,yaw:.50,pitch:.56},{name:'The mountain refuge',detail:'A small warm shelter below the weathered ridge.',target:[29,15,-16],distance:40,yaw:.75,pitch:.54},{name:'Still water',detail:'Two readers, a rowing boat, and the hush of the pines.',target:[-14,3,8],distance:33,yaw:.3,pitch:.67}];
 }
+
+registerHouseRoom('alpine',{build:alpineRoom,lights:[
+ // Broad light from the cutaway attic roof, above the village and viaduct.
+ [-28,28,7],[24,34,-3],
+ // Back-wall sconce undersides, the stove fire, and the reading lamp.
+ [-27,5.91,-60.6],[28,5.91,-60.6],[61,FLOOR+8,-35.62],[-58,5.15,30]
+]});

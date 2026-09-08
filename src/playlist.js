@@ -27,9 +27,19 @@ const PLAYLIST_TRACKS = [
  {id:'alpine-loft',        title:'High Clear Air',   blurb:'Flute and clarinet, a window open.',          trim:0},
 ];
 
-// Which piece belongs where. Cinema and night win over the room, because both
-// change what the visitor is doing rather than only where they are standing.
-const PLAYLIST_ROOM = {valley:'village-fete-band',coast:'coast-gallery',alpine:'alpine-loft',studio:'clockwork-parade'};
+// Which piece belongs where.
+//
+// Now that the score only sounds under the slow camera, a room's cue has to
+// survive being listened to rather than glanced at. Village Fete and Clockwork
+// Parade are the two with the strongest character — an oom-pah march and a
+// comic staccato — and both push against a camera that has stopped to look, so
+// they moved to the shelf where they can still be chosen deliberately. The
+// valley and the workshop took the two waltzes instead.
+//
+// Sea Air and High Clear Air stayed put. They measure just as busy, but their
+// activity is shimmer rather than incident, which sits under a slow camera
+// perfectly well — density alone was never the right test.
+const PLAYLIST_ROOM = {valley:'toy-shop-waltz',coast:'coast-gallery',alpine:'alpine-loft',studio:'waltz-woodwind-warm'};
 const PLAYLIST_CINEMA = 'waltz-slow-cinema';
 const PLAYLIST_NIGHT = 'waltz-after-hours';
 const PLAYLIST_FALLBACK = 'toy-shop-waltz';
@@ -64,6 +74,8 @@ function playlistWanted(){
  * Pinning a piece from the shelf is a deliberate ask, so that still plays
  * wherever you are. */
 function playlistAudible(){
+ // Never talk over the greeting. Whatever starts during it waits its turn.
+ if(soundscape&&arrivalUntil&&soundscape.ctx.currentTime<arrivalUntil)return false;
  if(playlistChoice!=='auto'&&playlistKnown(playlistChoice))return true;
  return !!(typeof hobby==='object'&&hobby?.cinema);
 }
@@ -147,9 +159,10 @@ function playlistBuild(){
  (document.getElementById('ui')||document.body).appendChild(panel);
 
  const items=panel.querySelector('#playlistItems');
- const groups=[['The waltzes',['toy-shop-waltz','waltz-woodwind-warm','waltz-slow-cinema','waltz-after-hours']],
-               ['The rooms',['village-fete-band','clockwork-parade','coast-gallery','alpine-loft']],
-               ['Also on the shelf',['workbench-sunday']]];
+ // Grouped by what the house does with them, so the panel tells the truth about
+ // which pieces you will hear without asking and which are yours to choose.
+ const groups=[['Played for you',['toy-shop-waltz','waltz-woodwind-warm','coast-gallery','alpine-loft','waltz-after-hours']],
+               ['Yours to choose',['village-fete-band','clockwork-parade','workbench-sunday','waltz-slow-cinema']]];
  for(const [label,ids] of groups){
   const present=ids.filter(id=>houseRecordingAvailable(id));if(!present.length)continue;
   const head=document.createElement('div');head.className='playlist-sep';head.textContent=label;items.appendChild(head);
@@ -252,14 +265,79 @@ if(typeof HouseSoundscape==='function'){
  };
 }
 
+/* ---- arriving ------------------------------------------------------------
+ *
+ * Sound is on by default now, and the house greets you once when you walk in.
+ *
+ * Browsers will not start an audio context without a user gesture, and the
+ * house rule is the same, so nothing here plays on load. What changed is that
+ * *any* first gesture counts — the drag that turns the room, a key, a tap —
+ * rather than only a click on the sound button. Someone who mutes is
+ * remembered and never re-armed.
+ *
+ * The arrival flourish plays once per visit over the room, then gets out of
+ * the way; the score itself still waits for the slow tour. */
+const SOUND_PREF='whistlevale-sound-v1';
+const ARRIVAL_ID='arrival';
+let arrivalPlayed=false;
+/* Context time the greeting finishes. The score holds until then: the arrival
+ * runs on its own node rather than through the score layers, so without this
+ * starting the tour mid-greeting raised a second piece over the top of it
+ * instead of replacing it, and you heard both at once. */
+let arrivalUntil=0;
+
+function soundMuted(){try{return localStorage.getItem(SOUND_PREF)==='off';}catch{return false;}}
+function rememberSound(){try{localStorage.setItem(SOUND_PREF,audio?.active?'on':'off');}catch{}}
+
+/* One-shot, straight to the music bus. Deliberately not a SCORE_ASSET: it is a
+ * greeting, not a record on the shelf, and must never be picked or looped. */
+async function playArrival(){
+ if(arrivalPlayed||!soundscape||!audio?.active)return;
+ if(typeof houseRecordingAvailable==='function'&&!houseRecordingAvailable(ARRIVAL_ID))return;
+ arrivalPlayed=true;
+ try{
+  const ctx=soundscape.ctx;
+  const source=window.HOUSE_EMBEDDED_AUDIO?.[ARRIVAL_ID]||'assets/audio/'+ARRIVAL_ID+'.mp3';
+  const response=await fetch(source);if(!response.ok)return;
+  const buffer=await ctx.decodeAudioData(await response.arrayBuffer());
+  const node=ctx.createBufferSource(),gain=ctx.createGain();
+  node.buffer=buffer;node.connect(gain).connect(soundscape.buses.music);
+  const now=ctx.currentTime,level=.72,out=Math.max(.05,buffer.duration-1.1);
+  gain.gain.setValueAtTime(0,now);
+  gain.gain.linearRampToValueAtTime(level,now+.35);
+  gain.gain.setValueAtTime(level,now+out);
+  gain.gain.linearRampToValueAtTime(0,now+buffer.duration);
+  // Release the score a little before the last of the greeting decays, so the
+  // room's piece rises into the tail rather than after a gap.
+  arrivalUntil=now+Math.max(.05,buffer.duration-1.6);
+  node.start(now);node.stop(now+buffer.duration+.05);
+  node.onended=()=>{node.disconnect();gain.disconnect();};
+ }catch(error){console.warn('Arrival flourish unavailable:',error.message);}
+}
+
+/* Arm on the first real gesture, once. */
+function armFirstListen(){
+ if(soundMuted())return;
+ const events=['pointerdown','keydown','touchstart','wheel'];
+ const start=()=>{
+  for(const type of events)document.removeEventListener(type,start,true);
+  if(soundMuted())return;
+  if(!audio?.active)enableSound(true);
+  playArrival();
+ };
+ for(const type of events)document.addEventListener(type,start,{capture:true,once:false,passive:true});
+}
+
 // Open the requested piece alongside the room effects after a user gesture.
 const playlistOriginalEnable=enableSound;
 enableSound=function(force=false){
  playlistRegister();
  playlistOriginalEnable(force);
  playlistBuild();
+ rememberSound();
+ if(audio?.active)playArrival();
 };
 
 playlistRegister();
-if(document.readyState==='loading')addEventListener('DOMContentLoaded',playlistBuild);
-else playlistBuild();
+if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>{playlistBuild();armFirstListen();});
+else{playlistBuild();armFirstListen();}
