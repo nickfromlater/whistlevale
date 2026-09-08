@@ -297,7 +297,7 @@ async function playArrival(){
  arrivalPlayed=true;
  try{
   const ctx=soundscape.ctx;
-  const source=window.HOUSE_EMBEDDED_AUDIO?.[ARRIVAL_ID]||'assets/audio/'+ARRIVAL_ID+'.mp3';
+  const source=houseRecordingURL(ARRIVAL_ID);
   const response=await fetch(source);if(!response.ok)return;
   const buffer=await ctx.decodeAudioData(await response.arrayBuffer());
   const node=ctx.createBufferSource(),gain=ctx.createGain();

@@ -128,7 +128,8 @@ window.ShopMapUI=(()=>{
   for(const {key,x,y,visible}of positions||[]){
    const marker=markers.get(key);if(!marker)continue;seen.add(key);
    const show=visible!==false&&Number.isFinite(x)&&Number.isFinite(y)&&x>=16&&x<=innerWidth-16&&y>=16&&y<=innerHeight-16;
-   marker.hidden=!show;if(show)marker.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-100%)`;
+   if(marker.hidden===show)marker.hidden=!show;
+   if(show){const position=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-100%)`;if(marker.style.transform!==position)marker.style.transform=position;}
   }
   for(const [key,marker]of markers)if(!seen.has(key))marker.hidden=true;
  }

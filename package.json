@@ -9,6 +9,11 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "test:audio": "node scripts/audio-qa.mjs",
+    "test:delivery": "node scripts/delivery-qa.mjs",
+    "test:geometry": "node scripts/geometry-qa.mjs --quick",
+    "test:geometry:full": "node scripts/geometry-qa.mjs",
+    "test:lighting": "node scripts/lighting-qa.mjs",
+    "test:startup": "node scripts/startup-qa.mjs",
     "test:rooms": "node scripts/rooms-qa.mjs",
     "test:map": "node scripts/shop-map-qa.mjs"
   },

@@ -159,6 +159,7 @@ updateCamera=function(dt){
 };
 
 updateUI=function(){
+ if(typeof isShopMapActive==='function'&&isShopMapActive())return;
  baseHobbyUI();if(!hobby.ready)return;
  const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name;$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Explore the hobby shop map. Current room: '+room.name);
  const electric=/electric|railcar/i.test(stock.type||'');
@@ -234,13 +235,14 @@ exportPlayable=async function(){
   for(const node of source.querySelectorAll('script[src]')){const r=await fetch(node.getAttribute('src'));if(!r.ok)throw new Error('Could not pack a script');node.textContent=(await r.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');}
   for(const node of source.querySelectorAll('link[rel=stylesheet]')){const r=await fetch(node.getAttribute('href'));if(!r.ok)throw new Error('Could not pack styles');const style=document.createElement('style');style.textContent=await r.text();node.replaceWith(style);}
   for(const node of source.querySelectorAll('link[rel~="icon"]')){const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;const r=await fetch(href);if(!r.ok)throw new Error('Could not pack the shop icon');node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await r.text()));}
-  const embedded={};await Promise.all(AUDIO_ASSETS.filter(houseRecordingAvailable).map(async id=>{if(window.HOUSE_EMBEDDED_AUDIO?.[id]){embedded[id]=window.HOUSE_EMBEDDED_AUDIO[id];return;}const response=await fetch('assets/audio/'+id+'.mp3');if(!response.ok)throw new Error('Could not pack audio');const blob=await response.blob();embedded[id]=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});}));
+  const exportAudioIds=[...new Set([...AUDIO_ASSETS,typeof ARRIVAL_ID==='string'?ARRIVAL_ID:'arrival'])].filter(houseRecordingAvailable);
+  const embedded={};await Promise.all(exportAudioIds.map(async id=>{if(window.HOUSE_EMBEDDED_AUDIO?.[id]){embedded[id]=window.HOUSE_EMBEDDED_AUDIO[id];return;}const response=await fetch(houseRecordingURL(id));if(!response.ok)throw new Error('Could not pack audio');const blob=await response.blob();embedded[id]=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});}));
   // Replace the prior audio payload when repacking an already portable world.
   for(const node of source.querySelectorAll('script'))if(node.id==='embeddedHouseAudio'||/^\s*window\.HOUSE_EMBEDDED_AUDIO\s*=/.test(node.textContent))node.remove();
   const embed=document.createElement('script');embed.id='embeddedHouseAudio';embed.textContent='window.HOUSE_EMBEDDED_AUDIO='+JSON.stringify(embedded)+';';source.querySelector('head').append(embed);
   const catalog=source.querySelector('#audioCatalog')||document.createElement('script');catalog.id='audioCatalog';catalog.textContent='window.HOUSE_AUDIO_AVAILABLE='+JSON.stringify(Object.keys(embedded))+';';if(!catalog.parentNode)source.querySelector('head').append(catalog);
   source.querySelector('#embeddedLayout').textContent=JSON.stringify(snapshot()).replace(/</g,'\\u003c');source.querySelector('#loader').classList.remove('done');
-  for(const selector of['#houseUI','#cinemaUI','#houseMap','#shopMapUI','#playlistPanel','#playlistBtn','#playlistStyle','#atmosphereSoundMixer'])source.querySelector(selector)?.remove();
+  for(const selector of['#houseUI','#cinemaUI','#houseMap','#shopMapUI','#playlistPanel','#playlistBtn','#playlistStyle','#atmosphereSoundMixer','#performancePanel'])source.querySelector(selector)?.remove();
   for(const node of source.querySelectorAll('dialog'))node.removeAttribute('open');for(const id of['builderUI','trainInspector','projectMenu','workshopBusy','worldTip'])source.querySelector('#'+id).hidden=true;
   // A new runtime starts running at its default throttle, with sound off.
   // Saved preferences can then update these controls together during startup.

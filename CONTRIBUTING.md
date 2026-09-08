@@ -14,10 +14,27 @@ Before opening a pull request, run:
 ```sh
 npm run check
 npm run test:audio
+npm run test:delivery
+npm run test:geometry
+npm run test:lighting
+npm run test:startup
 npm run test:rooms
 npm run test:map
 npm run build
 ```
+
+`test:geometry` runs the quick byte-exact primitive and track-query comparison
+used in CI. After changing geometry generation, also run
+`npm run test:geometry:full` to compare every room and train mesh. Use `?profile`
+in the browser for local frame, startup, draw-call and memory diagnostics;
+compare the same room, camera and device. The panel sends no telemetry.
+
+Startup can reuse a validated factory snapshot from the optional local-storage
+entry `whistlevale-factory-snapshot`; it never stores meshes. Bump
+`WORKSHOP_FACTORY_CACHE_VERSION` when factory scenery, default tracks, default
+stock/services, or procedural seed consumption changes. Fresh visits and invalid
+caches rebuild the pristine factory before applying saved edits, preserving the
+factory-reset and meadow actions.
 
 For visual changes, include desktop and phone screenshots and describe which
 room and camera views you checked. Check the live 3D house, room selection and
