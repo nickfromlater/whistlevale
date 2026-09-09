@@ -43,6 +43,16 @@
       "id": "meadow-reading", "title": "A shared chapter in the meadow", "kind": "vignette", "room": "studio",
       "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
       "miniatures": [{"builder": "reading", "at": [-21.8, 14.4], "angle": 0.24}]
+    },
+    {
+      "id": "willowbank-pottery", "title": "Willowbank Pottery", "kind": "building", "room": "commons",
+      "source": "src/scenery/willowbank.js",
+      "credits": [
+        {"name": "nickfromlater", "platform": "x", "handle": "nickfromlater", "note": "The first contribution to The Commons."},
+        {"name": "Whistlevale contributors", "note": "Shared geometry and window details."}
+      ],
+      "miniatures": [{"builder": "willowbank", "at": [-27, 8], "angle": 0.16}],
+      "view": {"distance": 19, "yaw": 0.45, "pitch": 0.48}
     }
   ]
 }

@@ -189,6 +189,7 @@ function getHouseScene(key){
   }
   scene.mesh=b.mesh();
   scene.lifeDetails=buildRoomLifeDetails(key,scene);scene.population+=scene.lifeDetails.population;
+  if(typeof communityRoomPlaces==='function')communityRoomPlaces(scene);
   roomScenes.set(key,scene);return scene;
  }catch(error){
   // Shell walls may already be uploaded when a scene builder or its train

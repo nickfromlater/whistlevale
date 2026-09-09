@@ -15,7 +15,7 @@ context.window=context;context.addEventListener=noop;
 context.HOUSE_COMMUNITY=JSON.parse(read('contributions/world.json'));
 const run=code=>vm.runInContext(code,context);
 run(read('src/community-core.js'));run(read('src/railway.js'));run('gl=glStub;upload=record;disposeMesh=dispose;');
-for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','rooms/commons.js','trains.js','community.js'])run(read('src/'+file));
+for(const [,file]of read('index.html').matchAll(/<script src="(src\/[^"?]+\.js)"/g)){if(file==='src/hobby.js')break;if(!['src/community-core.js','src/railway.js'].includes(file))run(read(file));}
 run(`
  assert.equal(runningCollectionMeshes.size,0,'catalogue does not allocate stock at startup');
  initLabels();

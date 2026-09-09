@@ -25,7 +25,9 @@ names, email addresses or account links into a public patch without permission.
 **Where it appears:** More → The builders lists community works, train and room
 credits, and credits in the current layout. The train cabinet shows a model's
 credit and the editor inspector shows a selected object's credit. There are no
-floating author labels or unsolicited popups over the railway.
+floating author labels or unsolicited popups over the railway. Profile links
+show their platform and open a new tab with `noopener noreferrer`, preserving
+the visitor’s room. The accessible label announces the new tab.
 
 **Where it persists:** `validateProject()` retains validated layout and object
 credits. Save, duplicate, undo/redo, JSON export/import and playable HTML keep

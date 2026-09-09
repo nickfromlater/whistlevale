@@ -9,8 +9,9 @@ request. Nothing submitted here is automatically published or loaded remotely.
 
 ## A shared place to begin
 
-[The Commons](../docs/contributing/commons.md) starts with landscape alone and
-welcomes its first buildings, miniature scenes and details. Use `room: "commons"`
+[The Commons](../docs/contributing/commons.md) has a stream, open meadows and its
+first contribution, Willowbank Pottery. It welcomes small buildings, miniature
+scenes and details. Use `room: "commons"`
 and a `miniatures` entry; the recipe gives starting coordinates and placement
 checks. It remains a reviewed shared scene, not a second live layout editor.
 
@@ -33,7 +34,7 @@ fast rendering. Run it locally and inspect clearances before submission.
 
 `world.json` is the active catalogue. Each work has a stable `id`, `title`,
 `kind`, registered `room`, existing repository `source`, and `credits`.
-Existing bakery/inn placements and six small scenes are worked examples.
+The bakery/inn placements, six small scenes and Willowbank Pottery are worked examples.
 Each work can have either or both of these placement arrays:
 
 - `workshop`: editable Alder Valley objects. `type` names an `ASSETS` entry;
@@ -49,7 +50,10 @@ Each work can have either or both of these placement arrays:
 Available miniature builders include people, birds, dogs, bicycles, chairs,
 cases, packs, books, rope, trolleys, cottages, trees, lamps, benches, and the
 harbor/porter/map-party/reading/atelier compositions. New compositions can add a
-reviewed builder in `src/people.js` and its bounded mapping in `src/community.js`.
+reviewed builder, declared footprint in `src/community-core.js` and mapping in
+`src/community.js`. Original buildings live in `src/scenery/`; follow the
+[building recipe](../docs/contributing/buildings.md#original-buildings-in-the-commons-or-another-annex)
+for script registration and optional `view` metadata.
 Touching objects belong inside one composition; independent footprints may not
 overlap. Register new room modules before startup and use their registry key.
 
@@ -59,8 +63,9 @@ of 64 placed pieces per room. Miniature
 geometry is capped at 300,000 vertices per room. These are guardrails, not a
 promise of phone performance; compare `?profile` on the same device and camera.
 `npm run check:contributions -- --json` validates data, credits, sources, train
-portraits, layout imports and shared workshop clearances. The full geometry
-check builds room details and enforces their measured budget.
+portraits, layout imports, shared workshop clearances and actual annex placement.
+It builds contributed scenes, reports geometry counts and rejects omitted work
+with its coordinates and the reason. The scene tests also verify model footprints.
 
 The dev server and build embed this JSON into the page; the browser never
 fetches it. Portable HTML includes it. Refresh after data edits and use **Restore

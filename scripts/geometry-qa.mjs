@@ -119,8 +119,8 @@ function worker(mode,output){
  vm.runInContext(nearestReference,context);
  if(mode==='reference')vm.runInContext(legacy,context,{filename:'pre-optimization-builder'});
  vm.runInContext('const qaCreateGround=createGround;createGround=function(){return profileGeometryStage("createGround",()=>qaCreateGround());};',context);
- const roomFiles=[...read('index.html').matchAll(/src="(src\/rooms\/[^"?]+\.js)"/g)].map(m=>m[1]);
- for(const file of['src/people.js','src/rooms.js',...roomFiles,'src/trains.js','src/community.js'])vm.runInContext(read(file),context,{filename:file});
+ const moduleFiles=[...read('index.html').matchAll(/<script src="(src\/[^"?]+\.js)"/g)].map(m=>m[1]);
+ for(const file of moduleFiles){if(file==='src/hobby.js')break;if(!['src/community-core.js','src/railway.js'].includes(file))vm.runInContext(read(file),context,{filename:file});}
  function run(name,code){group=name;const start=performance.now();vm.runInContext(code,context,{filename:'geometry-qa:'+name});timings[name]=Math.round((performance.now()-start)*10)/10;}
  run('primitives-and-transforms',primitives);
  run('nearest-track-queries',nearestQueries);

@@ -25,7 +25,7 @@ credited miniature placements. The editor path below is for Alder Valley.
    project menu's **Restore Alder Valley** so a saved layout cannot mask it.
    Confirm it is selectable, movable and credited in the inspector.
 
-## Make a genuinely new shape
+## Make a new shape
 
 The editor needs more than a new catalogue row. Inspect a similar `ASSETS` or
 `newDivisionAssets` row, `getTemplate`, `workshopGetTemplate`, `divisionAsset`, `registerObject`,
@@ -35,11 +35,41 @@ template dispatch that actually draws it. Match the renderer's coordinate and
 transform conventions. House geometry must clear trains at roof and platform
 height as well as at ground level.
 
-For a building in an annex room, inspect `cottage` in `src/rooms.js` and the
-room's own building functions. Existing cottage details can use a `miniatures`
-entry; a distinct building needs a bounded builder mapping or a room module
-change. Place it on the finished terrain sampler, preserving authored platforms
-and retaining walls. Add a credited community work pointing to the real source.
+### Original buildings in The Commons or another annex
+
+Use [Willowbank Pottery](../../src/scenery/willowbank.js) and its row in
+`contributions/world.json` as a complete example:
+
+1. Add `src/scenery/<slug>.js` with a uniquely named builder
+   `function yourBuilding(b,x,y,z,angle=0)`. Push the placement transform,
+   build in local coordinates, and pop it. Return the miniature population
+   (zero for an empty building). Shared helpers are in `src/rooms.js` and
+   `src/people.js`; `Builder` primitives are in `src/railway.js`.
+2. Include the script in `index.html` after its shared helpers and before
+   `src/community.js`. Classic scripts share a scope: do not add module imports.
+   Build, export and geometry checks discover these scripts from the page.
+3. Add its key and conservative **XZ radius** to `COMMUNITY_BUILDERS` in
+   `src/community-core.js`, then map that key to the function in
+   `communityMiniatures` in `src/community.js`. The radius is measured from the
+   local origin to the farthest vertex, including roofs, steps and props.
+   `npm run test:contributions` checks the actual mesh against this radius.
+   The adapter owns placement rotation and scale; your mapped builder receives
+   a local origin. Do not apply the catalogue transform a second time.
+4. Add a separate catalogue work with `source` pointing to the new source file,
+   the chosen public credit, and its `miniatures` placement. Preserve the
+   original authors when adapting shared details. Omit `y` to sample the room’s
+   finished terrain. Check foundation contact across the whole footprint.
+5. For a building worth a closer look, add an optional `view` to that work:
+   `{"distance":19,"yaw":0.45,"pitch":0.48}`. This adds its title under
+   **Views → Places**, aimed at its first placed miniature. Angles are radians;
+   distance accepts 10–120, yaw ±2π and pitch 0.2–1.35. Omitted fields get
+   reasonable defaults. Only successfully placed work gets a viewpoint.
+
+Keep small details in the static mesh. Existing materials and an unlettered
+maker’s plaque avoid extra texture slots; original sign artwork needs deliberate
+atlas allocation before geometry creation. Placement metadata alone cannot
+introduce new architecture. Existing buildings can use an existing builder;
+original buildings need original geometry.
 
 ## Check and submit
 

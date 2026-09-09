@@ -23,6 +23,7 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
 5. Run `npm run check:contributions -- --json`, `npm test`, and, for geometry,
    `npm run test:geometry:full`. Do not change budgets to silence a failure.
 6. Run the site on an isolated origin: `python3 scripts/serve.py --port 4175`.
+   If that port is occupied, use another free port; do not stop another server.
    Inspect desktop and 390px/320px phone layouts, the live map and the changed
    rooms. For trains check roofs, motion, formations and each finish. Exercise
    save/import and playable export when the change affects persistence or credit.
@@ -47,6 +48,9 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 - The app is dependency-free browser JavaScript with a custom WebGL 2 renderer.
 - `src/community-core.js` validates credits and contribution data; `src/community.js`
   connects reviewed data and the optional builders panel. Keep these off the frame loop.
+- `src/scenery/` holds original contributed buildings. Include new scripts before
+  `src/community.js`; register an accurate radius in `COMMUNITY_BUILDERS` and a
+  matching adapter function. The building recipe covers all three steps.
 - `src/railway.js` contains Alder Valley, simulation, renderer and layout editor.
 - `src/rooms.js` contains `registerHouseRoom`, scene caching, materials and geometry
   helpers. Register new room modules before startup; navigation and map layout

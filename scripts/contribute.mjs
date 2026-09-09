@@ -3,10 +3,10 @@
 // this command never edits, uploads, commits or installs anything.
 const args=process.argv.slice(2),kind=args.find(a=>!a.startsWith('--'));
 const routes={
- commons:{recipe:'docs/contributing/commons.md',files:['contributions/world.json','src/rooms/commons.js','src/community.js'],checks:['test:contributions','test:rooms','test:map','test:cinema','test:geometry:full']},
+ commons:{recipe:'docs/contributing/commons.md',files:['contributions/world.json','src/scenery/','src/rooms/commons.js','src/community-core.js','src/community.js','index.html'],checks:['test:contributions','test:rooms','test:map','test:cinema','test:geometry:full']},
  train:{recipe:'docs/contributing/trains.md',files:['src/trains.js','src/train-cabinet.js','assets/trains/'],checks:['test:trains','test:geometry:full']},
  livery:{recipe:'docs/contributing/trains.md',files:['src/trains.js'],checks:['test:trains','test:geometry:full']},
- building:{recipe:'docs/contributing/buildings.md',files:['contributions/world.json','src/railway.js','src/rooms.js','src/rooms/'],checks:['test:startup','test:geometry:full']},
+ building:{recipe:'docs/contributing/buildings.md',files:['contributions/world.json','src/scenery/','src/community-core.js','src/community.js','index.html','src/railway.js','src/rooms.js'],checks:['test:startup','test:geometry:full']},
  layout:{recipe:'contributions/README.md#layouts',files:['contributions/layouts/','src/railway.js'],checks:['test:startup']},
  people:{recipe:'contributions/README.md#shared-buildings-people-and-scenery',files:['contributions/world.json','src/people.js','src/community.js'],checks:['test:rooms','test:geometry:full']},
  vignette:{recipe:'contributions/README.md#shared-buildings-people-and-scenery',files:['contributions/world.json','src/people.js','src/community.js'],checks:['test:rooms','test:geometry:full']},

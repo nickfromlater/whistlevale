@@ -181,7 +181,8 @@ needs to be extended for another room.
 
 The current script order is the embedded contribution catalogue and credit validator,
 then the renderer, people and shared room registry,
-individual room modules, trains/audio/playlist, the contribution adapter, then `hobby.js`. The live map
+individual room modules, trains/audio/playlist, contributed scenery modules,
+the contribution adapter, then `hobby.js`. The live map
 modules `shop-house.js`, `shop-map-ui.js` and `shop-map.js` load after `hobby.js`
 and before its delayed startup runs. The earlier `house-map*` SVG files are
 legacy artwork and are not the active map.

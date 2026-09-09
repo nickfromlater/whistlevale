@@ -6,7 +6,7 @@
 // as the catalogue grows; geometry and clearance checks still apply separately.
 const COMMUNITY_LIMITS=Object.freeze({works:128,perRoom:64,credits:12,vertices:300000});
 const COMMUNITY_KINDS=['building','people','vignette','prop','planting','furniture','structure','district','room','train','livery','art','audio','code'];
-const COMMUNITY_BUILDERS=Object.freeze({harbor:1.1,porter:1,mapParty:.92,reading:1.15,atelier:1,person:.3,bird:.16,dog:.45,bicycle:.8,chair:.45,case:.3,pack:.3,book:.22,rope:.3,trolley:.65,cottage:2.5,tree:1.5,lamp:.3,bench:.65});
+const COMMUNITY_BUILDERS=Object.freeze({harbor:1.2,porter:1,mapParty:.95,reading:1.15,atelier:1,person:.4,bird:.16,dog:.45,bicycle:.8,chair:.45,case:.3,pack:.3,book:.22,rope:.3,trolley:.65,cottage:2.7,tree:1.8,lamp:.3,bench:.65,willowbank:5.3});
 function communityAssert(ok,message){if(!ok)throw new Error(message);}
 function communityText(value,max,label){communityAssert(typeof value==='string'&&value.trim().length>0&&value.length<=max&&!/[\u0000-\u001f\u007f<>]/.test(value),label+' must be plain text, 1–'+max+' characters.');return value.trim();}
 function communityFields(value,allowed,label){communityAssert(value&&typeof value==='object'&&!Array.isArray(value),label+' must be an object.');for(const key of Object.keys(value))communityAssert(allowed.includes(key),label+': unknown field '+key+'.');}
@@ -36,13 +36,20 @@ function validateCommunity(value){
  communityAssert(Array.isArray(value.works)&&value.works.length<=COMMUNITY_LIMITS.works,'Use at most 128 community works.');
  const ids=new Set(),counts=new Map(),footprints=new Map();
  const works=value.works.map(w=>{
-  communityFields(w,['id','title','kind','room','source','credits','workshop','miniatures'],'Work');
+  communityFields(w,['id','title','kind','room','source','credits','workshop','miniatures','view'],'Work');
   communityAssert(typeof w.id==='string'&&/^[a-z][a-z0-9-]{0,63}$/.test(w.id)&&!ids.has(w.id),'Work IDs must be unique lowercase slugs.');ids.add(w.id);
   const clean={id:w.id,title:communityText(w.title,80,'Work title'),kind:w.kind,room:w.room,source:w.source,credits:validateCredits(w.credits)};
   communityAssert(COMMUNITY_KINDS.includes(w.kind),'Unknown contribution kind: '+w.kind+'.');
   communityAssert(w.room==='house'||typeof w.room==='string'&&/^[a-z][a-z0-9-]{0,63}$/.test(w.room),'Use a registered room key or house.');
   communityAssert(typeof w.source==='string'&&/^(src|contributions|assets)\/[a-zA-Z0-9_./-]+$/.test(w.source)&&!w.source.split('/').includes('..'),'Source must be a repository path under src, contributions or assets.');
   communityAssert(clean.credits.length>0,'A community work needs a chosen public credit.');
+  if(w.view!==undefined){
+   communityFields(w.view,['distance','yaw','pitch'],w.id+' view');
+   communityAssert(w.miniatures?.length>0,w.id+': a view needs a miniature placement.');clean.view={...w.view};
+   if(w.view.distance!==undefined)communityNumber(w.view.distance,10,120,w.id+' view distance');
+   if(w.view.yaw!==undefined)communityNumber(w.view.yaw,-Math.PI*2,Math.PI*2,w.id+' view yaw');
+   if(w.view.pitch!==undefined)communityNumber(w.view.pitch,.2,1.35,w.id+' view pitch');
+  }
   for(const field of ['workshop','miniatures']){
    if(w[field]===undefined)continue;
    communityAssert(Array.isArray(w[field])&&w[field].length>0&&w[field].length<=64,field+' needs 1–64 placements.');
