@@ -22,8 +22,11 @@ Coordinates are model units; `at` is `[x,z]`, and angles are radians.
 | Eastern field | `[25, 7]` | Open ground below the woodland, suitable for a small workshop or garden |
 | Northern clearing | `[18, -9]` | A quieter space near the hill, suitable for a small scene |
 
-These are starting suggestions, not reserved plots or a fixed town plan. Check
-the latest catalogue before choosing a location. Keep open space between works,
+These are terrain examples, not reserved plots or a fixed town plan. Check
+the latest catalogue before choosing a location: an accepted contribution may
+already occupy one. The scene test checks these ground samples independently;
+it does not promise that they remain vacant. Updating a suggestion when it fills
+is helpful, but a contribution must not require moving an unrelated test fixture. Keep open space between works,
 retain views across the water, and leave the riverbanks and established trees
 clear. A railway or large district should start with an agreed proposal.
 
@@ -43,8 +46,8 @@ Add a separate work to `contributions/world.json`, preserving all existing work:
 }
 ```
 
-Replace the example identity and title; the example is not an existing
-contribution. `cottage` uses the established cottage model. For original
+Replace the example identity, title and coordinates; this JSON illustrates the
+format, not a guaranteed vacant site. `cottage` uses the established cottage model. For original
 architecture, follow the [building recipe](buildings.md) and add the actual
 geometry plus a bounded builder mapping. A new title alone does not make a new model.
 [Willowbank Pottery](../../src/scenery/willowbank.js) is the complete original
@@ -79,7 +82,9 @@ Inspect the live map, room, named viewpoints (including the new work), and cinem
 390px/320px phones. Check daytime and night, terrain contact, water and tree
 clearances, and **More → The builders**. Test a playable export for new source
 modules or credit changes. Include before/after screenshots, chosen credit,
-checks actually run and measured geometry impact in the PR template.
+checks actually run and measured geometry impact in the PR template. The
+[local review guide](review.md) gives the export menu route, evidence directory
+and checks specific to static annex scenery.
 
 A useful agent request:
 

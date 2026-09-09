@@ -75,3 +75,6 @@ Supply screenshots, the actual test results, geometry/performance impact, chosen
 credit and source/permission notes in the PR. Describe any unverified physical
 device behavior. Discuss an unusually large train or new mechanics first. Do
 not deploy the contribution from a fork or change the upstream repository settings.
+
+Use the [local review guide](review.md) for evidence storage, comparable runtime
+measurements and the complete-house export menu route.
