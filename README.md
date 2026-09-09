@@ -1,11 +1,26 @@
 # Whistlevale
 
-**A miniature railway house that anyone can build in.**
-Watch the trains, wander seven exhibition galleries, then choose an empty bay
-and contribute something of your own. Your chosen credit stays beside your work.
+**A model railway exhibit that anyone can contribute to.**
 
 [Visit Whistlevale](https://whistlevale.com) · [Choose a bay](docs/contributing/grandhall.md) ·
 [Contribute](CONTRIBUTING.md) · [Agents start here](AGENTS.md)
+
+## The idea
+
+Model railway clubs have built exhibits this way for a century. Nobody makes the
+whole layout. Each person builds one scene to a shared standard, brings it along,
+and the exhibition is whatever everyone brought that year.
+
+Whistlevale is that exhibit, permanently open and running in a browser. The
+trains are already circling and the galleries are already lit. The empty display
+bays are the point: take one, make something for it, and it stands in the hall
+under a plaque carrying the credit you chose.
+
+You do not need to know this codebase. Every bay hands you a brief written for a
+coding agent, and the first thing that brief tells the agent is to ask what you
+want to build.
+
+> **The Open Workshop** — *it doesn't have to be finished.*
 
 ## Room for your imagination
 
@@ -17,8 +32,6 @@ and chosen public credit. Selecting a bay does not reserve it.
 Contributions are ordinary pull requests: a scene, a building, a train, a livery,
 a poster, a whole room. Every one carries a credit you choose and is reviewed
 before publication.
-
-> **The Open Workshop** — *it doesn't have to be finished.*
 
 ## The house
 
