@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "framework": null,
   "git": {
-    "deploymentEnabled": {"codex/train-collection-20260909": false}
+    "deploymentEnabled": {"codex/train-collection-20260909": false, "contrib/meridian-observatory-commons": false}
   },
   "headers": [
     {

@@ -63,6 +63,16 @@
       ],
       "miniatures": [{"builder": "wintergarden", "at": [24, 9], "angle": 0, "scale": 0.9}],
       "view": {"distance": 29, "yaw": -0.32, "pitch": 0.48}
+    },
+    {
+      "id": "meridian-hill-observatory", "title": "Meridian Hill Observatory", "kind": "building", "room": "commons",
+      "source": "src/scenery/meridian-observatory.js",
+      "credits": [
+        {"name": "nickfromlater", "platform": "github", "handle": "nickfromlater", "note": "Original observatory design."},
+        {"name": "Whistlevale contributors", "note": "Shared native geometry primitives."}
+      ],
+      "miniatures": [{"builder": "meridian", "at": [-15, 14], "angle": -0.16}],
+      "view": {"distance": 25, "yaw": -0.35, "pitch": 0.43}
     }
   ]
 }
