@@ -224,10 +224,10 @@ class HouseSoundscape{
   const near=(x,z,r)=>Math.exp(-((position[0]-x)**2+(position[2]-z)**2)/(r*r));
   const town=room==='valley'?.12+.65*near(-21,10,27):room==='coast'?.035:0;
   const coast=room==='coast'?.70:room==='valley'?.45*near(8,1,18):0;
-  const forest=room==='alpine'?.62:room==='valley'?.14+.28*near(-8,-24,22):0;
+  const forest=HOUSE_ROOMS[room]?.ambient==='forest'?.62:room==='valley'?.14+.28*near(-8,-24,22):0;
   const workshop=room==='studio'?.65:room==='valley'&&(!hobby.cinema&&viewMode==='room')?.14:room==='coast'&&viewMode==='room'?.035:0;
   const p=hobbyTrainInfo().p,dist=len(sub(cameraPos,p)),exhibitTrain=hobby.scene?.trains[0];
-  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed??1),isSteam=typeof collectionPower==='function'?collectionPower(room)==='steam':room==='valley'||exhibitTrain?.type==='steam';
+  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed??0),isSteam=typeof collectionPower==='function'?collectionPower(room)==='steam':room==='valley'||exhibitTrain?.type==='steam';
   const trainLevel=paused||!isSteam?0:Math.sqrt(Math.min(visibleSpeed/1.5,1))*(hobby.cinema?.52:clamp(18/(dist+12),.06,.5));
   const targets={...score,town:town*.55,coast:coast*.62,forest:forest*.40,workshop:workshop*.46,steam:trainLevel*.90};
   for(const [id,layer]of this.layers){
@@ -241,7 +241,7 @@ class HouseSoundscape{
   }
   if(this.railway){
    // Retain the original wheel detail and interactive bells at a gentle level.
-   this.railway.master.gain.setTargetAtTime(this.buffers.has('steam')?.22:.48,this.ctx.currentTime,.6);
+   this.railway.master.gain.setTargetAtTime(HOUSE_ROOMS[room]?.railway===false?0:this.buffers.has('steam')?.22:.48,this.ctx.currentTime,.6);
    if(!isSteam)this.railway.lastChuff=Math.floor(travel/.45);
   }
   this.updateRoomSound(room,isSteam,visibleSpeed,dist);
@@ -257,7 +257,7 @@ enableSound=function(force=false){
  if($('cinemaMute')){$('cinemaMute').textContent=audio?.active?'Sound on':'Sound off';$('cinemaMute').setAttribute('aria-pressed',String(!!audio?.active));}
 };
 const originalWhistle=whistle;
-whistle=function(){if(!audio?.active)enableSound(true);if(typeof collectionPower==='function'&&collectionPower(hobby.room)!=='steam'){
+whistle=function(){if(HOUSE_ROOMS[hobby.room]?.railway===false)return;if(!audio?.active)enableSound(true);if(typeof collectionPower==='function'&&collectionPower(hobby.room)!=='steam'){
  const c=soundscape?.ctx;if(c&&soundscape.on&&c.currentTime-soundscape.lastWhistle>.75){const now=c.currentTime;soundscape.lastWhistle=now;for(const [frequency,level]of[[262,.055],[349,.030]]){const o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.value=frequency;g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(level,now+.05);g.gain.setValueAtTime(level,now+.45);g.gain.linearRampToValueAtTime(0,now+.68);o.connect(g).connect(soundscape.buses.train);o.start();o.stop(now+.70);o.onended=()=>{o.disconnect();g.disconnect();};}}
  $('whistleBtn').classList.add('active');setTimeout(()=>$('whistleBtn').classList.remove('active'),700);return;
  }if(soundscape?.whistle()){whistleSteam=1.6;for(let i=0;i<5;i++)emitSteam(true);$('whistleBtn').classList.add('active');setTimeout(()=>$('whistleBtn').classList.remove('active'),1500);}else originalWhistle();};

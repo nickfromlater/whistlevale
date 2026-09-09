@@ -1,0 +1,26 @@
+name: Report a bug
+description: Something looks, sounds or behaves incorrectly.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the room, train, view and whether this is the live site or a local checkout.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      description: Phone/desktop, browser version, and screen size if known.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or additional details
+      description: Avoid private data. For sensitive security reports, read SECURITY.md.

@@ -1,0 +1,31 @@
+name: Propose a contribution
+description: A train, building, vignette, room or other addition to the house.
+title: "Contribution: "
+body:
+  - type: markdown
+    attributes:
+      value: "Small contributions are welcome. Rooms, districts and major changes need an agreed proposal before implementation. Agents: read AGENTS.md and the relevant recipe."
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What would you like to make?
+      options: [Train, Livery, Building, Layout, People or vignette, Props or planting, Furniture or art, Structure or district, Room, Audio, Code or documentation]
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea and its place in the house
+      description: Describe the appearance, behavior, intended room and scope. Links or sketches help.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Credit and source material
+      description: Your chosen public name (a pseudonym is fine), original sources and permission notes. Do not include private contact details.
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed approach and checks
+      description: Existing model or builder to build on, expected performance impact, and how you will test it.

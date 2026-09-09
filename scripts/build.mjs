@@ -2,6 +2,7 @@ import {mkdir,rm,readFile,writeFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import {loadCommunity,scriptJSON} from './community-lib.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const out=path.join(root,'dist');
@@ -32,7 +33,10 @@ async function copyPublic(directory){
 await copyPublic('src');await copyPublic('assets');
 const audioIds=Object.keys(audioURLs).sort(),json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
 const catalog=`<script id="audioCatalog">window.HOUSE_AUDIO_AVAILABLE=${json(audioIds)};window.HOUSE_AUDIO_URLS=${json(audioURLs)};</script>`;
-const html=await readFile(path.join(root,'index.html'),'utf8');
+const community=await loadCommunity();
+const sourceHTML=await readFile(path.join(root,'index.html'),'utf8'),communitySlot=/<script id="communityCatalog">[\s\S]*?<\/script>/;
+if(!communitySlot.test(sourceHTML))throw new Error('The reviewed community catalogue placeholder is missing.');
+const html=sourceHTML.replace(communitySlot,()=>'<script id="communityCatalog">window.HOUSE_COMMUNITY='+scriptJSON(community)+';</script>');
 if(!/<script id="audioCatalog">[\s\S]*?<\/script>/.test(html))throw new Error('The optional audio catalog placeholder is missing.');
 const builtHTML=html.replace(/<script id="audioCatalog">[\s\S]*?<\/script>/,()=>catalog).replace(/\b(src|href)=(["'])([^"']+)\2/g,(attribute,name,quote,url)=>{
  const suffixAt=url.search(/[?#]/),file=suffixAt<0?url:url.slice(0,suffixAt),suffix=suffixAt<0?'':url.slice(suffixAt);

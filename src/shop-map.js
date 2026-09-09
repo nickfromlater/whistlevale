@@ -10,6 +10,7 @@ draw=function(mesh,model=I,p=mainProgram){if(mesh)shopBase.draw(mesh,shopRoomMod
 project=function(point){return shopBaseProject(shopRoomModel?transform(point,shopRoomModel):point);};
 RailwayAudio.prototype.update=function(dt){
  const run=()=>{
+  if(HOUSE_ROOMS[hobby.room]?.railway===false)return;
   const saved={lead:leadInfo,travel,speed},train=hobby.scene?.trains[0];
   try{
    if(hobby.room!=='valley'&&train){leadInfo=hobbyTrainInfo();travel=train.distance;speed*=train.speed;}
@@ -38,10 +39,10 @@ function shopWallVisible(w,entry){
 function shopRoomLights(entry,p){
  if(p!==mainProgram)return;
  let lights=shopLightCache.get(entry);
- if(!lights){lights={room:new Float32Array(houseRoomLights(entry.key).map(point=>transform(point,entry.model)).flat()),layout:new Float32Array(lampPositions.slice(0,8).map(point=>transform(point,entry.model)).flat())};shopLightCache.set(entry,lights);}
+ if(!lights){lights={room:new Float32Array(houseRoomLights(entry.key).map(point=>transform(point,entry.model)).flat()),layout:new Float32Array(houseLayoutLights(entry.key).map(point=>transform(point,entry.model)).flat())};shopLightCache.set(entry,lights);}
  gl.uniform3fv(uniform(p,'uRoomLights[0]'),lights.room);
  gl.uniform3fv(uniform(p,'uLamps[0]'),lights.layout);
- uv3(p,'uHead',transform(transform([0,1.3,1.7],hobbyTrainMatrix()),entry.model));uv3(p,'uForward',hobbyTrainInfo().f);
+ uv3(p,'uHead',transform(transform([0,1.3,1.7],hobbyTrainMatrix()),entry.model));uv3(p,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);
 }
 drawHobbyStatic=function(p,shadow){
  if(!shopMap.active)return shopBase.static(p,shadow);
@@ -171,7 +172,7 @@ function shopPick(x,y){
 }
 function initHouseMap(){
  ShopMapUI.init();
- canvas.setAttribute('aria-label',`${Object.keys(HOUSE_ROOMS).length} miniature railway rooms in Whistlevale. Drag to explore; scroll or pinch to zoom.`);
+ canvas.setAttribute('aria-label',`${Object.keys(HOUSE_ROOMS).length} miniature worlds in Whistlevale. Drag to explore; scroll or pinch to zoom.`);
  // Installed on window capture so the legacy editor's canvas capture listeners
  // cannot also consume a shop gesture. Normal room controls remain unchanged.
  const block=e=>{e.preventDefault();e.stopImmediatePropagation();};

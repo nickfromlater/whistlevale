@@ -13,15 +13,4 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm run check
-      - run: npm run test:audio
-      - run: npm run test:delivery
-      - run: npm run test:geometry
-      - run: npm run test:lighting
-      - run: npm run test:startup
-      - run: npm run test:rooms
-      - run: npm run test:map
-      - run: npm run test:cinema
-      - run: npm run test:analytics
-      - run: npm run test:trains
-      - run: npm run build
+      - run: npm test

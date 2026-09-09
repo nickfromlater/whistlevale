@@ -32,6 +32,7 @@ class Context {
  async resume(){this.state='running';}
 }
 const status={textContent:''},sandbox={window:{},AbortController,setTimeout,clearTimeout,Float32Array,console:{warn(){}},$:()=>status,enableSound(){},whistle(){},audio:null,
+ HOUSE_ROOMS:{valley:{ambient:'town'},coast:{ambient:'coast'},alpine:{ambient:'forest'},studio:{ambient:'workshop'},commons:{ambient:'forest',railway:false}},
  hobby:{room:'valley',cinema:true,scene:null},cameraTarget:[0,0,0],cameraPos:[0,0,15],innerWidth:1200,speed:1.9,paused:false,night:0,viewMode:'cinema',travel:3,
  hobbyTrainInfo:()=>({p:[0,0,0]}),hobbyTrainInTunnel:()=>false,project:()=>({x:600}),len:v=>Math.hypot(...v),sub:(a,b)=>a.map((v,i)=>v-b[i]),clamp:(v,a,b)=>Math.min(b,Math.max(a,v)),smooth:(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);},fetch:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)})};
 const context=vm.createContext(sandbox);vm.runInContext(await readFile(new URL('../src/soundscape.js',import.meta.url),'utf8'),context);
@@ -77,7 +78,9 @@ assert.equal(whistle.connections[0].connections[0].gain.target,0,'train slider c
 sandbox.paused=true;house.update();assert.equal(house.layers.get('steam').gain.gain.target,0);assert.equal(house.layers.get('the-long-way-home').gain.gain.target,.66,'pausing the train keeps the score');
 sandbox.paused=false;sandbox.hobby.room='alpine';sandbox.hobby.scene={trains:[{type:'mountain',speed:.63}]};house.update();assert.equal(house.layers.get('steam').gain.gain.target,0,'electric train has no steam loop');
 sandbox.hobby.room='coast';sandbox.hobby.scene={trains:[{type:'steam',speed:.78}]};house.update();assert.ok(Math.abs(house.layers.get('steam').source.playbackRate.target-.78)<1e-9,'chuffs use the visible exhibit speed');
-house.setEnabled(false);assert.equal(house.output.gain.target,0);assert.equal(house.whistle(),false);
+sandbox.hobby.room='commons';sandbox.hobby.scene={trains:[]};house.update();assert.equal(house.layers.get('steam').gain.gain.target,0,'landscape has no train loop');assert.equal(railway.master.gain.target,0,'landscape mutes legacy wheel sounds');
+ sandbox.hobby.room='coast';sandbox.hobby.scene={trains:[{type:'steam',speed:.78}]};house.update();assert.ok(railway.master.gain.target>0,'railway sound returns when leaving the landscape');
+ house.setEnabled(false);assert.equal(house.output.gain.target,0);assert.equal(house.whistle(),false);
 
 const retry=new HouseSoundscape(new Context()),attempted=[];let rejectAsset=true;sandbox.window.HOUSE_EMBEDDED_AUDIO={town:'data:audio/mp3;base64,AA=='};
 sandbox.fetch=async url=>{attempted.push(url);return{ok:!rejectAsset,arrayBuffer:async()=>new ArrayBuffer(1)};};

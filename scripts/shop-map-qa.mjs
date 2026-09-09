@@ -45,6 +45,7 @@ vm.runInContext(railway.slice(0,railway.indexOf("const canvas=$('world')"))+'\n'
  function updateSimulation(dt){if(hobby.scene&&!paused)for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;}
  function updateHobbyAudio(){records.audio.push({kind:'ambience',room:hobby.room,point:project(hobbyTrainInfo().p),eye:cameraPos.slice()});}
  function hobbyTrainInfo(){return hobby.scene?{p:[3,2,-4],f:[0,0,1]}:leadInfo;}
+ function hobbyHasTrain(){return hobby.room==='valley'||!!hobby.scene?.trains.length;}
  function hobbyTrainMatrix(){return ident();}function hobbyTrainInTunnel(){return false;}
  class RailwayAudio{update(){
   records.audio.push({kind:'railway',room:hobby.room,point:project(hobbyTrainInfo().p),eye:cameraPos.slice(),travel,speed,lead:leadInfo,lastChuff:this.lastChuff});
