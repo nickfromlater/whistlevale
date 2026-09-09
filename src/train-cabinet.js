@@ -179,7 +179,6 @@ function openTrainCabinet(opener=$('trainCollectionButton')){
  $('cabinetRoom').textContent=HOUSE_ROOMS[hobby.room].name.replace(/^The /,'');$('cabinetLift').setAttribute('aria-pressed','false');$('cabinetMotion').setAttribute('aria-pressed','false');$('cabinetMotion').innerHTML=cabinetIcon('play')+'Watch wheels';
  for(const button of document.querySelectorAll('[data-train-view]'))button.setAttribute('aria-pressed',String(button.dataset.trainView==='engine'));
  paintCabinetCards();paintCabinetDetails();$('trainCabinet').showModal();$('cabinetClose').focus({preventScroll:true});trainCabinet.preview?.reset();prepareCabinetPreview();
- window.railwayAnalytics?.control?.('train_collection');
 }
 function closeTrainCabinet(applied=false){
  if(!trainCabinet.open)return;trainCabinet.open=false;trainCabinet.token++;trainCabinet.moving=false;trainCabinet.preview?.release();$('trainCabinet').close();document.body.classList.remove('train-cabinet-open');shadowDirty=true;
@@ -219,7 +218,7 @@ function initTrainCabinet(){
 
  $('cabinetRun').onclick=()=>{
   if(hobby.room!==trainCabinet.room){$('cabinetStatus').textContent='The room has changed. Reopen the collection to choose its train.';return;}
-  try{const saved=chooseCollectionTrain(trainCabinet.room,trainCabinet.draft),name=collectionById.get(trainCabinet.draft.id).name;closeTrainCabinet(true);updateUI();toast(name+' is on the railway.'+(saved?'':' Saved for this visit.'));window.railwayAnalytics?.control?.('train_select');}
+  try{const saved=chooseCollectionTrain(trainCabinet.room,trainCabinet.draft),name=collectionById.get(trainCabinet.draft.id).name;closeTrainCabinet(true);updateUI();toast(name+' is on the railway.'+(saved?'':' Saved for this visit.'));}
   catch(error){console.warn('Train selection:',error);$('cabinetStatus').textContent='That train could not be prepared. Your current train is still running.';}
  };
  window.addEventListener('keydown',event=>{

@@ -120,29 +120,3 @@ The opt-in panel reports frame timing, draw calls, geometry and decoded-audio
 memory estimates; GPU timing appears when supported. It sends no telemetry and
 does no diagnostic work on ordinary visits. Measurements describe the device
 and view being inspected, rather than a traffic-capacity guarantee.
-
-## Engagement analytics
-
-The production site uses Vercel Web Analytics for pageviews and a small set of
-custom events. They add no interface, dependencies, cookies, or app-defined
-visitor identifier. The tracker records the first visit to each room, cinema
-starts, the first use of named controls, and cumulative visible-time milestones
-at 30 seconds, 1, 3, 5, 15 and 30 minutes. It pauses while the tab is hidden;
-map browsing is excluded from room time. Passive cinema viewing still counts.
-
-In the Vercel project, open **Analytics → Events** and select an event to inspect
-its properties. `room_visit` and `cinema_start` have a `room` property;
-`control_used` has `control` and `room`; `visit_time`, `room_time`, and
-`cinema_time` have a `seconds` milestone (and `room` where applicable).
-These are cumulative thresholds, not durations to add together. They show how
-many visits reached each threshold, rather than exact average visit length or
-proof of attention. Each room/control is counted once per page load; returning
-to a room accumulates its time. Previous traffic cannot be backfilled.
-
-Custom events are capped at 60 per page load. One lightweight timer checks every
-30 seconds, or sooner when a milestone is due; nothing runs in the animation
-loop and no drag coordinates, slider values, or free text are collected.
-Delivery is best effort: blocked scripts and errors stop tracking quietly.
-Local/preview hosts, portable exports, Do Not Track and Global Privacy Control
-are excluded. See [the maintenance notes](../CONTRIBUTING.md#engagement-analytics)
-for lifecycle hooks and report queries.

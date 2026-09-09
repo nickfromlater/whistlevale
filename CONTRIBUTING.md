@@ -48,7 +48,6 @@ npm run test:startup
 npm run test:rooms
 npm run test:map
 npm run test:cinema
-npm run test:analytics
 npm run test:trains
 npm run build
 ```
@@ -293,49 +292,6 @@ Please discuss broad interaction or art-direction changes in an issue first.
 Small fixes can go straight to a pull request. Describe the problem, what
 changes for the visitor, and how you verified it.
 
-## Engagement analytics
-
-`src/analytics.js` owns the production hostname allowlist and loads the existing
-first-party Vercel script asynchronously. It uses the vanilla
-`window.va('event', {name, data})` protocol without adding a package. Vercel
-custom events require a supported plan; see the [official event guide](https://vercel.com/docs/analytics/custom-events).
-Failures must never show a toast, block startup, capture a gesture, or affect
-rendering or sound. The single timer, event queue and deduplication sets are
-bounded; once the 60-event cap is reached, no more timing work is scheduled.
-
-Room/cinema/map lifecycle changes call the optional `railwayAnalytics.sync()`.
-It reads the final state in a microtask, excluding startup and room fades.
-Never poll room globals during rendering: the shop map temporarily borrows them
-to draw each room. Keep both map open/close and completed room entry hooks.
-Control tracking uses fixed names and committed changes, with first-use
-semantics per page load. It must not collect pointer movement, input values,
-layout names, text, or persistent identifiers. Do not wrap shared setters such
-as `setThrottle`: cinema and startup call them automatically.
-
-Visible time includes watching without interaction, with hidden tabs, BFCache
-absence and long suspended/stalled clock gaps excluded. Milestones are
-cumulative within a page load, including repeated room/cinema visits. Do not
-sum their `seconds` values or call the result average session length. The cap,
-blocked delivery and abrupt mobile exits can undercount. Historical pageviews
-contain no room-duration or control detail to recover.
-
-The authenticated CLI can read counts without opening the dashboard:
-
-```sh
-vercel metrics vercel.analytics_event.count --project endless-railroad \
-  --scope project-scope --prod --since 24h --group-by event_name --json
-```
-
-Use identical explicit `--since` and `--until` timestamps when comparing
-queries. Add `-a unique/visitor_id` for Vercel's daily visitor estimate, which
-is distinct from page-load event counts. Inspect event properties in the
-Analytics Events panel for room, control and milestone breakdowns.
-
-Run `npm run test:analytics` after tracking or lifecycle changes. It covers
-visibility, deep links, new registry rooms, map exclusion, cumulative cinema,
-BFCache, sleep, deduplication, passive input, blocked/throwing delivery and both
-source/hashed portable export scripts. Keep `#analyticsBootstrap` and the injected
-`[data-railway-analytics]` script excluded before export inlines app assets.
 
 ## Files that should stay local
 

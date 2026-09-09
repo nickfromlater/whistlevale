@@ -28,7 +28,7 @@ function openQuietPanel(id,opener,back){
  if(back===undefined)back=previous&&!quietPrimaryPanels.has(id)?{id:previous.id,opener:quietControls.opener,back:quietControls.back}:null;
  closeQuietControls();
  quietControls.panel=panel;quietControls.opener=opener;quietControls.back=back;
- panel.hidden=false;panel.scrollTop=0;window.railwayAnalytics?.panel?.(id);
+ panel.hidden=false;panel.scrollTop=0;
  for(const button of document.querySelectorAll('[data-quiet-opener]'))if(button.getAttribute('aria-controls')===id)button.setAttribute('aria-expanded','true');
  const backButton=panel.querySelector('[data-panel-back]');if(backButton)backButton.hidden=!back;
  if(id==='layoutPanel'){$('diagramToggle').setAttribute('aria-pressed','true');drawMap();}
