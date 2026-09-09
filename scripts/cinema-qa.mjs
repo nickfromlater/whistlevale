@@ -62,5 +62,7 @@ assert.equal(run('paused'),true,'landscape cinema preserves the other railways p
 assert.equal(run('hobbyHasTrain()'),false);assert.equal(run('[...cameraPos,...cameraTarget,...VP].every(Number.isFinite)'),true);
 fire('pointerdown');fire('pointermove',{clientX:760,clientY:470});fire('pointerup');fire('wheel',{deltaY:-30});run('cinemaCamera(1)');
 assert.equal(run('hobby.cinema'),true);assert.ok(run('cinemaOrbit.manual'),'landscape cinema accepts manual framing');
-fire('keydown',{key:'0'});run('cinemaCamera(1);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
+fire('keydown',{key:'0'});run("hobby.shot='tail';cinemaCamera(10);beginCinemaOrbit()");
+const wideLandscape=run('cinemaOrbit.manual.distance');assert.ok(wideLandscape>180,'phone room view starts beyond the train camera limit');fire('wheel',{deltaY:30});assert.ok(run('cinemaOrbit.manual.distance')>wideLandscape,'zooming out from a wide landscape never jumps inward');assert.ok(run('cinemaOrbit.manual.distance')<=360);
+run('cinemaCamera(1);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
 console.log('Cinema QA passed: drag, tap threshold, pinch/release, wheel, keyboard, moving train anchor, pause/audio preservation, auto return and focus, capture cleanup, lifecycle restoration and finite phone cameras.');
