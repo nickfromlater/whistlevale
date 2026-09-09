@@ -358,10 +358,16 @@ async function packHouseHall(){
   const result=await fetch(new URL(node.getAttribute('href'),url).href);if(!result.ok)throw new Error('Could not pack Hall styles');
   const style=page.createElement('style');style.textContent=await result.text();node.replaceWith(style);
  }
- for(const node of source.querySelectorAll('link[rel~="icon"]')){
+ // Icons are a mixed set now: a scalable SVG plus PNG tab and touch icons.
+ // Inline each by its own type, and include apple-touch-icon, which rel~="icon"
+ // does not match. A portable Hall may reference nothing outside itself.
+ for(const node of source.querySelectorAll('link[rel~="icon"],link[rel~="apple-touch-icon"]')){
   const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;
   const result=await fetch(new URL(href,url).href);if(!result.ok)throw new Error('Could not pack the Hall icon');
-  node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await result.text()));
+  if(/\.svg(\?|#|$)/i.test(href)){node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await result.text()));continue;}
+  const bytes=new Uint8Array(await result.arrayBuffer());let binary='';
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  node.setAttribute('href','data:image/png;base64,'+btoa(binary));
  }
  return '<!DOCTYPE html>\n'+source.outerHTML;
 }
