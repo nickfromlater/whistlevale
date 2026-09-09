@@ -1,23 +1,22 @@
 # Whistlevale
 
 **A miniature railway house that anyone can build in.**
-Wander seven galleries, watch the trains — then claim an empty exhibition bay and
-add something of your own. Your name goes on a plaque beside it, and the house
-walks visitors to it.
+Watch the trains, wander seven exhibition galleries, then choose an empty bay
+and contribute something of your own. Your chosen credit stays beside your work.
 
-[Visit Whistlevale](https://whistlevale.com) · [Claim a bay](contributions/README.md) ·
+[Visit Whistlevale](https://whistlevale.com) · [Choose a bay](docs/contributing/grandhall.md) ·
 [Contribute](CONTRIBUTING.md) · [Agents start here](AGENTS.md)
 
-## One hundred open bays
+## Room for your imagination
 
-The Grand Exhibition has **one hundred numbered display bays across seven
+The Grand Exhibition has **112 numbered display bays across seven
 galleries**, and almost all of them are empty. Pick one, run `npm run bay -- CC-07`
-for a self-contained brief, and hand it to your coding agent — it will ask what
-*you* want to make before it writes anything.
+for a self-contained brief, and hand it to your coding agent with your idea
+and chosen public credit. Selecting a bay does not reserve it.
 
 Contributions are ordinary pull requests: a scene, a building, a train, a livery,
-a poster, a whole room. Every one carries a credit you choose, and every one
-becomes a named stop on the slow tour.
+a poster, a whole room. Every one carries a credit you choose and is reviewed
+before publication.
 
 > **The Open Workshop** — *it doesn't have to be finished.*
 

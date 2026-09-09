@@ -43,6 +43,8 @@ const builtHTML=html.replace(/<script id="audioCatalog">[\s\S]*?<\/script>/,()=>
  return manifest.has(file)?`${name}=${quote}${manifest.get(file)}${suffix}${quote}`:attribute;
 });
 await writeFile(path.join(out,'index.html'),builtHTML);
+const hall=await readFile(path.join(root,'grandhall.html'),'utf8');
+await writeFile(path.join(out,'grandhall.html'),hall.replace(/\b(src|href)=(["'])([^"']+)\2/g,(attribute,name,quote,url)=>manifest.has(url)?`${name}=${quote}${manifest.get(url)}${quote}`:attribute));
 const walk=async dir=>(await Promise.all((await readdir(dir,{withFileTypes:true})).map(async p=>p.isDirectory()?walk(path.join(dir,p.name)):path.join(dir,p.name)))).flat();
 const files=await walk(out);
 if(files.some(f=>path.basename(f).startsWith('.')))throw new Error('A private file reached the public build.');

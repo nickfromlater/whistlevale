@@ -8,6 +8,11 @@ it a calmer, more convincing place to explore.
 [Agents start here](AGENTS.md) · [Add a train](docs/contributing/trains.md) ·
 [Add a building](docs/contributing/buildings.md) · [Grow The Commons](docs/contributing/commons.md) · [Layouts and scenery](contributions/README.md)
 
+For an exhibition miniature, choose a bay in the [Grand Hall](docs/contributing/grandhall.md)
+and copy its agent prompt, or run `npm run bay -- AR-03`. The prompt carries the
+bay's current dimensions and contribution recipe. Open room plots on the full
+house map offer a separate prompt for proposing a complete new room.
+
 Small fixes, original trains, paint schemes, buildings and miniature scenes are
 welcome. Choose the shortest path:
 
@@ -54,6 +59,7 @@ npm run test:geometry
 npm run test:lighting
 npm run test:startup
 npm run test:rooms
+npm run test:hall
 npm run test:map
 npm run test:cinema
 npm run test:trains
@@ -204,19 +210,34 @@ Preserve one-panel-at-a-time dismissal, visible focus restoration, 44-pixel touc
 targets, and safe-area spacing. Runtime panel headings must be removed when
 packing a portable export so they are created only once on its next startup.
 
+See [the Grand Hall recipe](docs/contributing/grandhall.md) for gallery and bay work.
+
 ### House layout metadata
 
-`src/shop-house.js` arranges registered rooms in two columns, adds rows and
-connecting corridors, aligns floors, and derives the overview camera. Metadata
+`src/shop-house.js` places a registered central exhibition at its authored size,
+with railway rooms in flanking rows. Without a central room it uses two columns.
+Both arrangements derive connecting corridors, aligned floors and overview bounds. Metadata
 under `definition.map` is optional:
 
 | Field | Meaning |
 | --- | --- |
+| `position` | `'central'` reserves the central footprint; at most one room may declare it. |
+| `plot` | In the central-Hall layout, an exact wing site such as `'east-3'` or `'west-4'`: side plus one-based row. A new room replaces that open plot. |
+| `destination` | Optional same-origin page entered from the map; its lightweight room model is used only in the house overview. |
 | `order` | Sort order in the house; new rooms append by default. Top-level `mapOrder` takes precedence. |
 | `scale` | Uniform scale for the entire scene, walls and trains; default `.40`. |
 | `footprint` | Room width and depth in its original scene units; default `[156, 128]`. |
 | `focus` | Camera target in local scene coordinates; defaults to `definition.target`. |
 | `signKey` | Optional existing room-atlas key for the doorway plaque. |
+
+Choose an open plot on the live map and copy its room prompt before authoring.
+Check current `main` to confirm the site is still free, and obtain an accepted
+whole-room proposal. Set `map.plot` to its stable ID and supply the room's actual
+`footprint` and `scale`; the site is not a reason to shrink the architecture.
+Duplicate explicit plots and malformed plot IDs are rejected. Rooms without
+`map.plot` continue to fill unclaimed wing positions automatically. Additional
+rows grow around the central Hall, with corridors and overview bounds derived
+from the resulting layout. Selection neither reserves a plot nor publishes it.
 
 The valley uses a smaller `.33` scale because its original shell is larger.
 `buildShopHouse()` returns `{mesh, layout}`; `layout.rooms` and `layout.byKey`

@@ -76,3 +76,22 @@
 @media(forced-colors:active){.sm-preview,.sm-directory,.sm-marker,.sm-back,.sm-reset,.sm-status{background:Canvas;border:1px solid CanvasText}.sm-directory-room.is-selected{outline:2px solid Highlight}.sm-enter{background:ButtonFace;color:ButtonText!important}}
 body.shop-map-open #ui,body.shop-map-open #houseUI,body.shop-map-open .mode-switch,body.shop-map-open .district-nav,body.shop-map-open #restore,body.shop-map-open #editorOverlay{visibility:hidden;pointer-events:none}
 body.shop-map-open canvas{touch-action:none}
+
+/* Empty sites are invitations, with the same deliberate tap targets as rooms. */
+.sm-directory-room.is-plot{border-style:dashed;border-color:#cedaba38}
+.sm-marker.is-plot{border-style:dashed;background:#243d35dc;color:#dce8c8}
+.sm-marker.is-plot .sm-marker-number{font:22px Georgia,serif}
+.sm-prompt{box-sizing:border-box;width:min(650px,calc(100vw - 28px));max-height:calc(100dvh - 32px);margin:auto;padding:30px;border:1px solid #bca574;border-radius:12px;background:#f0e7d4;color:#2a4234;box-shadow:0 24px 100px #081c1966;overflow:auto;overscroll-behavior:contain;pointer-events:auto}
+.sm-prompt::backdrop{background:#10241eb8;backdrop-filter:blur(5px)}
+.sm-prompt form{margin:0}.sm-prompt-close{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;font:26px Georgia,serif!important}
+.sm-prompt-close:hover{background:#334f3910}.sm-prompt-kicker{display:block;padding-right:32px;color:#6c7556;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
+.sm-prompt h2{margin:12px 32px 12px 0;font:32px/1.1 Georgia,serif;font-weight:400}
+.sm-prompt p{font-size:13px;line-height:1.65;color:#5c6d5c;max-width:52ch}
+.sm-prompt label{display:block;margin:20px 0 8px;font-size:12px}
+.sm-prompt textarea{box-sizing:border-box;display:block;width:100%;height:clamp(180px,38dvh,390px);resize:vertical;border:1px solid #94845d55;border-radius:5px;padding:14px;background:#faf5e9;color:#324a3b;font:12px/1.65 ui-monospace,monospace}
+.sm-prompt textarea:focus-visible{outline:2px solid #55744f;outline-offset:3px}
+.sm-prompt-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px}
+.sm-prompt-actions [role=status]{font-size:12px;line-height:1.5;color:#5c6d5c}
+.sm-copy{flex:none;min-height:44px;padding:10px 18px;border:1px solid #334d3e;border-radius:6px;background:#334d3e;color:#f0dfb9!important;font-size:13px!important}
+.sm-copy:hover{background:#43644c}.sm-prompt button:focus-visible{outline-color:#55744f}
+@media(max-width:600px){.sm-prompt{padding:24px 20px}.sm-prompt h2{font-size:28px}.sm-prompt textarea{font-size:16px}}
