@@ -6,7 +6,7 @@
 // as the catalogue grows; geometry and clearance checks still apply separately.
 const COMMUNITY_LIMITS=Object.freeze({works:128,perRoom:64,credits:12,vertices:300000});
 const COMMUNITY_KINDS=['building','people','vignette','prop','planting','furniture','structure','district','room','train','livery','art','audio','code'];
-const COMMUNITY_BUILDERS=Object.freeze({harbor:1.2,porter:1,mapParty:.95,reading:1.15,atelier:1,person:.4,bird:.16,dog:.45,bicycle:.8,chair:.45,case:.3,pack:.3,book:.22,rope:.3,trolley:.65,cottage:2.7,tree:1.8,lamp:.3,bench:.65,willowbank:5.3,wintergarden:11.4});
+const COMMUNITY_BUILDERS=Object.freeze({harbor:1.2,porter:1,mapParty:.95,reading:1.15,atelier:1,person:.4,bird:.16,dog:.45,bicycle:.8,chair:.45,case:.3,pack:.3,book:.22,rope:.3,trolley:.65,cottage:2.7,tree:1.8,lamp:.3,bench:.65,willowbank:5.3,wintergarden:11.4,meridian:5.9});
 function communityAssert(ok,message){if(!ok)throw new Error(message);}
 function communityText(value,max,label){communityAssert(typeof value==='string'&&value.trim().length>0&&value.length<=max&&!/[\u0000-\u001f\u007f<>]/.test(value),label+' must be plain text, 1–'+max+' characters.');return value.trim();}
 function communityFields(value,allowed,label){communityAssert(value&&typeof value==='object'&&!Array.isArray(value),label+' must be an object.');for(const key of Object.keys(value))communityAssert(allowed.includes(key),label+': unknown field '+key+'.');}
