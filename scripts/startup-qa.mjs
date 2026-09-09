@@ -111,7 +111,7 @@ const noStorage=fixture({denyStorage:true});noStorage.start();assert.deepEqual(n
 // Run the real controls initialization across fresh page lifetimes. An old
 // dismissal must not permanently remove the contribution path on later visits.
 const controlsSource=await readFile(new URL('../src/controls.js',import.meta.url),'utf8');
-function invitationPage({storage=new Map(),blocked=false,hall=true}={}){
+function invitationPage({storage=new Map(),blocked=false,hall=true,bootControls=true}={}){
  const nodes=new Map(),visits=[],focus=[];
  for(const id of ['hallInvitation','dismissHallInvitation','hallInvitationLink','moreBtn','soundClose','closeNetwork','helpClose','visitCommons','visitGrandHall','quietHide','restore','railControls','cinemaStart'])nodes.set(id,{
   hidden:true,dataset:{},setAttribute:noop,insertBefore:noop,querySelector:()=>({textContent:''}),focus:()=>focus.push(id)
@@ -121,8 +121,9 @@ function invitationPage({storage=new Map(),blocked=false,hall=true}={}){
   document:{querySelectorAll:()=>[],addEventListener:noop},window:{addEventListener:noop},
   localStorage:{getItem(key){if(blocked)throw new Error('Storage unavailable');return storage.get(key)||null;},setItem(key,value){if(blocked)throw new Error('Storage unavailable');storage.set(key,value);}}
  });
- vm.runInContext(controlsSource,context);const init=()=>vm.runInContext('initQuietControls()',context);init();
- return{nodes,visits,focus,init,click(modifier=null){let prevented=false;nodes.get('hallInvitationLink').onclick({[modifier]:true,preventDefault(){prevented=true;}});return prevented;}};
+ const loadControls=()=>vm.runInContext(controlsSource,context),init=()=>vm.runInContext('initQuietControls()',context);
+ if(bootControls){loadControls();init();}
+ return{context,nodes,visits,focus,loadControls,init,click(modifier=null){let prevented=false;nodes.get('hallInvitationLink').onclick({[modifier]:true,preventDefault(){prevented=true;}});return prevented;}};
 }
 const invitationStorage=new Map([['whistlevale-hall-invitation','dismissed'],['unrelated-preference','keep']]);
 const arrival=invitationPage({storage:invitationStorage});
@@ -143,5 +144,36 @@ for(const modifier of ['metaKey','ctrlKey','shiftKey','altKey']){
 const privateArrival=invitationPage({blocked:true});assert.equal(privateArrival.nodes.get('hallInvitation').hidden,false);assert.equal(privateArrival.click(),true);
 assert.equal(invitationPage({hall:false}).nodes.get('hallInvitation').hidden,true,'a house without the Hall does not offer a missing destination');
 console.log('Contribution invitation verified: visible on every new page, page-only dismissal, legacy/blocked storage, focus, modified links and Hall navigation.');
+
+// Model a slow parser-blocking script after hobby.js. Timer time can advance
+// while controls/map/cabinet definitions are absent; startup must wait for them.
+const hobbySource=await readFile(new URL('../src/hobby.js',import.meta.url),'utf8');
+const houseStartup=hobbySource.slice(hobbySource.indexOf('function startHouse('));
+for(const readyState of ['loading','interactive','complete']){
+ const page=invitationPage({bootControls:false}),events=new Map(),jobs=[],calls=[],inserted=[];let now=0;
+ Object.assign(page.context,{URLSearchParams,location:{protocol:'https:',search:'',hash:''},hobby:{room:'valley'},shadowDirty:false,
+  createHobbyUI:()=>calls.push('house'),baseHobbyStart:()=>{page.context.window.READY=true;},initHouseArt:noop,buildValleyLife:()=>({}),initWalkingFigures:noop,updateUI:noop,syncRoomControls:noop,enterCinema:noop,leaveCinema:noop,
+  setTimeout(callback,delay){jobs.push({callback,at:now+delay});},console:{error(error){throw error;}}
+ });
+ Object.assign(page.context.document,{readyState,body:{dataset:{}},addEventListener(type,callback,options){events.set(type,{callback,once:options?.once});}});
+ page.nodes.set('ambienceBtn',{onclick:noop,dataset:{},setAttribute:noop});
+ page.nodes.get('railControls').insertBefore=(node,before)=>inserted.push([node,before]);
+ const advance=ms=>{const end=now+ms;while(jobs.some(job=>job.at<=end)){jobs.sort((a,b)=>a.at-b.at);const job=jobs.shift();now=job.at;job.callback();}now=end;};
+ const parsed=()=>{page.context.document.readyState='interactive';const event=events.get('DOMContentLoaded');if(event){if(event.once)events.delete('DOMContentLoaded');event.callback();}};
+ const tail=()=>{page.loadControls();for(const name of ['initHouseMap','restoreCollectionSelections','initTrainCabinet'])page.context[name]=()=>calls.push(name);};
+ if(readyState!=='loading')tail();
+ vm.runInContext(houseStartup,page.context);
+ if(readyState==='loading'){
+  advance(3000);assert.deepEqual(calls,[],'a three-second late controls request cannot trigger partial startup');
+  assert.equal(page.nodes.get('hallInvitation').hidden,true);tail();parsed();
+ }
+ advance(50);
+ assert.deepEqual(calls,['house','initHouseMap','restoreCollectionSelections','initTrainCabinet'],readyState+' initializes every late module exactly once');
+ assert.equal(page.nodes.get('hallInvitation').hidden,false,'the real controls initializer reveals the contribution CTA');
+ assert.deepEqual(inserted,[[page.nodes.get('cinemaStart'),page.nodes.get('moreBtn')]],'the real controls initializer places Cinema in the dock');
+ assert.equal(vm.runInContext('quietControls.ready',page.context),true);assert.equal(page.context.hobby.ready,true);
+ parsed();advance(500);assert.equal(calls.filter(name=>name==='house').length,1,'DOMContentLoaded and the ready-state fallback cannot start twice');
+}
+console.log('House startup verified: delayed tail scripts finish before startup; controls, Cinema, CTA, map and cabinet initialize once for loading and parsed documents.');
 
 console.log('Startup verified: one saved-world build with a valid factory cache; identical saved state and random sequence; pristine reset/meadow/undo/import; invalid, stale, missing, blocked and embedded-storage fallbacks.');

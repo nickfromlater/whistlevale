@@ -105,7 +105,7 @@ navContext.qaScene={key:'commons',lifeDetails:{details:[{contribution:'willowban
 nav(`communityRoomPlaces(qaScene);setView=function(mode){viewMode=mode;};updateUI=function(){};
 function visitHouseRoom(key,after){navCalls.push(key);hobby.room=key;hobby.scene=key==='commons'?qaScene:null;after?.();}
 function openHouseMap(){mapCalls.push(true);return Promise.resolve();}function shopMapSelect(){}function toast(message){notices.push(message);}`);
-nav(hobby.slice(hobby.indexOf('function focusHouseWork('),hobby.indexOf('\nsetTimeout(startHouse,50)')));
+nav(hobby.slice(hobby.indexOf('function focusHouseWork('),hobby.indexOf('\nfunction scheduleHouseStartup(')));
 const portableAddresses=['file:///tmp/whistlevale.html?map=grandhall','blob:https://fixture.test/portable-house#map=grandhall'];
 const addresses=[destination[0].href];
 for(const address of portableAddresses){
