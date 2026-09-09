@@ -125,3 +125,26 @@ The Grand Hall also accepts `grandhall.html?profile`. Its local panel shows fram
 timing, CPU submission time, draw calls, vertex-buffer memory and shadow updates.
 Use the same gallery, camera, viewport and device for comparisons; reset after
 loading. CPU submission time is not a GPU measurement.
+
+## Grand Hall loading
+
+The house map keeps a lightweight overview of the exhibition. Enter the Hall
+to inspect the complete native exhibits and explore its connected galleries.
+The entered Hall builds the current gallery and visible neighboring galleries
+as needed, including their architecture and reviewed miniatures. Unvisited,
+inactive galleries do not build their full scenes at startup.
+
+The Hall retains at most three gallery scenes on desktop and two on phones.
+The current view keeps its galleries available; older hidden scenes release
+their graphics buffers when the cache fills. Returning to an evicted gallery
+rebuilds its scene. Exhibit source scripts load once when first needed and stay
+available for that page visit; releasing graphics buffers does not unload
+JavaScript. A portable export includes the source needed for the same behavior
+offline.
+
+For a useful performance check, measure first entry, movement between galleries,
+and a return after visiting enough galleries to fill the cache. The scene-count
+limit bounds how many galleries remain in graphics memory. Model complexity,
+shared textures, the shadow map and temporary construction data still affect
+memory and responsiveness; use the contribution geometry checks and actual
+device measurements alongside the profile panel.

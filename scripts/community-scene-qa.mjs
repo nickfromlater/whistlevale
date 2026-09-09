@@ -23,6 +23,10 @@ const results=run(`(()=>{
  const original=communityCatalogue.works;
  try{
   const commons=getHouseScene('commons');
+  const pottery=communityWorkView(commons,'willowbank-pottery',0),placedPottery=commons.lifeDetails.details.find(detail=>detail.contribution==='willowbank-pottery');
+  assert.ok(pottery&&placedPottery,'the Hall destination resolves the actual built Willowbank model');
+  assert.equal(pottery.target[0],placedPottery.x);assert.equal(pottery.target[2],placedPottery.z);assert.ok(pottery.target[1]>placedPottery.y);
+  assert.equal(pottery.distance,19);assert.equal(pottery.placement,0);assert.equal(communityWorkView({...commons,key:'coast'},'willowbank-pottery',0),null,'a room mismatch cannot frame unrelated geometry');
   assert.equal(commons.trains.length,1,'one modest Commons service');assert.equal(commons.routes.length,1);
   assert.equal(commons.trains[0].type,'steam');assert.equal(commons.trains[0].cars,2);
   const loop=commons.routes[0];assert.ok(loop.length>270&&loop.length<280);

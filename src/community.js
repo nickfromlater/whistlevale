@@ -31,27 +31,37 @@ function communityMiniatures(key,place){
 }
 function communityRoomPlaces(scene){
  for(const work of communityCatalogue.works.filter(w=>w.room===scene.key&&w.view)){
-  const placed=scene.lifeDetails.details.find(d=>d.contribution===work.id&&d.placement===0);if(!placed)continue;
-  const p=work.miniatures[0],r=COMMUNITY_BUILDERS[p.builder]*(p.scale??1);
-  scene.spots.push({name:work.title,target:[placed.x,placed.y+Math.min(2,r*.35),placed.z],distance:Math.max(12,r*4),pitch:.55,yaw:.45,...work.view,detail:'Made by '+communityCreditLine(work.credits)+'.'});
+  const view=communityWorkView(scene,work.id,0);if(!view)continue;
+  scene.spots.push({...view,detail:'Made by '+communityCreditLine(work.credits)+'.'});
  }
+}
+function communityWorkView(scene,id,placement=0){
+ if(!scene||typeof id!=='string'||!/^[a-z][a-z0-9-]*$/.test(id)||!Number.isSafeInteger(placement)||placement<0)return null;
+ const works=communityCatalogue.works.filter(work=>work.id===id);if(works.length!==1)return null;
+ const work=works[0],piece=work.miniatures?.[placement];if(work.room!==scene.key||!piece)return null;
+ const matches=(scene.lifeDetails?.details||[]).filter(detail=>detail.contribution===id&&detail.placement===placement);if(matches.length!==1)return null;
+ const placed=matches[0],radius=COMMUNITY_BUILDERS[piece.builder]*(piece.scale??1);
+ if(![placed.x,placed.y,placed.z,radius].every(Number.isFinite)||radius<=0)return null;
+ return{name:work.title,contribution:id,placement,target:[placed.x,placed.y+Math.min(2,radius*.35),placed.z],distance:Math.max(12,radius*4),pitch:.55,yaw:.45,...(placement===0?work.view:{})};
 }
 function communityCreditLine(credits){return validateCredits(credits).map(c=>c.name).join(', ');}
 function paintBuilders(){
  const list=$('buildersList');list.replaceChildren();
- const entries=communityCatalogue.works.map(w=>({title:w.title,room:w.room,credits:w.credits}));
- if(typeof GRAND_HALL_EXHIBITS!=='undefined'&&typeof grandHallExhibitCredits==='function')for(const exhibit of GRAND_HALL_EXHIBITS)entries.push({title:exhibit.title,room:'grandhall',credits:grandHallExhibitCredits(exhibit)});
- for(const q of TRAIN_COLLECTION)if(q.credits?.length)entries.push({title:q.name,room:'house',credits:q.credits});
- for(const [key,room]of Object.entries(HOUSE_ROOMS))if(room.credits?.length)entries.push({title:room.name,room:key,credits:room.credits});
- if(layoutCredits.length)entries.push({title:layoutTitle,room:'valley',credits:layoutCredits});
- const creditedObjects=new Map();for(const o of objects)if(o.credits?.length){const title=assetById[o.type]?.name||'Scenery',key=title+JSON.stringify(o.credits);if(!creditedObjects.has(key))creditedObjects.set(key,{title,room:'valley',credits:o.credits});}
+ const entries=communityCatalogue.works.map(w=>({key:JSON.stringify(['work',w.id,w.source]),title:w.title,room:w.room,credits:w.credits}));
+ if(typeof GRAND_HALL_EXHIBITS!=='undefined'&&typeof grandHallExhibitCredits==='function')for(const exhibit of GRAND_HALL_EXHIBITS)entries.push({key:JSON.stringify(['work',exhibit.id,exhibit.source]),title:exhibit.title,room:'grandhall',credits:grandHallExhibitCredits(exhibit)});
+ for(const q of TRAIN_COLLECTION)if(q.credits?.length)entries.push({key:JSON.stringify(['train',q.id]),title:q.name,room:'house',credits:q.credits});
+ for(const [key,room]of Object.entries(HOUSE_ROOMS))if(room.credits?.length)entries.push({key:JSON.stringify(['room',key]),title:room.name,room:key,credits:room.credits});
+ if(layoutCredits.length)entries.push({key:'layout',title:layoutTitle,room:'valley',credits:layoutCredits});
+ const creditedObjects=new Map();for(const o of objects)if(o.credits?.length){const title=assetById[o.type]?.name||'Scenery',key=JSON.stringify(['object',o.type,o.credits]);if(!creditedObjects.has(key))creditedObjects.set(key,{key,title,room:'valley',credits:o.credits});}
  entries.push(...creditedObjects.values());
  const authors=new Map();
  for(const entry of entries)for(const credit of validateCredits(entry.credits)){
   const key=JSON.stringify([credit.name,credit.platform,credit.handle]);
   if(!authors.has(key))authors.set(key,{credit,works:new Map()});
-  const author=authors.get(key),workKey=entry.title+entry.room;
-  if(!author.works.has(workKey))author.works.set(workKey,{...entry,note:credit.note});
+  const author=authors.get(key);
+  // One reviewed work can be displayed in several rooms; titles are not IDs.
+  if(!author.works.has(entry.key))author.works.set(entry.key,{title:entry.title,rooms:new Set(),notes:new Set()});
+  const work=author.works.get(entry.key);work.rooms.add(entry.room);if(credit.note)work.notes.add(credit.note);
  }
  for(const {credit,works}of authors.values()){
   const item=document.createElement('li'),heading=document.createElement('h3'),url=communityCreditURL(credit),name=document.createElement(url?'a':'span');name.textContent=credit.name;
@@ -62,8 +72,8 @@ function paintBuilders(){
   }heading.append(name);item.append(heading);
   const details=document.createElement('details'),summary=document.createElement('summary'),workList=document.createElement('ul');summary.textContent=works.size===1?'1 contribution':works.size+' contributions';details.open=works.size<=3;details.append(summary);workList.className='builders-works';
   for(const work of works.values()){
-   const row=document.createElement('li'),title=document.createElement('strong'),room=document.createElement('span');title.textContent=work.title;room.textContent=HOUSE_ROOMS[work.room]?.name||'Across the house';row.append(title,room);
-   if(work.note){const note=document.createElement('p');note.textContent=work.note;row.append(note);}workList.append(row);
+   const row=document.createElement('li'),title=document.createElement('strong'),room=document.createElement('span');title.textContent=work.title;room.textContent=[...work.rooms].map(key=>HOUSE_ROOMS[key]?.name||'Across the house').join(' · ');row.append(title,room);
+   for(const text of work.notes){const note=document.createElement('p');note.textContent=text;row.append(note);}workList.append(row);
   }
   details.append(workList);item.append(details);list.append(item);
  }

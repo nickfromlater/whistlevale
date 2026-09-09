@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 import {alignExport} from './grandhall-align.mjs';
-import {communityContext,loadContributionDefinitions,prepareCommunityGeometry} from './community-lib.mjs';
+import {communityContext,loadContributionDefinitions,loadReviewedHallSources,prepareCommunityGeometry} from './community-lib.mjs';
 
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
 const [html,index,data,exhibits,prompts,core]=await Promise.all(['grandhall.html','index.html','src/grandhall-data.js','src/grandhall-exhibits.js','src/grandhall-contribute.js','src/community-core.js'].map(read));
@@ -14,6 +14,19 @@ const roomIds=new Set(),bayIds=new Set(),workIds=new Set(),occupied=new Set();
 const displayFormats=new Set(['open-table','low-vitrine','tall-vitrine','wall-case','round-vitrine']);
 const finiteVector=(vector,length,label)=>assert.ok(Array.isArray(vector)&&vector.length===length&&vector.every(Number.isFinite),label);
 const positive=(n,label)=>assert.ok(Number.isFinite(n)&&n>0,label);
+const community=JSON.parse(await read('contributions/world.json'));
+const scriptTags=page=>[...page.matchAll(/<script\b([^>]*)>/g)].map(([,attributes])=>Object.fromEntries([...attributes.matchAll(/(?:^|\s)([\w-]+)=(['"])(.*?)\2/g)].map(([,name,,value])=>[name,value])));
+function checkSourceDeclarations(exhibit,housePage,hallPage,works){
+ assert.ok(exhibit.mapPreview===undefined||typeof exhibit.mapPreview==='boolean',exhibit.id+' optional mapPreview is a boolean');
+ const placeholders=scriptTags(hallPage).filter(tag=>tag['data-source']===exhibit.source);
+ assert.equal(placeholders.length,1,exhibit.source+' has one deferred declaration in grandhall.html');
+ const placeholder=placeholders[0];
+ assert.equal(placeholder.type,'application/x-whistlevale-exhibit',exhibit.source+' uses the Hall deferred script type');
+ assert.equal(placeholder['data-src'],exhibit.source,exhibit.source+' deferred URL matches its reviewed source');
+ assert.equal(placeholder.src,undefined,exhibit.source+' defers execution until its gallery is needed');
+ const railwayPlacement=works.some(work=>work.source===exhibit.source&&work.room!=='house'&&(work.miniatures?.length||work.workshop?.length));
+ if(exhibit.mapPreview===true||railwayPlacement)assert.ok(scriptTags(housePage).some(tag=>tag.src===exhibit.source&&(!tag.type||['text/javascript','application/javascript'].includes(tag.type))),exhibit.source+' needs an eager index.html script for its map preview or railway placement');
+}
 for(const room of catalog.rooms){
  assert.ok(/^[a-z][a-z0-9-]*$/.test(room.id)&&!roomIds.has(room.id),'gallery IDs are unique and URL-safe');roomIds.add(room.id);
  for(const key of ['x','z'])assert.ok(Number.isFinite(room[key]),room.id+' '+key);
@@ -34,6 +47,25 @@ for(const bay of catalog.bays){
  assert.ok(Math.abs(bay.x-room.x)+halfX<room.width/2&&Math.abs(bay.z-room.z)+halfZ<room.depth/2,bay.id+' display stays inside its gallery');
  for(const key of ['camera','target','marker'])finiteVector(bay[key],3,bay.id+' '+key);
 }
+// Every authored display keeps a visitor-width route to its front, including
+// the new wall windows. This exercises spatial composition instead of merely
+// checking that each object fits independently inside the room rectangle.
+for(const [ri,room]of catalog.rooms.entries()){
+ const bays=catalog.bays.filter(b=>b.room===ri),clearance=.32,step=.45;
+ const blocked=(x,z)=>bays.some(b=>{
+  const dx=x-b.x+room.x,dz=z-b.z+room.z,ca=Math.cos(b.yaw),sa=Math.sin(b.yaw),lx=ca*dx-sa*dz,lz=sa*dx+ca*dz;
+  return b.furniture==='round'?Math.hypot(lx,lz)<b.width/2+clearance:Math.abs(lx)<b.width/2+clearance&&Math.abs(lz)<b.depth/2+clearance;
+ });
+ const nx=Math.floor((room.width-1)/step),nz=Math.floor((room.depth-1)/step),x0=-room.width/2+.5,z0=-room.depth/2+.5;
+ const grid=(x,z)=>[Math.max(0,Math.min(nx-1,Math.round((x-x0)/step))),Math.max(0,Math.min(nz-1,Math.round((z-z0)/step)))];
+ const [sx,sz]=grid(room.view.camera[0],room.view.camera[2]),seen=new Set(),queue=[[sx,sz]];
+ assert.ok(!blocked(x0+sx*step,z0+sz*step),room.id+' arrival camera has physical clearance');
+ for(let k=0;k<queue.length;k++){const [x,z]=queue[k],key=x+z*nx;if(seen.has(key)||x<0||z<0||x>=nx||z>=nz||blocked(x0+x*step,z0+z*step))continue;seen.add(key);queue.push([x-1,z],[x+1,z],[x,z-1],[x,z+1]);}
+ for(const bay of bays){const front=bay.depth/2+.85,x=bay.x-room.x+Math.sin(bay.yaw)*front,z=bay.z-room.z+Math.cos(bay.yaw)*front,[gx,gz]=grid(x,z);assert.ok(seen.has(gx+gz*nx),bay.id+' has a connected visitor approach');}
+}
+const protectedBay=catalog.bays.find(b=>b.id==='GH-08');
+assert.deepEqual([protectedBay.x,protectedBay.z,protectedBay.width,protectedBay.depth,protectedBay.y,protectedBay.surfaceY,protectedBay.maxHeight],[-5,10,3.3,3.35,1.24,1.252,1.7],'the published Willowbank display keeps its complete placement envelope');
+
 assert.ok(bayIds.has(catalog.featured),'featured bay exists');
 for(const exhibit of catalog.exhibits){
  assert.ok(/^[a-z][a-z0-9-]*$/.test(exhibit.id)&&!workIds.has(exhibit.id),'exhibit IDs are unique and URL-safe');workIds.add(exhibit.id);
@@ -46,11 +78,11 @@ for(const exhibit of catalog.exhibits){
  if(exhibit.link!==undefined){const link=new URL(exhibit.link);assert.equal(link.protocol,'https:','credit links use HTTPS');assert.equal(link.username+link.password,'','credit links contain no credentials');}
  assert.ok(/^src\/scenery\/[a-z][a-z0-9-]*\.js$/.test(exhibit.source),'native exhibit declares its source');
  await read(exhibit.source);
- for(const [page,source]of [['index.html',index],['grandhall.html',html]])assert.ok(source.includes('src="'+exhibit.source+'"'),exhibit.source+' is included in '+page);
+ checkSourceDeclarations(exhibit,index,html,community.works);
 }
 const first=catalog.exhibits.find(e=>e.id==='willowbank-pottery');
 assert.ok(first,'the original Willowbank contribution remains');assert.equal(first.bay,catalog.featured);assert.equal(first.maker,'nickfromlater');assert.equal(first.link,'https://x.com/nickfromlater');assert.equal(first.builder,'willowbank');
-const plain=value=>JSON.parse(JSON.stringify(value)),originalPottery=JSON.parse(await read('contributions/world.json')).works.find(work=>work.id===first.id);
+const plain=value=>JSON.parse(JSON.stringify(value)),originalPottery=community.works.find(work=>work.id===first.id);
 assert.deepEqual(plain(catalog.credits(first)),originalPottery.credits,'Willowbank preserves every original Commons credit');
 assert.deepEqual(plain(catalog.credits({maker:'Legacy maker',link:'https://x.com/legacy_maker'})),[{name:'Legacy maker',platform:'x',handle:'legacy_maker'}]);
 assert.deepEqual(plain(catalog.credits({credits:[{name:'Pseudonym'}]})),[{name:'Pseudonym'}]);
@@ -84,6 +116,37 @@ const measurements=geometry.run(`(()=>{
  }
  return result;
 })()`);
+
+// Follow the Hall-only recipe in a fresh VM: one native source and a deferred
+// Hall declaration, with no index script or Commons placement. Nothing here
+// changes the public collection or creates a file that a build could publish.
+const deferredExhibit={id:'qa-deferred-native',bay:catalog.bays.find(b=>!occupied.has(b.id)).id,title:'Unpublished native fixture',credits:[{name:'Example Maker'}],story:'QA only',builder:'qa-deferred-native',scale:1,source:'src/scenery/qa-deferred-native.js'};
+const deferredTag='<script type="application/x-whistlevale-exhibit" data-source="'+deferredExhibit.source+'" data-src="'+deferredExhibit.source+'"></script>';
+assert.ok(!index.includes(deferredExhibit.source),'new Hall-only fixture has no initial house script');
+checkSourceDeclarations(deferredExhibit,index,html+deferredTag,community.works);
+checkSourceDeclarations({...deferredExhibit,mapPreview:false},index,html+deferredTag,community.works);
+assert.throws(()=>checkSourceDeclarations({...deferredExhibit,mapPreview:'true'},index,html+deferredTag,community.works),/mapPreview is a boolean/);
+assert.throws(()=>checkSourceDeclarations({...deferredExhibit,mapPreview:true},index,html+deferredTag,community.works),/eager index.html script/);
+assert.throws(()=>checkSourceDeclarations(deferredExhibit,index,html+deferredTag,[{source:deferredExhibit.source,room:'commons',miniatures:[{}]}]),/eager index.html script/);
+assert.throws(()=>checkSourceDeclarations(deferredExhibit,index,html,community.works),/one deferred declaration/);
+const deferred=await communityContext(),sourceReads=new Map();
+await loadContributionDefinitions(deferred,{format:'whistlevale-community',version:1,works:[]},{readSource:async file=>{
+ sourceReads.set(file,(sourceReads.get(file)||0)+1);
+ if(file===deferredExhibit.source)return "const qaDeferredLoaded=true;function qaDeferredNative(b){b.box(0,.1,0,.2,.2,.2,'#bda167',41);}";
+ const source=await read(file);
+ if(file==='src/grandhall-exhibits.js')return source+'\nGRAND_HALL_EXHIBITS.push('+JSON.stringify(deferredExhibit)+');\nconst qaOriginalBuilder=grandHallBuildExhibit;grandHallBuildExhibit=(name,b)=>name===\'qa-deferred-native\'?qaDeferredNative(b):qaOriginalBuilder(name,b);';
+ return source;
+}});
+assert.equal(sourceReads.get(deferredExhibit.source),1,'headless geometry review discovers the new source from the reviewed Hall registry');
+assert.equal(sourceReads.get(first.source),1,'an eager Commons source is not executed again for Hall review');
+prepareCommunityGeometry(deferred);
+const deferredModel=deferred.run(`(()=>{const exhibit=GRAND_HALL_EXHIBITS.at(-1),bay=GRAND_HALL_BAYS.find(b=>b.id===exhibit.bay),b=new Builder();grandHallPlaceExhibit(exhibit,b,bay);return{vertices:b.data.length/12,minY:Math.min(...b.data.filter((_,i)=>i%12===1)),surfaceY:bay.surfaceY,credits:grandHallExhibitCredits(exhibit)};})()`);
+assert.equal(deferredModel.vertices,36,'Hall-only source constructs its actual native triangles through the shared placement helper');
+assert.ok(Math.abs(deferredModel.minY-deferredModel.surfaceY)<1e-6,'deferred source rests on its display surface');
+assert.deepEqual(plain(deferredModel.credits),deferredExhibit.credits,'the unpublished work retains its chosen public credit');
+deferred.run("GRAND_HALL_EXHIBITS.unshift({source:'../outside.js'});");
+await assert.rejects(()=>loadReviewedHallSources(deferred,{readSource:()=>{throw new Error('Unexpected source read');}}),/Invalid reviewed Hall source/);
+console.log('Deferred contribution QA passed: Hall-only source absent from index, native geometry and credit, eager-source deduplication, source allowlist and preview/railway loading requirements.');
 
 // A Hall-only work must appear in the house's existing credit UI, without a
 // duplicate placement in the Commons. This fixture is never published.

@@ -49,6 +49,21 @@ const report=run(`(()=>{
 })()`);
 console.table(report.counts);console.log(`Entered Hall geometry passed: ${report.total.toLocaleString()} vertices, ${report.records} batches, finite architecture, distinct galleries, translucent cases and connected portals.`);
 
+// Scoped residency reconstructs exactly the same room geometry, including its
+// own half-links, without building another gallery or duplicating portal UI.
+run(`(()=>{
+ const original=records.slice(),portalCount=portals.length;let rebuilt=0;
+ for(let ri=0;ri<GRAND_HALL_GALLERIES.length;ri++){
+  const before=records.length;buildGrandHallArchitecture(ri);const scoped=records.splice(before),expected=original.filter(r=>r.room===ri);
+  assert.equal(scoped.length,expected.length,'scoped room has the same batches');
+  scoped.forEach((r,i)=>{assert.equal(r.room,ri,'scoped geometry belongs to the requested room');assert.deepEqual(r.mesh.data,expected[i].mesh.data,'room rebuild preserves its triangles');rebuilt+=r.mesh.count;});
+  assert.equal(portals.length,portalCount,'residency rebuild creates no duplicate portal controls');
+ }
+ assert.equal(rebuilt,original.reduce((sum,r)=>sum+r.mesh.count,0),'owned half-passages neither disappear nor duplicate');
+ for(const invalid of [-1,99,1.5])assert.throws(()=>buildGrandHallArchitecture(invalid),/Unknown Hall gallery/);
+})()`);
+console.log('Entered Hall residency geometry passed: independent gallery builds, identical reconstruction, owned half-links and stable portal controls.');
+
 // Window art must sit inside real openings. Shoot through the actual triangles
 // so a later solid-wall simplification cannot silently flatten the reveals.
 run(`(()=>{
@@ -82,6 +97,7 @@ console.log('Entered Hall construction passed: recessed window openings, bounded
 run(`(()=>{
  for(const bay of GRAND_HALL_BAYS){
   const b=new Builder();grandHallBayShape(b,bay);const data=b.mesh().data,px=bay.furniture==='platform'?.38:0,pz=0;let top=-Infinity;
+  if(bay.furniture==='round')for(let i=0;i<data.length;i+=12)if(data[i+9]===53){assert.ok(Math.abs(data[i+1]-bay.surfaceY)<1e-6,'round display finish uses one actual support plane');assert.ok(data[i+4]>.999,'round felt has no hidden coplanar bottom cap');}
   for(let i=0;i<data.length;i+=36){
    if(data[i+4]<.999)continue;
    const ax=data[i],az=data[i+2],bx=data[i+12],bz=data[i+14],cx=data[i+24],cz=data[i+26],den=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);if(Math.abs(den)<1e-12)continue;
@@ -95,7 +111,7 @@ run(`(()=>{
 // The real entered renderer must execute every reviewed model, too. This
 // catches scenery helpers that exist in a railway room but not in the museum.
 run(core);run(exhibits);
-for(const [,path]of html.matchAll(/<script src="(src\/scenery\/[^" ]+\.js)"><\/script>/g))run(await read(path));
+for(const path of run('Array.from(new Set(GRAND_HALL_EXHIBITS.map(e=>e.source)))'))run(await read(path));
 run('const BAY_BY_ID=new Map(GRAND_HALL_BAYS.map(b=>[b.id,b]));');
 run(declaration(source,'buildPublishedPottery'));
 run(`(()=>{

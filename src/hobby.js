@@ -79,7 +79,8 @@ function visitHouseDestination(key){
  const path=HOUSE_ROOMS[key]?.map?.destination;if(!path)return false;
  if(path==='grandhall.html'&&typeof window.HOUSE_EMBEDDED_HALL==='string'&&window.HOUSE_EMBEDDED_HALL){
   const safe=value=>JSON.stringify(value).replace(/</g,'\\u003c');
-  const context='<script>window.HOUSE_RETURN_URL='+safe(location.href)+';window.HOUSE_HALL_FROM='+safe(hobby.room)+';</script>';
+  const catalogue=typeof communityCatalogue==='undefined'?null:communityCatalogue,roomNames=Object.fromEntries(Object.entries(HOUSE_ROOMS).map(([id,room])=>[id,room.name]));
+  const context='<script>window.HOUSE_RETURN_URL='+safe(location.href)+';window.HOUSE_HALL_FROM='+safe(hobby.room)+';window.HOUSE_ROOM_NAMES='+safe(roomNames)+';window.HOUSE_COMMUNITY='+safe(catalogue)+';</script>';
   const html=window.HOUSE_EMBEDDED_HALL.replace(/<head\b[^>]*>/i,head=>head+context);
   const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));location.assign(url);return true;
  }
@@ -350,9 +351,10 @@ async function packHouseHall(){
  const url=new URL('grandhall.html',location.href),response=await fetch(url.href);
  if(!response.ok)throw new Error('Could not pack the Grand Hall');
  const page=new DOMParser().parseFromString(await response.text(),'text/html'),source=page.documentElement;
- for(const node of source.querySelectorAll('script[src]')){
-  const result=await fetch(new URL(node.getAttribute('src'),url).href);if(!result.ok)throw new Error('Could not pack a Hall script');
-  node.textContent=(await result.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');
+ for(const node of source.querySelectorAll('script[src],script[data-src]')){
+  const attribute=node.hasAttribute('data-src')?'data-src':'src';
+  const result=await fetch(new URL(node.getAttribute(attribute),url).href);if(!result.ok)throw new Error('Could not pack a Hall script');
+  node.textContent=(await result.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute(attribute);
  }
  for(const node of source.querySelectorAll('link[rel=stylesheet]')){
   const result=await fetch(new URL(node.getAttribute('href'),url).href);if(!result.ok)throw new Error('Could not pack Hall styles');
@@ -414,14 +416,33 @@ function startHouse(){
   if(typeof initTrainCabinet==='function')initTrainCabinet();
   syncRoomControls();
   window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyHasTrain()?hobbyTrainInfo().p.slice():null,sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
-  document.body.dataset.room='valley';const initialParams=houseInitialParams(),initialRoom=initialParams.get('room');const openRequestedMap=()=>{const key=initialParams.get('map');if(key&&typeof openHouseMap==='function')openHouseMap().then(()=>{if(HOUSE_ROOMS[key])shopMapSelect(key);});};if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom,openRequestedMap);else openRequestedMap();
+  document.body.dataset.room='valley';restoreHouseLocation();
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
+}
+function focusHouseWork(id,placement=0){
+ const view=communityWorkView(hobby.scene,id,placement);if(!view)return false;
+ setView('overview',false);orbit.target=view.target.slice();orbit.distance=innerWidth<700?(view.phoneDistance??view.distance*1.7):view.distance;orbit.pitch=view.pitch;orbit.yaw=view.yaw;
+ hobby.spot=hobby.scene.spots.findIndex(spot=>spot.contribution===id&&spot.placement===placement);
+ cameraTarget=orbit.target.slice();cameraPos=add(cameraTarget,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);
+ for(const [index,button]of [...$('roomPlaces').querySelectorAll('button')].entries())button.classList.toggle('chosen',index===hobby.spot);
+ shadowDirty=true;updateUI();return true;
+}
+function restoreHouseLocation(params=houseInitialParams()){
+ const room=params.get('room'),after=()=>{
+  if(params.has('work')){
+   const placement=params.get('placement')??'0',valid=params.getAll('room').length===1&&params.getAll('work').length===1&&params.getAll('placement').length<=1&&/^(0|[1-9][0-9]*)$/.test(placement);
+   if(valid&&hobby.room===room&&focusHouseWork(params.get('work'),Number(placement)))return;
+   toast('This miniature is no longer available in this room.');
+  }
+  const map=params.get('map');if(map&&typeof openHouseMap==='function')openHouseMap().then(()=>{if(HOUSE_ROOMS[map])shopMapSelect(map);});
+ };
+ if(room&&HOUSE_ROOMS[room]&&room!=='valley')visitHouseRoom(room,after);else after();
 }
 function houseInitialParams(){
  const params=new URLSearchParams(location.search);
  if(location.protocol==='blob:'){
-  const returned=new URLSearchParams(location.hash.slice(1)),map=returned.get('map');
-  if(map&&HOUSE_ROOMS[map]){params.set('map',map);const room=returned.get('room');if(room&&HOUSE_ROOMS[room])params.set('room',room);}
+  const returned=new URLSearchParams(location.hash.slice(1)),map=returned.get('map'),room=returned.get('room');
+  if(map&&HOUSE_ROOMS[map]||returned.has('work')&&room&&HOUSE_ROOMS[room])for(const key of['map','room','work','placement'])if(returned.has(key)){params.delete(key);for(const value of returned.getAll(key))params.append(key,value);}
  }
  return params;
 }

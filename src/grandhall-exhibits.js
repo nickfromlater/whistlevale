@@ -10,7 +10,7 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'Whistlevale contributors',note:'Shared geometry and window details.'}
  ],
  story:'A small pottery workshop, with a covered worktable, greenware and a carefully stocked window. The first contribution to Whistlevale.',
- builder:'willowbank',scale:.28,source:'src/scenery/willowbank.js'
+ builder:'willowbank',scale:.28,source:'src/scenery/willowbank.js',mapPreview:true
 }];
 function grandHallExhibitCredits(exhibit){
  let credits=exhibit.credits;
@@ -28,8 +28,24 @@ function grandHallExhibitCredits(exhibit){
  if(!clean.length)throw new Error('A Hall exhibit needs a chosen public credit.');
  return clean;
 }
+function grandHallRailwayLocations(exhibit){
+ const catalogue=typeof window==='undefined'?null:window.HOUSE_COMMUNITY;
+ if(!exhibit||typeof exhibit.id!=='string'||!/^[a-z][a-z0-9-]*$/.test(exhibit.id)||typeof exhibit.source!=='string'||!Array.isArray(catalogue?.works))return[];
+ const matches=catalogue.works.filter(work=>work.id===exhibit.id);if(matches.length!==1||matches[0].source!==exhibit.source)return[];
+ const work=matches[0];if(typeof work.room!=='string'||!/^[a-z][a-z0-9-]*$/.test(work.room)||work.room==='house'||!Array.isArray(work.miniatures))return[];
+ const result=[];
+ for(const [placement,piece]of work.miniatures.entries()){
+  if(!piece||!Array.isArray(piece.at)||piece.at.length!==2||!piece.at.every(Number.isFinite)||!Object.hasOwn(COMMUNITY_BUILDERS,piece.builder))continue;
+  const address=new URL(window.HOUSE_RETURN_URL||'index.html',location.href),params=address.protocol==='blob:'?new URLSearchParams():address.searchParams;
+  params.delete('map');params.set('room',work.room);params.set('work',work.id);params.set('placement',String(placement));
+  if(address.protocol==='blob:')address.hash=params.toString();
+  const name=(typeof HOUSE_ROOMS==='undefined'?null:HOUSE_ROOMS[work.room]?.name)||window.HOUSE_ROOM_NAMES?.[work.room]||work.room.replace(/(^|-)([a-z])/g,(_,prefix,letter)=>(prefix?' ':'')+letter.toUpperCase());
+  result.push({room:work.room,name,work:work.id,placement,href:address.href});
+ }
+ return result;
+}
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:willowbankPottery};
+ const builders={willowbank:(...args)=>willowbankPottery(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }

@@ -53,7 +53,7 @@ person wants to build and which public credit to use if either is missing.
 
 The Hall and Commons use separate placement catalogues. Never put Hall bay
 coordinates into `contributions/world.json`. Author native geometry in
-`src/scenery/`, include it in both pages, and register its builder and credited
+`src/scenery/`, declare its deferred source in the Hall page, and register its builder and credited
 record in `src/grandhall-exhibits.js`. A Hall-only model does not need Commons
 builder registration. The Hall recipe covers exact loading order and validation.
 There is no upload or browser-draft workflow: contributions are reviewed source
