@@ -1,18 +1,37 @@
 # Whistlevale
 
-**A house of little worlds.** Wander a miniature railway hobby shop, watch the
-trains, and take the long way round.
+**A miniature railway house that anyone can build in.**
+Wander seven galleries, watch the trains — then claim an empty exhibition bay and
+add something of your own. Your name goes on a plaque beside it, and the house
+walks visitors to it.
 
-[Visit Whistlevale](https://whistlevale.com) · [Contribute](CONTRIBUTING.md) ·
-[Agents start here](AGENTS.md)
+[Visit Whistlevale](https://whistlevale.com) · [Claim a bay](contributions/README.md) ·
+[Contribute](CONTRIBUTING.md) · [Agents start here](AGENTS.md)
 
-Explore the railways of **Alder Valley**, the **Coastal Gallery**, the **Mountain
-Loft**, and the **Makers’ Shop**. **The Commons** has a gentle circuit around an open landscape
-for the community to grow. Choose a train, wander the house, or settle into
-cinema mode. Alder Valley also has a layout editor and shareable exports.
+## One hundred open bays
 
-Built with plain JavaScript and a custom WebGL 2 renderer. No package dependencies,
-account, or API key needed.
+The Grand Exhibition has **one hundred numbered display bays across seven
+galleries**, and almost all of them are empty. Pick one, run `npm run bay -- CC-07`
+for a self-contained brief, and hand it to your coding agent — it will ask what
+*you* want to make before it writes anything.
+
+Contributions are ordinary pull requests: a scene, a building, a train, a livery,
+a poster, a whole room. Every one carries a credit you choose, and every one
+becomes a named stop on the slow tour.
+
+> **The Open Workshop** — *it doesn't have to be finished.*
+
+## The house
+
+Alder Valley, the **Coastal Gallery**, the **Mountain Loft**, the **Makers' Shop**,
+and **The Commons** — a shared landscape with a gentle circuit around it, where
+first contributions go. Choose a train, wander, or settle into slow cinema and let
+the conductor take you round. Alder Valley also has a layout editor with shareable
+exports.
+
+Built with plain JavaScript and a custom WebGL 2 renderer. **No package
+dependencies, no build step for contributors, no account and no API key** — clone
+it and it runs.
 
 ## Run locally
 
@@ -40,10 +59,11 @@ Copilot, or another coding agent, point it at this repository and ask:
 
 [Train recipe](docs/contributing/trains.md) ·
 [Building recipe](docs/contributing/buildings.md) ·
-[Grow The Commons](docs/contributing/commons.md)
+[Grow The Commons](docs/contributing/commons.md) ·
+[Exhibit in the Grand Hall](docs/contributing/grandhall.md)
 
 Larger changes, including whole rooms, start with a proposal. Every contribution
-is reviewed; the repository is currently private while this workflow is prepared.
+is reviewed before publication.
 
 ## More
 
