@@ -46,13 +46,14 @@ export function prepareCommunityGeometry({context,run}){
  run('gl=communityGL;upload=communityUpload;disposeMesh=function(){};initLabels();initRoomArt();initHouseArt();');
 }
 export function inspectCommunityScenes({run},keys){
- const keySource=JSON.stringify(keys);
- return run(`(()=>{const result=[];for(const key of ${keySource}){
+ // Give each authored room its own bounded execution window. Building every
+ // room in one VM call can time out on shared CI runners as the house grows.
+ return keys.map(key=>run(`(()=>{const key=${JSON.stringify(key)};
   const scene=getHouseScene(key),omitted=scene.lifeDetails.omitted||[];
   if(omitted.length){const p=omitted[0];throw new Error(p.id+' miniatures['+p.placement+'] in '+key+' at ['+p.at.join(', ')+']: '+p.reason);}
   const placements=scene.lifeDetails.details.filter(d=>d.contribution).length;
-  result.push({room:key,placements,vertices:scene.lifeDetails.communityVertices});
- }return result;})()`);
+  return {room:key,placements,vertices:scene.lifeDetails.communityVertices};
+ })()`));
 }
 // Check-time model measurements, not a browser startup or frame-loop task.
 // Room totals above also include any terrain terrace added by the adapter.
