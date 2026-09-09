@@ -9,9 +9,18 @@ it a calmer, more convincing place to explore.
 [Add a building](docs/contributing/buildings.md) · [Grow The Commons](docs/contributing/commons.md) · [Layouts and scenery](contributions/README.md)
 
 Small fixes, original trains, paint schemes, buildings and miniature scenes are
-welcome. Describe your idea in an issue or make a focused pull request. For a
-whole room, district, new audio pipeline or major renderer change, agree on a
-proposal first. That lets us find a good place for the work before you invest in it.
+welcome. Choose the shortest path:
+
+- **Small contribution or fix:** open a pull request with the change. No issue
+  or advance approval is required.
+- **Bug report, question or early idea:** open an issue to discuss it.
+- **Whole room, district or major renderer/audio change:** open a proposal issue
+  and agree on the scope with the maintainer before building. Then submit a PR
+  linked to that issue.
+
+Issues are for discussion; PRs contain the actual code, artwork or documentation.
+The maintainer reviews and merges PRs. Opening an issue or PR does not publish a
+change or reserve a place in the house.
 
 Codex, Claude Code and Copilot can follow the same end-to-end recipes. Start with
 `npm run contribute -- --list`, then `npm run contribute -- train` (or `building`).

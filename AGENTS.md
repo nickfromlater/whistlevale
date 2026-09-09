@@ -33,8 +33,10 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
    result, checks and any limitations. Push or open the PR when authorized;
    do not ask again for permission already given. Agents never merge.
 
-Small fixes and contributions can start directly. Agree on a proposal before
-building a whole room, district or major renderer/audio change.
+Small fixes and contributions can go straight to a PR; no issue is required.
+Use an issue for bugs, questions or early ideas. For a whole room, district or
+major renderer/audio change, agree on a proposal issue before building, then
+submit the change as a PR.
 
 ## Contributing to an exhibition bay
 

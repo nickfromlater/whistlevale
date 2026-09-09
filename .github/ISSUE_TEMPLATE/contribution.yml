@@ -1,10 +1,10 @@
 name: Propose a contribution
-description: A train, building, vignette, room or other addition to the house.
+description: Discuss an idea or propose a larger contribution. Small changes can go straight to a PR.
 title: "Contribution: "
 body:
   - type: markdown
     attributes:
-      value: "Small contributions are welcome. Rooms, districts and major changes need an agreed proposal before implementation. Agents: read AGENTS.md and the relevant recipe."
+      value: "Small contributions can go straight to a pull request; this issue is optional. Rooms, districts and major changes need an agreed proposal here before implementation, followed by a PR with the work. Agents: read AGENTS.md and the relevant recipe."
   - type: dropdown
     id: kind
     attributes:
