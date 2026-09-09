@@ -3,9 +3,12 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {loadCommunity,scriptJSON} from './community-lib.mjs';
+import {ensureHostedAudio} from './hosted-audio.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const out=path.join(root,'dist');
+const hostedAudio=await ensureHostedAudio({root,origin:process.env.WHISTLEVALE_AUDIO_ORIGIN});
+if(hostedAudio.enabled)console.log(`Whistlevale: verified ${hostedAudio.recordings} hosted recordings (${hostedAudio.downloaded} downloaded, ${hostedAudio.reused} reused).`);
 await rm(out,{recursive:true,force:true});
 await mkdir(out,{recursive:true});
 const manifest=new Map(),audioURLs={};

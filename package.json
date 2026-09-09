@@ -9,6 +9,7 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "test:audio": "node scripts/audio-qa.mjs",
+    "test:hosted-audio": "node scripts/hosted-audio-qa.mjs",
     "test:delivery": "node scripts/delivery-qa.mjs",
     "test:geometry": "node scripts/geometry-qa.mjs --quick",
     "test:geometry:full": "node scripts/geometry-qa.mjs",
@@ -21,7 +22,7 @@
     "contribute": "node scripts/contribute.mjs",
     "check:contributions": "node scripts/community-check.mjs",
     "test:contributions": "node scripts/community-qa.mjs && node scripts/community-scene-qa.mjs",
-    "test": "npm run check && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:delivery && npm run test:geometry && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:hall && npm run test:map && npm run test:cinema && npm run test:trains && npm run build",
+    "test": "npm run check && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:hall && npm run test:map && npm run test:cinema && npm run test:trains && npm run build",
     "bay": "node scripts/bay.mjs",
     "grandhall:align": "node scripts/grandhall-align.mjs",
     "test:hall": "node scripts/grandhall-qa.mjs && node scripts/hall-scene-qa.mjs && node scripts/hall-residency-qa.mjs && node scripts/hall-navigation-qa.mjs && node scripts/meridian-observatory-qa.mjs"
