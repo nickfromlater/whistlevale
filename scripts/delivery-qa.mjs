@@ -35,7 +35,8 @@ class PackingDocument{
  querySelectorAll(selector){
   if(selector==='script[src]')return this.nodes.filter(n=>n.tag==='script'&&n.getAttribute('src'));
   if(selector==='link[rel=stylesheet]')return this.nodes.filter(n=>n.tag==='link'&&n.getAttribute('rel')==='stylesheet');
-  if(selector==='link[rel~="icon"]')return this.nodes.filter(n=>n.tag==='link'&&(n.getAttribute('rel')||'').split(/\s+/).includes('icon'));
+  const icons=/^link\[rel~="([a-z-]+)"\](?:,link\[rel~="([a-z-]+)"\])?$/.exec(selector);
+  if(icons){const wanted=icons.slice(1).filter(Boolean);return this.nodes.filter(n=>n.tag==='link'&&(n.getAttribute('rel')||'').split(/\s+/).some(rel=>wanted.includes(rel)));}
   throw new Error('Unexpected packing selector '+selector);
  }
  createElement(tag){return{tag,textContent:'',get outerHTML(){return'<'+tag+'>'+this.textContent+'</'+tag+'>';}};}
@@ -43,11 +44,11 @@ class PackingDocument{
 }
 async function checkPortableHall(build){
  const hobby=await readFile(path.join(root,'src/hobby.js'),'utf8'),requests=[],blobs=[],navigations=[];
- const sandbox={Blob,URLSearchParams,console,window:{},HOUSE_ROOMS:{grandhall:{map:{destination:'grandhall.html'}},commons:{}},hobby:{room:'commons'},
+ const sandbox={Blob,URLSearchParams,console,btoa,window:{},HOUSE_ROOMS:{grandhall:{map:{destination:'grandhall.html'}},commons:{}},hobby:{room:'commons'},
   location:{href:'https://fixture.test/index.html?room=commons',origin:'https://fixture.test',assign:url=>navigations.push(url)},
   URL:class extends URL{static createObjectURL(blob){blobs.push(blob);return'blob:https://fixture.test/portable-hall-'+blobs.length;}},
   DOMParser:class{parseFromString(html,type){assert.equal(type,'text/html');return new PackingDocument(html);}},
-  fetch:async value=>{const url=new URL(value);requests.push(url.href);assert.equal(url.origin,'https://fixture.test','packing uses this build');try{const data=await readFile(path.join(fixture,'dist',url.pathname));return{ok:true,text:async()=>data.toString('utf8')};}catch{return{ok:false};}}
+  fetch:async value=>{const url=new URL(value);requests.push(url.href);assert.equal(url.origin,'https://fixture.test','packing uses this build');try{const data=await readFile(path.join(fixture,'dist',url.pathname));return{ok:true,text:async()=>data.toString('utf8'),arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)};}catch{return{ok:false};}}
  };
  const context=vm.createContext(sandbox),run=code=>vm.runInContext(code,context);
  run(hobby.slice(hobby.indexOf('async function packHouseHall('),hobby.indexOf('\nexportPlayable=async function(')));
@@ -56,7 +57,7 @@ async function checkPortableHall(build){
  const packed=await run('packHouseHall()');
  assert.ok(packed.startsWith('<!DOCTYPE html>'),'portable Hall is a standalone HTML document');
  assert.deepEqual(external(packed),[],'portable Hall needs no external scripts, styles or icon');
- assert.equal(requests.length,1+build.hallRefs.filter(url=>url.endsWith('.js')).length,'Hall page and each external renderer source are packed once');
+ assert.equal(requests.length,1+build.hallRefs.filter(url=>/\.(js|svg|png)$/.test(url)).length,'Hall page and each external renderer source and icon are packed once');
  const registry=(await readFile(path.join(root,'src/grandhall-exhibits.js'),'utf8')).replace(/<\/script/gi,'<\\/script');
  assert.ok(packed.includes(registry),'native exhibit definitions and original creator credits survive packing');
  assert.ok(packed.includes('function willowbankPottery('),'the actual native model is present');
@@ -128,7 +129,7 @@ async function build(){
  }
  assert.ok(!files.some(file=>/^(src\/.*\.(js|css)|assets\/audio\/.*\.mp3|assets\/favicon\.svg)$/.test(file)),'no original app/audio duplicates are emitted');
  for(const file of files.filter(file=>file.startsWith('immutable/'))){
-  const match=file.match(/\.([a-f0-9]{16})\.(js|css|mp3|svg)$/);assert.ok(match,'only content-fingerprinted files occupy the immutable directory');
+  const match=file.match(/\.([a-f0-9]{16})\.(js|css|mp3|svg|png)$/);assert.ok(match,'only content-fingerprinted files occupy the immutable directory');
   const original=file.replace(/^immutable\//,'').replace(/\.[a-f0-9]{16}(?=\.[^.]+$)/,'');
   const before=await readFile(path.join(fixture,original)),after=await readFile(path.join(fixture,'dist',file));
   assert.ok(before.equals(after),'versioning preserves every byte: '+original);assert.equal(digest(after),match[1],'filename matches actual content');
