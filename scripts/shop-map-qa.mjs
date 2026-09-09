@@ -6,7 +6,7 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
-const [railway,rooms,house,controller]=await Promise.all(['src/railway.js','src/rooms.js','src/shop-house.js','src/shop-map.js'].map(read));
+const [railway,rooms,house,controller,hobbySource]=await Promise.all(['src/railway.js','src/rooms.js','src/shop-house.js','src/shop-map.js','src/hobby.js'].map(read));
 function declaration(source,name){
  const start=source.lastIndexOf('function '+name+'(');assert.ok(start>=0,'Missing '+name);
  let depth=0,quote='',line=false,block=false;
@@ -27,10 +27,12 @@ const classes=new Set(),captured=new Set();
 const canvas={style:{},setAttribute(){},closest:()=>null,setPointerCapture:id=>captured.add(id),hasPointerCapture:id=>captured.has(id),releasePointerCapture:id=>captured.delete(id)};
 const node={hidden:false,focus(){},setAttribute(){}};
 const ui={visible:false,loading:null,selected:null,current:null,roomKeys:[],init(){},show(key){this.visible=true;this.selected=this.current=key;this.refresh();},hide(){this.visible=false;},select(key,current){this.selected=key;this.current=current;},setLoading(text){this.loading=text;},setMarkerPositions(){},refresh(){this.roomKeys=Array.from(this.getRoomKeys?.()||[]);}};
-const context=vm.createContext({assert,records,console:{...console,error:error=>records.errors.push(error.message)},requestAnimationFrame:fn=>{raf.push(fn);return raf.length;},
+const navigations=[];
+const context=vm.createContext({URL,location:{href:'https://example.test/index.html',origin:'https://example.test',assign:url=>navigations.push(url)},assert,records,console:{...console,error:error=>records.errors.push(error.message)},requestAnimationFrame:fn=>{raf.push(fn);return raf.length;},
  window:listeners,canvas,document:{getElementById:()=>node,body:{classList:{add:name=>classes.add(name),remove:(...names)=>names.forEach(name=>classes.delete(name))}}},ShopMapUI:ui,
  innerWidth:1440,innerHeight:900,screenW:1440,screenH:900,$:()=>node});
 const run=code=>vm.runInContext(code,context);
+run(declaration(hobbySource,'visitHouseDestination'));
 vm.runInContext(railway.slice(0,railway.indexOf("const canvas=$('world')"))+'\n'+
  ['roundRect','slab','project','screenRay'].map(name=>declaration(railway,name)).join('\n')+`
  const FLOOR=-23.97,I=ident(),mainProgram='main',roomLabels={};
@@ -147,3 +149,30 @@ run("delete HOUSE_ROOMS.broken;houseRoomRevision++;failRoom=null");await settle(
 run("reduceMotion=true;shopMapEnter('coast',true);updateCamera(.02)");assert.equal(run('hobby.cinema'),true);assert.equal(run('hobby.room'),'coast');assert.equal(run('shopMap.active'),false);
 
 console.log('Shop map QA passed: cancelled/failed/warm loading, mid-load registration and active revision reload, camera return and entry projection, scoped drawing/audio and exception cleanup, all-room simulation, pause, pointer drag/pinch/cancel, Escape, and reduced-motion cinema entry.');
+
+run("HOUSE_ROOMS.exhibition={map:{destination:'grandhall.html'}};shopFinishEntry('exhibition',false)");
+assert.equal(new URL(navigations.at(-1)).pathname,'/grandhall.html');
+assert.equal(new URL(navigations.at(-1)).searchParams.get('from'),run('hobby.room'));
+run("HOUSE_ROOMS.exhibition.map.destination='https://elsewhere.test/'");
+assert.throws(()=>run("visitHouseDestination('exhibition')"),/must stay on this site/);
+
+// A room-sized invitation is selectable without pretending to be a loaded scene.
+ui.openPlot=plot=>{ui.plot=plot;};
+run("delete HOUSE_ROOMS.exhibition;registerHouseRoom('museum',{name:'The Museum',railway:false,map:{position:'central',footprint:[600,720],scale:.4},build(){}})");
+await settle(run('openHouseMap()'));
+const roomBuilds=records.builds.length,activations=records.activations.length;
+run(`(()=>{
+ assert.equal(SHOP_HOUSE_LAYOUT.plots.length,3);
+ const plot=SHOP_HOUSE_LAYOUT.plots[0];
+ shopMapSelect(plot.id);assert.equal(shopMap.selected,plot.id);assert.equal(ShopMapUI.selected,plot.id);
+ shopMapResetView();updateCamera(2);
+ const p=project([plot.center[0],SHOP_HOUSE_LAYOUT.floorY+9,plot.center[2]]);
+ assert.equal(shopPick(p.x,p.y),plot.id,'the visible expansion floor is picked at its center');
+ shopMapEnter(plot.id);
+ assert.equal(ShopMapUI.plot.id,plot.id,'a site opens its own agent prompt');
+ assert.equal(shopMap.entry,null,'a site cannot start a room flight');assert.equal(shopMap.active,true);
+ assert.equal(HOUSE_ROOMS[plot.id],undefined,'open sites never pollute room discovery');
+})()`);
+assert.equal(records.builds.length,roomBuilds,'copying a plot prompt builds no scene');assert.equal(records.activations.length,activations,'copying a plot prompt changes no current room');
+run('closeShopMap()');
+console.log('Future-room map QA passed: projected plot picking, selection, prompt dispatch, no fake room or scene activation.');
