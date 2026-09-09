@@ -81,9 +81,10 @@ run(`
  chooseCollectionTrain('coast',{id:'tern',livery:2,cars:4});assert.equal(runningCollectionMeshes.size,1,'last user leaving a model releases it');
  assert.equal(primary.type,'steam');assert.equal(collectionPower('coast'),'steam');
  for(const bad of[null,{}, {id:'unknown',livery:0,cars:1},{id:'tern',livery:-1,cars:1},{id:'tern',livery:3,cars:1},{id:'tern',livery:0,cars:0},{id:'tern',livery:0,cars:7},{id:'tern',livery:0,cars:1.5}])assert.equal(validateCollectionChoice(bad),null);
- assert.equal(collectionPower('commons'),null);
- assert.throws(()=>chooseCollectionTrain('commons',{id:'tern',livery:0,cars:2}),/unavailable/);
- assert.equal(selectedCollection.commons,undefined,'a landscape cannot acquire a train selection');
+ registerHouseRoom('qa-landscape',{name:'Landscape fixture',railway:false,build(){},shell:()=>[]});
+ assert.equal(collectionPower('qa-landscape'),null);
+ assert.throws(()=>chooseCollectionTrain('qa-landscape',{id:'tern',livery:0,cars:2}),/unavailable/);
+ assert.equal(selectedCollection['qa-landscape'],undefined,'a landscape cannot acquire a train selection');
  assert.throws(()=>chooseCollectionTrain('unknown',{id:'tern',livery:0,cars:2}));
  const beforeFailure=collectionChoice('valley');
 `);
@@ -95,8 +96,8 @@ run(`
  const qaSnapshot=collectionExport();assert.equal(qaSnapshot.version,1);assert.equal(qaSnapshot.rooms.coast.id,'tern');
  for(const key of Object.keys(selectedCollection))delete selectedCollection[key];
  restoreCollectionSelections();assert.equal(collectionChoice('valley').id,'tern');assert.equal(collectionChoice('coast').cars,4);
- const embedded=$('embeddedTrainCollection');embedded.textContent=JSON.stringify({version:1,rooms:{commons:{id:'tern',livery:0,cars:2},alpine:{id:'bergwald',livery:1,cars:2},ghost:{id:'tern',livery:0,cars:1},studio:{id:'wren',livery:99,cars:1}}});
- restoreCollectionSelections();assert.equal(collectionChoice('alpine').livery,1);assert.equal(selectedCollection.ghost,undefined);assert.equal(selectedCollection.commons,undefined,'stored selections cannot put trains in a landscape');assert.equal(selectedCollection.studio,undefined);embedded.textContent='null';
+ const embedded=$('embeddedTrainCollection');embedded.textContent=JSON.stringify({version:1,rooms:{'qa-landscape':{id:'tern',livery:0,cars:2},alpine:{id:'bergwald',livery:1,cars:2},ghost:{id:'tern',livery:0,cars:1},studio:{id:'wren',livery:99,cars:1}}});
+ restoreCollectionSelections();assert.equal(collectionChoice('alpine').livery,1);assert.equal(selectedCollection.ghost,undefined);assert.equal(selectedCollection['qa-landscape'],undefined,'stored selections cannot put trains in a landscape');assert.equal(selectedCollection.studio,undefined);embedded.textContent='null';
  const setItem=localStorage.setItem;localStorage.setItem=()=>{throw Error('private mode');};assert.equal(chooseCollectionTrain('valley',{id:'wren',livery:0,cars:2}),false);assert.equal(collectionChoice('valley').id,'wren');localStorage.setItem=setItem;
  console.table(qaBudget);
 `);

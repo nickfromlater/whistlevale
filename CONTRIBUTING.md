@@ -149,7 +149,7 @@ needs an `edge` with an `at(distance)` function and a positive finite `length`,
 plus finite `distance` and `speed` values. A speed of zero is valid for a stationary
 exhibit. Invalid trains are rejected with a room-specific error before scenery
 upload; allocated shell walls are released and the partial room is not cached.
-A landscape room may explicitly declare `railway: false`, as The Commons does.
+A landscape-only room may explicitly declare `railway: false`.
 It must leave both `scene.trains` and `scene.routes` empty. Train controls,
 selection, particles, headlight and train audio are inactive; cinema frames the
 landscape and still accepts camera input. Remove that declaration when adding

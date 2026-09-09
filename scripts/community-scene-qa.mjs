@@ -23,18 +23,23 @@ const results=run(`(()=>{
  const original=communityCatalogue.works;
  try{
   const commons=getHouseScene('commons');
-  assert.equal(commons.trains.length,0,'the shared starting landscape has no trains');assert.equal(commons.routes.length,0);
-  assert.equal(HOUSE_ROOMS.commons.railway,false);assert.ok(houseLayoutLights('commons').every(p=>p[1]<FLOOR),'no inherited village street lights in the starting meadow');
+  assert.equal(commons.trains.length,1,'one modest Commons service');assert.equal(commons.routes.length,1);
+  assert.equal(commons.trains[0].type,'steam');assert.equal(commons.trains[0].cars,2);
+  const loop=commons.routes[0];assert.ok(loop.length>270&&loop.length<280);
+  assert.ok(Math.hypot(...loop.at(0).p.map((v,i)=>v-loop.at(loop.length).p[i]))<1e-8,'continuous circuit');
+  for(let d=0;d<loop.length;d+=.25){const p=loop.at(d).p,h=commonsSurface(p[0],p[2]);assert.ok(h<=p[1]-.12,'terrain never buries the rails');if(commonsBank(p[0],p[2])>6.3)assert.ok(h>=p[1]-.40,'land sections support the ballast');else assert.ok(COMMONS_BRIDGES.some(q=>Math.abs(p[2]-q.z)<.01&&Math.abs(p[0]-q.x)<=q.half),'water crossings have bridge decks');}
+  for(const t of COMMONS_TREES){assert.ok(miniatureTrackClear(commons,t.x,t.z,t.h*.52),'tree canopy clears the trains');const mesh=new Builder();commonsTree(mesh,t);for(let i=0;i<mesh.data.length;i+=12)assert.ok(Math.hypot(mesh.data[i]-t.x,mesh.data[i+2]-t.z)<=t.h*.52,'tree geometry fits its protected footprint');}
+  assert.notEqual(HOUSE_ROOMS.commons.railway,false);assert.equal(houseLayoutLights('commons').filter(p=>p[1]>FLOOR).length,2,'only the actual halt lamps illuminate the miniature');
   // Suggested coordinates describe suitable terrain, not permanently vacant plots.
   // Validate the real catalogue above; isolate these terrain fixtures so accepting
   // a contribution on a suggested site does not break an unrelated test.
-  for(const at of[[-23,-3],[25,7],[18,-9]]){
+  for(const at of[[-23,-3],[25,7],[18,-3]]){
    communityCatalogue.works=[{id:'fixture-cottage',title:'QA cottage',kind:'building',source:'contributions/world.json',room:'commons',credits:[{name:'Test fixture'}],miniatures:[{builder:'cottage',at}]}];
    validateCommunity({format:'whistlevale-community',version:1,works:communityCatalogue.works});
    const detail=buildRoomLifeDetails('commons',commons),placed=detail.details.find(d=>d.contribution==='fixture-cottage');assert.ok(placed,'documented site has terrain suitable for a cottage');
    assert.equal(placed.credits[0].name,'Test fixture');assert.ok(detail.communityVertices>0);
   }
-  for(const at of[[commonsStream(0),0],[54,0],[COMMONS_TREES[0].x,COMMONS_TREES[0].z]]){
+  for(const at of[[commonsStream(0),0],[54,0],[COMMONS_TREES[0].x,COMMONS_TREES[0].z],[-47,3],[-28,23.1]]){
    communityCatalogue.works=[{id:'fixture-cottage',title:'QA cottage',kind:'building',source:'contributions/world.json',room:'commons',credits:[{name:'Test fixture'}],miniatures:[{builder:'cottage',at}]}];
    const rejected=buildRoomLifeDetails('commons',commons);
    assert.equal(rejected.details.length,0,'water, board edges and woodland stay clear');
