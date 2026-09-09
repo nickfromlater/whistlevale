@@ -89,7 +89,9 @@ function shopOverview(){
  return{target:q.target.slice(),distance:Math.max(q.distance*(phone?1.38:1.05),fitWidth),pitch:phone?1.02:.87,yaw:.035};
 }
 function shopProjection(){
- const phone=innerWidth<700;cameraNear=.3;
+ // A proportionate near plane preserves depth precision across the full estate.
+ // A fixed 0.3 plane made stacked stone floors fight at the distant overview.
+ const phone=innerWidth<700;cameraNear=Math.max(.3,len(sub(cameraPos,cameraTarget))*.01);
  cameraProjection=perspective(.72,screenW/screenH,cameraNear,Math.max(700,shopMap.orbit.distance*4));
  cameraProjection[9]=phone?-.07:0;
  VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
@@ -105,10 +107,10 @@ updateCamera=function(dt){
   const blend=reduceMotion?1:1-Math.exp(-dt*6);
   cameraPos=lerpV(cameraPos,shopCameraPosition(shopMap.orbit),blend);cameraTarget=lerpV(cameraTarget,shopMap.orbit.target,blend);shopProjection();
  }
- ShopMapUI.setMarkerPositions(SHOP_HOUSE_LAYOUT.rooms.map(entry=>{const point=project(entry.labelAnchor);return{key:entry.key,...point,visible:!shopMap.entry&&point.visible};}));
+ ShopMapUI.setMarkerPositions([...SHOP_HOUSE_LAYOUT.rooms,...(SHOP_HOUSE_LAYOUT.plots||[])].map(entry=>{const point=project(entry.labelAnchor);return{key:entry.key||entry.id,...point,visible:!shopMap.entry&&point.visible};}));
 };
 function shopMapSelect(key){
- if(!SHOP_HOUSE_LAYOUT.byKey[key]||shopMap.loading||shopMap.entry)return;
+ if((!SHOP_HOUSE_LAYOUT.byKey[key]&&!SHOP_HOUSE_LAYOUT.plots?.some(plot=>plot.id===key))||shopMap.loading||shopMap.entry)return;
  shopMap.selected=key;ShopMapUI.select(key,hobby.room);
 }
 function shopMapResetView(){if(shopMap.loading||shopMap.entry)return;shopMap.orbit=shopOverview();}
@@ -152,12 +154,15 @@ async function openHouseMap(){
  }catch(error){console.error(error);closeShopMap();toast('The shop map could not open. Please try again.');}
 }
 function shopFinishEntry(key,cinema){
+ if(visitHouseDestination(key))return;
  closeShopMap();
  try{activateHouseRoom(key);if(cinema)enterCinema();else $('houseMapButton')?.focus({preventScroll:true});shopBase.camera(0);}
  catch(error){console.error(error);toast('This room could not open. Please try again.');}
 }
 function shopMapEnter(key,cinema=false){
  if(!shopMap.active||shopMap.loading||shopMap.entry)return;
+ const plot=SHOP_HOUSE_LAYOUT.plots?.find(plot=>plot.id===key);
+ if(plot){shopMapSelect(key);ShopMapUI.openPlot(plot);return;}
  const entry=SHOP_HOUSE_LAYOUT.byKey[key],room=HOUSE_ROOMS[key];if(!entry||!room)return;
  shopMapSelect(key);ShopMapUI.setLoading('Entering '+room.name.replace(/^The /,'')+'…');
  const phone=innerWidth<700,q={target:room.target,distance:room.distance*(phone?1.78:1),pitch:phone?Math.max(.74,room.pitch):room.pitch,yaw:phone?.12:room.yaw};
@@ -168,7 +173,7 @@ function shopPick(x,y){
  const ray=screenRay(x,y);if(ray.dir[1]>=-.001)return null;
  const t=(SHOP_HOUSE_LAYOUT.floorY+9-ray.origin[1])/ray.dir[1];if(t<0)return null;
  const p=add(ray.origin,mul(ray.dir,t));
- return SHOP_HOUSE_LAYOUT.rooms.find(({hitBounds:b})=>p[0]>=b.x0&&p[0]<=b.x1&&p[2]>=b.z0&&p[2]<=b.z1)?.key||null;
+ return SHOP_HOUSE_LAYOUT.rooms.find(({hitBounds:b})=>p[0]>=b.x0&&p[0]<=b.x1&&p[2]>=b.z0&&p[2]<=b.z1)?.key||SHOP_HOUSE_LAYOUT.plots?.find(({bounds:b})=>p[0]>=b.x0&&p[0]<=b.x1&&p[2]>=b.z0&&p[2]<=b.z1)?.id||null;
 }
 function initHouseMap(){
  ShopMapUI.init();

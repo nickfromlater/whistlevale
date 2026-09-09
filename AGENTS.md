@@ -40,14 +40,27 @@ submit the change as a PR.
 
 ## Contributing to an exhibition bay
 
-The published checkout does not yet include `grandhall.html` or its contribution
-recipe, so the legacy `bay` and `grandhall:align` scripts are not a complete
-contribution path. Do not use them to put Hall coordinates into
-`contributions/world.json` or overwrite the shared catalogue.
+`grandhall.html` is the central exhibition, reached through the house map.
+Read [the Hall recipe](docs/contributing/grandhall.md). For a named bay, run
+`npm run bay -- AR-03` for the same copyable agent prompt offered by the page,
+including its current gallery, position and display dimensions. Ask what the
+person wants to build and which public credit to use if either is missing.
 
-For a bay request, use the Hall page, bay data and recipe on the requested
-branch when available. If they are missing, explain the limitation and clarify
-the intended destination; do not silently substitute a Commons placement.
+The Hall and Commons use separate placement catalogues. Never put Hall bay
+coordinates into `contributions/world.json`. Author native geometry in
+`src/scenery/`, include it in both pages, and register its builder and credited
+record in `src/grandhall-exhibits.js`. A Hall-only model does not need Commons
+builder registration. The Hall recipe covers exact loading order and validation.
+There is no upload or browser-draft workflow: contributions are reviewed source
+changes. Selecting a bay neither reserves it nor publishes the work. Keep gallery
+and bay IDs in `src/grandhall-data.js` stable, and check current `main` for existing
+occupants before authoring. The old `grandhall:align` conversion remains disabled.
+
+Open room plots in the full house map offer a separate room prompt. These start
+with an accepted whole-room proposal, not a Hall exhibit. Register the resulting
+room with `map.plot` set to the selected stable ID (for example `east-3`), plus
+its real footprint and scale. See the Hall recipe's room-plot section and
+`CONTRIBUTING.md#adding-a-room`; selection does not reserve or publish the site.
 
 ## Setup and checks
 
@@ -67,9 +80,10 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 - The app is dependency-free browser JavaScript with a custom WebGL 2 renderer.
 - `src/community-core.js` validates credits and contribution data; `src/community.js`
   connects reviewed data and the optional builders panel. Keep these off the frame loop.
-- `src/scenery/` holds original contributed buildings. Include new scripts before
-  `src/community.js`; register an accurate radius in `COMMUNITY_BUILDERS` and a
-  matching adapter function. The building recipe covers all three steps.
+- `src/scenery/` holds original contributed buildings. For railway placements,
+  include new scripts before `src/community.js`, register an accurate radius in
+  `COMMUNITY_BUILDERS` and a matching adapter function. The building recipe covers
+  all three steps; Hall-only exhibits use the separate Hall registry above.
 - `src/railway.js` contains Alder Valley, simulation, renderer and layout editor.
 - `src/rooms.js` contains `registerHouseRoom`, scene caching, materials and geometry
   helpers. Register new room modules before startup; navigation and map layout

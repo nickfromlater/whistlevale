@@ -40,6 +40,7 @@ function communityCreditLine(credits){return validateCredits(credits).map(c=>c.n
 function paintBuilders(){
  const list=$('buildersList');list.replaceChildren();
  const entries=communityCatalogue.works.map(w=>({title:w.title,room:w.room,credits:w.credits}));
+ if(typeof GRAND_HALL_EXHIBITS!=='undefined'&&typeof grandHallExhibitCredits==='function')for(const exhibit of GRAND_HALL_EXHIBITS)entries.push({title:exhibit.title,room:'grandhall',credits:grandHallExhibitCredits(exhibit)});
  for(const q of TRAIN_COLLECTION)if(q.credits?.length)entries.push({title:q.name,room:'house',credits:q.credits});
  for(const [key,room]of Object.entries(HOUSE_ROOMS))if(room.credits?.length)entries.push({title:room.name,room:key,credits:room.credits});
  if(layoutCredits.length)entries.push({title:layoutTitle,room:'valley',credits:layoutCredits});

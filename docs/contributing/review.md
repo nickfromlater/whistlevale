@@ -17,9 +17,10 @@ command and link checks below. Record actual results in the PR template.
 | Documentation or guidance CLI | Verify local links and anchors, command names, examples and generated guidance against this checkout. Scene screenshots are unnecessary unless app UI also changes. |
 | Any visible change | Desktop, 390px and 320px views; daylight/night; actual room and live 3D map; keyboard access; chosen credit. |
 | Static annex building or scene | Wide view, named close-up and low orbit; foundation contact, roof and props; tree/water/rail/neighbor clearances; landscape cinema where relevant. These pieces are not editable objects. |
+| Grand Hall exhibit | Native model in both the house map and entered Hall; selected bay and close views; display-surface contact and usable case bounds; chosen credit and creator links; the Hall export route below. |
 | Editable Alder Valley asset | Above, plus select/move, reset, duplicate, undo/redo and layout JSON import/export. |
 | Train or livery | Every finish, formation, working wheels/bogies/roofs, sound and running motion in railway rooms; cabinet focus and phone navigation. |
-| New source module or credit | Playable export includes the model and chosen credit; open the contributed room and its named view in the exported house. |
+| New source module or credit | Playable export includes the model and chosen credit; open the contributed room and its named view or Hall bay in the exported house. |
 
 Responsive desktop viewports do not verify native phone gestures or physical
 phone performance. Say which device and interactions were actually checked.
@@ -45,8 +46,21 @@ reviewed contribution catalogue. The editor's separate **Export layout (.json)**
 contains the Alder Valley layout; it is not a Commons scenery export.
 
 Open the downloaded `whistlevale.html` in a browser, use **Switch room** to enter
-the contributed room, then choose **Views → Places → your work**. Check
-**More → The builders** too. Keep generated exports in the ignored evidence
-directory. If browser tooling blocks the local file, record playback as
-unverified; do not bypass its URL policy. Source inspection and automated
+the contributed room, then choose **Views → Places → your work** in rooms with
+the standard house controls. Check **More → The builders** too.
+
+For a **Grand Hall exhibit**, use **← House map** in the entered Hall, select
+**Alder Valley** and enter it, then use **More → Build your railway → Project
+menu → Export playable HTML**. The export packs the dedicated Hall page, its
+native exhibit scripts and their credits together with the house. In the
+downloaded house, use **Switch room → Grand Hall → Enter**, select the exhibit's
+bay, and inspect the complete model, chosen credit and creator link if supplied.
+For the original Willowbank Pottery, use **GH-08** and verify `nickfromlater` and
+the existing X profile link. Use **← House map** to check the model in the
+exported overview, then enter **Alder Valley** and check **More → The builders**.
+The Hall's own bay details provide its exhibit inspection.
+
+Keep generated exports in the ignored evidence directory. If browser tooling
+blocks the local file, record playback as unverified; do not bypass its URL
+policy. Source inspection and automated
 round-trip tests are useful evidence, but do not prove local-file playback.

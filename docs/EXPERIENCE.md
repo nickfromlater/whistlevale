@@ -120,3 +120,8 @@ The opt-in panel reports frame timing, draw calls, geometry and decoded-audio
 memory estimates; GPU timing appears when supported. It sends no telemetry and
 does no diagnostic work on ordinary visits. Measurements describe the device
 and view being inspected, rather than a traffic-capacity guarantee.
+
+The Grand Hall also accepts `grandhall.html?profile`. Its local panel shows frame
+timing, CPU submission time, draw calls, vertex-buffer memory and shadow updates.
+Use the same gallery, camera, viewport and device for comparisons; reset after
+loading. CPU submission time is not a GPU measurement.
