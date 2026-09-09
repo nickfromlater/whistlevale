@@ -73,12 +73,12 @@ function initQuietControls(){
  const originalHideUI=hideUI;
  hideUI=()=>{closeQuietControls();originalHideUI();(hidden?$('restore'):$('moreBtn')).focus({preventScroll:true});};
  $('visitCommons').onclick=()=>{closeQuietControls();visitHouseRoom('commons');};
- // A quiet, dismissible invitation on arrival; the More menu always retains it.
+ // Show on each page arrival. Dismissal lasts only for this visit; the More
+ // menu retains the contribution path without reopening the invitation.
  const hallInvitation=$('hallInvitation');
  if(hallInvitation&&HOUSE_ROOMS.grandhall){
-  let dismissed=false;try{dismissed=localStorage.getItem('whistlevale-hall-invitation')==='dismissed';}catch{}
-  hallInvitation.hidden=dismissed;
-  const dismiss=()=>{hallInvitation.hidden=true;try{localStorage.setItem('whistlevale-hall-invitation','dismissed');}catch{}};
+  hallInvitation.hidden=false;
+  const dismiss=()=>{hallInvitation.hidden=true;};
   $('dismissHallInvitation').onclick=()=>{dismiss();$('moreBtn').focus({preventScroll:true});};
   $('hallInvitationLink').onclick=event=>{if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();dismiss();visitHouseRoom('grandhall');};
  }

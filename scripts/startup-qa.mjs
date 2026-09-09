@@ -108,4 +108,40 @@ const privatePortable=fixture({embedded,denyStorage:true});privatePortable.start
 const malformedEmbed=fixture({storage:stored(),embedded:'{'});malformedEmbed.start();assert.equal(malformedEmbed.records.builds[0].capture,true);assert.deepEqual(malformedEmbed.snapshot(),pristine,'corrupt embedded data preserves the previous safe fallback');
 const noStorage=fixture({denyStorage:true});noStorage.start();assert.deepEqual(noStorage.snapshot(),pristine);
 
+// Run the real controls initialization across fresh page lifetimes. An old
+// dismissal must not permanently remove the contribution path on later visits.
+const controlsSource=await readFile(new URL('../src/controls.js',import.meta.url),'utf8');
+function invitationPage({storage=new Map(),blocked=false,hall=true}={}){
+ const nodes=new Map(),visits=[],focus=[];
+ for(const id of ['hallInvitation','dismissHallInvitation','hallInvitationLink','moreBtn','soundClose','closeNetwork','helpClose','visitCommons','visitGrandHall','quietHide','restore','railControls','cinemaStart'])nodes.set(id,{
+  hidden:true,dataset:{},setAttribute:noop,insertBefore:noop,querySelector:()=>({textContent:''}),focus:()=>focus.push(id)
+ });
+ const context=vm.createContext({$:id=>nodes.get(id),HOUSE_ROOMS:hall?{grandhall:{}}:{},visitHouseRoom:key=>visits.push(key),
+  hideUI:noop,toggleDiagram:noop,playlistToggle:noop,showHelp:noop,closeHelp:noop,
+  document:{querySelectorAll:()=>[],addEventListener:noop},window:{addEventListener:noop},
+  localStorage:{getItem(key){if(blocked)throw new Error('Storage unavailable');return storage.get(key)||null;},setItem(key,value){if(blocked)throw new Error('Storage unavailable');storage.set(key,value);}}
+ });
+ vm.runInContext(controlsSource,context);const init=()=>vm.runInContext('initQuietControls()',context);init();
+ return{nodes,visits,focus,init,click(modifier=null){let prevented=false;nodes.get('hallInvitationLink').onclick({[modifier]:true,preventDefault(){prevented=true;}});return prevented;}};
+}
+const invitationStorage=new Map([['whistlevale-hall-invitation','dismissed'],['unrelated-preference','keep']]);
+const arrival=invitationPage({storage:invitationStorage});
+assert.equal(arrival.nodes.get('hallInvitation').hidden,false,'an old permanent dismissal cannot suppress a new arrival');
+assert.deepEqual(arrival.focus,[],'showing the invitation never steals focus');
+arrival.nodes.get('dismissHallInvitation').onclick();
+assert.equal(arrival.nodes.get('hallInvitation').hidden,true);assert.deepEqual(arrival.focus,['moreBtn']);
+arrival.init();assert.equal(arrival.nodes.get('hallInvitation').hidden,true,'initializing controls again does not undo dismissal during this page visit');
+const reloaded=invitationPage({storage:invitationStorage});
+assert.equal(reloaded.nodes.get('hallInvitation').hidden,false,'reloading restores the contribution invitation');
+assert.equal(reloaded.click(),true);assert.deepEqual(reloaded.visits,['grandhall']);assert.equal(reloaded.nodes.get('hallInvitation').hidden,true);
+assert.deepEqual([...invitationStorage],[['whistlevale-hall-invitation','dismissed'],['unrelated-preference','keep']],'invitation actions leave existing preferences untouched');
+assert.equal(invitationPage({storage:invitationStorage}).nodes.get('hallInvitation').hidden,false,'visiting the Hall cannot suppress a subsequent arrival');
+for(const modifier of ['metaKey','ctrlKey','shiftKey','altKey']){
+ const page=invitationPage();assert.equal(page.click(modifier),false);assert.deepEqual(page.visits,[]);
+ assert.equal(page.nodes.get('hallInvitation').hidden,false,'modified links retain native browser behavior');
+}
+const privateArrival=invitationPage({blocked:true});assert.equal(privateArrival.nodes.get('hallInvitation').hidden,false);assert.equal(privateArrival.click(),true);
+assert.equal(invitationPage({hall:false}).nodes.get('hallInvitation').hidden,true,'a house without the Hall does not offer a missing destination');
+console.log('Contribution invitation verified: visible on every new page, page-only dismissal, legacy/blocked storage, focus, modified links and Hall navigation.');
+
 console.log('Startup verified: one saved-world build with a valid factory cache; identical saved state and random sequence; pristine reset/meadow/undo/import; invalid, stale, missing, blocked and embedded-storage fallbacks.');
