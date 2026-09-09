@@ -7,12 +7,14 @@ authorized. An ignored local path alone is not evidence a remote reviewer can se
 
 ## Match the checks to the change
 
-Run `npm run check:contributions -- --json` and `npm test`. For geometry changes,
-also run `npm run test:geometry:full`. Record actual results and limitations in
-`.github/PULL_REQUEST_TEMPLATE.md`.
+For code or scene changes, run `npm test`; geometry also needs
+`npm run test:geometry:full`. For contributions, include the measured report from
+`npm run check:contributions -- --json`. Documentation-only changes need the
+command and link checks below. Record actual results in the PR template.
 
 | Contribution | Manual review |
 | --- | --- |
+| Documentation or guidance CLI | Verify local links and anchors, command names, examples and generated guidance against this checkout. Scene screenshots are unnecessary unless app UI also changes. |
 | Any visible change | Desktop, 390px and 320px views; daylight/night; actual room and live 3D map; keyboard access; chosen credit. |
 | Static annex building or scene | Wide view, named close-up and low orbit; foundation contact, roof and props; tree/water/rail/neighbor clearances; landscape cinema where relevant. These pieces are not editable objects. |
 | Editable Alder Valley asset | Above, plus select/move, reset, duplicate, undo/redo and layout JSON import/export. |
