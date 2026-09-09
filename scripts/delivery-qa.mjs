@@ -13,7 +13,8 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const fixture=await mkdtemp(path.join(os.tmpdir(),'whistlevale-delivery-'));
 const digest=buffer=>createHash('sha256').update(buffer).digest('hex').slice(0,16);
 const walk=async directory=>(await Promise.all((await readdir(directory,{withFileTypes:true})).map(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):path.join(directory,entry.name)))).flat();
-const external=html=>[...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^https?:/.test(url));
+// Vercel serves this first-party endpoint itself; it is not a built app asset.
+const external=html=>[...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^https?:/.test(url)&&url!=='/_vercel/insights/script.js');
 async function build(){
  execFileSync(process.execPath,['scripts/build.mjs'],{cwd:fixture,stdio:'pipe'});
  const html=await readFile(path.join(fixture,'dist/index.html'),'utf8'),window={};

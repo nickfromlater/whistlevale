@@ -27,27 +27,27 @@ window.ShopMapUI=(()=>{
   root=document.createElement('section');root.id='shopMapUI';root.className='shop-map-ui';root.hidden=true;
   root.setAttribute('role','region');root.setAttribute('aria-label','Shop map');
   root.innerHTML=`
-   <header class="sm-heading"><span class="sm-brand">Whistlevale</span><h1 id="smTitle" tabindex="-1">Shop map<span class="sm-title-dot" aria-hidden="true"></span></h1><p id="smRoomCount"></p></header>
+   <header class="sm-heading"><span class="sm-brand">Whistlevale</span><h1 id="smTitle" tabindex="-1">Choose a room<span class="sm-title-dot" aria-hidden="true"></span></h1><p id="smRoomCount"></p></header>
    <button type="button" class="sm-back">${icons.back}<span class="sm-back-full">Back to the railway</span><span class="sm-back-short">Back</span></button>
    <div class="sm-markers" aria-label="Room entrances"></div>
    <section class="sm-preview" aria-labelledby="smRoomName">
-    <div class="sm-preview-top"><span class="sm-room-number" id="smRoomNumber"></span><span id="smRoomTag"></span><span class="sm-current" id="smCurrent">Your railway</span></div>
-    <h2 id="smRoomName"></h2><p class="sm-description" id="smDescription"></p>
-    <div class="sm-entry-actions"><button type="button" class="sm-enter"><span id="smEnterLabel">Enter room</span>${icons.arrow}</button><button type="button" class="sm-cinema">${icons.play}<span>Watch cinema</span></button></div>
+    <div class="sm-preview-summary"><span class="sm-room-number" id="smRoomNumber"></span><h2 id="smRoomName"></h2><button type="button" class="sm-info" aria-label="About this room" aria-controls="smDetails" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 7.5v.5"/></svg></button><button type="button" class="sm-enter"><span id="smEnterLabel">Enter</span>${icons.arrow}</button></div>
+    <div id="smDetails" hidden><div class="sm-preview-top"><span id="smRoomTag"></span><span class="sm-current" id="smCurrent">Your railway</span></div><p class="sm-description" id="smDescription"></p><button type="button" class="sm-cinema">${icons.play}<span>Watch cinema</span></button></div>
    </section>
-   <div class="sm-view-tools"><span class="sm-orbit-hint"><span class="sm-mouse-hint">Drag to turn · Scroll to explore</span><span class="sm-touch-hint">Drag to turn · Pinch to explore</span></span><button type="button" class="sm-reset">${icons.orbit}<span>Reset view</span></button></div>
+   <div class="sm-view-tools"><span class="sm-orbit-hint"><span class="sm-mouse-hint">Drag to turn · Scroll to explore</span><span class="sm-touch-hint">Drag to turn · Pinch to explore</span></span><button type="button" class="sm-reset" aria-label="Reset view">${icons.orbit}<span>Reset view</span></button></div>
    <nav class="sm-directory" aria-label="Room directory"></nav>
    <div class="sm-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>`;
   document.body.appendChild(root);
-  for(const [key,query]of Object.entries({heading:'#smTitle',count:'#smRoomCount',back:'.sm-back',markerLayer:'.sm-markers',panel:'.sm-preview',number:'#smRoomNumber',tag:'#smRoomTag',title:'#smRoomName',description:'#smDescription',current:'#smCurrent',enter:'.sm-enter',enterLabel:'#smEnterLabel',cinema:'.sm-cinema',reset:'.sm-reset',directory:'.sm-directory',status:'.sm-status'}))nodes[key]=root.querySelector(query);
+  for(const [key,query]of Object.entries({heading:'#smTitle',count:'#smRoomCount',back:'.sm-back',markerLayer:'.sm-markers',panel:'.sm-preview',number:'#smRoomNumber',tag:'#smRoomTag',title:'#smRoomName',description:'#smDescription',current:'#smCurrent',enter:'.sm-enter',enterLabel:'#smEnterLabel',cinema:'.sm-cinema',info:'.sm-info',details:'#smDetails',reset:'.sm-reset',directory:'.sm-directory',status:'.sm-status'}))nodes[key]=root.querySelector(query);
   nodes.back.addEventListener('click',()=>call('closeShopMap'));
   nodes.enter.addEventListener('click',()=>enter(selected));
   nodes.cinema.addEventListener('click',()=>enter(selected,true));
   nodes.reset.addEventListener('click',()=>call('shopMapResetView'));
+  nodes.info.addEventListener('click',()=>{nodes.details.hidden=!nodes.details.hidden;nodes.info.setAttribute('aria-expanded',String(!nodes.details.hidden));});
   // These listeners run only on this layer's controls, never on the canvas.
   root.addEventListener('keydown',event=>{
    event.stopPropagation();
-   if(event.key==='Escape'){event.preventDefault();call('closeShopMap');return;}
+   if(event.key==='Escape'){event.preventDefault();if(!nodes.details.hidden){nodes.details.hidden=true;nodes.info.setAttribute('aria-expanded','false');nodes.info.focus();}else call('closeShopMap');return;}
    const b=event.target.closest('.sm-directory-room');
    if(!b||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
    event.preventDefault();const keys=rooms.map(([key])=>key),at=keys.indexOf(b.dataset.room);
@@ -93,7 +93,8 @@ window.ShopMapUI=(()=>{
   nodes.number.textContent=room.number||String(index+1).padStart(2,'0');
   nodes.tag.textContent=room.tag||room.layout||'A little world';
   nodes.title.textContent=name;nodes.description.textContent=room.description||'Step inside and explore this little railway world.';
-  nodes.current.hidden=!isCurrent;nodes.enterLabel.textContent=isCurrent?'Return to room':'Enter room';
+  nodes.current.hidden=!isCurrent;nodes.enterLabel.textContent=isCurrent?'Return':'Enter';
+  nodes.info.setAttribute('aria-label',`About ${name}`);
   nodes.enter.setAttribute('aria-label',`${isCurrent?'Return to':'Enter'} ${name}`);
   nodes.cinema.setAttribute('aria-label',`Watch cinema in ${name}`);
   for(const [id,b]of directory){
@@ -108,14 +109,17 @@ window.ShopMapUI=(()=>{
   }
  }
  function show(currentKey){
-  init();if(!opened)lastFocus=document.activeElement;
+  init();if(!opened)lastFocus=document.activeElement===document.body?document.getElementById('houseMapButton'):document.activeElement;
   current=currentKey;selected=currentKey;refresh();opened=true;root.hidden=false;
+  nodes.details.hidden=true;nodes.info.setAttribute('aria-expanded','false');
   nodes.heading.focus({preventScroll:true});
  }
  function hide(){
   if(!root)return;const restore=root.contains(document.activeElement);opened=false;root.hidden=true;
   for(const marker of markers.values())marker.hidden=true;
-  if(restore)requestAnimationFrame(()=>{if(!opened&&document.activeElement===document.body&&lastFocus?.isConnected&&lastFocus.getClientRects().length)lastFocus.focus({preventScroll:true});});
+  // Room controls are visible before hide() runs. Restore now: during the next
+  // animation frame, browsers can still report the just-hidden heading as active.
+  if(restore&&lastFocus?.isConnected&&lastFocus.getClientRects().length)lastFocus.focus({preventScroll:true});
  }
  function setLoading(text){
   if(!root?.isConnected)init();loading=typeof text==='string'&&text.length>0;

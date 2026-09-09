@@ -49,7 +49,7 @@ class HouseSoundscape{
   const originalUpdate=railway.update;
   if(typeof originalUpdate==='function')railway.update=function(dt){
    this.nextBird=Infinity;
-   if(hobby.room!=='valley'&&hobby.scene?.trains[0]?.type!=='steam')this.lastChuff=Math.floor(travel/.45);
+   if(typeof collectionPower==='function'?collectionPower(hobby.room)!=='steam':hobby.room!=='valley'&&hobby.scene?.trains[0]?.type!=='steam')this.lastChuff=Math.floor(travel/.45);
    return originalUpdate.call(this,dt);
   };
   this.prepareRoomSound();
@@ -122,7 +122,8 @@ class HouseSoundscape{
    this.target(bed.gain.gain,p.air*support*swell,1.4);this.target(bed.filter.frequency,cutoff,2.6);
   }
   const proximity=hobby.cinema?.75:clamp(20/(distance+20),.08,.65),motorLevel=!paused&&!isSteam?.0042*Math.sqrt(clamp(visibleSpeed/1.5,0,1))*proximity:0;
-  this.target(sound.motor.gain,motorLevel,.85);for(const motor of sound.motors)this.target(motor.source.frequency,(78+clamp(visibleSpeed,0,3)*38)*motor.ratio,1.8);
+  const diesel=typeof collectionPower==='function'&&collectionPower(hobby.room)==='diesel';
+  this.target(sound.motor.gain,motorLevel*(diesel?1.3:1),.85);for(const motor of sound.motors)this.target(motor.source.frequency,((diesel?48:78)+clamp(visibleSpeed,0,3)*(diesel?23:38))*motor.ratio,1.8);
   // Existing recordings remain the primary soundscape. Procedural cues become
   // both rarer and quieter when a room recording is available.
   if(now>=sound.nextNature){
@@ -226,7 +227,7 @@ class HouseSoundscape{
   const forest=room==='alpine'?.62:room==='valley'?.14+.28*near(-8,-24,22):0;
   const workshop=room==='studio'?.65:room==='valley'&&(!hobby.cinema&&viewMode==='room')?.14:room==='coast'&&viewMode==='room'?.035:0;
   const p=hobbyTrainInfo().p,dist=len(sub(cameraPos,p)),exhibitTrain=hobby.scene?.trains[0];
-  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed??1),isSteam=room==='valley'||exhibitTrain?.type==='steam';
+  const visibleSpeed=speed*(room==='valley'?1:exhibitTrain?.speed??1),isSteam=typeof collectionPower==='function'?collectionPower(room)==='steam':room==='valley'||exhibitTrain?.type==='steam';
   const trainLevel=paused||!isSteam?0:Math.sqrt(Math.min(visibleSpeed/1.5,1))*(hobby.cinema?.52:clamp(18/(dist+12),.06,.5));
   const targets={...score,town:town*.55,coast:coast*.62,forest:forest*.40,workshop:workshop*.46,steam:trainLevel*.90};
   for(const [id,layer]of this.layers){
@@ -256,5 +257,8 @@ enableSound=function(force=false){
  if($('cinemaMute')){$('cinemaMute').textContent=audio?.active?'Sound on':'Sound off';$('cinemaMute').setAttribute('aria-pressed',String(!!audio?.active));}
 };
 const originalWhistle=whistle;
-whistle=function(){if(!audio?.active)enableSound(true);if(soundscape?.whistle()){whistleSteam=1.6;for(let i=0;i<5;i++)emitSteam(true);$('whistleBtn').classList.add('active');setTimeout(()=>$('whistleBtn').classList.remove('active'),1500);}else originalWhistle();};
+whistle=function(){if(!audio?.active)enableSound(true);if(typeof collectionPower==='function'&&collectionPower(hobby.room)!=='steam'){
+ const c=soundscape?.ctx;if(c&&soundscape.on&&c.currentTime-soundscape.lastWhistle>.75){const now=c.currentTime;soundscape.lastWhistle=now;for(const [frequency,level]of[[262,.055],[349,.030]]){const o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.value=frequency;g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(level,now+.05);g.gain.setValueAtTime(level,now+.45);g.gain.linearRampToValueAtTime(0,now+.68);o.connect(g).connect(soundscape.buses.train);o.start();o.stop(now+.70);o.onended=()=>{o.disconnect();g.disconnect();};}}
+ $('whistleBtn').classList.add('active');setTimeout(()=>$('whistleBtn').classList.remove('active'),700);return;
+ }if(soundscape?.whistle()){whistleSteam=1.6;for(let i=0;i<5;i++)emitSteam(true);$('whistleBtn').classList.add('active');setTimeout(()=>$('whistleBtn').classList.remove('active'),1500);}else originalWhistle();};
 function updateHobbyAudio(){soundscape?.update();}

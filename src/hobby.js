@@ -8,6 +8,7 @@ function hobbyTrainInfo(){return hobby.room==='valley'||!hobby.scene?leadInfo:ho
 function hobbyTrainMatrix(){return hobby.room==='valley'||!hobby.scene?trainModels[0]:circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance);}
 function hobbyTrainInTunnel(){return hobby.room==='valley'&&leadInfo&&inTunnel(leadInfo.edge,leadInfo.d,2);}
 function hobbyTrainLabel(key=hobby.room){
+ if(typeof collectionTrainLabel==='function')return collectionTrainLabel(key);
  const room=HOUSE_ROOMS[key]||{},stock=typeof TRAIN_ROSTER!=='undefined'?TRAIN_ROSTER[key]:null;
  return stock||{name:room.train?.name||room.layout||room.name||'The local railway',number:room.train?.number||'',service:room.train?.service||room.service||'Scenic service',type:room.train?.type||''};
 }
@@ -24,7 +25,7 @@ function drawHobbyTrains(p){
  else if(hobby.scene){drawHouseTrains(hobby.scene,p);drawWalkingFigures(hobby.scene.actors,p);}
 }
 function drawHobbyParticles(){
- if(hobby.room==='valley'){drawSteam();return;}
+ if(hobby.room==='valley'){if(typeof collectionPower!=='function'||collectionPower('valley')==='steam')drawSteam();return;}
  // Reuse the steam system at the active exhibit locomotive, including room dust.
  const savedSteam=steam.map(p=>p.p),source=trainModels[0],destination=hobbyTrainMatrix();
  const origin=transform([0,1.7,1.03],source),target=transform([0,1.7,1.03],destination);
@@ -47,17 +48,19 @@ setView=function(mode,announce=true){
  updateUI();
 };
 enterBuild=function(on=true){
+ if(typeof closeQuietControls==='function')closeQuietControls();
  if(hobby.cinema)leaveCinema(false);
  if(on&&hobby.room!=='valley'){visitHouseRoom('valley',()=>baseHobbyBuild(true));return;}
  baseHobbyBuild(on);shadowDirty=true;
 };
-beginManualOrbit=function(){if(hobby.cinema)leaveCinema(false);baseManualOrbit();};
+beginManualOrbit=function(){if(hobby.cinema){beginCinemaOrbit();return;}baseManualOrbit();};
 
 // Shared synchronous entry. The caller owns map state, fades and error handling.
 // Resolve geometry first so a failed room build leaves the active room intact.
 function activateHouseRoom(key){
  if(!HOUSE_ROOMS[key])throw new Error('Unknown hobby house room: '+key);
  const scene=key==='valley'?null:getHouseScene(key);
+ if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
  hobby.room=key;hobby.scene=scene;hobby.spot=-1;
  document.body.classList.toggle('annex',key!=='valley');document.body.dataset.room=key;shadowDirty=true;
@@ -65,6 +68,7 @@ function activateHouseRoom(key){
  renderRoomPlaces();updateUI();
  $('layoutPanel').hidden=true;$('ambiencePanel').hidden=true;
  try{sessionStorage.setItem('hobby-house-room',key);const url=new URL(location.href);url.searchParams.set('room',key);window.history.replaceState(null,'',url);}catch{}
+ window.railwayAnalytics?.sync?.();
  return scene;
 }
 
@@ -73,12 +77,12 @@ function visitHouseRoom(key,after){
  if(typeof closeHouseMap==='function')closeHouseMap();
  if(key===hobby.room){setView('room',false);after?.();return;}
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
- hobby.transition=true;$('roomTransition').classList.add('visible');$('transitionNumber').textContent=HOUSE_ROOMS[key].number;$('transitionName').textContent=HOUSE_ROOMS[key].name;
+ hobby.transition=true;window.railwayAnalytics?.sync?.();$('roomTransition').classList.add('visible');$('transitionNumber').textContent=HOUSE_ROOMS[key].number;$('transitionName').textContent=HOUSE_ROOMS[key].name;
  setTimeout(()=>{
   try{
    activateHouseRoom(key);
   }catch(error){console.error(error);toast('This room could not open. Please try again.');}
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{$('roomTransition').classList.remove('visible');hobby.transition=false;after?.();});});
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{$('roomTransition').classList.remove('visible');hobby.transition=false;after?.();window.railwayAnalytics?.sync?.();});});
  },reduceMotion?0:260);
 }
 
@@ -94,23 +98,101 @@ function renderRoomPlaces(){
 
 function enterCinema(){
  if(hobby.cinema||!hobby.ready)return;if(building)baseHobbyBuild(false);
+ if(typeof closeQuietControls==='function')closeQuietControls();
  hobby.saved={throttle,paused,view:viewMode,target:orbit.target.slice(),distance:orbit.distance,pitch:orbit.pitch,yaw:orbit.yaw};
- hobby.cinema=true;hobby.cinemaStart=roomClock;hobby.heading=hobbyTrainInfo().f.slice();hobby.tunnelBlend=hobbyTrainInTunnel()?1:0;hobby.shotBlend={side:9,back:-14,height:8.5};
+ hobby.cinema=true;resumeCinemaCamera();hobby.cinemaStart=roomClock;hobby.heading=hobbyTrainInfo().f.slice();hobby.tunnelBlend=hobbyTrainInTunnel()?1:0;hobby.shotBlend={side:9,back:-14,height:8.5};
  viewMode='cinema';document.body.classList.add('cinematic');document.body.classList.remove('hidden-ui','train-focus');hidden=false;
  $('trainInspector').hidden=true;$('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;
  setThrottle(Math.min(throttle||28,28));if(paused)togglePause();if(!audio?.active)enableSound(true);
  $('cinemaRoom').textContent=HOUSE_ROOMS[hobby.room].layout;$('cinemaSubtitle').textContent=HOUSE_ROOMS[hobby.room].tag;
- $('cinemaStart').setAttribute('aria-pressed','true');$('cinemaExit').focus();wakeCinema();
+ $('cinemaStart').setAttribute('aria-pressed','true');$('cinemaExit').focus();wakeCinema();window.railwayAnalytics?.sync?.();
 }
 function leaveCinema(restore=true){
- if(!hobby.cinema)return;hobby.cinema=false;document.body.classList.remove('cinematic','cinema-idle');$('cinemaStart').setAttribute('aria-pressed','false');
+ if(!hobby.cinema)return;clearCinemaPointers();cinemaOrbit.manual=null;clearTimeout(cinemaIdleTimer);hobby.cinema=false;document.body.classList.remove('cinematic','cinema-idle');$('cinemaStart').setAttribute('aria-pressed','false');
  const saved=hobby.saved;hobby.saved=null;
  if(saved){setThrottle(saved.throttle);if(paused!==saved.paused)togglePause();viewMode=saved.view==='cinema'?'room':saved.view;Object.assign(orbit,{target:saved.target,distance:saved.distance,pitch:saved.pitch,yaw:saved.yaw});}
  else viewMode='room';
  if(restore){$('cinemaStart').focus();updateUI();}
+ window.railwayAnalytics?.sync?.();
 }
 let cinemaIdleTimer=0;
 function wakeCinema(){if(!hobby.cinema)return;document.body.classList.remove('cinema-idle');clearTimeout(cinemaIdleTimer);cinemaIdleTimer=setTimeout(()=>{if(hobby.cinema&&$('soundPanel').hidden&&!document.querySelector('#cinemaControls :focus-visible'))document.body.classList.add('cinema-idle');},5500);}
+
+// Cinema has its own gesture state: adjusting the frame must not restore the
+// pre-cinema throttle, pause state or room camera. The train remains the anchor.
+const cinemaOrbit={manual:null,pointers:new Map(),origin:null};
+function beginCinemaOrbit(){
+ if(cinemaOrbit.manual)return cinemaOrbit.manual;
+ const delta=sub(cameraPos,cameraTarget),distance=Math.max(.1,len(delta));
+ cinemaOrbit.manual={offset:sub(cameraTarget,hobbyTrainInfo().p),distance,yaw:Math.atan2(delta[0],delta[2]),pitch:Math.asin(clamp(delta[1]/distance,-1,1))};
+ $('cinemaShot').hidden=true;$('cinemaCameraLabel').hidden=true;$('cinemaAuto').hidden=false;wakeCinema();
+ window.railwayAnalytics?.control?.('camera_manual');
+ return cinemaOrbit.manual;
+}
+function clearCinemaPointers(){
+ const ids=[...cinemaOrbit.pointers.keys()];cinemaOrbit.pointers.clear();cinemaOrbit.origin=null;
+ for(const id of ids)if(canvas.hasPointerCapture(id))canvas.releasePointerCapture(id);
+ canvas.style.cursor='';
+}
+function resumeCinemaCamera(){
+ if(cinemaOrbit.manual)window.railwayAnalytics?.control?.('camera_auto');
+ clearCinemaPointers();cinemaOrbit.manual=null;
+ const restoreFocus=document.activeElement===$('cinemaAuto');
+ $('cinemaAuto').hidden=true;$('cinemaShot').hidden=false;$('cinemaCameraLabel').hidden=false;
+ if(restoreFocus)$('cinemaShot').focus();wakeCinema();
+}
+function bindCinemaCamera(){
+ const block=e=>{e.preventDefault();e.stopImmediatePropagation();};
+ // Capture before the canvas's normal orbit/editor listeners, as the map does.
+ window.addEventListener('pointerdown',e=>{
+  if(!hobby.cinema||e.target!==canvas)return;block(e);wakeCinema();
+  if(e.button!==0||cinemaOrbit.pointers.size>=2)return;
+  if(typeof closeQuietControls==='function')closeQuietControls();
+  canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);
+  cinemaOrbit.pointers.set(e.pointerId,[e.clientX,e.clientY]);
+  cinemaOrbit.origin=[e.clientX,e.clientY];canvas.style.cursor='grabbing';
+ },true);
+ window.addEventListener('pointermove',e=>{
+  if(!hobby.cinema||e.target!==canvas)return;wakeCinema();
+  const previous=cinemaOrbit.pointers.get(e.pointerId);if(!previous)return;block(e);
+  const next=[e.clientX,e.clientY],other=[...cinemaOrbit.pointers].find(([id])=>id!==e.pointerId)?.[1];
+  if(other){
+   const before=Math.hypot(previous[0]-other[0],previous[1]-other[1]),after=Math.hypot(next[0]-other[0],next[1]-other[1]);
+   if(before>8&&after>8&&Math.abs(after-before)>.1){const orbit=beginCinemaOrbit();orbit.distance=clamp(orbit.distance*before/after,6,180);}
+  }else{
+   if(cinemaOrbit.origin&&Math.hypot(next[0]-cinemaOrbit.origin[0],next[1]-cinemaOrbit.origin[1])<4)return;
+   cinemaOrbit.origin=null;const orbit=beginCinemaOrbit();
+   orbit.yaw-=(next[0]-previous[0])*.0048;orbit.pitch=clamp(orbit.pitch+(next[1]-previous[1])*.0036,.08,1.43);
+  }
+  cinemaOrbit.pointers.set(e.pointerId,next);
+ },true);
+ const release=e=>{
+  if(!cinemaOrbit.pointers.has(e.pointerId))return;block(e);
+  cinemaOrbit.pointers.delete(e.pointerId);
+  if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+  // Rebase the remaining finger after a pinch instead of reusing the first drag.
+  cinemaOrbit.origin=cinemaOrbit.pointers.values().next().value||null;
+  if(!cinemaOrbit.pointers.size)canvas.style.cursor='';
+ };
+ for(const type of['pointerup','pointercancel','lostpointercapture'])window.addEventListener(type,release,true);
+ window.addEventListener('wheel',e=>{
+  if(!hobby.cinema||e.target!==canvas)return;block(e);wakeCinema();if(!e.deltaY)return;
+  const orbit=beginCinemaOrbit(),pixels=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?innerHeight:1);
+  orbit.distance=clamp(orbit.distance*Math.exp(clamp(pixels,-160,160)*.0015),6,180);
+ },{capture:true,passive:false});
+ for(const type of['click','dblclick','contextmenu'])window.addEventListener(type,e=>{if(hobby.cinema&&e.target===canvas)block(e);},true);
+ window.addEventListener('keydown',e=>{
+  if(!hobby.cinema||e.target!==canvas||e.ctrlKey||e.metaKey||e.altKey)return;
+  const key=e.key;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','0'].includes(key))return;
+  block(e);if(key==='0'){resumeCinemaCamera();return;}const orbit=beginCinemaOrbit();
+  if(key==='ArrowLeft'||key==='ArrowRight')orbit.yaw+=key==='ArrowLeft'?.08:-.08;
+  else if(key==='ArrowUp'||key==='ArrowDown')orbit.pitch=clamp(orbit.pitch+(key==='ArrowUp'?-.06:.06),.08,1.43);
+  else orbit.distance=clamp(orbit.distance*(key==='-'?1.1:1/1.1),6,180);
+  wakeCinema();
+ },true);
+ window.addEventListener('blur',clearCinemaPointers);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)clearCinemaPointers();});
+}
 
 updateSimulation=function(dt){
  baseHobbySimulation(dt);
@@ -125,13 +207,14 @@ function cinemaCamera(dt){
  for(const key of['side','back','height'])hobby.shotBlend[key]=mix(hobby.shotBlend[key],q[key],blend);
  hobby.tunnelBlend=mix(hobby.tunnelBlend,hobbyTrainInTunnel()?1:0,1-Math.exp(-dt*.4));
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
- const target=add(add(p,mul(f,-3.0)),[0,1.1,0]);
+ const manual=cinemaOrbit.manual,target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
+ if(manual){const {yaw,pitch,distance}=manual;desired=add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance]);}
  const ground=(x,z)=>hobby.room==='valley'?naturalH(x,z):hobby.scene.height(x,z);
  desired[1]=Math.max(desired[1],ground(desired[0],desired[2])+3.3);
  // Keep the line of sight above ridges without twitching at each terrain sample.
  for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
- cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*1.45));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*2.5));
+ cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*(manual?10:1.45)));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*(manual?10:2.5)));
  cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 
@@ -161,8 +244,8 @@ updateCamera=function(dt){
 updateUI=function(){
  if(typeof isShopMapActive==='function'&&isShopMapActive())return;
  baseHobbyUI();if(!hobby.ready)return;
- const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name;$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Explore the hobby shop map. Current room: '+room.name);
- const electric=/electric|railcar/i.test(stock.type||'');
+ const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name.replace(/^The /,'');$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Switch room. Current room: '+room.name);
+ const electric=typeof collectionPower==='function'?collectionPower(hobby.room)!=='steam':/electric|railcar/i.test(stock.type||'');
  $('cabMark').textContent=(electric?'IN THE CAB · ':'ON THE FOOTPLATE · ')+stock.name.toUpperCase()+(stock.number?' No. '+stock.number:'');$('cabMark').classList.toggle('show',viewMode==='cab');
  const engineTitle=document.querySelector('.engine-title'),label=JSON.stringify([stock.number,stock.name]);
  if(engineTitle.dataset.trainLabel!==label){
@@ -175,14 +258,19 @@ updateUI=function(){
   $('engineStatus').textContent=paused?'Taking a little breather':[stock.type,stock.service].filter(Boolean).join(' · ');
   $('speedValue').textContent=Math.round((paused?0:speed)*hobby.scene.trains[0].speed*8.073);$('runState').textContent=paused?'Railway paused':stock.service||'Scenic service';
  }
+ if(typeof collectionPower==='function'){
+  const steamTrain=collectionPower(hobby.room)==='steam';
+  $('whistleBtn').querySelector('span').textContent=steamTrain?'Whistle':'Horn';$('whistleBtn').title=steamTrain?'Sound the whistle (H)':'Sound the horn (H)';
+  if(hobby.room==='valley'&&!paused&&!atStation&&!stopRequested)$('engineStatus').textContent=stock.type+' · '+stock.service;
+  const throttleMeta=document.querySelector('.throttle-meta span:last-child');if(throttleMeta)throttleMeta.textContent=steamTrain?'Full steam':'Full power';
+ }
  $('lifeCount').textContent='A world quietly going about its day';
  if(hobby.cinema){$('cinemaPause').innerHTML=icon(paused?'play':'pause')+(paused?'Continue journey':'Pause journey');$('cinemaPause').setAttribute('aria-pressed',String(paused));const elapsed=Math.floor(roomClock-hobby.cinemaStart);$('cinemaTime').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');}
 };
 
 function createHobbyUI(){
  const ui=document.createElement('div');ui.id='houseUI';ui.innerHTML=`
-  <div class="house-wayfinding"><button id="houseMapButton" aria-controls="shopMapUI" aria-label="Explore the hobby shop map"><span class="house-map-icon"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 11 14 4l11 7v13H3Z M3 14h22M14 4v20M8 14v10M20 14v10M8 8v6M20 8v6"/></svg></span><span><small>EXPLORE THE HOUSE</small><strong id="currentRoomName">The Grand Hall</strong></span><span class="room-number" id="currentRoomNumber">01</span><span class="house-map-arrow">↗</span></button><span id="lifeCount" class="life-count"></span></div>
-  <nav id="roomPlaces" class="room-places" aria-label="Little places in this room"></nav>
+  <div class="house-wayfinding"><button id="houseMapButton" aria-controls="shopMapUI" aria-label="Switch room" title="Explore the house and choose another room"><span class="house-map-icon"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 11 14 4l11 7v13H3Z M3 14h22M14 4v20M8 14v10M20 14v10M8 8v6M20 8v6"/></svg></span><span class="room-switch-copy"><span class="room-switch-label">Switch room</span><strong id="currentRoomName">Alder Valley</strong></span><span class="room-number" id="currentRoomNumber" aria-hidden="true">01</span><svg class="room-switch-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button><span id="lifeCount" class="life-count"></span></div>
   <div class="immersion-entry"><button id="cinemaStart" aria-pressed="false">${icon('play')}<span>Slow cinema</span><kbd>C</kbd></button><button id="soundMixerButton" aria-label="Open soundscape mixer">${icon('sound')}</button></div>
   <section id="soundPanel" class="sound-panel" aria-label="Soundscape mixer" hidden><div class="sound-panel-top"><span class="eyebrow">A LITTLE LESS HURRY</span><button id="soundClose" aria-label="Close soundscape mixer">×</button></div><h2>The sound of being here.</h2><p>A quiet score, soft wheels, and a world going about its day.</p><button id="soundToggle" class="sound-enable" aria-pressed="false">Enable sound</button>
    <label for="musicMix"><span>Original score</span><output id="musicMixValue">40%</output></label><input id="musicMix" aria-label="Music volume" type="range" min="0" max="100" value="40">
@@ -192,9 +280,9 @@ function createHobbyUI(){
   </section>
   <div id="roomTransition" class="room-transition" aria-hidden="true"><span id="transitionNumber">02</span><div class="eyebrow">WHISTLEVALE HOBBY HOUSE</div><h2 id="transitionName">The Coastal Gallery</h2><div class="transition-rule"></div></div>
  `;document.body.append(ui);
- const cinema=document.createElement('div');cinema.id='cinemaUI';cinema.innerHTML=`<div class="cinema-matte top"></div><div class="cinema-matte bottom"></div><span class="cinema-wordmark">WHISTLEVALE <i>A HOUSE OF LITTLE WORLDS</i></span><button id="cinemaExit">Leave cinema <kbd>Esc</kbd></button><div class="cinema-caption"><span id="cinemaSubtitle">THE LONG WAY HOME</span><h2 id="cinemaRoom">Alder Valley</h2><p>A small world. A slower pace.</p></div><div id="cinemaControls"><button id="cinemaPause">${icon('pause')}Pause journey</button><span class="cinema-separator"></span><label class="cinema-camera-label" for="cinemaShot">Camera</label><select id="cinemaShot" aria-label="Cinematic camera"><option value="drift">Gentle drift</option><option value="side">Alongside</option><option value="wide">Wide landscape</option><option value="tail">Following behind</option></select><button id="cinemaMute" aria-pressed="false">Sound on</button><button id="cinemaMix" aria-label="Adjust cinematic soundscape">${icon('settings')}</button></div><div class="cinema-session"><span class="cinema-live-dot"></span>NOWHERE ELSE TO BE <time id="cinemaTime">00:00</time></div>`;document.body.append(cinema);
+ const cinema=document.createElement('div');cinema.id='cinemaUI';cinema.innerHTML=`<div class="cinema-matte top"></div><div class="cinema-matte bottom"></div><span class="cinema-wordmark">WHISTLEVALE <i>A HOUSE OF LITTLE WORLDS</i></span><button id="cinemaExit">Leave cinema <kbd>Esc</kbd></button><div class="cinema-caption"><span id="cinemaSubtitle">THE LONG WAY HOME</span><h2 id="cinemaRoom">Alder Valley</h2><p class="cinema-camera-hint">Drag to look around · Scroll or pinch to zoom</p></div><div id="cinemaControls"><button id="cinemaPause">${icon('pause')}Pause journey</button><span class="cinema-separator"></span><label id="cinemaCameraLabel" class="cinema-camera-label" for="cinemaShot">Camera</label><select id="cinemaShot" aria-label="Cinematic camera"><option value="drift">Gentle drift</option><option value="side">Alongside</option><option value="wide">Wide landscape</option><option value="tail">Following behind</option></select><button id="cinemaAuto" title="Resume the automatic camera" hidden>Auto camera</button><button id="cinemaMute" aria-pressed="false">Sound on</button><button id="cinemaMix" aria-label="Adjust cinematic soundscape">${icon('settings')}</button></div><div class="cinema-session"><span class="cinema-live-dot"></span>NOWHERE ELSE TO BE <time id="cinemaTime">00:00</time></div>`;document.body.append(cinema);
  $('houseMapButton').onclick=()=>openHouseMap();$('cinemaStart').onclick=enterCinema;$('cinemaExit').onclick=()=>leaveCinema();$('cinemaPause').onclick=togglePause;
- $('cinemaShot').onchange=e=>{hobby.shot=e.target.value;wakeCinema();};$('cinemaMute').onclick=()=>enableSound();
+ $('cinemaShot').onchange=e=>{hobby.shot=e.target.value;resumeCinemaCamera();};$('cinemaAuto').onclick=resumeCinemaCamera;bindCinemaCamera();$('cinemaMute').onclick=()=>enableSound();
  let soundOpener=null;
  const showSound=e=>{
   const show=$('soundPanel').hidden;$('soundPanel').hidden=!show;
@@ -232,6 +320,8 @@ function createHobbyUI(){
 exportPlayable=async function(){
  try{
   toast('Packing your little world, including its soundtrack…');const source=document.documentElement.cloneNode(true);
+  // Hosting supplies analytics separately. A portable railway has no such route.
+  for(const node of source.querySelectorAll('#analyticsBootstrap,[data-railway-analytics],script[src="/_vercel/insights/script.js"]'))node.remove();
   for(const node of source.querySelectorAll('script[src]')){const r=await fetch(node.getAttribute('src'));if(!r.ok)throw new Error('Could not pack a script');node.textContent=(await r.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');}
   for(const node of source.querySelectorAll('link[rel=stylesheet]')){const r=await fetch(node.getAttribute('href'));if(!r.ok)throw new Error('Could not pack styles');const style=document.createElement('style');style.textContent=await r.text();node.replaceWith(style);}
   for(const node of source.querySelectorAll('link[rel~="icon"]')){const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;const r=await fetch(href);if(!r.ok)throw new Error('Could not pack the shop icon');node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await r.text()));}
@@ -241,8 +331,18 @@ exportPlayable=async function(){
   for(const node of source.querySelectorAll('script'))if(node.id==='embeddedHouseAudio'||/^\s*window\.HOUSE_EMBEDDED_AUDIO\s*=/.test(node.textContent))node.remove();
   const embed=document.createElement('script');embed.id='embeddedHouseAudio';embed.textContent='window.HOUSE_EMBEDDED_AUDIO='+JSON.stringify(embedded)+';';source.querySelector('head').append(embed);
   const catalog=source.querySelector('#audioCatalog')||document.createElement('script');catalog.id='audioCatalog';catalog.textContent='window.HOUSE_AUDIO_AVAILABLE='+JSON.stringify(Object.keys(embedded))+';';if(!catalog.parentNode)source.querySelector('head').append(catalog);
+  if(typeof collectionExport==='function')source.querySelector('#embeddedTrainCollection').textContent=JSON.stringify(collectionExport()).replace(/</g,'\\u003c');
+  if(typeof collectionPortraitURL==='function'){
+   const portraits={};await Promise.all(TRAIN_COLLECTION.map(async q=>{const url=collectionPortraitURL(q.id);if(url.startsWith('data:')){portraits[q.id]=url;return;}const response=await fetch(url);if(!response.ok)throw new Error('Could not pack the train portraits');const blob=await response.blob();portraits[q.id]=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});}));
+   source.querySelector('#embeddedTrainPortraits').textContent=JSON.stringify(portraits);
+  }
+  source.querySelector('#trainCabinet')?.remove();source.querySelector('#trainCollectionButton')?.remove();
   source.querySelector('#embeddedLayout').textContent=JSON.stringify(snapshot()).replace(/</g,'\\u003c');source.querySelector('#loader').classList.remove('done');
-  for(const selector of['#houseUI','#cinemaUI','#houseMap','#shopMapUI','#playlistPanel','#playlistBtn','#playlistStyle','#atmosphereSoundMixer','#performancePanel'])source.querySelector(selector)?.remove();
+  for(const selector of['#houseUI','#cinemaUI','#cinemaStart','#houseMap','#shopMapUI','#playlistPanel','#playlistBtn','#playlistStyle','#atmosphereSoundMixer','#performancePanel'])source.querySelector(selector)?.remove();
+  for(const node of source.querySelectorAll('.quiet-generated'))node.remove();
+  for(const node of source.querySelectorAll('.quiet-panel'))node.hidden=true;
+  for(const node of source.querySelectorAll('[data-quiet-opener]'))node.setAttribute('aria-expanded','false');
+  source.querySelector('#roomPlaces').replaceChildren();
   for(const node of source.querySelectorAll('dialog'))node.removeAttribute('open');for(const id of['builderUI','trainInspector','projectMenu','workshopBusy','worldTip'])source.querySelector('#'+id).hidden=true;
   // A new runtime starts running at its default throttle, with sound off.
   // Saved preferences can then update these controls together during startup.
@@ -250,7 +350,7 @@ exportPlayable=async function(){
   const playButton=source.querySelector('#playBtn');playButton.classList.remove('active');playButton.setAttribute('aria-pressed','false');playButton.setAttribute('aria-label','Pause the railway');playButton.querySelector('use').setAttribute('href','#i-pause');
   const regulator=source.querySelector('#throttle');regulator.value='42';regulator.setAttribute('value','42');regulator.style.setProperty('--fill','42%');source.querySelector('#throttleValue').textContent='42%';
   const notice=source.querySelector('#toast');notice.classList.remove('show');notice.textContent='';
-  source.querySelector('body').className='';source.querySelector('#error').removeAttribute('style');exportBlob('<!DOCTYPE html>\n'+source.outerHTML,'text/html','whistlevale.html');$('projectMenu').hidden=true;toast('Your hobby house is packed, soundtrack and all.');
+  source.querySelector('body').className='quiet-ui';source.querySelector('#error').removeAttribute('style');exportBlob('<!DOCTYPE html>\n'+source.outerHTML,'text/html','whistlevale.html');$('projectMenu').hidden=true;toast('Your hobby house is packed, soundtrack and all.');
  }catch(error){console.error(error);toast('Could not pack the full house. Export the layout JSON to keep your edits.');}
 };
 
@@ -261,8 +361,11 @@ function startHouse(){
  $('ambienceBtn').onclick=e=>{atmosphereClick(e);$('soundPanel').hidden=true;if($('playlistPanel'))$('playlistPanel').hidden=true;$('playlistBtn')?.setAttribute('aria-expanded','false');$('playlistBtn')?.classList.remove('on');};
  try{
   initHouseArt();hobby.life=buildValleyLife();initWalkingFigures();if(typeof initHouseMap==='function')initHouseMap();hobby.ready=true;shadowDirty=true;updateUI();
+  if(typeof initQuietControls==='function')initQuietControls();
+  if(typeof restoreCollectionSelections==='function')restoreCollectionSelections();
+  if(typeof initTrainCabinet==='function')initTrainCabinet();
   window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyTrainInfo().p.slice(),sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
-  document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);
+  document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);window.railwayAnalytics?.sync?.();
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
 }
 setTimeout(startHouse,50);
