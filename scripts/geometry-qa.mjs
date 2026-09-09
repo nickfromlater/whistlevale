@@ -113,12 +113,13 @@ function worker(mode,output){
    meshes.push({file:name,group,count:data.length/12});return{count:data.length/12};
   }});
  context.window=context;context.addEventListener=noop;
+ vm.runInContext(read('src/community-core.js'),context);context.HOUSE_COMMUNITY=JSON.parse(read('contributions/world.json'));
  vm.runInContext(read('src/railway.js'),context,{filename:'src/railway.js'});
  vm.runInContext('gl=glStub;upload=record;disposeMesh=function(){};',context);
  vm.runInContext(nearestReference,context);
  if(mode==='reference')vm.runInContext(legacy,context,{filename:'pre-optimization-builder'});
  vm.runInContext('const qaCreateGround=createGround;createGround=function(){return profileGeometryStage("createGround",()=>qaCreateGround());};',context);
- for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','trains.js'])vm.runInContext(read('src/'+file),context,{filename:'src/'+file});
+ for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','trains.js','community.js'])vm.runInContext(read('src/'+file),context,{filename:'src/'+file});
  function run(name,code){group=name;const start=performance.now();vm.runInContext(code,context,{filename:'geometry-qa:'+name});timings[name]=Math.round((performance.now()-start)*10)/10;}
  run('primitives-and-transforms',primitives);
  run('nearest-track-queries',nearestQueries);

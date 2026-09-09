@@ -33,13 +33,14 @@ function openQuietPanel(id,opener,back){
  const backButton=panel.querySelector('[data-panel-back]');if(backButton)backButton.hidden=!back;
  if(id==='layoutPanel'){$('diagramToggle').setAttribute('aria-pressed','true');drawMap();}
  if(id==='playlistPanel')playlistPaint();
+ if(id==='buildersPanel')paintBuilders();
  if(id==='soundPanel')wakeCinema();
  (panel.querySelector('.control-panel-head h2')||panel.querySelector('h2,h3'))?.focus({preventScroll:true});
 }
 
 function initQuietControls(){
  if(quietControls.ready)return;quietControls.ready=true;
- const titles={viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide'};
+ const titles={viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide',buildersPanel:'The builders',contributePanel:'Want to contribute?'};
  for(const [id,title]of Object.entries(titles)){
   const panel=$(id);if(!panel)continue;
   panel.classList.add('quiet-panel');panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label',title);panel.removeAttribute('aria-modal');
@@ -54,7 +55,7 @@ function initQuietControls(){
   };
   quietControls.panels.push(panel);
  }
- const bindings={viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help'};
+ const bindings={viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help',buildersButton:'buildersPanel',contributeButton:'contributePanel',buildersContribute:'contributePanel'};
  for(const [id,panel]of Object.entries(bindings)){
   const button=$(id);if(!button)continue;
   button.dataset.quietOpener='';button.setAttribute('aria-controls',panel);button.setAttribute('aria-expanded','false');

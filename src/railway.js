@@ -1009,11 +1009,12 @@ function buildSetDetails(){
 
 // -------------------------- Interactive layout workshop --------------------------
 let building=false,category='Village',selectedId=null,draft=null,ghost=null,ghostCheck={ok:true},gridVisible=true,snapEnabled=true,trackEditing=false,editRoute='common',chosenKnot=null,chosenSegment=0,showTangents=false;
+let layoutCredits=[];
 let layoutTitle='Alder Valley Grand Division',undoStack=[],redoStack=[],factorySnapshot=null,gesture=null,editPointers=new Map(),preGesture=null,rebuilding=false,pendingRebuild=false,saveTimer=0,confirmAction=null,gridMesh=null,ringMesh=null,oldInspector='',cameraProjection=ident();
 const overlay=$('editorOverlay'),ectx=overlay.getContext('2d'),thumbs=new Map();
 const clone=v=>JSON.parse(JSON.stringify(v));
 const STORAGE_KEY='alder-valley-grand-division-v2';
-function workshopSnapshot(){return {format:'alder-valley-workshop',version:1,name:layoutTitle,objects:clone(objects),tracks:clone(trackDesign),flat:flatTerrain,livery,coaches:offsets.length-2};}
+function workshopSnapshot(){return {format:'alder-valley-workshop',version:1,name:layoutTitle,credits:validateCredits(layoutCredits),objects:clone(objects),tracks:clone(trackDesign),flat:flatTerrain,livery,coaches:offsets.length-2};}
 function pushUndo(state=snapshot()){undoStack.push(state);if(undoStack.length>40)undoStack.shift();redoStack=[];updateUndo();}
 function updateUndo(){$('undoBuild').disabled=!undoStack.length;$('redoBuild').disabled=!redoStack.length;}
 function saveProjectSoon(){clearTimeout(saveTimer);$('saveState').textContent='Saving…';saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(snapshot()));$('saveState').textContent='Saved on this device';}catch{$('saveState').textContent='Export a copy to save';}},500);}
@@ -1028,7 +1029,8 @@ function validateProject(value){
    const p=o.params;if(!isNum(p.w,.5,7)||!isNum(p.d,.5,7)||!isNum(p.h,.5,7)||typeof p.paint!=='string'||typeof p.roof!=='string'||!/^#[0-9a-f]{6}$/i.test(p.paint)||!/^#[0-9a-f]{6}$/i.test(p.roof))throw new Error('A building has invalid dimensions or colors.');
    params={w:p.w,d:p.d,h:p.h,paint:p.paint,roof:p.roof,name:['post','bakery','inn'].includes(p.name)?p.name:null};
   }
-  clean.objects.push({id:'o'+(i+1),type:o.type,x:o.x,z:o.z,angle:o.angle,scale:o.scale,seed:isNum(o.seed,0,1e9)?Math.floor(o.seed):i*101,params,yoff:isNum(o.yoff,-24,24)?o.yoff:0});
+  const credits=validateCredits(o.credits);
+  clean.objects.push({...(credits.length?{credits}:{}),id:'o'+(i+1),type:o.type,x:o.x,z:o.z,angle:o.angle,scale:o.scale,seed:isNum(o.seed,0,1e9)?Math.floor(o.seed):i*101,params,yoff:isNum(o.yoff,-24,24)?o.yoff:0});
  }
  for(let key of Object.keys(value.tracks||{})){
   if(!/^(common|highline|lowline|yard|freight|mountain|siding[0-9]+|depot)$/.test(key))continue;const curves=value.tracks?.[key];if(!Array.isArray(curves)||curves.length<1||curves.length>50)throw new Error('The layout track data is missing or too large.');
@@ -1039,11 +1041,12 @@ function validateProject(value){
  for(const key of ['freight','mountain'])if(clean.tracks[key]&&len(sub(clean.tracks[key][0][0],clean.tracks[key].at(-1)[3]))>.01)throw new Error('A closed circuit has been disconnected.');
  const t=clean.tracks;
  for(let key of['highline','lowline'])if(len(sub(t.common.at(-1)[3],t[key][0][0]))>.01||len(sub(t[key].at(-1)[3],t.common[0][0]))>.01)throw new Error('The running lines must connect at both junctions.');
+ if(value.credits!==undefined)clean.credits=validateCredits(value.credits);
  clean.division='grand-v2';clean.services={freight:value.services?.freight!==false,mountain:value.services?.mountain!==false};return clean;
 }
 function workshopApplySnapshot(s,initial=false){
  const changedTerrain=flatTerrain!==!!s.flat||JSON.stringify(trackDesign)!==JSON.stringify(s.tracks)||JSON.stringify(objects.filter(o=>o.type==='hill'))!==JSON.stringify(s.objects.filter(o=>o.type==='hill'));
- layoutTitle=s.name;objects=clone(s.objects);objectSerial=objects.reduce((n,o)=>Math.max(n,parseInt(o.id.slice(1))||0),0);trackDesign=clone(s.tracks);flatTerrain=!!s.flat;
+ layoutTitle=s.name;layoutCredits=validateCredits(s.credits);objects=clone(s.objects);objectSerial=objects.reduce((n,o)=>Math.max(n,parseInt(o.id.slice(1))||0),0);trackDesign=clone(s.tracks);flatTerrain=!!s.flat;
  selectedId=null;draft=null;ghost=null;chosenKnot=null;
  const needTrain=s.livery!==livery||s.coaches!==offsets.length-2;livery=s.livery;setCoachOffsets(s.coaches);
  if(needTrain&&!initial)buildTrains();$('layoutName').value=layoutTitle;updateTrainControls();
@@ -1131,7 +1134,7 @@ function refreshInspector(force=false){
  if(draft){const a=assetById[draft.type];title=a.name;description='Tap an open spot to place. R turns the piece. Keep placing or choose Select.';overline='READY TO PLACE';}
  else if(o){title=assetById[o.type].name;description=o.type==='hill'?'Drag to reposition. Increase Size to widen the terrain.':'Drag to move. Fine-tune, duplicate, or remove this piece.';overline='YOUR '+(o.type==='hill'?'LANDSCAPE':'SCENERY');}
  else if(trackEditing){title=chosenKnot?'Shape the curve.':'A railway that follows your hand.';description=chosenKnot?'Drag the node or adjust its height. Attached rails stay joined.':'Gold circles move connected sections. Select a line in the tray.';overline='THE RUNNING LINE';}
- $('inspectorTitle').textContent=title;$('inspectorDescription').textContent=description;$('inspectorOverline').textContent=overline;$('objectControls').hidden=!o;$('placementControls').hidden=!draft;
+ $('inspectorTitle').textContent=title;$('inspectorDescription').textContent=description+(o?.credits?.length?' Made by '+communityCreditLine(o.credits)+'.':'');$('inspectorOverline').textContent=overline;$('objectControls').hidden=!o;$('placementControls').hidden=!draft;
  document.body.classList.toggle('no-selection',!o&&!draft&&!trackEditing);
  if(o){$('objectAngle').value=Math.round((o.angle*180/PI+360)%360);$('objectScale').value=o.scale.toFixed(1);}
  updateUndo();
@@ -1351,7 +1354,7 @@ function bindWorkshop(){
 // Bump this version when factory placements, tracks, stock/services or seeded
 // generation changes. Only a validated pristine snapshot can skip factory capture;
 // the cache contains editable layout data, never GPU meshes or generated artwork.
-const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-1',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
+const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-2-community',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
 let workshopStartup=null;
 function workshopFactoryChecksum(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return(hash>>>0).toString(16);}
 function readWorkshopStartupLayout(){
@@ -1714,7 +1717,7 @@ function seedDivisionScenery(){
  for(const x of[-35.8,-28.9,-23.8,-16.2,-10.5])addO('townhouse',x,14.1,PI,.91+rnd(-.06,.08));
  for(const x of[-35.8,-29.1,-16.2,-10.6])addO('cottage',x,-1.25,.03+rnd(-.07,.07),1.02,{w:rnd(2.5,3.0),d:2.4,h:rnd(2,2.65),paint:['#d0bd98','#bbc6ab','#b7af92'][Math.floor(rand()*3)],roof:['#647b69','#8d7456','#5c6d64'][Math.floor(rand()*3)],name:null});
  for(const x of[-37,-31,-24.9,-18.0]){addO('cottage',x,-8.7,0,.88);addO('flowers',x,-6.8,0,.72);}
- addO('bakery',-8.3,5.6,-.22,1.08);addO('inn',-9.2,-2.4,.2,1.05);
+ communityWorkshop(addO);
  addO('fence',-26,-5.3,0,1.25);addO('flowers',-30.2,3.0,0,.74);addO('bench',-23,2.5,PI,1);addO('bench',-20,2.5,PI,1);
  // The harbor is at the edge of the lake, not on top of the water.
  addO('warehouse',-3.3,-.7,-PI/2,1.08);addO('crane',-1.0,4.25,PI/2,.86);addO('lighthouse',-2.0,6.8,0,.76);
