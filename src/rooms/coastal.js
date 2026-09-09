@@ -95,6 +95,41 @@ function coastBoat(b,x,z,angle,kind=0,s=1){
  else{b.box(0,.43,-.55,.80,.48,.76,'#d7ccac',23);b.box(0,.7,-.55,.91,.10,.89,'#6f8b7e',41);b.box(0,.46,-.15,.57,.22,.03,'#699997',6);b.beam([0,.21,.50],[0,2.85,.50],.027,'#bdab7d',41,7);b.beam([-.79,2,.50],[.79,2,.50],.02,'#b5a476',41,7);b.beam([0,2.81,.50],[0,.2,-1.75],.007,'#c9c2a1',22,5);for(let j=0;j<3;j++)b.sphere(.63,.17,-.8+j*.65,.09,.15,.12,'#ddcda6',23,7,5);b.box(0,.37,1.1,.67,.25,.62,'#9b9f79',22);}
  b.pop();
 }
+// Small, fixed groups make the shoreline feel worked by tides and wind.
+// All samples use the finished terrain and keep the railway envelope clear.
+function coastShoreDetails(b,land,shore,near,east,north){
+ // Broken chalk at the foot of the headland, with darker stone at the tide line.
+ for(let i=0;i<48;i++){
+  const z=-10.8+i*.45,x=east(z)-.30+Math.sin(i*2.4)*.52,y=land(x,z),r=.20+hash(i,918)*.33;
+  if(y>2.3||near(x,z).dist<2.0||Math.hypot(x-27.5,z+1.2)<3.6)continue;
+  b.push(x,Math.max(.25,y)-.02,z,0,hash(i,287)*PI);
+  b.sphere(0,.10,0,r,.18+hash(i,76)*.26,r*.72,y<.6?'#9eae9e':'#c7c8ae',4,6,4,true);b.pop();
+ }
+ // Two small shingle coves on the northern shore, away from the working quay.
+ for(const [cx,spread]of[[-1,5.2],[14,4.0]])for(let i=0;i<34;i++){
+  const x=cx+(hash(i,cx+83)-.5)*spread,z=north(x)+(hash(i,74)-.2)*.7,y=land(x,z);
+  if(y<.38||y>1.22||near(x,z).dist<2)continue;
+  const r=.07+hash(i,155)*.14;b.sphere(x,y+.03,z,r,r*.5,r*.76,i%3?'#b7b69b':'#909e8c',4,6,3,true);
+ }
+ // Marram clumps and small sea-pink flowers on the dune shoulders. The low
+ // clusters leave the keeper's path, beach blankets and harbor paving clear.
+ for(const [cx,cz,rx,rz,count]of[[-7,-17,5,1.7,23],[17,-18,4,1.8,22],[41,12,3,5,26],[-43,22,2.2,3.5,16],[39,-25,4,2.5,18]])for(let i=0;i<count;i++){
+  const a=i*2.39996,r=Math.sqrt((i+.5)/count),x=cx+Math.cos(a)*rx*r,z=cz+Math.sin(a)*rz*r,y=land(x,z);
+  if(near(x,z).dist<2.1||shore(x,z)<1.35||Math.abs(z)>30)continue;
+  for(let j=0;j<5;j++){
+   const a=j*2.4,h=.20+hash(i,j)*.24,dx=Math.cos(a)*.15,dz=Math.sin(a)*.15;
+   b.tri([x-.025,y,z],[x+dx+.12,y+h,z+dz],[x+.025,y,z],j%2?'#90965c':'#b3ad78',8);
+   b.tri([x,y,z-.025],[x+dx+.12,y+h,z+dz],[x,y,z+.025],'#a7a372',8);
+  }
+  if(i%4===0)for(let j=0;j<3;j++)b.sphere(x+.15*j,y+.24+hash(i,j)*.08,z+.15,.07,.045,.065,'#b59492',8,5,3);
+ }
+ // A pair of low driftwood pieces rests above the tide on the quiet cove.
+ for(const [x,z,a]of[[12,-11.8,.35],[16.4,-12.6,-.21]]){
+  const y=land(x,z);if(y<.55||y>1.5||near(x,z).dist<2)continue;
+  b.push(x,y+.07,z,0,a);b.beam([-.65,0,0],[.65,.035,.14],.065,'#a99f7e',22,6);b.beam([-.18,.015,.05],[.04,.08,.38],.028,'#b7af8f',22,5);b.pop();
+ }
+}
+
 function coastRoom(scene,b){
  // A blue-painted exhibition case on bleached trestles replaces the heavy oak
  // table. Its full perimeter contains both the landform and the open sea.
@@ -105,21 +140,30 @@ function coastRoom(scene,b){
  const edge=new Edge('The Tidewater shore line',splineCurves(points,true,.78)),near=coastTrackSampler(edge);scene.routes=[edge];scene.trains=[{edge,distance:edge.length*.08,speed:.67,type:'steam',cars:3}];
  const west=z=>-14.5+1.4*Math.sin(z*.19)+.65*Math.cos(z*.41),east=z=>29+3.4*Math.sin(z*.115)-6.4*Math.exp(-(((z+1)/9.5)**2)),north=x=>-15.2+3.4*Math.cos((x-4)*.105)+1.8*Math.sin(x*.23);
  const shore=(x,z)=>Math.max(west(z)-x,north(x)-z,Math.min(x-east(z),19.4-z),Math.min(-11.55-x,16.4-z,z+15.0));
- const natural=(x,z)=>{
+ const natural=(x,z,trackDistance)=>{
   const k=shore(x,z),dry=smooth(-.8,1.35,k),inland=smooth(1.2,4.5,k),eastRise=(2.9+.38*Math.sin(z*.21)+.16*Math.cos(x*.26))*smooth(16,25,x)*(1-smooth(9,18,z))*smooth(.55,1.7,k),northRise=2.3*Math.exp(-(((x-16)/30)**2+((z+27)/8.5)**2)),westDune=2.2*Math.exp(-(((x+42)/8)**2+((z+27)/8)**2));
-  let y=.13+1.12*dry+eastRise+(northRise+westDune)*inland;
+  // Low wind-shaped folds break up the turf without moving the rail bench.
+  const dunes=(.24+.19*Math.sin(x*.43+z*.24)+.11*Math.sin(z*.71-x*.16))*inland*smooth(1.2,3.4,trackDistance);
+  let y=.13+1.12*dry+eastRise+(northRise+westDune)*inland+dunes;
   const town=(1-smooth(8.8,11,Math.abs(x+23.5)))*(1-smooth(15.0,18,Math.abs(z-.3)));y=mix(y,1.25,town*dry);
   y=mix(y,4.85,1-smooth(3.0,5.2,Math.hypot(x-27.5,z+1.2)));
   const beach=Math.exp(-(((x-31)/6.5)**2+((z-12.5)/5.3)**2));y=mix(y,1.25,beach*.91*dry);
   return y;
  };
- const land=(x,z)=>{const q=near(x,z),raw=natural(x,z),support=smooth(.5,2.5,shore(x,z))*(1-smooth(.82,2.65,q.dist));return mix(raw,q.y-.25,support);};
+ const land=(x,z)=>{const q=near(x,z),raw=natural(x,z,q.dist),support=smooth(.5,2.5,shore(x,z))*(1-smooth(.82,2.65,q.dist));return mix(raw,q.y-.25,support);};
  scene.height=(x,z)=>Math.abs(x)<48&&Math.abs(z)<32?Math.max(.49,land(x,z)):FLOOR;
  houseTerrain(b,96,64,land,(x,y,z,n)=>{
-  const k=shore(x,z),gr=lerpV(col('#819971'),col('#a9ad7d'),noise(x*.24,z*.24)),beach=Math.exp(-(((x-31)/7)**2+((z-12.5)/6)**2)),grass=smooth(1.4,3.8,k)*(1-beach*.91),chalk=smooth(.77,.47,n[1])*smooth(1.45,3.4,y);
-  const strata=lerpV(col('#c1c5ae'),col('#dcdac1'),.5+.5*Math.sin(y*7.0+z*.08));return lerpV(lerpV(col('#d7c79e'),gr,grass),strata,chalk*.94);
+  const k=shore(x,z),gr=lerpV(col('#728e6b'),col('#b6b185'),noise(x*.24,z*.24)*.65+(.5+.5*Math.sin(x*.43+z*.24))*.35),beach=Math.exp(-(((x-31)/7)**2+((z-12.5)/6)**2)),grass=smooth(1.4,3.8,k)*(1-beach*.91),chalk=smooth(.77,.47,n[1])*smooth(1.45,3.4,y);
+  const strata=lerpV(col('#c1c5ae'),col('#dcdac1'),.5+.5*Math.sin(y*7.0+z*.08));const sand=lerpV(col('#a8ad91'),col('#d7c79e'),smooth(.12,1.35,y));return lerpV(lerpV(sand,gr,grass),strata,chalk*.94);
  },.66);
- for(let z=-31.95;z<31.95;z+=1.05)for(let x=-47.95;x<47.95;x+=1.05){const xx=Math.min(x+1.05,47.95),zz=Math.min(z+1.05,31.95),k=shore((x+xx)/2,(z+zz)/2);if(k>2.2)continue;const c=lerpV(col('#8eb8a9'),col('#5b9694'),smooth(-1,-11,k));b.quad([x,.49,z],[x,.49,zz],[xx,.49,zz],[xx,.49,z],c,7,[0,1,0],[[0,0],[0,1],[1,1],[1,0]]);}
+ // Interpolate shallows at vertices; per-tile colors left a visible grid at sea.
+ const waterColor=(x,z)=>lerpV(col('#aac1ad'),col('#548e90'),smooth(.6,-9,shore(x,z)));
+ for(let z=-31.95;z<31.95;z+=1.05)for(let x=-47.95;x<47.95;x+=1.05){
+  const xx=Math.min(x+1.05,47.95),zz=Math.min(z+1.05,31.95);if(shore((x+xx)/2,(z+zz)/2)>2.2)continue;
+  const points=[[x,.49,z],[x,.49,zz],[xx,.49,zz],[xx,.49,z]],colors=points.map(p=>waterColor(p[0],p[2]));
+  for(const i of[0,1,2,0,2,3])b.vertex(points[i],[0,1,0],colors[i],7);
+ }
+ coastShoreDetails(b,land,shore,near,east,north);
  // Thin tide marks, interrupted by wet sand and the working quay.
  for(let z=-10;z<29;z+=.7){if(z>-14&&z<16.5)continue;const a=west(z)+.15,c=west(z+.7)+.15;b.quad([a,.5,z],[c,.5,z+.7],[c+.10,.5,z+.7],[a+.10,.5,z],'#b6c9b0',7);}
  // The causeway follows the authored spline and its changing grade. Piles meet
@@ -163,7 +207,16 @@ function coastRoom(scene,b){
  const keeperY=land(34.8,-8.8);b.box(34.8,keeperY-.27,-8.8,5.0,.55,4.1,'#bfc0a6',4);cottage(b,34.8,keeperY+.04,-8.8,4.3,3.3,2.55,'#ddd2ae','#829b8b',-.23);
  housePath(b,[[35,-6.5],[32,-4.5],[30,-1],[27.5,1.1]],.72,land,'#d5cead');
  housePath(b,[[27.8,2.0],[30.5,4.5],[28.6,7.5],[31.8,10.0],[32,13.5]],.73,land,'#d5c9a3');
- for(const [x,z]of[[24.3,-2.5],[24.1,-.9],[24.7,1.4],[26.1,2.9],[29,2.4],[31,1.5]]){const y=land(x,z);b.box(x,y+.31,z,.6,.63,.60,'#b9bda2',4);}
+ // A continuous low garden wall, open at the keeper's path. Short courses
+ // follow the headland instead of reading as isolated cubes above the cliff.
+ const gardenWall=[[24.3,-2.5],[24.1,-.9],[24.7,1.4],[26.1,2.9],[27.3,2.8]];
+ for(let i=0;i<gardenWall.length-1;i++){
+  const a=gardenWall[i],q=gardenWall[i+1],length=Math.hypot(q[0]-a[0],q[1]-a[1]),n=Math.ceil(length/.45),angle=Math.atan2(q[0]-a[0],q[1]-a[1]);
+  for(let j=0;j<n;j++){
+   const x=mix(a[0],q[0],(j+.5)/n),z=mix(a[1],q[1],(j+.5)/n),y=land(x,z);
+   b.push(x,y,z,0,angle);b.box(0,.18,0,.32,.46,length/n+.025,'#aeb69e',4);b.box(0,.43,0,.40,.08,length/n+.035,'#cccbb0',4);b.pop();
+  }
+ }
  // Chalk layers are exposed only at the headland's steeper seaward face.
  for(let i=0;i<28;i++){const z=-11+hash(i,854)*22,x=east(z)+.6+hash(i,263)*1.0,y=land(x,z);if(y<1.6||near(x,z).dist<2)continue;b.push(x,y-.18,z,0,.2+hash(i,991));b.sphere(0,0,0,.70+hash(i,375)*.60,.31+hash(i,852)*.30,.62,'#cacbb3',4,7,4,true);b.pop();}
  for(const [i,x,z]of[[0,30.5,10.4],[1,33.0,11.0],[2,30.0,13.0],[3,32.3,13.4],[4,29.6,15.1]]){
