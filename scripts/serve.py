@@ -23,7 +23,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         self.path = '/' + path
-        if path == 'index.html':
+        if path in ('index.html', 'grandhall.html'):
             recordings = sorted(p.stem for p in (ROOT / 'assets' / 'audio').glob('*.mp3') if p.is_file() and not p.name.startswith('.'))
             catalog = json.dumps(recordings, separators=(',', ':')).replace('<', '\\u003c')
             html = re.sub(r'(<script id="audioCatalog">)[\s\S]*?(</script>)', lambda match: match[1] + 'window.HOUSE_AUDIO_AVAILABLE=' + catalog + ';' + match[2], resolved.read_text())

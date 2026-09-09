@@ -13,7 +13,9 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const fixture=await mkdtemp(path.join(os.tmpdir(),'whistlevale-delivery-'));
 const digest=buffer=>createHash('sha256').update(buffer).digest('hex').slice(0,16);
 const walk=async directory=>(await Promise.all((await readdir(directory,{withFileTypes:true})).map(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):path.join(directory,entry.name)))).flat();
-const external=html=>[...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url));
+const external=html=>[...html.replace(/(<script\b[^>]*>)[\s\S]*?<\/script>/gi,'$1</script>').matchAll(/\s(?:src|href|data-src)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url));
+assert.deepEqual(external('<script>const example=\' data-src="example-only.js"\';</script><script type="application/x-whistlevale-exhibit" data-src="real-source.js"></script>'),['real-source.js'],'source examples inside scripts are not network requests');
+const attributes=text=>new Map([...text.matchAll(/(?:^|\s)([a-z][a-z0-9-]*)\s*=\s*(["'])(.*?)\2/gi)].map(match=>[match[1],match[3]]));
 // A small DOM adapter for asset replacement only. The real Hall document and
 // renderer source are packed; inline scripts are never executed by this parser.
 class PackingDocument{
@@ -21,11 +23,12 @@ class PackingDocument{
   this.html=html;this.nodes=[];
   for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>|<link\b([^>]*)>/gi)){
    const script=match[1]!==undefined,attributes=script?match[1]:match[3];
-   if(script&&!/\bsrc=/.test(attributes))continue;
    const node={tag:script?'script':'link',attributes,textContent:script?match[2]:'',start:match.index,end:match.index+match[0].length,replacement:null,
-    getAttribute(name){return this.attributes.match(new RegExp('\\b'+name+'=["\\\']([^"\\\']*)["\\\']'))?.[1]??null;},
-    removeAttribute(name){this.attributes=this.attributes.replace(new RegExp('\\s*'+name+'=["\\\'][^"\\\']*["\\\']'),'');},
+    getAttribute(name){return this.attributes.match(new RegExp('(?:^|\\s)'+name+'\\s*=\\s*(["\\\'])(.*?)\\1'))?.[2]??null;},
+    hasAttribute(name){return this.getAttribute(name)!==null;},
+    removeAttribute(name){this.attributes=this.attributes.replace(new RegExp('(?:^|\\s)'+name+'\\s*=\\s*(["\\\'])(.*?)\\1'),'');},
     setAttribute(name,value){this.removeAttribute(name);this.attributes+=' '+name+'="'+value+'"';},
+    get dataset(){return{source:this.getAttribute('data-source')};},
     replaceWith(other){this.replacement=other;},
     get outerHTML(){if(this.replacement)return this.replacement.outerHTML;return this.tag==='script'?'<script'+this.attributes+'>'+this.textContent+'</script>':'<link'+this.attributes+'>';}
    };this.nodes.push(node);
@@ -34,6 +37,8 @@ class PackingDocument{
  }
  querySelectorAll(selector){
   if(selector==='script[src]')return this.nodes.filter(n=>n.tag==='script'&&n.getAttribute('src'));
+  if(selector==='script[src],script[data-src]')return this.nodes.filter(n=>n.tag==='script'&&(n.hasAttribute('src')||n.hasAttribute('data-src')));
+  if(selector==='script[type="application/x-whistlevale-exhibit"]')return this.nodes.filter(n=>n.tag==='script'&&n.getAttribute('type')==='application/x-whistlevale-exhibit');
   if(selector==='link[rel=stylesheet]')return this.nodes.filter(n=>n.tag==='link'&&n.getAttribute('rel')==='stylesheet');
   const icons=/^link\[rel~="([a-z-]+)"\](?:,link\[rel~="([a-z-]+)"\])?$/.exec(selector);
   if(icons){const wanted=icons.slice(1).filter(Boolean);return this.nodes.filter(n=>n.tag==='link'&&(n.getAttribute('rel')||'').split(/\s+/).some(rel=>wanted.includes(rel)));}
@@ -41,6 +46,38 @@ class PackingDocument{
  }
  createElement(tag){return{tag,textContent:'',get outerHTML(){return'<'+tag+'>'+this.textContent+'</'+tag+'>';}};}
  get outerHTML(){let html=this.html;for(const node of [...this.nodes].reverse())html=html.slice(0,node.start)+node.outerHTML+html.slice(node.end);return html.replace(/^<!doctype[^>]*>\s*/i,'');}
+}
+const deferredScripts=html=>new PackingDocument(html).querySelectorAll('script[type="application/x-whistlevale-exhibit"]');
+const catalogFrom=html=>{
+ const script=new PackingDocument(html).nodes.find(node=>node.tag==='script'&&node.getAttribute('id')==='communityCatalog');
+ assert.ok(script,'the page embeds reviewed contribution data');const window={};vm.runInNewContext(script.textContent,{window});return JSON.parse(JSON.stringify(window.HOUSE_COMMUNITY));
+};
+async function checkDeferredSourceLoading(html,packed){
+ const placeholders=deferredScripts(html),inserted=[],requested=[],errors=new Set();
+ assert.ok(placeholders.length,'the Hall declares deferred native source');
+ const sandbox={URL,console,location:{href:packed?'blob:https://fixture.test/portable-hall':'https://fixture.test/grandhall.html'},
+  window:{addEventListener(type,fn){assert.equal(type,'error');errors.add(fn);},removeEventListener(type,fn){assert.equal(type,'error');errors.delete(fn);}},
+  document:{querySelectorAll(selector){assert.equal(selector,'script[type="application/x-whistlevale-exhibit"]');return placeholders;},
+   createElement(tag){assert.equal(tag,'script');return{dataset:{},textContent:'',remove(){this.removed=true;}};},head:{append(script){
+    inserted.push(script);const execute=source=>{try{vm.runInContext(source,context,{timeout:1000});script.onload?.();}catch(error){for(const fn of [...errors])fn({filename:script.src||'',error});}};
+    if(script.src){assert.equal(packed,false,'packed exhibit activation never requests a URL');const url=new URL(script.src);assert.equal(url.origin,'https://fixture.test');requested.push(url.pathname);readFile(path.join(fixture,'dist',url.pathname),'utf8').then(execute,()=>script.onerror());}
+    else execute(script.textContent);
+   }}}
+ };
+ const context=vm.createContext(sandbox),run=code=>vm.runInContext(code,context);
+ const hall=await readFile(path.join(fixture,'grandhall.html'),'utf8'),start=hall.indexOf('function loadHallSource('),end=hall.indexOf('\nconst hallSources=',start);
+ assert.ok(start>0&&end>start,'extract the actual Hall source activation callback');
+ run(await readFile(path.join(fixture,'src/grandhall-residency.js'),'utf8'));run(hall.slice(start,end));
+ sandbox.sources=placeholders.map(node=>node.dataset.source);run('const loader=createGrandHallSourceLoader({sources,load:loadHallSource,concurrency:1});');
+ assert.equal(run('typeof willowbankPottery'),'undefined','parsing deferred source does not define or execute its model');assert.equal(inserted.length,0);assert.equal(requested.length,0);
+ await assert.rejects(run('loader.ensure("src/scenery/unreviewed.js")'),/Unregistered/);assert.equal(inserted.length,0,'unregistered source cannot create an executing script');
+ const first=placeholders[0],original=first.textContent;
+ if(packed){first.textContent='throw new Error("isolated activation failure");';await assert.rejects(run('loader.ensure(sources[0])'),/Could not run/);assert.ok(inserted.at(-1).removed,'a failed inline activation removes its runtime script');assert.equal(errors.size,0);first.textContent=original;}
+ const firstLoad=run('loader.ensure(sources[0])');assert.equal(run('loader.ensure(sources[0])'),firstLoad,'concurrent requests share the exact activation promise');await firstLoad;
+ await run('loader.ensureMany(sources)');
+ assert.equal(run('typeof willowbankPottery'),'function','the actual reviewed model becomes callable after explicit activation');
+ assert.equal(run('loader.stats.loaded'),placeholders.length);assert.equal(inserted.filter(script=>!script.removed).length,placeholders.length,'each deferred source activates once');assert.equal(errors.size,0,'activation releases its error listener');
+ assert.equal(requested.length,packed?0:placeholders.length,'online activation uses fingerprints; packed activation uses only embedded text');
 }
 async function checkPortableHall(build){
  const hobby=await readFile(path.join(root,'src/hobby.js'),'utf8'),requests=[],blobs=[],navigations=[];
@@ -61,6 +98,16 @@ async function checkPortableHall(build){
  const registry=(await readFile(path.join(root,'src/grandhall-exhibits.js'),'utf8')).replace(/<\/script/gi,'<\\/script');
  assert.ok(packed.includes(registry),'native exhibit definitions and original creator credits survive packing');
  assert.ok(packed.includes('function willowbankPottery('),'the actual native model is present');
+ assert.deepEqual(catalogFrom(packed),build.window.HOUSE_COMMUNITY,'the packed Hall retains the same railway placement catalogue and credits');
+ const deferred=deferredScripts(packed),originalDeferred=deferredScripts(build.hallHTML);
+ assert.equal(deferred.length,originalDeferred.length,'every deferred source stays in an inert script container');
+ for(const [index,node]of deferred.entries()){
+  assert.equal(node.hasAttribute('src'),false);assert.equal(node.hasAttribute('data-src'),false,'packed source contains no deferred network address');
+  assert.equal(node.dataset.source,originalDeferred[index].dataset.source,'packing retains the canonical source identity');
+  const expected=(await readFile(path.join(fixture,'dist',originalDeferred[index].getAttribute('data-src')),'utf8')).replace(/<\/script/gi,'<\\/script');
+  assert.equal(node.textContent,expected,'all native source bytes are embedded with script-safe escaping');
+ }
+ await checkDeferredSourceLoading(build.hallHTML,false);await checkDeferredSourceLoading(packed,true);
 
  // Execute the exporter's exact payload block. An already packed document
  // replaces its prior payload, preserves script safety and performs no fetch.
@@ -113,6 +160,7 @@ async function build(){
  const community=html.match(/<script id="communityCatalog">([\s\S]*?)<\/script>/);assert.ok(community,'built page embeds the reviewed contribution catalogue');
  vm.runInNewContext(community[1],{window});
  assert.deepEqual(JSON.parse(JSON.stringify(window.HOUSE_COMMUNITY)),JSON.parse(await readFile(path.join(fixture,'contributions/world.json'),'utf8')),'contribution data and credits survive the public build');
+ assert.deepEqual(catalogFrom(hallHTML),JSON.parse(JSON.stringify(window.HOUSE_COMMUNITY)),'the Hall and house receive the same reviewed catalogue for railway links');
  const files=(await walk(path.join(fixture,'dist'))).map(file=>path.relative(path.join(fixture,'dist'),file).split(path.sep).join('/')).sort();
  const refs=external(html),hallRefs=external(hallHTML);
  for(const [page,references]of [['index.html',refs],['grandhall.html',hallRefs]]){
@@ -125,6 +173,14 @@ async function build(){
   for(const file of external(source).filter(url=>url.startsWith('src/')&&url.endsWith('.js'))){
    const fingerprint='immutable/'+file.replace(/\.js$/,'.'+digest(await readFile(path.join(fixture,file)))+'.js');
    assert.ok(references.includes(fingerprint),page+' points at the current public source: '+file);
+  }
+  if(page==='grandhall.html'){
+   const originalDeferred=deferredScripts(source),builtDeferred=deferredScripts(hallHTML);assert.equal(builtDeferred.length,originalDeferred.length);
+   for(const [index,node]of builtDeferred.entries()){
+    const canonical=originalDeferred[index].getAttribute('data-source'),fingerprint='immutable/'+canonical.replace(/\.js$/,'.'+digest(await readFile(path.join(fixture,canonical)))+'.js');
+    assert.equal(node.getAttribute('data-source'),canonical,'data-source remains the stable reviewed identity');
+    assert.equal(node.getAttribute('data-src'),fingerprint,'data-src receives the actual source fingerprint');assert.equal(node.hasAttribute('src'),false,'deferred source is never promoted to an eager script');assert.equal(node.textContent,'');
+   }
   }
  }
  assert.ok(!files.some(file=>/^(src\/.*\.(js|css)|assets\/audio\/.*\.mp3|assets\/favicon\.svg)$/.test(file)),'no original app/audio duplicates are emitted');
@@ -140,8 +196,13 @@ async function build(){
  return {html,hallHTML,files,refs,hallRefs,window:JSON.parse(JSON.stringify(window))};
 }
 try{
+ const attributeProbe=new PackingDocument('<script type="application/x-whistlevale-exhibit" data-source="src/scenery/model.js" data-src="immutable/model.123.js"></script>').nodes[0];
+ assert.equal(attributeProbe.getAttribute('src'),null);assert.equal(attributeProbe.hasAttribute('src'),false);attributeProbe.removeAttribute('src');
+ assert.equal(attributeProbe.getAttribute('data-src'),'immutable/model.123.js','src operations cannot match the data-src suffix');
+ attributeProbe.removeAttribute('data-src');assert.equal(attributeProbe.hasAttribute('data-src'),false);assert.deepEqual([...attributes(attributeProbe.attributes).keys()],['type','data-source'],'packing removes only the deferred URL attribute');
  await mkdir(path.join(fixture,'scripts'),{recursive:true});
  await cp(path.join(root,'scripts/build.mjs'),path.join(fixture,'scripts/build.mjs'));
+ await cp(path.join(root,'scripts/serve.py'),path.join(fixture,'scripts/serve.py'));
  await cp(path.join(root,'scripts/community-lib.mjs'),path.join(fixture,'scripts/community-lib.mjs'));
  await cp(path.join(root,'contributions'),path.join(fixture,'contributions'),{recursive:true});
  await cp(path.join(root,'grandhall.html'),path.join(fixture,'grandhall.html'));
@@ -154,6 +215,24 @@ try{
  const empty=await build();assert.equal(empty.window.HOUSE_AUDIO_AVAILABLE.length,0,'a source-only clone needs no recordings');
  assert.equal(await readFile(path.join(fixture,'index.html'),'utf8'),originalHTML,'the source page is unchanged');
  assert.equal(await readFile(path.join(fixture,'grandhall.html'),'utf8'),originalHallHTML,'the Hall source page is unchanged');
+ // Invoke the real preview handler without opening a socket or browser.
+ const preview=JSON.parse(execFileSync('python3',['-c',`import importlib.util, io, json
+spec = importlib.util.spec_from_file_location('whistlevale_preview', 'scripts/serve.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+pages = {}
+for page in ('index.html', 'grandhall.html'):
+    handler = module.Handler.__new__(module.Handler)
+    handler.path = '/' + page
+    handler.command = 'GET'
+    handler.wfile = io.BytesIO()
+    handler.send_response = lambda status: None if status == 200 else (_ for _ in ()).throw(AssertionError(status))
+    handler.send_header = lambda *args: None
+    handler.end_headers = lambda: None
+    module.Handler.do_GET(handler)
+    pages[page] = handler.wfile.getvalue().decode('utf-8')
+print(json.dumps(pages))`],{cwd:fixture,encoding:'utf8'}));
+ for(const page of ['index.html','grandhall.html'])assert.deepEqual(catalogFrom(preview[page]),empty.window.HOUSE_COMMUNITY,'preview injects the same public contribution catalogue into '+page);
 
  // Use local recordings if present. A clean CI clone uses opaque byte fixtures
  // for packaging checks; these are never decoded, published or treated as audio.
@@ -191,8 +270,15 @@ try{
   assert.ok(!hallChanged.files.includes(obsolete),'no obsolete Hall catalogue remains in the build');
  }
  assert.notEqual(hallChanged.hallHTML,audioChanged.hallHTML,'fresh Hall HTML points at the changed shared catalogue');
- await checkPortableHall(hallChanged);
- console.log('Portable Hall QA passed: native models and credits packed, offline repacking and file/blob entry, return context, script-safe embedding and incomplete-export rejection.');
+ const modelSource=deferredScripts(hallChanged.hallHTML)[0].dataset.source,modelPath=path.join(fixture,modelSource);
+ await writeFile(modelPath,(await readFile(modelPath,'utf8'))+'\n// isolated deferred native source fingerprint check\n');
+ const modelChanged=await build();
+ for(const key of ['refs','hallRefs']){
+  const changed=modelChanged[key].filter(url=>!hallChanged[key].includes(url));assert.equal(changed.length,1,'one native source change updates only its eager/deferred source URL per page');
+  assert.ok(changed[0].includes('/scenery/'),'both pages resolve the same new native model bytes');
+ }
+ await checkPortableHall(modelChanged);
+ console.log('Portable Hall QA passed: every deferred source embedded inertly, explicit online/offline activation, source identity and credits, offline repacking and file/blob entry, return context, script-safe embedding and incomplete-export rejection.');
 
  const config=JSON.parse(await readFile(path.join(root,'vercel.json'),'utf8'));
  const cacheRules=config.headers.filter(rule=>rule.headers.some(header=>header.key.toLowerCase()==='cache-control'));

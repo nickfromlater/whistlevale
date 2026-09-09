@@ -68,16 +68,28 @@ installation or API key is needed.
    model example. Shared `Builder` primitives live in `src/railway.js`; room
    helpers live in `src/rooms.js`. Balance every transform push/pop and build
    around a local origin. The exhibition adapter positions and scales the work.
-2. Include the new script in **both** `index.html` before `hobby.js` and
-   `grandhall.html` before inline startup, after the helpers it needs. Keep the
-   Hall material adapter's supported helpers in mind; do not assume every
-   railway-only global exists in the Hall's renderer. Both support `Builder`
-   primitives, `ringX`/`ringZ`, `hash`/`shade` and `windowPane`. For the current
-   adapter use material IDs `0, 4, 5, 6, 8, 22, 23, 41`; do not assume
-   railway atlas labels or other helpers are present. Test the actual model in
-   both renderers.
+2. Register the source in `grandhall.html` before inline startup as a deferred
+   classic script. The source loads only when its gallery is needed:
+
+   ```html
+   <script type="application/x-whistlevale-exhibit" data-source="src/scenery/my-miniature.js" data-src="src/scenery/my-miniature.js"></script>
+   ```
+
+   Keep `data-source` equal to the registry's canonical source path. The build
+   fingerprints `data-src`; portable export embeds the file without executing it
+   until needed. For a Hall-only work, this declaration is sufficient; do not
+   add an eager source tag to `index.html`. A work also placed in a railway room,
+   or explicitly opted into the house-map preview, needs the normal source tag
+   in `index.html` before `hobby.js` as well.
+
+   Keep code initialization limited to definitions. Both renderers support
+   `Builder` primitives, `ringX`/`ringZ`, `hash`/`shade` and `windowPane`. For the
+   Hall adapter use material IDs `0, 4, 5, 6, 8, 22, 23, 41`; do not assume railway
+   atlas labels or every room helper is available. Test the actual model.
 3. Add a dispatch mapping to `grandHallBuildExhibit()` in
-   `src/grandhall-exhibits.js`. Add one `GRAND_HALL_EXHIBITS` record there with
+   `src/grandhall-exhibits.js`. Wrap the builder reference in a function so other
+   unloaded sources are never resolved eagerly, for example
+   `miniature: (...args) => myMiniature(...args)`. Add one `GRAND_HALL_EXHIBITS` record there with
    `bay`, a unique `id`, `title`, `credits`, `story`, `builder`, uniform `scale`,
    and `source` pointing to the new scenery file. Use the normal attribution
    array: each credit has a chosen `name`, optional paired `platform`/`handle`
@@ -86,7 +98,9 @@ installation or API key is needed.
    **More → The builders** in the main house. Source packing retains them in
    both parts of a playable export. The helper accepts the original legacy
    `maker`/`link` fields for compatibility; new exhibits use `credits`.
-   Safe profile links open in a new tab. Do not replace an occupied bay or
+   Safe profile links open in a new tab. A Hall exhibit with the same `id` and
+   `source` as a reviewed railway miniature gains a link to that exact placement,
+   with the camera focused on the built model. Do not replace an occupied bay or
    copy a credit you were not given.
 4. Inspect the bay's actual display shape and its surroundings. Open tables,
    low or tall glass cases, wall cabinets and round cases offer different
@@ -102,7 +116,7 @@ placements. For a separately requested Commons placement, follow the additional
 registration steps in the [building recipe](buildings.md).
 
 Use deterministic, static geometry with an intentional silhouette and restrained
-small detail. Do not add runtime downloads, dependencies or per-frame rebuilding.
+small detail. Use the shared deferred loader; do not add third-party downloads, dependencies or per-frame rebuilding.
 Keep local buffers owned by their existing scene lifecycle and disposal paths.
 
 ## Keep the coordinates and credits intact
@@ -144,6 +158,50 @@ required source notices when adapting another person's work. State authorship
 and source permissions in the PR; an agent's assistance is not a replacement
 for the chosen human credit.
 
+## Performance as the collection grows
+
+The entered Hall builds static architecture and native exhibits only for the
+current gallery and the neighboring galleries needed by its visible view.
+Geometry from inactive, unvisited galleries is not constructed at startup.
+Its residency cache retains at most **three galleries on desktop** and **two
+on phones**. Galleries in the current view are pinned; when another gallery is
+needed, the least recently used hidden gallery releases its GPU buffers and
+vertex-array objects. Revisiting it rebuilds deterministic geometry from source.
+
+Source loading and geometry residency have separate lifetimes. A reviewed
+exhibit script is loaded and executed once when needed, with duplicate requests
+sharing the same load. Source stays available for the page visit even after its
+gallery's GPU resources are evicted. Portable exports retain these sources for
+offline visits. Keep script initialization limited to definitions; building
+meshes or creating large caches at file load would defeat gallery loading.
+
+The house map uses a lightweight overview; enter the Hall for full exhibit
+inspection. A Hall-only contribution marks its occupied display with a small
+brass edge plaque, without constructing the full model in the map. The optional
+`mapPreview: true` record field explicitly opts a reviewed native model into
+the overview; Willowbank retains that preview. Such a preview needs its source
+available at main-house startup. Ordinary Hall-only source can wait for entry
+to its gallery. Preserve the complete entered model, chosen credits and portable
+export when adding or changing a preview.
+
+The gallery-count limit is not a byte or frame-time guarantee. Keep the existing
+geometry budgets and measure the complete emitted model, including its props.
+The renderer stores 12 float32 values per vertex, or **48 bytes per vertex** in
+its vertex buffer; shared textures, shadows and temporary CPU arrays add memory
+beyond that figure. Review the total contribution allowance across the Hall,
+rather than treating it as a fresh allowance for every bay or visible gallery.
+Do not increase budgets to fit a detailed model. Reduce unnecessary geometry
+and verify that useful detail remains visible from its actual viewing distance.
+
+With `grandhall.html?profile`, compare first entry, a neighboring-gallery visit,
+and return after eviction on the same device, viewport, camera and lighting.
+Visit more galleries than the cache can retain and check that hidden GPU
+resources are released. Verify retry after a failed source load and that a
+rapid change of destination cannot activate or retain an abandoned scene.
+`node scripts/hall-residency-qa.mjs` exercises these ownership and loading rules
+with a synthetic catalogue; it adds no public exhibits and does not substitute
+for physical phone performance checks.
+
 ## Check the whole route
 
 ```sh
@@ -166,9 +224,9 @@ Use the [review checklist](review.md) for export and attribution checks affected
 by shared source changes. Mark physical touch or other unavailable checks as
 unverified rather than treating desktop resizing as a device test.
 
-The main map loads the Hall's architecture and the shared reviewed native
-exhibits through its own scene renderer. Entering the Hall opens its dedicated
-page. Check both: a model that renders in one can still fail in the other.
+The main map loads a lightweight Hall overview through its own scene renderer.
+Entering the Hall opens its dedicated page with the complete native exhibits.
+Check both the overview and the entered work when reviewing a contribution.
 `map.position: 'central'` reserves its authored footprint, while bounds,
 connecting corridors, picking and framing grow from the registered room sizes.
 Do not shrink the Hall to a standard railway-room cell.

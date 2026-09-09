@@ -138,7 +138,7 @@ function grandHallMapCase(b,bay){
  }
  if(bay.displayFormat==='wall-case')b.quad([-w/2,y,-d/2],[w/2,y,-d/2],[w/2,y+h,-d/2],[-w/2,y+h,-d/2],'#a9a28d',23);
 }
-function grandHallMapFurniture(b,bay){
+function grandHallMapFurniture(b,bay,occupied=false){
  const r=GRAND_HALL_GALLERIES[bay.room],{w,d,y,surfaceY}=bay,kind=bay.furniture;
  b.push(bay.x,0,bay.z,0,bay.yaw);
  if(kind==='round'){
@@ -159,7 +159,11 @@ function grandHallMapFurniture(b,bay){
   b.box(0,surfaceY-.09,0,w,.18,d,stone?'#d2c9ab':r.cloth,stone?24:23);
   if(kind==='cabinet')b.box(0,.11,0,w*.83,.22,d*.83,'#493e31',22);
  }
- grandHallMapCase(b,bay);b.pop();
+ grandHallMapCase(b,bay);
+ // A small edge plaque marks reviewed occupancy without inventing a miniature
+ // or constructing a full Hall-only model for the distant house overview.
+ if(occupied)b.quad([-.24,y-.18,d/2+.025],[.24,y-.18,d/2+.025],[.24,y-.05,d/2+.025],[-.24,y-.05,d/2+.025],'#c9ad73',41);
+ b.pop();
 }
 function buildGrandHallMap(scene,b){
  b.push(-grandHallMapCenter[0]*GRAND_HALL_UNIT_SCALE,FLOOR,-grandHallMapCenter[1]*GRAND_HALL_UNIT_SCALE,0,0,0,GRAND_HALL_UNIT_SCALE);
@@ -197,8 +201,10 @@ function buildGrandHallMap(scene,b){
   }
   b.pop();
  }
- for(const bay of GRAND_HALL_BAYS)grandHallMapFurniture(b,bay);
+ const markedBays=new Set(GRAND_HALL_EXHIBITS.filter(exhibit=>exhibit.mapPreview!==true).map(exhibit=>exhibit.bay));
+ for(const bay of GRAND_HALL_BAYS)grandHallMapFurniture(b,bay,markedBays.has(bay.id));
  for(const exhibit of GRAND_HALL_EXHIBITS){
+  if(exhibit.mapPreview!==true)continue;
   const bay=GRAND_HALL_BAYS.find(item=>item.id===exhibit.bay);if(!bay)continue;
   grandHallPlaceExhibit(exhibit,b,bay);
  }

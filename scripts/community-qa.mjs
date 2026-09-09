@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {communityContext,loadCommunity,read} from './community-lib.mjs';
+import {communityContext,loadCommunity,loadContributionDefinitions,read} from './community-lib.mjs';
 
 const {context,run}=await communityContext(),plain=value=>JSON.parse(JSON.stringify(value));
 const catalogue=await loadCommunity();context.catalogue=catalogue;
@@ -40,4 +40,97 @@ context.bad=structuredClone(catalogue);context.bad.works[0].view={distance:19};
 assert.throws(()=>run('validateCommunity(bad)'),'a workshop-only work cannot create an annex viewpoint');
 const hobby=await read('src/hobby.js');assert.match(hobby,/embeddedLayout.*JSON.stringify\(snapshot\(\)\).*replace/,'portable export embeds the credited snapshot with script-safe escaping');
 assert.match(hobby,/buildersList.*replaceChildren/,'portable export clears runtime credit markup before rebuilding');
-console.log('Contribution QA passed: bounded metadata, safe profile URLs, rejected malformed data/overlaps, legacy compatibility and credit round trips.');
+
+// Exercise the real Builders rendering with reviewed records and isolated
+// same-title works. Credits count artwork, while locations count its displays.
+const builders=await communityContext();await loadContributionDefinitions(builders,catalogue);
+class CreditNode{
+ constructor(tag){this.tag=tag;this.children=[];this.textContent='';this.attributes={};}
+ append(...nodes){this.children.push(...nodes);}
+ replaceChildren(...nodes){this.children=nodes;}
+ setAttribute(name,value){this.attributes[name]=value;}
+}
+const builderList=new CreditNode('ul');
+builders.context.document.getElementById=id=>{assert.equal(id,'buildersList');return builderList;};
+builders.context.document.createElement=tag=>new CreditNode(tag);
+const authorFor=name=>builderList.children.find(row=>row.children[0]?.children[0]?.textContent===name);
+const worksFor=author=>author.children[1].children[1].children;
+const notesFor=work=>work.children.filter(node=>node.tag==='p').map(node=>node.textContent);
+builders.run('paintBuilders()');
+const potteryAuthor=authorFor('nickfromlater'),potteryWorks=worksFor(potteryAuthor);
+assert.equal(potteryAuthor.children[1].children[0].textContent,'1 contribution','Willowbank counts once across the two catalogues');
+assert.equal(potteryWorks.length,1);assert.equal(potteryWorks[0].children[0].textContent,'Willowbank Pottery');
+assert.equal(potteryWorks[0].children[1].textContent,'The Commons · The Grand Hall','one work lists both display locations');
+assert.deepEqual(notesFor(potteryWorks[0]),catalogue.works.find(work=>work.id==='willowbank-pottery').credits.filter(credit=>credit.name==='nickfromlater').map(credit=>credit.note),'the original creator note is preserved without duplication');
+const maker=note=>({name:'QA maker',platform:'github',handle:'qa-maker',note}),helper={name:'QA helper',note:'Shared foliage.'};
+builders.context.qaWorks=[
+ {id:'qa-shared',title:'Same title',source:'src/scenery/qa-shared.js',room:'commons',credits:[maker('Original design.'),helper]},
+ {id:'qa-distinct',title:'Same title',source:'src/scenery/qa-shared.js',room:'commons',credits:[maker('Separate sculpture.')]},
+ {id:'qa-reused-id',title:'Same title',source:'src/scenery/qa-original.js',room:'commons',credits:[maker('Original sculpture.')]}
+];
+builders.context.qaExhibits=[
+ {...builders.context.qaWorks[0],credits:[maker('Exhibition mounting.'),helper]},
+ {id:'qa-reused-id',title:'Same title',source:'src/scenery/qa-adaptation.js',credits:[maker('A separate adaptation.')]}
+];
+builders.run('communityCatalogue.works=qaWorks;GRAND_HALL_EXHIBITS.splice(0,GRAND_HALL_EXHIBITS.length,...qaExhibits);paintBuilders();');
+const author=authorFor('QA maker'),works=worksFor(author),creator=author.children[0].children[0];
+assert.equal(author.children[1].children[0].textContent,'4 contributions','different IDs or sources remain distinct despite identical titles');
+assert.equal(works.length,4);assert.equal(works[0].children[1].textContent,'The Commons · The Grand Hall');
+assert.deepEqual(notesFor(works[0]),['Original design.','Exhibition mounting.'],'each distinct creator note survives grouping');
+assert.deepEqual(works.slice(1).map(notesFor),[['Separate sculpture.'],['Original sculpture.'],['A separate adaptation.']]);
+const helperWorks=worksFor(authorFor('QA helper'));assert.equal(helperWorks.length,1);
+assert.deepEqual(notesFor(helperWorks[0]),['Shared foliage.'],'notes remain with the credited person and repeated notes appear once');
+assert.equal(helperWorks[0].children[1].textContent,'The Commons · The Grand Hall');
+assert.equal(creator.href,'https://github.com/qa-maker');assert.equal(creator.target,'_blank');assert.equal(creator.rel,'noopener noreferrer');
+builders.run('paintBuilders()');assert.equal(worksFor(authorFor('QA maker')).length,4,'reopening Builders does not duplicate contributions');
+
+// Hall links use reviewed identities and resolve the same placed model in the
+// house. Both regular links and portable file/blob returns reach its camera.
+const navigation=await communityContext();await loadContributionDefinitions(navigation,structuredClone(catalogue));
+const nav=navigation.run,navContext=navigation.context;
+Object.assign(navContext,{URL,URLSearchParams,location:new URL('https://fixture.test/grandhall.html'),navCalls:[],mapCalls:[],notices:[]});
+const destination=plain(nav('grandHallRailwayLocations(GRAND_HALL_EXHIBITS[0])'));
+assert.deepEqual(destination,[{room:'commons',name:'The Commons',work:'willowbank-pottery',placement:0,href:'https://fixture.test/index.html?room=commons&work=willowbank-pottery&placement=0'}]);
+assert.deepEqual(plain(nav('grandHallRailwayLocations({id:"missing",source:"src/scenery/willowbank.js"})')),[]);
+assert.deepEqual(plain(nav('grandHallRailwayLocations({id:"../invalid",source:"src/scenery/willowbank.js"})')),[]);
+assert.deepEqual(plain(nav('grandHallRailwayLocations({...GRAND_HALL_EXHIBITS[0],source:"src/scenery/different.js"})')),[],'a same-name work with another source does not acquire this placement');
+nav('HOUSE_COMMUNITY.works.push(HOUSE_COMMUNITY.works.find(work=>work.id==="willowbank-pottery"))');
+assert.deepEqual(plain(nav('grandHallRailwayLocations(GRAND_HALL_EXHIBITS[0])')),[],'ambiguous catalogue IDs produce no link');nav('HOUSE_COMMUNITY.works.pop()');
+const originalCatalogue=navContext.HOUSE_COMMUNITY;navContext.HOUSE_COMMUNITY=null;
+assert.deepEqual(plain(nav('grandHallRailwayLocations(GRAND_HALL_EXHIBITS[0])')),[],'missing public data leaves the Hall usable');navContext.HOUSE_COMMUNITY=originalCatalogue;
+
+navContext.document.getElementById=()=>({querySelectorAll:()=>[]});
+navContext.hobby={room:'valley',scene:null,spot:-1};
+navContext.qaScene={key:'commons',lifeDetails:{details:[{contribution:'willowbank-pottery',placement:0,x:-27,y:1.5,z:8}]},spots:[],trains:[{distance:8,speed:.3}]};
+nav(`communityRoomPlaces(qaScene);setView=function(mode){viewMode=mode;};updateUI=function(){};
+function visitHouseRoom(key,after){navCalls.push(key);hobby.room=key;hobby.scene=key==='commons'?qaScene:null;after?.();}
+function openHouseMap(){mapCalls.push(true);return Promise.resolve();}function shopMapSelect(){}function toast(message){notices.push(message);}`);
+nav(hobby.slice(hobby.indexOf('function focusHouseWork('),hobby.indexOf('\nsetTimeout(startHouse,50)')));
+const portableAddresses=['file:///tmp/whistlevale.html?map=grandhall','blob:https://fixture.test/portable-house#map=grandhall'];
+const addresses=[destination[0].href];
+for(const address of portableAddresses){
+ navContext.HOUSE_RETURN_URL=address;const link=new URL(nav('grandHallRailwayLocations(GRAND_HALL_EXHIBITS[0])[0].href'));
+ assert.equal(link.pathname,new URL(address).pathname,'portable work links retain the exported house identity');
+ const params=link.protocol==='blob:'?new URLSearchParams(link.hash.slice(1)):link.searchParams;
+ assert.equal(params.get('work'),'willowbank-pottery');assert.equal(params.get('placement'),'0');assert.equal(params.has('map'),false,'a contribution link enters its room instead of reopening the map');addresses.push(link.href);
+}
+const beforeMotion=nav('JSON.stringify({paused,throttle,trains:qaScene.trains})');
+for(const address of addresses){
+ navContext.location=new URL(address);nav('hobby.room="valley";hobby.scene=null;restoreHouseLocation()');
+ assert.equal(nav('hobby.room'),'commons');assert.equal(nav('viewMode'),'overview');assert.equal(nav('hobby.spot'),0);
+ assert.deepEqual(plain(nav('cameraTarget')),plain(nav('qaScene.spots[0].target')),'camera centers the live placement surface and matches its existing Places view');
+ assert.equal(nav('orbit.distance'),19,'Willowbank uses its authored close view');
+ assert.equal(nav('JSON.stringify({paused,throttle,trains:qaScene.trains})'),beforeMotion,'work navigation preserves train state');
+}
+assert.equal(navContext.mapCalls.length,0);assert.equal(navContext.notices.length,0);
+navContext.innerWidth=390;nav('restoreHouseLocation()');assert.ok(Math.abs(nav('orbit.distance')-32.3)<1e-8,'phone entry keeps the established wider framing');navContext.innerWidth=1440;
+for(const suffix of ['work=missing','work=../bad','work=willowbank-pottery&work=willowbank-pottery','work=willowbank-pottery&placement=-1','work=willowbank-pottery&placement=1','work=willowbank-pottery&placement=0&placement=1']){
+ navContext.location=new URL('https://fixture.test/index.html?room=commons&'+suffix);const before=nav('JSON.stringify(orbit)'),notices=navContext.notices.length;
+ nav('restoreHouseLocation()');assert.equal(nav('JSON.stringify(orbit)'),before,'invalid or ambiguous work links never focus another object');assert.equal(navContext.notices.length,notices+1);
+}
+nav('communityCatalogue.works.push(communityCatalogue.works.find(work=>work.id==="willowbank-pottery"))');
+assert.equal(nav('focusHouseWork("willowbank-pottery",0)'),false,'duplicate source IDs cannot select an arbitrary placement');nav('communityCatalogue.works.pop()');
+nav('qaScene.lifeDetails.details.push(qaScene.lifeDetails.details[0])');
+assert.equal(nav('focusHouseWork("willowbank-pottery",0)'),false,'duplicate built placement IDs cannot select an arbitrary model');nav('qaScene.lifeDetails.details.length=0');
+assert.equal(nav('focusHouseWork("willowbank-pottery",0)'),false,'an omitted model has no fabricated camera target');
+console.log('Contribution QA passed: bounded metadata, safe profiles, credit round trips, grouped artwork locations and public/file/blob links to actual railway placements.');

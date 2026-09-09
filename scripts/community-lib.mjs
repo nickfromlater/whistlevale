@@ -29,13 +29,27 @@ export async function loadCommunity(){
  }
  return JSON.parse(JSON.stringify(clean));
 }
-export async function loadContributionDefinitions({context,run},catalogue){
+export async function loadReviewedHallSources({run},{loaded=new Set(),readSource=read}={}){
+ // Only the checked-in Hall registry selects executable sources. Imported
+ // contribution JSON stays data, including any source paths it contains.
+ const sources=run("typeof GRAND_HALL_EXHIBITS==='undefined'?[]:[...new Set(GRAND_HALL_EXHIBITS.map(exhibit=>exhibit.source))]");
+ for(const source of sources){
+  if(typeof source!=='string'||!/^src\/scenery\/[a-z][a-z0-9-]*\.js$/.test(source))throw new Error('Invalid reviewed Hall source: '+source);
+  if(loaded.has(source))continue;
+  run(await readSource(source));loaded.add(source);
+ }
+}
+export async function loadContributionDefinitions({context,run},catalogue,{readSource=read}={}){
  context.HOUSE_COMMUNITY=catalogue;
- const files=[...(await read('index.html')).matchAll(/<script src="(src\/[^"?]+\.js)"/g)].map(m=>m[1]);
+ const loaded=new Set(['src/community-core.js','src/railway.js']);
+ const files=[...(await readSource('index.html')).matchAll(/<script src="(src\/[^"?]+\.js)"/g)].map(m=>m[1]);
  for(const file of files){
   if(file==='src/hobby.js')break;
-  if(!['src/community-core.js','src/railway.js'].includes(file))run(await read(file));
+  if(!loaded.has(file)){run(await readSource(file));loaded.add(file);}
  }
+ // Browser startup leaves Hall-only code deferred. Geometry review must still
+ // exercise every registered native model with the complete shared helpers.
+ await loadReviewedHallSources({run},{loaded,readSource});
 }
 export function prepareCommunityGeometry({context,run}){
  const noop=()=>{};context.communityGL=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});
