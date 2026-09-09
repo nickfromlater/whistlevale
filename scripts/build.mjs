@@ -17,7 +17,7 @@ async function copyPublic(directory){
   if(entry.isDirectory()){await copyPublic(relative);continue;}
   if(!entry.isFile()||(relative.startsWith('assets/')&&relative.endsWith('.json')))continue;
   const data=await readFile(path.join(root,relative));
-  const versioned=/\.(js|css|mp3)$/.test(relative)||relative==='assets/favicon.svg';
+  const versioned=/\.(js|css|mp3)$/.test(relative)||/^assets\/(favicon\.svg|favicon-\d+\.png|apple-touch-icon\.png)$/.test(relative);
   let target=relative;
   if(versioned){
    const extension=path.posix.extname(relative),hash=createHash('sha256').update(data).digest('hex').slice(0,16);
