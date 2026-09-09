@@ -8,7 +8,9 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
 
 1. **Find the starting point.** Check `git status` and preserve existing work,
    including untracked files.
-   Use a contribution branch (or a fork); use a separate checkout if work overlaps.
+   Outside contributors fork `nickfromlater/whistlevale` and work on a branch in
+   their fork. Contributors with write access can use a branch in this repository.
+   Use a separate checkout if work overlaps.
    Run `npm run contribute -- --list`, then `npm run contribute -- <kind>` for
    the relevant recipe and files. Use `docs` for documentation. These commands
    only print guidance; they do not create files.
@@ -31,7 +33,10 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
 5. **Hand it over.** Stage only this task's changes. Prepare a focused commit
    and use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) to explain the
    result, checks and any limitations. Push or open the PR when authorized;
-   do not ask again for permission already given. Agents never merge.
+   do not ask again for permission already given. Target the PR at
+   `nickfromlater/whistlevale`, base branch `main`, from the contribution branch
+   in the fork or this repository. The maintainer reviews and merges; agents
+   never merge or push directly to `main`.
 
 Small fixes and contributions can go straight to a PR; no issue is required.
 Use an issue for bugs, questions or early ideas. For a whole room, district or
