@@ -25,7 +25,6 @@ source credits, and check that they survive exports. The app lists credits under
 
 Use the PR template to describe the result, credit, evidence and limitations.
 Maintainer review decides acceptance; submission does not publish or deploy it.
-The repository is private while this workflow is prepared.
 
 ## Local development
 
@@ -299,11 +298,3 @@ Never commit credentials, `.env`, `.vercel/`, private generation logs, or audio
 files whose rights do not allow redistribution. The project does not need
 runtime credentials. New artwork and code contributions must be compatible
 with the MIT license. Recorded audio has separate rights; see the audio notes.
-
-### Local review branch
-
-`codex/train-collection-20260909` is excluded from Vercel Git deployments in
-`vercel.json` while the collection is reviewed locally. Pushing that branch
-backs up the work without publishing a preview or production release. Other
-branches retain their existing deployment behavior. See Vercel’s
-[branch deployment configuration](https://vercel.com/docs/project-configuration/git-configuration#gitdeploymentenabled).
