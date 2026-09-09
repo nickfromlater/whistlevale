@@ -295,18 +295,19 @@ function buildCollectionStock(){
 const collectionBuildTrains=buildTrains;
 buildTrains=function(){collectionBuildTrains();buildCollectionStock();};
 
-function drawCollectionMotion(m,phase,p,wheels=wheelMesh){
+function drawCollectionMotion(m,phase,p,wheels=wheelMesh,mechanism=null){
+ const rod=mechanism?.rod||rodMesh,joint=mechanism?.joint||jointMesh,piston=mechanism?.piston||pistonMesh,coupling=mechanism?.coupling||couplingMesh;
  for(const z of[-.70,-.15,.40])draw(wheels,mm(m,mm(trans(0,.325,z),rx(phase))),p);
  for(const s of[-1,1]){
   const q=phase+(s<0?PI/2:0),cy=.325+.143*Math.cos(q),cz=.143*Math.sin(q),xx=s*.447;
   const back=[xx,cy,-.70+cz],front=[xx,cy,.40+cz],middle=[xx,cy,-.15+cz];
-  drawLink(rodMesh,back,front,m,p);
-  for(const z of[-.70,-.15,.40])draw(jointMesh,mm(m,trans(xx,cy,z+cz)),p);
+  drawLink(rod,back,front,m,p);
+  for(const z of[-.70,-.15,.40])draw(joint,mm(m,trans(xx,cy,z+cz)),p);
   const sliderZ=middle[2]+Math.sqrt(Math.max(.01,.91*.91-(.345-cy)**2)),crosshead=[s*.565,.345,sliderZ];
-  drawLink(rodMesh,[s*.474,cy,middle[2]],crosshead,m,p);draw(pistonMesh,mm(m,trans(...crosshead)),p);
-  drawLink(couplingMesh,crosshead,[s*.565,.345,1.23],m,p);
+  drawLink(rod,[s*.474,cy,middle[2]],crosshead,m,p);draw(piston,mm(m,trans(...crosshead)),p);
+  drawLink(coupling,crosshead,[s*.565,.345,1.23],m,p);
   const ecc=[s*.492,.325+.054*Math.cos(q+.85),-.15+.054*Math.sin(q+.85)];
-  drawLink(couplingMesh,ecc,[s*.583,.50,.83],m,p);draw(jointMesh,mm(m,trans(...ecc)),p);
+  drawLink(coupling,ecc,[s*.583,.50,.83],m,p);draw(joint,mm(m,trans(...ecc)),p);
  }
 }
 
@@ -348,3 +349,324 @@ function drawHouseTrainFormation(scene,train,p){
   drawLink(couplingMesh,a,b,I,p);
  }
 }
+
+// The cabinet's catalogue is authored stock, not a second simulation. Its models
+// are built on demand and run on the same rails, motion and coupling code.
+const TRAIN_COLLECTION=[
+ {id:'nightingale',name:'Nightingale',number:'07',family:'tender',power:'steam',arrangement:'4–6–0',tag:'The original favourite',service:'Passenger service',formation:'coaches',cars:3,description:'Polished brass, a copper-capped chimney, and a proper tender full of coal. The locomotive that started this little house.',details:['Quartered driving wheels & moving valve gear','Riveted boiler, cab gauges & open footplate','Compartment coaches with an observation balcony'],liveries:[['Brunswick green','#315544','#dbbd79','#325342'],['Midnight blue','#344f69','#d8c69b','#32495e'],['Claret & cream','#753d45','#e2bd83','#6b3941']]},
+ {id:'tern',name:'Tern',number:'14',family:'tank',power:'steam',arrangement:'0–6–0T',tag:'A little salt in the air',service:'Branch-line passenger',formation:'coaches',cars:2,description:'A compact side-tank engine with sea-glass paintwork and a bright brass nameplate. Made for little platforms and the long way around the bay.',details:['Side tanks, exposed smokebox & copper pipework','Working coupling rods and rear coal bunker','Clerestory coaches with open end platforms'],liveries:[['Sea glass','#286369','#d4c390','#38747a'],['Harbour blue','#375974','#d7caa1','#456880'],['Chalk & olive','#67735a','#ded2aa','#71806a']]},
+ {id:'wren',name:'Wren',number:'03',family:'saddle',power:'steam',arrangement:'0–6–0ST',tag:'Small engine. Big personality.',service:'Light passenger',formation:'coaches',cars:2,description:'Honey-coloured paint, a curved saddle tank, and tiny wooden coaches. An industrious little engine that looks as lovely standing still as it does at work.',details:['Curved saddle tank with a brass filler cap','Open cab, handrails & three driven axles','Short timber coaches with roof ventilators'],liveries:[['Honey & teak','#b58a43','#ead2a1','#886443'],['Bottle green','#344c3c','#dbbc7c','#916a43'],['Oxblood','#803e36','#d9bd86','#815641']]},
+ {id:'meridian',name:'Meridian',number:'28',family:'express',power:'steam',arrangement:'4–6–0',tag:'An occasion on every departure',service:'Express passenger',formation:'coaches',cars:4,description:'Deep blue enamel and sweeping smoke deflectors give this express a grander presence. The observation carriage is the best seat in the house.',details:['Tall smoke deflectors with fine rivet lines','Brass boiler bands and mechanical valve gear','Matching tender and lined passenger coaches'],liveries:[['Night express','#253e60','#d9c792','#344962'],['Pullman plum','#51354b','#dbb981','#563b4d'],['Ivory & moss','#c5bda5','#8b7047','#536759']]},
+ {id:'cinder',name:'Cinder',number:'05',family:'shunter',power:'diesel',arrangement:'B–B',tag:'The useful little one',service:'Mixed goods',formation:'wagons',cars:3,description:'A square-shouldered diesel with a long bonnet, open walkways, and a cab full of small instruments. Give it a string of goods wagons and a job to do.',details:['Louvred engine covers & a deep radiator grille','Handrails, steps, fuel tank & cab instruments','A mixed goods rake ending in a brake van'],liveries:[['Works ochre','#b18b42','#e5d2a3','#825e43'],['Industrial green','#4a6559','#ddcb99','#825e43'],['Signal red','#9b493b','#e1c89a','#825e43']]},
+ {id:'kingfisher',name:'Kingfisher',number:'21',family:'railbus',power:'diesel',arrangement:'Bo–Bo',tag:'The slow Sunday service',service:'Diesel railcar',formation:'trailers',cars:1,description:'A two-tone railcar with a softly sloping nose, wide windows, and a warm timber interior. A different kind of railway rhythm, without a plume of steam.',details:['Sloping cab ends and paired headlamps','Roof vents, underfloor engine & luggage racks','Matching trailer with visible passenger seats'],liveries:[['Petrol & cream','#2d6972','#e3ce9e','#367079'],['Sunset orange','#b96c43','#efd9ad','#a86342'],['Wine & parchment','#70414c','#e6d2ab','#774954']]},
+ {id:'bergwald',name:'Bergwald',number:'12',family:'electric',power:'electric',arrangement:'Bo–Bo',tag:'A mountain original',service:'Electric railcar',formation:'trailers',cars:1,description:'Heritage red, porcelain insulators, and a delicate diamond pantograph. Watch its bogies find their way around the curve as the valley drops away.',details:['Diamond pantograph & porcelain roof insulators','Copper bus, resistor bank & cab windscreen wipers','Separate swivelling bogies and open interiors'],liveries:[['Alpine red','#a54438','#e3cf9d','#aa4e40'],['Forest & cream','#3c6656','#ddcba4','#456c5b'],['Glacier blue','#587b91','#e5d9b7','#64869b']]},
+ {id:'juniper',name:'Juniper',number:'32',family:'panorama',power:'electric',arrangement:'Bo–Bo',tag:'Every window, a view',service:'Panorama electric',formation:'trailers',cars:2,description:'An airy electric train with raised panoramic glazing and a silver roofline. Built around the view, with small tables and a quiet place by the window.',details:['Raised glazed observation roof & slim framing','Articulated diamond collector and roof equipment','Window-side seating, tables & wide cab glazing'],liveries:[['Sage & silver','#7c9480','#e5d7b4','#8c9d85'],['Lake blue','#4d7686','#dedac5','#5f8592'],['Cream & copper','#c9bca0','#9f7656','#b6a48b']]}
+];
+const collectionById=new Map(TRAIN_COLLECTION.map(q=>[q.id,q]));
+const selectedCollection=Object.create(null),runningCollectionMeshes=new Map(),collectionOffsetCache=new Map();
+const collectionStorageKey='whistlevale-train-collection-v1';
+const cabinetInitLabels=initLabels;
+initLabels=function(){
+ cabinetInitLabels();
+ for(const q of TRAIN_COLLECTION){
+  // Fixed allocation during world construction, before any geometry uses UVs.
+  const neededRow=atlasX+246+2>2048?atlasY+atlasRow+3:atlasY;
+  if(neededRow+50>1024)continue;
+  label('collection-name-'+q.id,q.name.toUpperCase(),188,40,'#263d34','#e6cf98',22,true);
+  label('collection-number-'+q.id,q.number,54,50,'#263d34','#e6cf98',31,true);
+ }
+};
+function collectionPaint(choice){
+ const q=collectionById.get(choice.id),v=q.liveries[choice.livery];
+ return {name:v[0],body:v[1],line:v[2],coach:v[3],wheel:shade(v[1],.67)};
+}
+function validateCollectionChoice(value){
+ if(!value||!collectionById.has(value.id))return null;
+ const q=collectionById.get(value.id);
+ if(!Number.isInteger(value.livery)||value.livery<0||value.livery>=q.liveries.length||!Number.isInteger(value.cars)||value.cars<1||value.cars>6)return null;
+ return {id:q.id,livery:value.livery,cars:value.cars};
+}
+function collectionDefault(room){
+ const stock=roomScenes.get(room)?.trains[0],id=room==='valley'?'nightingale':room==='coast'?'tern':room==='studio'?'wren':stock?.type==='steam'?'tern':'bergwald';
+ const q=collectionById.get(id);return {id,livery:id==='nightingale'?Math.max(0,['green','blue','claret'].indexOf(livery)):0,cars:room==='valley'?Math.min(6,offsets.length-2):Math.max(1,Math.min(6,stock?.cars??q.cars))};
+}
+function collectionChoice(room){return selectedCollection[room]||collectionDefault(room);}
+function collectionTrainLabel(room){const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
+function collectionPower(room){
+ if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
+ return room==='valley'||roomScenes.get(room)?.trains[0]?.type==='steam'?'steam':'electric';
+}
+function collectionOffsets(choice){
+ const key=choice.id+':'+choice.cars;if(collectionOffsetCache.has(key))return collectionOffsetCache.get(key);
+ const q=collectionById.get(choice.id),tender=['tender','express'].includes(q.family),out=[0];
+ if(tender)out.push(2.75);
+ for(let i=0;i<choice.cars;i++)out.push(tender?5.21+3.26*i:q.family==='saddle'?3.15+2.81*i:q.family==='shunter'?3.23+2.80*i:['railbus','panorama'].includes(q.family)?3.78+3.55*i:q.power==='electric'?3.48+3.26*i:3.43+3.26*i);
+ collectionOffsetCache.set(key,out);return out;
+}
+function collectionExport(){return {version:1,rooms:Object.fromEntries(Object.entries(selectedCollection).map(([room,choice])=>[room,{...choice}]))};}
+function restoreCollectionSelections(){
+ let data;
+ try{const embedded=$('embeddedTrainCollection')?.textContent;data=embedded&&embedded.trim()!=='null'?JSON.parse(embedded):JSON.parse(localStorage.getItem(collectionStorageKey)||'null');}catch{return;}
+ if(data?.version!==1||!data.rooms||typeof data.rooms!=='object')return;
+ for(const [room,value]of Object.entries(data.rooms)){
+  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||!choice)continue;
+  // Build only the train in the initial room; other saved choices are lazy.
+  try{if(room==='valley')ensureRunningCollection(choice);selectedCollection[room]=choice;}catch{}
+ }
+}
+function applyCollectionToScene(scene){
+ const choice=selectedCollection[scene.key];if(!choice||scene.trains[0].collectionChoice===choice)return;
+ ensureRunningCollection(choice);const q=collectionById.get(choice.id),train=scene.trains[0];
+ train.collectionChoice=choice;train.cars=choice.cars;train.type=q.power==='electric'?'mountain':q.power;train.stock='collection:'+q.id;
+}
+const collectionGetHouseScene=getHouseScene;
+getHouseScene=function(key){const scene=collectionGetHouseScene(key);if(scene)applyCollectionToScene(scene);return scene;};
+function chooseCollectionTrain(room,value){
+ const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room))throw new Error('This train choice is unavailable.');
+ ensureRunningCollection(choice);selectedCollection[room]=choice;
+ if(room!=='valley'&&roomScenes.has(room))applyCollectionToScene(roomScenes.get(room));
+ shadowDirty=true;let saved=true;
+ try{localStorage.setItem(collectionStorageKey,JSON.stringify(collectionExport()));}catch{saved=false;}
+ pruneRunningCollection();return saved;
+}
+function pruneRunningCollection(){
+ const used=new Set(Object.values(selectedCollection).map(q=>q.id+':'+q.livery));
+ for(const [key,stock]of runningCollectionMeshes)if(!used.has(key)){for(const mesh of Object.values(stock))if(mesh?.vao)disposeMesh(mesh);runningCollectionMeshes.delete(key);}
+}
+function ensureRunningCollection(choice){
+ const key=choice.id+':'+choice.livery;if(runningCollectionMeshes.has(key))return runningCollectionMeshes.get(key);
+ const geometry=collectionGeometry(choice),stock={};
+ try{for(const [part,mesh]of Object.entries(geometry))stock[part]=upload(mesh.data);}
+ catch(error){for(const mesh of Object.values(stock))disposeMesh(mesh);throw error;}
+ runningCollectionMeshes.set(key,stock);return stock;
+}
+function collectionAppend(mesh,b){const data=new Float32Array(mesh.data.length+b.data.length);data.set(mesh.data);data.set(b.data,mesh.data.length);return {data,count:data.length/12};}
+function collectionExpress(roof){
+ const mesh=makeLoco(roof),b=new Builder(),q=trainPaint();
+ for(const side of[-1,1]){
+  b.box(side*.477,1.035,1.02,.038,.65,.77,q.body,40);
+  b.beam([side*.502,1.37,.65],[side*.502,1.37,1.40],.012,q.line,41,8);
+  fineRivets(b,[side*.505,.74,.70],[side*.505,1.30,.70],9,q.line,.010);
+  for(const z of[.74,1.28])b.beam([side*.35,.70,z],[side*.475,.74,z],.019,'#728071',41,8);
+ }
+ return collectionAppend(mesh,b);
+}
+function collectionShunter(withRoof=true){
+ const b=new Builder(),q=trainPaint(),dark='#293831',steel='#9dada0';
+ b.box(0,.34,.03,.95,.15,3.05,dark,42);b.box(0,.19,0,.55,.22,1.26,'#434e43',42);
+ stockBuffers(b,-1.54);stockBuffers(b,1.58);
+ b.box(0,.82,.38,.68,.80,1.88,q.body,40);b.box(0,1.235,.36,.73,.04,1.96,q.body,40);
+ for(const s of[-1,1]){
+  b.box(s*.43,.47,.13,.22,.05,2.74,steel,41);
+  for(const z of[-.33,.28,.91]){
+   b.box(s*.348,.86,z,.023,.56,.50,shade(q.body,.83),40);
+   for(let i=0;i<7;i++)b.box(s*.364,.66+i*.062,z,.018,.018,.41,dark,42);
+   b.box(s*.381,1.12,z,.027,.026,.115,steel,41);
+  }
+  for(const z of[-1.34,-.51,.46,1.40])b.beam([s*.48,.48,z],[s*.48,.93,z],.017,q.line,41,8);
+  b.beam([s*.48,.94,-1.36],[s*.48,.94,1.41],.019,q.line,41,8);
+  for(const z of[-1.33,1.30])for(let i=0;i<2;i++)b.box(s*.48,.33-i*.11,z,.20,.032,.29,dark,42);
+  b.box(s*.44,.73,-1.04,.055,.49,.79,q.body,40);
+  for(const z of[-1.44,-.63])b.box(s*.44,1.23,z,.055,.59,.055,q.body,40);
+  b.box(s*.44,1.55,-1.04,.063,.075,.86,q.body,40);
+  b.push(s*.476,.76,-1.04,0,s*PI/2);sign(b,'engine',0,0,0,.23,.22);b.pop();
+ }
+ for(const z of[-1.44,-.63]){
+  b.box(0,.77,z,.86,.52,.053,q.body,40);b.box(0,1.55,z,.89,.075,.056,q.body,40);
+  for(const x of[-.43,0,.43])b.box(x,1.25,z,.036,.55,.054,q.body,40);
+  for(const x of[-.22,.22])b.beam([x,1.0,z-.031],[x+.10,1.30,z-.032],.008,dark,42,6);
+ }
+ b.box(0,.58,-1.02,.85,.05,.79,'#8c7657',22);b.box(0,.97,-.72,.66,.07,.20,dark,42);
+ for(const x of[-.20,.12])stockGauge(b,x,1.025,-.78,.038);
+ b.box(-.21,.76,-1.12,.24,.09,.23,'#7f5945',23);b.box(-.21,.92,-1.25,.24,.28,.045,'#7f5945',23);
+ b.box(0,.85,1.332,.61,.66,.028,dark,42);
+ for(let i=0;i<12;i++)b.box(-.275+i*.05,.85,1.351,.016,.60,.026,steel,41);
+ b.cylinder(.10,1.43,.73,.057,.057,.38,dark,42,18);b.cylinder(.10,1.631,.73,.068,.068,.039,steel,41,18);
+ b.cylinder(0,1.28,-.24,.17,.17,.033,dark,42,24);for(let i=0;i<8;i++)b.box((i-3.5)*.039,1.301,-.24,.014,.012,.27,steel,41);
+ if(withRoof){b.push(0,0,-1.04);barrelRoof(b,1.02,.99,1.59,dark);b.pop();}
+ for(const z of[-1.61,1.65])for(const x of[-.27,.27])stockLamp(b,x,.61,z,z<0,.057);
+ return b.mesh();
+}
+function collectionRailcar(trailer=false,panorama=false){
+ const b=new Builder(),q=trainPaint(),half=trailer?1.51:1.70,side=.445,cream=panorama?'#d8ddca':'#e5d4ae',steel='#a9b6a5',dark='#293c34';
+ // A continuous rounded cab shell, rather than an apron attached to a flat cab.
+ b.box(0,.335,0,.86,.13,half*2-.15,dark,42);b.box(0,.418,0,.81,.045,half*2-.30,'#a38b65',22);
+ b.box(0,.242,-.16,.51,.16,.78,'#586657',42);
+ if(!panorama){b.box(0,.229,.56,.59,.20,.53,'#4c594d',42);for(let z=.36;z<.79;z+=.07)b.box(0,.121,z,.52,.013,.024,steel,41);}
+ for(const sideSign of[-1,1]){
+  const x=sideSign*side,end=half-.36;
+  b.box(x,.662,0,.055,.45,end*2,q.body,40);
+  b.box(x,.91,0,.068,.045,end*2,cream,0);b.box(x,1.419,0,.071,.060,end*2,cream,0);
+  b.box(sideSign*.480,.492,0,.011,.017,end*2-.04,q.line,41);
+  b.box(sideSign*.482,.866,0,.011,.018,end*2-.04,steel,41);
+  const n=trailer?5:6,step=end*2/n;
+  for(let i=0;i<=n;i++){
+   const z=-end+i*step;b.box(x,1.162,z,.060,.472,.035,cream,0);
+   b.box(sideSign*.478,1.162,z,.012,.451,.013,steel,41);
+  }
+  for(let i=0;i<n;i++){
+   const z=-end+(i+.5)*step;
+   b.box(sideSign*.480,1.364,z,.011,.018,step-.042,steel,41);
+   b.box(sideSign*.480,.962,z,.011,.018,step-.042,steel,41);
+   if(!panorama)b.box(sideSign*.469,1.268,z,.019,.013,step-.04,cream,0);
+   b.box(sideSign*.285,.569,z,.24,.107,.225,panorama?'#718d76':'#946d57',23);
+   b.box(sideSign*.363,.718,z,.055,.27,.225,panorama?'#5b7564':'#79563f',23);
+   if(panorama&&i%2===1){b.box(sideSign*.255,.78,z-.14,.32,.027,.16,'#d0c3a3',22);b.cylinder(sideSign*.255,.618,z-.14,.015,.015,.31,steel,41,8);}
+   if(i===2){b.sphere(sideSign*.28,.83,z,.039,.049,.039,'#cba984',0,8,5);b.sphere(sideSign*.28,.732,z,.048,.074,.040,panorama?'#b08f60':'#6d877b',23,8,5);}
+  }
+  // Door recess, handles and two separate step treads at each vestibule.
+  for(const endSign of[-1,1]){
+   const z=endSign*(half-.22);b.box(x,.662,z,.052,.448,.235,q.body,40);
+   for(const zz of[z-.127,z+.127])b.box(x,1.17,zz,.057,.50,.025,cream,0);
+   b.box(x,1.42,z,.068,.063,.27,cream,0);
+   b.beam([sideSign*.485,.72,z+.062],[sideSign*.485,.88,z+.062],.009,steel,41,8);
+   for(let j=0;j<2;j++)b.box(sideSign*.478,.332-j*.092,z,.158,.028,.259,dark,42);
+  }
+  b.push(sideSign*.482,.683,0,0,sideSign*PI/2);sign(b,'stock-alpine',0,0,0,.69,.116);b.pop();
+  if(!panorama)for(let z=-.95;z<1;z+=.065)b.box(sideSign*.478,.610,z,.011,.012,.032,shade(q.body,.77),40);
+ }
+ for(const endSign of[-1,1]){
+  const xs=[-.445,-.37,-.22,0,.22,.37,.445],face=(x,y)=>[x,y,endSign*(half+.035-.20*(Math.abs(x)/.445)**2)];
+  for(let i=0;i<xs.length-1;i++){
+   const a=face(xs[i],.455),b0=face(xs[i+1],.455),c=face(xs[i+1],.92),d=face(xs[i],.92);
+   a[2]-=endSign*.065;b0[2]-=endSign*.065;
+   b.quad(a,b0,c,d,q.body,40);
+   b.beam(face(xs[i],.872),face(xs[i+1],.872),.012,q.line,41,8);
+   b.beam(face(xs[i],.94),face(xs[i+1],.94),.018,cream,0,8);
+   const topA=face(xs[i],1.417),topB=face(xs[i+1],1.417);topA[2]-=endSign*.15;topB[2]-=endSign*.15;
+   b.beam(topA,topB,.026,cream,0,8);
+   if(i===0||i===xs.length-2)b.quad(d,c,topB,topA,cream,0);
+  }
+  const left=face(-.37,.962),right=face(.37,.962),tl=face(-.37,1.39),tr=face(.37,1.39);tl[2]-=endSign*.15;tr[2]-=endSign*.15;
+  b.quad(left,right,tr,tl,panorama?'#779b94':'#768f83',43);
+  for(const x of[-.37,0,.37]){const a=face(x,.95),z=face(x,1.413);z[2]-=endSign*.15;b.beam(a,z,x===0?.013:.022,cream,0,8);}
+  for(const x of[-.23,.23]){
+   stockLamp(b,x,.744,endSign*(half+.045-.20*(Math.abs(x)/.445)**2),endSign<0,.045);
+   const a=face(x,1.008),tip=face(x+.075,1.219);a[2]+=endSign*.007;tip[2]-=endSign*.073;b.beam(a,tip,.006,dark,42,6);
+  }
+  b.box(0,.381,endSign*(half+.014),.72,.065,.06,steel,41);
+  b.beam([0,.29,endSign*half],[0,.29,endSign*(half+.17)],.024,dark,42,8);
+  b.box(0,.872,endSign*(half-.34),.67,.059,.21,'#506356',42);
+  for(const x of[-.20,.12])stockGauge(b,x,.921,endSign*(half-.38),.028);
+  b.box(-.20,.60,endSign*(half-.51),.20,.07,.18,'#80634c',23);
+ }
+ return b.mesh();
+}
+function collectionRailcarRoof(trailer=false,panorama=false){
+ const b=new Builder(),q=trainPaint(),half=trailer?1.51:1.70,steel='#a6b4a6';
+ if(panorama){
+  // Low glazed shoulders make one continuous observation saloon.
+  for(const s of[-1,1]){
+   b.quad([s*.477,1.447,-half+.30],[s*.477,1.447,half-.30],[s*.30,1.689,half-.40],[s*.30,1.689,-half+.40],'#87aaa1',43);
+   for(let z=-half+.34;z<half-.29;z+=.34)b.beam([s*.480,1.448,z],[s*.30,1.70,z*.92],.013,'#d4dcc8',41,8);
+   b.beam([s*.481,1.445,-half+.26],[s*.481,1.445,half-.26],.018,steel,41,8);
+   b.beam([s*.302,1.703,-half+.36],[s*.302,1.703,half-.36],.016,steel,41,8);
+  }
+  b.box(0,1.699,0,.60,.033,half*2-.69,'#c0cbbc',41);
+  for(const s of[-1,1]){b.quad([-.475,1.447,s*(half-.29)],[.475,1.447,s*(half-.29)],[.30,1.69,s*(half-.40)],[-.30,1.69,s*(half-.40)],'#c0cbbc',41);b.box(0,1.469,s*(half-.20),.89,.057,.23,'#a3b4a4',41);}
+  if(!trailer){
+   const z=-half+.43,base=1.76,top=2.24;
+   for(const x of[-.18,.18]){for(const y of[1.72,1.76])b.cylinder(x,y,z,.049,.044,.018,'#e0dcc4',0,12);for(const s of[-1,1]){b.beam([x,base,z],[x,2.0,z+s*.27],.013,'#696d60',41,8);b.beam([x,2.0,z+s*.27],[x,top,z],.013,'#696d60',41,8);b.cylinder(x,2,z+s*.27,.025,.025,.025,steel,41,10,0,PI/2);}}
+   b.beam([-.40,top,z],[.40,top,z],.018,steel,41,8);
+   b.beam([.26,1.725,-half+.5],[.26,1.725,-.25],.009,'#ac8764',41,8);
+  }
+ }else{
+  // Shallow elliptical roof: rounded railbus proportions, with ribbed vents.
+  for(let i=0;i<24;i++){
+   const a=i*PI/24,c=(i+1)*PI/24,point=(angle,z)=>[Math.cos(angle)*.485,1.445+Math.sin(angle)*.155,z];
+   b.quad(point(a,-half+.14),point(a,half-.14),point(c,half-.14),point(c,-half+.14),'#879b8c',41);
+   for(const s of[-1,1])b.tri([0,1.445,s*(half-.14)],point(a,s*(half-.14)),point(c,s*(half-.14)),'#879b8c',41);
+  }
+  for(const s of[-1,1])b.beam([s*.485,1.446,-half+.13],[s*.485,1.446,half-.13],.015,'#d6d3b9',41,8);
+  for(const z of[-.87,-.28,.32,.89]){b.box(0,1.616,z,.24,.05,.14,'#617364',42);for(let i=0;i<5;i++)b.box((i-2)*.042,1.646,z,.012,.014,.12,steel,41);}
+  if(!trailer)b.cylinder(.24,1.64,-.86,.035,.035,.20,'#596959',42,12);
+ }
+ return b.mesh();
+}
+function collectionBogieParts(){
+ const axle=smallAxle;
+ let bogie;
+ try{smallAxle=()=>{};bogie=makeBogie();}finally{smallAxle=axle;}
+ const b=new Builder();b.push(0,-.186,0);axle(b,0,.17,.66);b.pop();
+ // Small cast ribs make wheel rotation legible without oversized bright spokes.
+ for(const s of[-1,1])for(let i=0;i<6;i++){const a=i*TAU/6;b.beam([s*.365,Math.cos(a)*.056,Math.sin(a)*.056],[s*.365,Math.cos(a)*.124,Math.sin(a)*.124],.010,'#607563',41,6);}
+ return {bogie,axle:b.mesh()};
+}
+function collectionGeometry(choice){
+ const q=collectionById.get(choice.id),paint=collectionPaint(choice),saved={mesh:Builder.prototype.mesh,paint:trainPaint,seed,coast:TRAIN_ROSTER.coast,studio:TRAIN_ROSTER.studio,alpine:TRAIN_ROSTER.alpine,labels:{...labels}};
+ // Capture exactly the same procedural mesh used by the railway. This prevents
+ // preview generation from uploading to or changing the active WebGL context.
+ Builder.prototype.mesh=function(){return {data:new Float32Array(this.data),count:this.data.length/12};};
+ try{
+  seed=80183+TRAIN_COLLECTION.indexOf(q)*701;trainPaint=()=>paint;
+  for(const key of['coast','studio','alpine'])TRAIN_ROSTER[key]={...TRAIN_ROSTER[key],...paint};
+  const name=labels['collection-name-'+q.id],number=labels['collection-number-'+q.id];
+  if(name){labels.name=name;for(const key of['coast','studio','alpine'])labels['stock-'+key]=name;}
+  if(number){labels.engine=number;for(const key of['coast','studio','alpine'])labels['stock-number-'+key]=number;}
+  const parts=collectionBogieParts();
+  let mechanism=new Builder();mechanism.box(0,0,.5,.034,.041,1,'#b7c0ab',41);parts.rod=mechanism.mesh();
+  mechanism=new Builder();mechanism.box(0,0,0,.067,.091,.131,'#899784',41);parts.piston=mechanism.mesh();
+  mechanism=new Builder();mechanism.sphere(0,0,0,.024,.031,.031,'#dbcca7',41,10,6);parts.joint=mechanism.mesh();
+  mechanism=new Builder();mechanism.cylinder(0,0,.5,.018,.018,1,'#969d87',41,10,PI/2);parts.coupling=mechanism.mesh();
+  if(q.power==='steam'){
+   const tender=['tender','express'].includes(q.family),engine=roof=>q.family==='express'?collectionExpress(roof):tender?makeLoco(roof):stockTankEngine(q.family==='saddle'?'studio':'coast',roof);
+   parts.loco=engine(true);parts.cab=engine(false);parts.wheels=makeWheels();
+   if(tender)parts.tender=makeTender();
+   parts.coach=tender?makeCoach():stockCoach(q.family==='saddle'?'studio':'coast');parts.tail=tender?makeCoach(true):stockCoach(q.family==='saddle'?'studio':'coast',true);parts.roof=tender?makeCoachRoof():stockCoachRoof(q.family==='saddle'?'studio':'coast');
+  }else if(q.family==='shunter'){
+   parts.loco=collectionShunter();parts.cab=collectionShunter(false);parts.coach=makeGoodsVehicle('box');parts.tank=makeGoodsVehicle('tank');parts.tail=makeGoodsVehicle('brake');
+  }else{
+   const classic=q.family==='electric',panorama=q.family==='panorama';
+   parts.motor=classic?stockElectric():collectionRailcar(false,panorama);parts.trailer=classic?stockElectric(true):collectionRailcar(true,panorama);
+   parts.motorRoof=classic?stockElectric(false,false,true):collectionRailcarRoof(false,panorama);parts.trailerRoof=classic?stockElectric(true,false,true):collectionRailcarRoof(true,panorama);
+  }
+  return parts;
+ }finally{Builder.prototype.mesh=saved.mesh;trainPaint=saved.paint;seed=saved.seed;TRAIN_ROSTER.coast=saved.coast;TRAIN_ROSTER.studio=saved.studio;TRAIN_ROSTER.alpine=saved.alpine;Object.assign(labels,saved.labels);}
+}
+function drawSelectedCollection(choice,matrixAt,p,phase=0,stock=ensureRunningCollection(choice),open=cutaway&&p===mainProgram){
+ const q=collectionById.get(choice.id),tender=['tender','express'].includes(q.family),ds=collectionOffsets(choice),ends=[],models=[];
+ const bogieAt=offset=>{const m=matrixAt(offset);draw(stock.bogie,m,p);for(const z of[-.22,.22])draw(stock.axle,mm(m,mm(trans(0,.186,z),rx(phase*.305/.17))),p);};
+ for(let i=0;i<ds.length;i++){
+  const m=matrixAt(ds[i]);models.push(m);
+  if(i===0&&q.power==='steam'){
+   draw(open||viewMode==='cab'&&p===mainProgram?stock.cab:stock.loco,m,p);drawCollectionMotion(m,phase,p,stock.wheels,stock);ends.push(tender?1.82:1.76);
+  }else if(tender&&i===1){draw(stock.tender,m,p);ends.push(1.04);}
+  else if(q.family==='shunter'){
+   draw(i===0?(open||viewMode==='cab'&&p===mainProgram?stock.cab:stock.loco):i===ds.length-1?stock.tail:i%3===2?stock.tank:stock.coach,m,p);
+   if(i===0)for(const z of[-.92,.92])bogieAt(ds[i]-z);ends.push(i?1.40:1.82);
+  }else if(q.power!=='steam'){
+   draw(i?stock.trailer:stock.motor,m,p);if(!open&&!(i===0&&viewMode==='cab'&&p===mainProgram))draw(i?stock.trailerRoof:stock.motorRoof,m,p);
+   for(const z of[-(i?.86:1.03),i?.86:1.03])bogieAt(ds[i]-z);ends.push(q.family==='electric'?(i?1.565:1.795):(i?1.69:1.92));
+  }else{
+   draw(i===ds.length-1?stock.tail:stock.coach,m,p);if(!open)draw(stock.roof,m,p);
+   const spread=q.family==='saddle'?.66:tender?.91:.88;for(const z of[-spread,spread])bogieAt(ds[i]-z);ends.push(q.family==='saddle'?1.35:tender?1.64:1.575);
+  }
+ }
+ for(let i=1;i<models.length;i++)drawLink(stock.coupling,transform([0,.29,-ends[i-1]],models[i-1]),transform([0,.29,tender&&i===1?.98:ends[i]],models[i]),I,p);
+}
+const cabinetDrawMain=workshopDrawTrains;
+workshopDrawTrains=function(p=mainProgram){
+ const choice=selectedCollection.valley;
+ if(choice&&trainModels[0])drawSelectedCollection(choice,offset=>vehicleMatrix(travel-offset),p,wheelPhase);else cabinetDrawMain(p);
+};
+const cabinetDrawHouse=drawHouseTrainFormation;
+drawHouseTrainFormation=function(scene,train,p){
+ if(train.collectionChoice)drawSelectedCollection(train.collectionChoice,offset=>circuitMatrix(train.edge,train.distance-offset),p,-collectionWheelPhase(train));
+ else cabinetDrawHouse(scene,train,p);
+};
+
+const cabinetRebuildTrains=buildTrains;
+buildTrains=function(){
+ cabinetRebuildTrains();
+ for(const stock of runningCollectionMeshes.values())for(const mesh of Object.values(stock))disposeMesh(mesh);
+ runningCollectionMeshes.clear();
+ if(selectedCollection.valley)ensureRunningCollection(selectedCollection.valley);
+ for(const scene of roomScenes.values())if(selectedCollection[scene.key]){scene.trains[0].collectionChoice=null;applyCollectionToScene(scene);}
+};
+
+// Hidden steam is unnecessary work while inspecting a diesel/electric service.
+const cabinetUpdateSteam=updateSteam;
+updateSteam=function(dt){
+ if(typeof hobby!=='undefined'&&hobby.ready&&collectionPower(hobby.room)!=='steam'){steam.length=0;steamAccumulator=0;whistleSteam=0;return;}
+ cabinetUpdateSteam(dt);
+};

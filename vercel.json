@@ -3,6 +3,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": null,
+  "git": {
+    "deploymentEnabled": {"codex/train-collection-20260909": false}
+  },
   "headers": [
     {
       "source": "/",

@@ -167,3 +167,19 @@ const hobbySource=await readFile(new URL('../src/hobby.js',import.meta.url),'utf
 const exportIds=hobbySource.match(/const exportAudioIds=([^;]+);/)[1];
 assert.deepEqual([...vm.runInContext(exportIds,context)],['town','arrival'],'portable export includes an available greeting alongside room audio');
 console.log('Lossless delivery audio QA passed: identical retained loop samples, shared buffer identity, versioned playback, dev fallback, embedded precedence, and portable arrival inclusion.');
+
+// Newly selectable diesel/electric stock must not inherit steam effects.
+Context.prototype.createOscillator=function(){const n=new Node();this.sources.push(n);return n;};
+const hornContext=new Context(),hornHouse=new HouseSoundscape(hornContext);
+sandbox.hornHouse=hornHouse;sandbox.hobby={room:'valley',cinema:false,scene:null};sandbox.collectionPower=()=> 'diesel';sandbox.$=id=>id==='whistleBtn'?{classList:{add(){},remove(){}}}:id==='soundStatus'?status:null;sandbox.setTimeout=()=>0;
+vm.runInContext('soundscape=hornHouse;audio={active:true};whistle();',context);
+assert.equal(hornContext.sources.length,2,'a diesel uses the two-tone horn');
+for(const source of hornContext.sources){assert.equal(source.connections[0].connections[0],hornHouse.buses.train,'horn follows the independent train mixer');assert.ok(source.stopTime<1,'horn has a bounded tail');}
+vm.runInContext('whistle();',context);assert.equal(hornContext.sources.length,2,'rapid horn presses do not accumulate voices');
+hornHouse.train=0;hornHouse.update();assert.equal(hornHouse.buses.train.gain.target,0,'muted train category also mutes the horn');
+for(const source of hornContext.sources)source.onended();assert.ok(hornContext.sources.every(source=>source.connections.length===0),'finished horn voices disconnect');
+hornContext.currentTime=2;hornHouse.setEnabled(false);vm.runInContext('whistle();',context);assert.equal(hornContext.sources.length,2,'muted mixer starts no horn voices');
+const selectedSteam=new HouseSoundscape(new Context());selectedSteam.buffers.set('steam',raw);selectedSteam.createLayer('steam');
+sandbox.collectionPower=()=> 'electric';selectedSteam.update();assert.equal(selectedSteam.layers.get('steam').gain.gain.target,0,'selected electric in Alder Valley has no steam loop');
+sandbox.collectionPower=()=> 'steam';selectedSteam.update();assert.ok(selectedSteam.layers.get('steam').gain.gain.target>0,'switching back to steam restores the loop');
+console.log('Selected stock audio QA passed: power-aware steam, bounded horn voices, train-category routing, mute and voice disposal.');
