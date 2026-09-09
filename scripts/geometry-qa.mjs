@@ -17,7 +17,7 @@ const args=process.argv.slice(2),quick=args.includes('--quick');
 const nearestReference=`function originalNearestTrack(x,z){let gx=Math.floor(x/2),gz=Math.floor(z/2),best={dist:99,p:[0,1.06,0],edge:null,d:0};for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){let c=trackGrid.get((gx+i)+','+(gz+j));if(c)for(let a of c){let d=Math.hypot(x-a.p[0],z-a.p[2]);if(d<best.dist)best={...a,dist:d}}}return best}`;
 
 // Frozen reference operations from the original geometry prefix. Unchanged
-// primitive bodies remain the real application code in both runs.
+// primitive bodies remain shared unless frozen below for a topology change.
 const legacy=`
 normalTransform=function(n,m){let a=V(m[0],m[1],m[2]),b=V(m[4],m[5],m[6]),c=V(m[8],m[9],m[10]);return norm(add(add(mul(cross(b,c),n[0]),mul(cross(c,a),n[1])),mul(cross(a,b),n[2])))};
 Builder.prototype.push=function(x=0,y=0,z=0,ax=0,ay=0,az=0,sx=1,sy=sx,sz=sx){this.stack.push(this.m);this.m=mm(this.m,mm(trans(x,y,z),mm(ry(ay),mm(rx(ax),mm(rz(az),scaling(sx,sy,sz))))));return this};
@@ -25,6 +25,8 @@ Builder.prototype.matrix=function(m){this.stack.push(this.m);this.m=mm(this.m,m)
 Builder.prototype.pop=function(){this.m=this.stack.pop()||ident();return this};
 Builder.prototype.vertex=function(p,n,c,mat=0,uv=[0,0]){let q=transform(p,this.m),nn=normalTransform(n,this.m);this.data.push(...q,...nn,...col(c),mat,...uv)};
 Builder.prototype.tri=function(a,b,c,color,mat=0,ns=null,uv=null){let n=norm(cross(sub(b,a),sub(c,a)));this.vertex(a,ns?ns[0]:n,color,mat,uv?uv[0]:[0,0]);this.vertex(b,ns?ns[1]:n,color,mat,uv?uv[1]:[0,0]);this.vertex(c,ns?ns[2]:n,color,mat,uv?uv[2]:[0,0])};
+Builder.prototype.cylinder=function(x,y,z,r1,r2,h,color,mat=0,segs=12,ax=0,az=0){this.push(x,y,z,ax,0,az);for(let i=0;i<segs;i++){let a=i*TAU/segs,b=(i+1)*TAU/segs,pa=[Math.cos(a)*r1,-h/2,Math.sin(a)*r1],pb=[Math.cos(b)*r1,-h/2,Math.sin(b)*r1],pc=[Math.cos(b)*r2,h/2,Math.sin(b)*r2],pd=[Math.cos(a)*r2,h/2,Math.sin(a)*r2],na=norm([Math.cos(a),(r1-r2)/h,Math.sin(a)]),nb=norm([Math.cos(b),(r1-r2)/h,Math.sin(b)]);this.tri(pa,pd,pc,color,mat,[na,na,nb]);this.tri(pa,pc,pb,color,mat,[na,nb,nb]);if(r2>0)this.tri([0,h/2,0],pc,pd,shade(color,1.05),mat);if(r1>0)this.tri([0,-h/2,0],pa,pb,color,mat)}this.pop();return this};
+Builder.prototype.sphere=function(x,y,z,sx,sy,sz,color,mat=0,segments=10,rings=7,flat=false){this.push(x,y,z,0,0,0,sx,sy,sz);const p=(a,t)=>[Math.sin(t)*Math.cos(a),Math.cos(t),Math.sin(t)*Math.sin(a)];for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){let a=i*TAU/segments,b=(i+1)*TAU/segments,t=j*PI/rings,u=(j+1)*PI/rings,ps=[p(a,t),p(a,u),p(b,u),p(b,t)],c=flat?shade(color,.93+.13*hash(i,j)):color;this.tri(ps[0],ps[2],ps[1],c,mat,flat?null:[ps[0],ps[2],ps[1]]);this.tri(ps[0],ps[3],ps[2],c,mat,flat?null:[ps[0],ps[3],ps[2]])}this.pop();return this};
 appendInstance=function(dst,src,m){const a=dst.data;for(let i=0;i<src.length;i+=12){const x=src[i],y=src[i+1],z=src[i+2],nx=src[i+3],ny=src[i+4],nz=src[i+5],s=Math.hypot(m[0],m[1],m[2])||1;a.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],(m[0]*nx+m[4]*ny+m[8]*nz)/s,(m[1]*nx+m[5]*ny+m[9]*nz)/s,(m[2]*nx+m[6]*ny+m[10]*nz)/s,src[i+6],src[i+7],src[i+8],src[i+9],src[i+10],src[i+11]);}};
 nearestTrack=originalNearestTrack;
 if(typeof createGroundUncached==='function')createGround=createGroundUncached;
@@ -64,9 +66,31 @@ const primitives=`(()=>{
  }
  // Degenerate normals, zero scale, and stack underflow preserve their bytes.
  b.push(0,0,0,0,0,0,0,1,1);b.tri([0,0,0],[0,0,0],[0,0,0],'#aabbcc');b.pop();b.pop();shapes(2);
+ // Topology reuse must retain seams, fractional subdivisions and independently
+ // transformed normals/colours, including a second use of the same template.
+ for(const flat of[false,true,false]){
+  b.push(1,2,3,.2,.4,.7,.5,1.7,-.3);
+  b.sphere(0,0,0,.8,.4,1.2,'#aabbcc',8,7.5,4.5,flat);
+  b.cylinder(0,0,0,.7,.1,1.3,'#98b276',41,8.5,.1,-.3);b.pop();
+ }
  b.mesh();const instance=new Builder();
  for(const m of[ident(),mm(trans(2,-4,3),mm(ry(.52),scaling(1.4))),mm(rx(-.71),scaling(-.6)),scaling(0)])appendInstance(instance,b.data,m);
  instance.mesh();
+})()`;
+
+const terrainQueries=`(()=>{
+ const b=new Builder(),surface=alpineRelief(b,(x,z)=>4+Math.sin(x*1.1)*Math.cos(z*.8),()=>[.4,.5,.3]);
+ // Read the emitted triangles directly. Barycentric points must meet the
+ // returned ground sampler even where the analytic height bends between them.
+ for(let triangle=370;triangle<150*96*2-370;triangle+=173){
+  const i=triangle*36,a=b.data.slice(i,i+3),q=b.data.slice(i+12,i+15),r=b.data.slice(i+24,i+27);
+  for(const weights of[[.2,.3,.5],[.1,.7,.2]]){
+   const p=a.map((v,k)=>v*weights[0]+q[k]*weights[1]+r[k]*weights[2]);
+   if(Math.abs(p[0])>43||Math.abs(p[2])>24)continue;
+   assert.ok(Math.abs(surface(p[0],p[2])-p[1])<1e-10,'detail heights meet the drawn terrain triangle');
+  }
+ }
+ for(const p of[[52,0],[-52,0],[0,33],[0,-33],[51,32],[-51,-32]])assert.ok(Number.isFinite(surface(...p)),'edge and rounded-corner queries remain finite');
 })()`;
 
 function worker(mode,output){
@@ -98,11 +122,13 @@ function worker(mode,output){
  function run(name,code){group=name;const start=performance.now();vm.runInContext(code,context,{filename:'geometry-qa:'+name});timings[name]=Math.round((performance.now()-start)*10)/10;}
  run('primitives-and-transforms',primitives);
  run('nearest-track-queries',nearestQueries);
+ run('terrain-surface-queries',terrainQueries);
  if(!quick){
   run('valley','seed=72491;buildWorld();rebuildScenery();');
   run('valley-room','createRoom();');
   run('valley-people','buildValleyLife();initWalkingFigures();');
   run('train-collection','buildTrains();');
+  run('selectable-trains',"for(const q of TRAIN_COLLECTION)for(let livery=0;livery<q.liveries.length;livery++)for(const part of Object.values(collectionGeometry({id:q.id,livery,cars:q.cars})))upload(part.data);");
   run('room-atlas','initHouseArt();');
   for(const key of['coast','alpine','studio'])run(key,`getHouseScene('${key}');`);
  }

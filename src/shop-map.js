@@ -83,14 +83,14 @@ updateHobbyAudio=function(dt){
 function shopCameraPosition(q){return add(q.target,[Math.sin(q.yaw)*Math.cos(q.pitch)*q.distance,Math.sin(q.pitch)*q.distance,Math.cos(q.yaw)*Math.cos(q.pitch)*q.distance]);}
 function shopOverview(){
  const q=SHOP_HOUSE_LAYOUT.mapEntry,phone=innerWidth<700;
- // Fit the house inside the usable canvas, leaving room for the preview card.
+ // Fit the house between the small header and the room directory.
  const fitWidth=SHOP_HOUSE_LAYOUT.width/(2*Math.tan(.36)*(innerWidth/innerHeight)*.80);
  return{target:q.target.slice(),distance:Math.max(q.distance*(phone?1.38:1.05),fitWidth),pitch:phone?1.02:.87,yaw:.035};
 }
 function shopProjection(){
  const phone=innerWidth<700;cameraNear=.3;
  cameraProjection=perspective(.72,screenW/screenH,cameraNear,Math.max(700,shopMap.orbit.distance*4));
- cameraProjection[8]=phone?0:.16;cameraProjection[9]=phone?-.23:0;
+ cameraProjection[9]=phone?-.07:0;
  VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 updateCamera=function(dt){
@@ -119,16 +119,18 @@ function shopRestore(){
 function closeShopMap(){
  if(!shopMap.open)return;
  shopMap.token++;shopMap.open=false;shopMap.active=false;shopMap.loading=false;shopMap.entry=null;shopMap.pointers.clear();shopMap.drag=null;
- canvas.style.cursor='';document.body.classList.remove('shop-map-open');ShopMapUI.setLoading(null);ShopMapUI.hide();shopRestore();updateUI();
+ canvas.style.cursor='';document.body.classList.remove('shop-map-open');ShopMapUI.setLoading(null);ShopMapUI.hide();shopRestore();updateUI();window.railwayAnalytics?.sync?.();
 }
 function closeHouseMap(){closeShopMap();}
 async function openHouseMap(){
  if(!hobby.ready||shopMap.open||hobby.transition)return;
+ if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)enterBuild(false);if(hobby.cinema)leaveCinema(false);
  shopMap.saved={view:viewMode,orbit:{...orbit,target:orbit.target.slice()},eye:cameraPos.slice(),target:cameraTarget.slice(),light:lightVP,lens:lensAmount};
  shopMap.open=true;shopMap.loading=true;shopMap.selected=hobby.room;shopLightCache=new WeakMap();const token=++shopMap.token;
  for(const id of['soundPanel','playlistPanel','ambiencePanel','layoutPanel','trainInspector'])if($(id))$(id).hidden=true;
- document.body.classList.remove('hidden-ui');hidden=false;document.body.classList.add('shop-map-open');ShopMapUI.show(hobby.room);
+ // Capture the opener before hiding the room controls, which can blur it.
+ document.body.classList.remove('hidden-ui');hidden=false;ShopMapUI.show(hobby.room);document.body.classList.add('shop-map-open');window.railwayAnalytics?.sync?.();
  try{
   // Re-read the registry after each yield: a new module may register while
   // earlier rooms are being prepared, including a replacement of a cached one.

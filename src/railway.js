@@ -29,16 +29,56 @@ function basis(p,f){f=norm(f);const reference=Math.abs(f[1])>.999?[0,0,1]:[0,1,0
 function hash(x,z){let a=Math.sin(x*127.1+z*311.7)*43758.5453123;return a-Math.floor(a)}
 function noise(x,z){let ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz;fx=fx*fx*(3-2*fx);fz=fz*fz*(3-2*fz);return mix(mix(hash(ix,iz),hash(ix+1,iz),fx),mix(hash(ix,iz+1),hash(ix+1,iz+1),fx),fz)}
 function fbm(x,z){return .56*noise(x,z)+.28*noise(x*2.03,z*2.03)+.16*noise(x*4.07,z*4.07)}
+// Reuse unit topology across trees, wheels, lamps and miniature figures.
+// These points are read-only inputs; transforms and colours remain per instance.
+const primitiveCircles=new Map(),primitiveSpheres=new Map();
+function primitiveCircle(segments){
+ let points=primitiveCircles.get(segments);
+ if(!points){points=[];for(let i=0;i<=Math.ceil(segments);i++){const a=i*TAU/segments;points.push([Math.cos(a),Math.sin(a)]);}primitiveCircles.set(segments,points);}
+ return points;
+}
+function primitiveSphere(segments,rings){
+ const key=segments+','+rings;let points=primitiveSpheres.get(key);
+ if(!points){
+  points=[];const circle=primitiveCircle(segments);
+  for(let j=0;j<=Math.ceil(rings);j++){const t=j*PI/rings,s=Math.sin(t),c=Math.cos(t);for(const [x,z]of circle)points.push([s*x,c,s*z]);}
+  primitiveSpheres.set(key,points);
+ }
+ return points;
+}
 class Builder{
  constructor(){this.data=[];this.m=ident();this.stack=[];this.normalMatrix=null;this.normalStack=[]}
  push(x=0,y=0,z=0,ax=0,ay=0,az=0,sx=1,sy=sx,sz=sx){this.stack.push(this.m);this.normalStack.push(this.normalMatrix);this.normalMatrix=null;this.m=mm(this.m,mm(trans(x,y,z),mm(ry(ay),mm(rx(ax),mm(rz(az),scaling(sx,sy,sz))))));return this}
  matrix(m){this.stack.push(this.m);this.normalStack.push(this.normalMatrix);this.normalMatrix=null;this.m=mm(this.m,m);return this}pop(){this.m=this.stack.pop()||ident();this.normalMatrix=this.normalStack.pop()||null;return this}
- vertex(p,n,c,mat=0,uv=[0,0]){let q=transform(p,this.m),nn=normalTransform(n,this.m,this.normalMatrix||(this.normalMatrix=normalCofactors(this.m)));this.data.push(...q,...nn,...col(c),mat,...uv)}
+ vertex(p,n,c,mat=0,uv=null){
+  // Millions of vertices share this path. Write scalar attributes directly,
+  // retaining double precision and the original transform/normal sum order.
+  const m=this.m,k=this.normalMatrix||(this.normalMatrix=normalCofactors(m)),rgb=col(c);
+  const nx=(k[0]*n[0]+k[3]*n[1])+k[6]*n[2],ny=(k[1]*n[0]+k[4]*n[1])+k[7]*n[2],nz=(k[2]*n[0]+k[5]*n[1])+k[8]*n[2],s=1/(Math.hypot(nx,ny,nz)||1);
+  const data=this.data;let i=data.length;
+  data[i++]=m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12];data[i++]=m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13];data[i++]=m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14];
+  data[i++]=nx*s;data[i++]=ny*s;data[i++]=nz*s;
+  data[i++]=rgb[0];data[i++]=rgb[1];data[i++]=rgb[2];data[i++]=mat;data[i++]=uv?uv[0]:0;data[i]=uv?uv[1]:0;
+ }
  tri(a,b,c,color,mat=0,ns=null,uv=null){let n=ns?null:norm(cross(sub(b,a),sub(c,a)));this.vertex(a,ns?ns[0]:n,color,mat,uv?uv[0]:[0,0]);this.vertex(b,ns?ns[1]:n,color,mat,uv?uv[1]:[0,0]);this.vertex(c,ns?ns[2]:n,color,mat,uv?uv[2]:[0,0])}
  quad(a,b,c,d,color,mat=0,n=null,uv=null){this.tri(a,b,c,color,mat,n?[n,n,n]:null,uv?[uv[0],uv[1],uv[2]]:null);this.tri(a,c,d,color,mat,n?[n,n,n]:null,uv?[uv[0],uv[2],uv[3]]:null)}
  box(x,y,z,w,h,d,color,mat=0){let X=w/2,Y=h/2,Z=d/2;this.push(x,y,z);this.quad([-X,-Y,Z],[X,-Y,Z],[X,Y,Z],[-X,Y,Z],color,mat);this.quad([X,-Y,-Z],[-X,-Y,-Z],[-X,Y,-Z],[X,Y,-Z],shade(color,.91),mat);this.quad([X,-Y,Z],[X,-Y,-Z],[X,Y,-Z],[X,Y,Z],color,mat);this.quad([-X,-Y,-Z],[-X,-Y,Z],[-X,Y,Z],[-X,Y,-Z],color,mat);this.quad([-X,Y,Z],[X,Y,Z],[X,Y,-Z],[-X,Y,-Z],shade(color,1.04),mat);this.quad([-X,-Y,-Z],[X,-Y,-Z],[X,-Y,Z],[-X,-Y,Z],shade(color,.75),mat);this.pop();return this}
- cylinder(x,y,z,r1,r2,h,color,mat=0,segs=12,ax=0,az=0){this.push(x,y,z,ax,0,az);for(let i=0;i<segs;i++){let a=i*TAU/segs,b=(i+1)*TAU/segs,pa=[Math.cos(a)*r1,-h/2,Math.sin(a)*r1],pb=[Math.cos(b)*r1,-h/2,Math.sin(b)*r1],pc=[Math.cos(b)*r2,h/2,Math.sin(b)*r2],pd=[Math.cos(a)*r2,h/2,Math.sin(a)*r2],na=norm([Math.cos(a),(r1-r2)/h,Math.sin(a)]),nb=norm([Math.cos(b),(r1-r2)/h,Math.sin(b)]);this.tri(pa,pd,pc,color,mat,[na,na,nb]);this.tri(pa,pc,pb,color,mat,[na,nb,nb]);if(r2>0)this.tri([0,h/2,0],pc,pd,shade(color,1.05),mat);if(r1>0)this.tri([0,-h/2,0],pa,pb,color,mat)}this.pop();return this}
- sphere(x,y,z,sx,sy,sz,color,mat=0,segments=10,rings=7,flat=false){this.push(x,y,z,0,0,0,sx,sy,sz);const p=(a,t)=>[Math.sin(t)*Math.cos(a),Math.cos(t),Math.sin(t)*Math.sin(a)];for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){let a=i*TAU/segments,b=(i+1)*TAU/segments,t=j*PI/rings,u=(j+1)*PI/rings,ps=[p(a,t),p(a,u),p(b,u),p(b,t)],c=flat?shade(color,.93+.13*hash(i,j)):color;this.tri(ps[0],ps[2],ps[1],c,mat,flat?null:[ps[0],ps[2],ps[1]]);this.tri(ps[0],ps[3],ps[2],c,mat,flat?null:[ps[0],ps[3],ps[2]])}this.pop();return this}
+ cylinder(x,y,z,r1,r2,h,color,mat=0,segs=12,ax=0,az=0){
+  this.push(x,y,z,ax,0,az);const circle=primitiveCircle(segs);
+  for(let i=0;i<segs;i++){
+   const a=circle[i],b=circle[i+1],pa=[a[0]*r1,-h/2,a[1]*r1],pb=[b[0]*r1,-h/2,b[1]*r1],pc=[b[0]*r2,h/2,b[1]*r2],pd=[a[0]*r2,h/2,a[1]*r2],na=norm([a[0],(r1-r2)/h,a[1]]),nb=norm([b[0],(r1-r2)/h,b[1]]);
+   this.tri(pa,pd,pc,color,mat,[na,na,nb]);this.tri(pa,pc,pb,color,mat,[na,nb,nb]);if(r2>0)this.tri([0,h/2,0],pc,pd,shade(color,1.05),mat);if(r1>0)this.tri([0,-h/2,0],pa,pb,color,mat);
+  }
+  this.pop();return this;
+ }
+ sphere(x,y,z,sx,sy,sz,color,mat=0,segments=10,rings=7,flat=false){
+  this.push(x,y,z,0,0,0,sx,sy,sz);const points=primitiveSphere(segments,rings),stride=Math.ceil(segments)+1;
+  for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){
+   const k=j*stride+i,a=points[k],b=points[k+stride],c=points[k+stride+1],d=points[k+1],tint=flat?shade(color,.93+.13*hash(i,j)):color;
+   this.tri(a,c,b,tint,mat,flat?null:[a,c,b]);this.tri(a,d,c,tint,mat,flat?null:[a,d,c]);
+  }
+  this.pop();return this;
+ }
  beam(a,b,r,color,mat=0,sides=6){let f=sub(b,a),m=basis(mul(add(a,b),.5),f);this.matrix(m);this.cylinder(0,0,0,r,r,len(f),color,mat,sides,PI/2);this.pop();return this}
  mesh(){return upload(this.data)}
 }
@@ -165,7 +205,18 @@ class Edge{
 }
 const P=(x,z,y=1.06)=>[x,y,z];let common,highline,lowline,yard,edges,trackGrid=new Map(),tunnelStart=0,tunnelEnd=0;
 function baseInitTracks(){common=new Edge('common',[[P(9,-14),P(0,-14),P(-8,-14),P(-18,-14)],[P(-18,-14),P(-25.5,-14),P(-28,-10),P(-28,-3)],[P(-28,-3),P(-28,6),P(-26,14),P(-18,14)],[P(-18,14),P(-11,14),P(-5,14),P(0,14)]]);highline=new Edge('highline',[[P(0,14),P(8,14),P(12,14,4.45),P(19,10,4.45)],[P(19,10,4.45),P(25,6.57,4.45),P(28,3),P(28,-3)],[P(28,-3),P(28,-11),P(24,-14),P(18,-14)],[P(18,-14),P(15,-14),P(12,-14),P(9,-14)]]);lowline=new Edge('lowline',[[P(0,14),P(6,14),P(10,8),P(10,2)],[P(10,2),P(10,-5),P(19,-8),P(17,-12)],[P(17,-12),P(16,-14),P(12,-14),P(9,-14)]]);yard=new Edge('yard',[[P(-21,13.5),P(-16,13.5),P(-18,9),P(-13,9)],[P(-13,9),P(-9,9),P(-5,9),P(-2,9)]]);edges=[common,highline,lowline,yard];for(let edge of edges)for(let d=0;d<edge.length;d+=.5){let a=edge.at(d),k=`${Math.floor(a.p[0]/2)},${Math.floor(a.p[2]/2)}`;if(!trackGrid.has(k))trackGrid.set(k,[]);trackGrid.get(k).push(a)}let inside=[];for(let d=0;d<common.length;d+=.25){let a=common.at(d);if(naturalH(a.p[0],a.p[2])>3.3)inside.push(d)}tunnelStart=inside[0]||12;tunnelEnd=inside[inside.length-1]||38;}
-function nearestTrack(x,z){let gx=Math.floor(x/2),gz=Math.floor(z/2),best={dist:99,p:[0,1.06,0],edge:null,d:0};for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){let c=trackGrid.get(`${gx+i},${gz+j}`);if(c)for(let a of c){let d=Math.hypot(x-a.p[0],z-a.p[2]);if(d<best.dist)best={...a,dist:d}}}return best}
+function nearestTrack(x,z){
+ const gx=Math.floor(x/2),gz=Math.floor(z/2);let best=null,dist=99;
+ for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
+  const cell=trackGrid.get(`${gx+i},${gz+j}`);if(!cell)continue;
+  for(const a of cell){
+   const dx=x-a.p[0],dz=z-a.p[2];
+   if(Math.abs(dx)>dist||Math.abs(dz)>dist)continue;
+   const d=Math.hypot(dx,dz);if(d<dist){best=a;dist=d;}
+  }
+ }
+ return best?{...best,dist}:{dist:99,p:[0,1.06,0],edge:null,d:0};
+}
 function riverX(z){return 15.7+2.1*Math.sin((z+5)*.16)+.7*Math.sin(z*.32)}function riverWidth(z){return 1.35+1.32*Math.exp(-Math.pow((z-1)/6,2))+.22*Math.cos(z*.24)}
 function baseNaturalH(x,z){let peaks=7.9*Math.exp(-Math.pow((x+13)/8.4,2)-Math.pow((z+13.5)/5.3,2))+3.2*Math.exp(-Math.pow((x+23)/4.7,2)-Math.pow((z+9)/5.1,2))+3.0*Math.exp(-Math.pow((x+2)/4.1,2)-Math.pow((z+17.3)/3.3,2));peaks*=.82+.3*fbm(x*.44,z*.44);return .68+peaks+(fbm(x*.26,z*.26)-.5)*.24}
 function terrainH(x,z){let h=naturalH(x,z),rd=Math.abs(x-riverX(z))-riverWidth(z);if(rd<1.2)h=mix(-.28,h,smooth(-.4,1.1,rd));let t=nearestTrack(x,z);if(t.dist<1.6&&!(t.edge===common&&t.d>tunnelStart-1.8&&t.d<tunnelEnd+1.8)&&rd>.4){let elevate=t.edge!==highline||t.d<10.5||t.d>39;if(elevate)h=mix(h,t.p[1]-.24,1-smooth(.6,1.6,t.dist))}return h}
@@ -245,12 +296,12 @@ function makeCar(){let b=new Builder();b.box(0,.24,0,.55,.22,1.04,'#ad6e4b',1);b
 function buildTrains(){locoMesh=makeLoco();locoCabMesh=makeLoco(false);wheelMesh=makeWheels();tenderMesh=makeTender();coachMesh=makeCoach();bogieMesh=makeBogie();dieselMesh=makeDiesel();flatcarMesh=makeFlatcar();carMesh=makeCar();let b=new Builder();b.box(0,0,0,.042,.047,1.16,'#ccbd91',1);for(let z of[-.55,0,.55])b.cylinder(.017,0,z,.040,.04,.045,GOLD,1,10,0,PI/2);rodMesh=b.mesh();}
 // Each vehicle queries a continuous history of actually traversed edges.
 // Changing a turnout never changes the route underneath a moving carriage.
-let history=[],travel=0,chosenRoute='highline',speed=2.23,throttle=42,paused=false,stopRequested=false,atStation=false,completedLaps=0,travelled=0,arrivalTime=0;
+let journeyHistory=[],travel=0,chosenRoute='highline',speed=2.23,throttle=42,paused=false,stopRequested=false,atStation=false,completedLaps=0,travelled=0,arrivalTime=0;
 const offsets=[0,2.70,5.19,8.37,11.55];let trainModels=[],bogieModels=[],leadInfo=null,wheelPhase=0;
-function initJourney(){history=[{edge:highline,start:0,end:highline.length},{edge:common,start:highline.length,end:highline.length+common.length}];travel=highline.length+common.length-7.6;updateTrainModels()}
-function where(s){let tail=history[history.length-1];if(s>tail.end){let next=tail.edge===common?(chosenRoute==='highline'?highline:lowline):common;return next.at(s-tail.end)}for(let i=history.length-1;i>=0;i--){let h=history[i];if(s>=h.start-.00001&&s<=h.end+.00001){let a=h.edge.at(s-h.start);a.absolute=s;return a}}let h=history[0];return h.edge.at(clamp(s-h.start,0,h.edge.length))}
-function appendEdge(){let last=history[history.length-1],edge;if(last.edge===common){edge=chosenRoute==='highline'?highline:lowline;completedLaps++;}else edge=common;history.push({edge,start:last.end,end:last.end+edge.length});if(history.length>16)history.shift()}
-function advance(distance){travel+=Math.max(0,distance);travelled+=Math.max(0,distance);while(travel>history[history.length-1].end-1e-6)appendEdge()}
+function initJourney(){journeyHistory=[{edge:highline,start:0,end:highline.length},{edge:common,start:highline.length,end:highline.length+common.length}];travel=highline.length+common.length-7.6;updateTrainModels()}
+function where(s){let tail=journeyHistory[journeyHistory.length-1];if(s>tail.end){let next=tail.edge===common?(chosenRoute==='highline'?highline:lowline):common;return next.at(s-tail.end)}for(let i=journeyHistory.length-1;i>=0;i--){let h=journeyHistory[i];if(s>=h.start-.00001&&s<=h.end+.00001){let a=h.edge.at(s-h.start);a.absolute=s;return a}}let h=journeyHistory[0];return h.edge.at(clamp(s-h.start,0,h.edge.length))}
+function appendEdge(){let last=journeyHistory[journeyHistory.length-1],edge;if(last.edge===common){edge=chosenRoute==='highline'?highline:lowline;completedLaps++;}else edge=common;journeyHistory.push({edge,start:last.end,end:last.end+edge.length});if(journeyHistory.length>16)journeyHistory.shift()}
+function advance(distance){travel+=Math.max(0,distance);travelled+=Math.max(0,distance);while(travel>journeyHistory[journeyHistory.length-1].end-1e-6)appendEdge()}
 function distanceToStation(){let a=where(travel),stopD=common.length-7.0;if(a.edge===common&&a.d<=stopD+.05)return Math.max(0,stopD-a.d);let rem=a.edge.length-a.d;if(a.edge===common)return rem+(chosenRoute==='highline'?highline.length:lowline.length)+stopD;return rem+stopD}
 function vehicleMatrix(s){let center=where(s),front=where(s+.60),rear=where(s-.60),f=norm(sub(front.p,rear.p));return basis(add(center.p,[0,.072,0]),f)}
 function updateTrainModels(){leadInfo=where(travel);trainModels=offsets.map(o=>vehicleMatrix(travel-o));bogieModels=[];for(let o of offsets.slice(2))for(let d of[-.91,.91])bogieModels.push(vehicleMatrix(travel-o+d));}
@@ -287,7 +338,9 @@ function setThrottle(v){throttle=clamp(Number(v)||0,0,100);$('throttle').value=S
 function switchRoute(){chosenRoute=chosenRoute==='highline'?'lowline':'highline';$('routeLabel').textContent=chosenRoute==='highline'?'The viaduct ↗':'The riverside ↗';$('routeButtonLabel').textContent=chosenRoute==='highline'?'Viaduct':'Riverside';$('routeBtn').classList.toggle('active',chosenRoute==='lowline');if(audio)audio.switch();toast(chosenRoute==='highline'?'Next junction: up and over the viaduct.':'Next junction: take the quiet riverside line.');savePrefs();if(navigator.vibrate)navigator.vibrate(12)}
 function baseToggleStop(){if(atStation){atStation=false;stopRequested=false;throttle=throttle||42;setThrottle(throttle);$('stopBtn').classList.remove('active');$('stopLabel').textContent='Station stop';toast('All aboard. Next stop: the open countryside.');if(audio)audio.bell();if(paused)togglePause()}else{stopRequested=!stopRequested;$('stopBtn').classList.toggle('active',stopRequested);$('stopLabel').textContent=stopRequested?'Stop requested':'Station stop';toast(stopRequested?'Alder Vale is expecting you. Braking is automatic.':'Station stop cancelled. Enjoy the journey.')}updateUI()}
 function project(p){let x=p[0],y=p[1],z=p[2],w=VP[3]*x+VP[7]*y+VP[11]*z+VP[15];return{x:(VP[0]*x+VP[4]*y+VP[8]*z+VP[12])/w*innerWidth/2+innerWidth/2,y:innerHeight/2-(VP[1]*x+VP[5]*y+VP[9]*z+VP[13])/w*innerHeight/2,visible:w>0}}
-function workshopUpdateSimulation(dt){night=mix(night,targetNight,1-Math.exp(-dt*.9));if(paused)return;let desired=throttle/100*5.3;if(atStation)desired=0;let distance=stopRequested&&!atStation?distanceToStation():Infinity;if(stopRequested&&!atStation)desired=Math.min(desired,Math.sqrt(2*.68*Math.max(distance-.025,0)));let rate=desired>speed?.42:.9;speed+=clamp(desired-speed,-rate*dt,rate*dt);let step=speed*dt;if(stopRequested&&!atStation&&distance<.08&&(step>=distance-.012||speed<.08)){advance(Math.max(0,distance));speed=0;atStation=true;arrivalTime=clock;$('stopLabel').textContent='Depart';toast('A perfect arrival. Welcome to Alder Vale.');if(audio)audio.bell()}else advance(step);wheelPhase-=step/.304;updateTrainModels();updateSteam(dt);let near=false;for(let o of[0,3,6,9,12]){let p=where(travel-o).p;if(Math.hypot(p[0]+21.3,p[2]-13)<8.0)near=true}gateAngle=mix(gateAngle,near?0:1.32,1-Math.exp(-dt*2));}
+// Forward is local +Z: positive X rotation rolls the bottom of the wheel back
+// against the rail. The wheels and valve gear share this phase.
+function workshopUpdateSimulation(dt){night=mix(night,targetNight,1-Math.exp(-dt*.9));if(paused)return;let desired=throttle/100*5.3;if(atStation)desired=0;let distance=stopRequested&&!atStation?distanceToStation():Infinity;if(stopRequested&&!atStation)desired=Math.min(desired,Math.sqrt(2*.68*Math.max(distance-.025,0)));let rate=desired>speed?.42:.9;speed+=clamp(desired-speed,-rate*dt,rate*dt);let step=speed*dt;if(stopRequested&&!atStation&&distance<.08&&(step>=distance-.012||speed<.08)){advance(Math.max(0,distance));speed=0;atStation=true;arrivalTime=clock;$('stopLabel').textContent='Depart';toast('A perfect arrival. Welcome to Alder Vale.');if(audio)audio.bell()}else advance(step);wheelPhase+=step/.304;updateTrainModels();updateSteam(dt);let near=false;for(let o of[0,3,6,9,12]){let p=where(travel-o).p;if(Math.hypot(p[0]+21.3,p[2]-13)<8.0)near=true}gateAngle=mix(gateAngle,near?0:1.32,1-Math.exp(-dt*2));}
 const mapctx=$('map').getContext('2d');
 function drawMap(){const c=mapctx,w=c.canvas.width,h=c.canvas.height;c.clearRect(0,0,w,h);let tx=x=>w*.48+x*w*.0137,tz=z=>h*.50+z*h*.023;let selected=chosenRoute==='highline'?highline:lowline;c.strokeStyle='#8fada326';c.lineWidth=5;c.beginPath();for(let z=-20;z<=20;z+=.5){let x=riverX(z);z===-20?c.moveTo(tx(x),tz(z)):c.lineTo(tx(x),tz(z))}c.stroke();function path(edge,color,width){c.strokeStyle=color;c.lineWidth=width;c.lineJoin='round';c.lineCap='round';c.beginPath();for(let d=0;d<edge.length;d+=.35){let p=edge.at(d).p;d===0?c.moveTo(tx(p[0]),tz(p[2])):c.lineTo(tx(p[0]),tz(p[2]))}let p=edge.at(edge.length).p;c.lineTo(tx(p[0]),tz(p[2]));c.stroke()}path(highline,'#647c6d66',2.0);path(lowline,'#647c6d66',2.0);path(yard,'#647c6d55',1.3);path(selected,'#dfc18a',2.3);path(common,'#b8c5a4',2.1);c.fillStyle='#283d30';c.strokeStyle='#ebd9ab';c.lineWidth=1.5;c.fillRect(tx(-15),tz(14)+5,26,5);c.strokeRect(tx(-15),tz(14)+5,26,5);c.fillStyle='#aebfa7';c.font='11px Arial';c.textAlign='center';c.fillText('ALDER VALE',tx(-11),tz(14)+27);c.beginPath();c.arc(tx(0),tz(14),4.3,0,TAU);c.fillStyle='#e6c581';c.fill();for(let o of[11.55,8.37,5.19,2.7]){let p=where(travel-o).p;c.beginPath();c.arc(tx(p[0]),tz(p[2]),2.25,0,TAU);c.fillStyle='#d9d3ac';c.fill()}let p=leadInfo.p;c.shadowColor='#f0ce88';c.shadowBlur=9;c.fillStyle='#fbe2ac';c.beginPath();c.arc(tx(p[0]),tz(p[2]),3.9,0,TAU);c.fill();c.shadowBlur=0;}
 function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.round((paused?0:speed)*8.073);$('runState').textContent=paused?'Railway paused':atStation?'At Alder Vale':stopRequested?'Calling at Alder Vale':'Miniature, not motionless';$('engineStatus').innerHTML='<span class="status-dot">●</span> '+(atStation?'At the platform · Ready to depart':stopRequested?'Alder Vale · Stop requested':paused?'Taking a little breather':'4-6-0 · Passenger service');let place,title,detail,overline='A WORLD WORTH SLOWING DOWN FOR';if(atStation){place='station-stop';title='Welcome to Alder Vale.';detail='A moment to linger. Choose Depart when you’re ready.';overline='PLATFORM 1 · A PERFECT ARRIVAL'}else if(leadInfo.edge===highline&&leadInfo.d>9&&leadInfo.d<38){place='viaduct';title='A little above it all.';detail='Seven stone arches. One unhurried crossing.';overline='ALDER VIADUCT · THE HIGH LINE'}else if(leadInfo.edge===common&&leadInfo.d>tunnelStart&&leadInfo.d<tunnelEnd){place='tunnel';title='Through the old mountain.';detail='Built in 1898. Still the best way through.';overline='FERNHOLLOW TUNNEL · KEEP LISTENING'}else if(leadInfo.edge===lowline){place='riverside';title='The road less hurried.';detail='Along the water, beneath the willows.';overline='RIVERSIDE BRANCH · THE LOW LINE'}else if(leadInfo.edge===common&&leadInfo.d>common.length-20){place='station';title='All aboard, Nightingale.';detail='Past the village. Over the valley. Home again.'}else{place='countryside';title='Nowhere else to be.';detail='A winding line through a world in miniature.';overline='THE ALDER VALLEY RAILWAY · SINCE 1898'}if(place!==currentPlace){$('locationTitle').textContent=title;$('locationDetail').textContent=detail;$('locationOverline').textContent=overline;currentPlace=place}drawMap()}
@@ -334,8 +387,8 @@ function workshopUpdateCamera(dt){
  }
  const blend=1-Math.exp(-dt*rate);cameraPos=lerpV(cameraPos,pos,blend);cameraTarget=lerpV(cameraTarget,target,blend);
  cameraNear=clamp(len(sub(cameraPos,cameraTarget))*.006,.06,.75);const projection=perspective(fov,screenW/screenH,cameraNear,500);
- if(viewMode==='room'||viewMode==='overview')projection[9]=innerWidth<700?-.13:-.10;
- if(viewMode==='engine'&&!building){if(innerWidth>820)projection[8]=-.16;else projection[9]=-.23;}if(building){projection[8]=innerWidth<821?0:-.22;projection[9]=innerWidth<821?-.20:-.05;}cameraProjection=projection;
+ // Viewing controls are now tucked away; only the workbench needs extra space.
+ if(building){projection[8]=innerWidth<821?0:-.22;projection[9]=innerWidth<821?-.20:-.05;}cameraProjection=projection;
  VP=mm(projection,lookAt(cameraPos,cameraTarget));
 }
 function beginManualOrbit(){
@@ -404,8 +457,10 @@ function workshopBindControls(){
  document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeHelp();$('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;$('mapBtn').setAttribute('aria-expanded','false');$('ambienceBtn').setAttribute('aria-expanded','false');if(hidden)hideUI();return;}
   if(!$('help').hidden){if(e.key==='Tab'){const first=$('helpClose');e.preventDefault();first.focus();}return;}
+  if(e.target.closest('button')&&(e.key===' '||e.key==='Enter'))return;
   if(e.target.matches('input,textarea,select')||e.ctrlKey||e.metaKey||e.altKey)return;
   const k=e.key.toLowerCase();if(k===' '){e.preventDefault();togglePause();}else if(k==='h')whistle();else if(k==='r')switchRoute();else if(k==='s')toggleStop();else if(k==='n')toggleLight();else if(k==='f')hideUI();else if(k==='p')capturePhoto();else if(k==='m')toggleDiagram();else if('123456'.includes(k)&&k.length===1)setView(['room','overview','station','follow','cab','tour'][Number(k)-1]);
+  window.railwayAnalytics?.shortcut?.(k);
  });
  canvas.addEventListener('pointerdown',e=>{
   if(!$('help').hidden)return;
@@ -1521,9 +1576,13 @@ function createGround(){
    }
    neighbors.set(key,candidates);
   }
-  let best={dist:99,p:[0,1.06,0],edge:null,d:0};
-  for(const a of candidates){const d=Math.hypot(x-a.p[0],z-a.p[2]);if(d<best.dist)best={...a,dist:d};}
-  return best;
+  let best=null,dist=99;
+  for(const a of candidates){
+   const dx=x-a.p[0],dz=z-a.p[2];
+   if(Math.abs(dx)>dist||Math.abs(dz)>dist)continue;
+   const d=Math.hypot(dx,dz);if(d<dist){best=a;dist=d;}
+  }
+  return best?{...best,dist}:{dist:99,p:[0,1.06,0],edge:null,d:0};
  };
  try{return createGroundUncached();}finally{nearestTrack=previousNearestTrack;}
 }
@@ -1912,7 +1971,7 @@ function drawMap(){
  for(const edge of edges)path(edge,'#677e704f',1.7);
  path(divisionEdges.freight,'#a6c9b4',2.2);path(divisionEdges.mountain,'#d4a58f',2.1);path(common,'#e3c283',2.7);path(chosenRoute==='highline'?highline:lowline,'#e3c283',2.7);
  function marker(p,color,r){c.fillStyle=color;c.beginPath();c.arc(tx(p[0]),tz(p[2]),r,0,TAU);c.fill();}
- for(const o of offsets)marker(where(travel-o).p,o?'#d0bd92':'#ffdfa0',o?2.4:4.7);
+ for(const o of(typeof selectedCollection!=='undefined'&&selectedCollection.valley?collectionOffsets(selectedCollection.valley):offsets))marker(where(travel-o).p,o?'#d0bd92':'#ffdfa0',o?2.4:4.7);
  if(divisionEdges.freight)marker(circuitAt(divisionEdges.freight,freightDistance).p,'#c5efda',4.4);
  if(divisionEdges.mountain)marker(circuitAt(divisionEdges.mountain,mountainDistance).p,'#f4be9e',4.4);
  c.font='11px Arial';c.fillStyle='#d2d6bc';c.textAlign='center';for(const [text,x,z]of[['ALDER VALE',-23,4],['WILLOW QUAY',6,7],['EASTBANK',36,-4],['SUMMIT',-7,-33]])c.fillText(text,tx(x),tz(z));

@@ -73,6 +73,14 @@ function alpineRelief(b,height,palette){
  for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){const [x,z]=bound(-W/2+i*W/nx,-D/2+j*D/nz),y=height(x,z),n=norm([height(x-.12,z)-height(x+.12,z),.24,height(x,z-.12)-height(x,z+.12)]);pts.push([x,y,z]);ns.push(n);colors.push(palette(x,y,z,n));}
  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i;for(const ids of[[a,a+nx+1,a+1],[a+1,a+nx+1,a+nx+2]])for(const k of ids)b.vertex(pts[k],ns[k],colors[k],3);}
  const outline=roundRect(W,D,R,20);for(let i=0;i<outline.length;i++){const a=outline[i],q=outline[(i+1)%outline.length];b.quad([a[0],-.2,a[1]],[q[0],-.2,q[1]],[q[0],height(...q),q[1]],[a[0],height(...a),a[1]],'#65725a',3);}
+ // Props and paths must meet the triangles we drew, not the analytic slope
+ // between samples. Reuse this grid; no extra terrain queries or mesh uploads.
+ return (x,z)=>{
+  if(Math.abs(x)>W/2||Math.abs(z)>D/2||(Math.abs(x)>W/2-R&&Math.abs(z)>D/2-R))return height(x,z);
+  const u=(x+W/2)*nx/W,v=(z+D/2)*nz/D,i=Math.min(nx-1,Math.floor(u)),j=Math.min(nz-1,Math.floor(v)),a=j*(nx+1)+i,tx=u-i,tz=v-j;
+  const y=pts[a][1],right=pts[a+1][1],front=pts[a+nx+1][1],corner=pts[a+nx+2][1];
+  return tx+tz<=1?y+(right-y)*tx+(front-y)*tz:corner+(front-corner)*(1-tx)+(right-corner)*(1-tz);
+ };
 }
 function alpineViaduct(b,edge,start,end,height){
  // Centre an open arch on the lower railway crossing; a pier must never fall
@@ -94,28 +102,14 @@ function alpineStoneWall(b,points,height,nearest){
  for(let i=0;i<points.length-1;i++){const a=points[i],q=points[i+1],n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.39);for(let j=0;j<n;j++){const x=mix(a[0],q[0],j/n),z=mix(a[1],q[1],j/n),y=height(x,z);if(nearest(x,z).dist<1.7)continue;for(let row=0;row<2;row++)b.sphere(x+(row?.10:0),y+.15+row*.21,z,.26,.16,.18,row?'#afb49a':'#859279',4,7,4,true);}}
 }
 function alpineSlate(b,height,nearest){
- // Broad irregular fracture planes replace the smooth powdery appearance of
- // a height field. Each slab is a few metres across in the miniature world.
- for(let row=0;row<11;row++)for(let col=0;col<13;col++){
-  const x=3+col*3.4+(row%2)*1.65,z=-31+row*1.9,dx=3.7+hash(col,row)*.55,dz=1.95+hash(row,col)*.45;
-  const xz=[[x,z],[x-.32,z+dz],[x+dx-.42,z+dz+.10],[x+dx,z-.15]],ys=xz.map(p=>height(...p));
-  if(Math.min(...ys)<8.0||xz.some(p=>nearest(...p).dist<1.8)||Math.max(...ys)>28.5)continue;
-  const pts=xz.map(([xx,zz],i)=>[xx,ys[i]+.07+(i===1||i===2?.14:0),zz]);
-  const tone=(row+col)%5===0?'#7f8a79':(row+col)%3===0?'#697b72':'#4c6662';
-  b.tri(pts[0],pts[1],pts[3],tone,3);b.tri(pts[1],pts[2],pts[3],shade(tone,.91),3);
-  // The front lip of the stratum is exposed stone, not a painted stripe.
-  b.quad(pts[1],pts[2],add(pts[2],[0,-.23,-.07]),add(pts[1],[0,-.23,-.07]),'#3e5652',3);
- }
- const fractures=[[[19,-27],[19.5,-24],[17.6,-20],[18.2,-17],[16,-13]],[[25,-27],[26,-24],[24,-21],[25,-18],[23.5,-15]],[[31,-28],[30.5,-25],[32,-23],[31,-19],[32.4,-15]],[[39,-28],[38,-25],[39,-22],[37.8,-18]],[[8,-30],[8.5,-27],[7,-24],[8,-21]]];
- for(const points of fractures)for(let i=0;i<points.length-1;i++){
-  const a=points[i],q=points[i+1],n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.30);
-  for(let j=0;j<n;j++){const p=lerpV(a,q,j/n),v=lerpV(a,q,(j+1)/n),y=height(...p),yy=height(...v);if(y<9||yy<9||nearest(...p).dist<1.7)continue;b.beam([p[0],y+.19,p[1]],[v[0],yy+.19,v[1]],.035,'#354c49',3,4);}
- }
- // Buttresses split the ridgeline into individual crags with asymmetric tops.
- for(const [x,z,h]of[[13,-23,3.5],[18.5,-18.2,4.1],[25.5,-21,4.4],[34,-24,3.6],[41.5,-22,4.0],[8,-26,2.8]]){
-  const y=height(x,z),base=[[-1.4,1.3],[1.25,1.5],[1.65,-.6],[-.8,-1.2]].map(([dx,dz])=>[x+dx,height(x+dx,z+dz)-.2,z+dz]),a=[x-.25,y+h,z-.45],q=[x-1.0,y+h*.74,z+.48];
-  b.tri(base[0],base[1],q,'#465f5c',3);b.tri(base[1],a,q,'#75877b',3);b.tri(base[1],base[2],a,'#3d5654',3);b.tri(base[2],base[3],a,'#627b71',3);b.tri(base[3],q,a,'#8c9985',3);b.tri(base[3],base[0],q,'#526e64',3);
-  if(y>21)b.tri(add(a,[-.13,.035,.08]),add(a,[-.65,-.28,.25]),add(a,[.20,-.22,.45]),'#d9e0d1',3);
+ // Short ledges follow the actual relief. A coarse overlay used to bridge
+ // several terrain triangles, leaving broad floating plates on the rock face.
+ for(const [cx,cz,count]of[[9,-25,5],[17,-22,7],[23,-18,6],[33,-24,6],[39,-20,5]])for(let i=0;i<count;i++){
+  const x=cx+(i-count/2)*.9,z=cz+Math.sin(i*.7)*.8,dx=.7+hash(i,cx)*.5,dz=.38+hash(i,cz)*.35;
+  const xz=[[x,z],[x-.12,z+dz],[x+dx*.8,z+dz+.10],[x+dx,z-.12]],ys=xz.map(p=>height(...p));
+  if(Math.min(...ys)<9||xz.some(p=>nearest(...p).dist<2.1))continue;
+  const pts=xz.map(([xx,zz],i)=>[xx,ys[i]+.035,zz]),tone=i%3?'#7d8b80':'#919b8a';
+  b.tri(pts[0],pts[1],pts[3],tone,3);b.tri(pts[1],pts[2],pts[3],shade(tone,.94),3);
  }
 }
 
@@ -136,31 +130,43 @@ function alpineRoom(scene,b){
   const crag=Math.max(peak(x,z,24,-23,23,15,30,.15),peak(x,z,40,-24,15,14,21,-.13),peak(x,z,4,-28,16,11,17,.1),peak(x,z,-31,-25,21,13,13,-.25));
   const spur=7.5*Math.exp(-(((x-38)/10)**2+(z/17)**2))+3.8*Math.exp(-(((x+13)/14)**2+((z+7)/13)**2));
   let y=2.2+Math.max(crag*(.93+.12*noise(x*.34,z*.31)),spur)+.58*noise(x*.10,z*.13);
+  // Creases are carved into the mountain itself. Their shadows replace the
+  // dark line geometry and freestanding fins that used to sit on its face.
+  const exposed=smooth(7,13,y)*smooth(-10,-17,z),fold=Math.sin(x*.72+z*.24+noise(x*.2,z*.16)*1.7);
+  y+=exposed*(.34*Math.sin(x*1.8+z*.67)-1.25*Math.max(0,fold)**6);
   return y+(.15*Math.sin(y*1.35+x*.27)+.055*Math.sin(y*3.8-z*.36))*smooth(7,12,y);
  };
+ const refugeY=raw(31,-17);
  const lakeField=(x,z)=>Math.hypot((x+13.6)/10.1,(z-7.9)/6.7)+.082*Math.sin(x*.33+z*.42)+.035*Math.sin(z*.91);
  const streamX=z=>-8.0+(z-13)*.66+Math.sin((z-13)*.37)*1.0;
  const height=(x,z)=>{
   let y=raw(x,z),n=nearest(x,z,true);
   const village=(1-smooth(.75,1.14,Math.hypot((x+31)/12,(z-8)/12)));y=mix(y,2.48,village);
+  const terrace=1-smooth(.91,1.27,Math.max(Math.abs(x-31)/3.25,Math.abs(z+17)/2.85));y=mix(y,refugeY,terrace);
   y=mix(1.25,y,smooth(.79,1.13,lakeField(x,z)));
   if(z>12.0){const dist=Math.abs(x-streamX(z)),fade=smooth(12,15,z);y=mix(y,1.48,fade*(1-smooth(.46,1.18,dist)));}
   if(n.dist<2.8)y=mix(n.p[1]-.24,y,smooth(.85,2.8,n.dist));
   return y;
  };
  scene.height=(x,z)=>Math.abs(x)<52&&Math.abs(z)<33?height(x,z):FLOOR;
- alpineRelief(b,height,(x,y,z,n)=>{
+ const surface=alpineRelief(b,height,(x,y,z,n)=>{
   const pasture=smooth(21,26,z),grassTexture=mix(noise(x*.26,z*.26),(Math.sin(x*.44+z*.11)*.5+.5)*.64+.15,pasture*.65);
-  const meadow=lerpV(col('#385738'),col('#88935d'),grassTexture*.69),stratum=Math.sin(y*1.4+x*.24+z*.11)*.5+.5,rock=lerpV(col('#3d5956'),col('#829281'),stratum*.24+noise(x*.64,z*.63)*.36);
-  const stone=Math.max(smooth(.13,.44,1-n[1])*smooth(4,9,y),smooth(7,12,y)*.97),snow=smooth(27,31.6,y+noise(x*.35,z*.35)*1.3)*smooth(.48,.88,n[1]);
+  const meadow=lerpV(col('#46623e'),col('#919d69'),grassTexture*.78),stratum=Math.sin(y*1.4+x*.24+z*.11)*.5+.5,rock=lerpV(col('#536963'),col('#98a08e'),stratum*.25+noise(x*.64,z*.63)*.36);
+  const stone=Math.max(smooth(.13,.44,1-n[1])*smooth(4,9,y),smooth(7,12,y)*.97),snow=smooth(23.5,29.7,y+noise(x*.35,z*.35)*1.8)*smooth(.42,.83,n[1]);
   let color=lerpV(meadow,rock,stone);color=lerpV(color,col('#dce2d8'),snow);
-  if(lakeField(x,z)<1.18)color=lerpV(col('#b4b795'),color,smooth(.99,1.18,lakeField(x,z)));return color;
+  // Scree gathers below the crags rather than coating the whole mountain.
+  const scree=Math.exp(-(((x-21)/6.5)**2+((z+12.5)/2.8)**2))*.72+Math.exp(-(((x-38)/4.2)**2+((z+15)/3.0)**2))*.58;
+  color=lerpV(color,col('#a1a38b'),scree*smooth(4,8,y));
+  if(lakeField(x,z)<1.18)color=lerpV(col('#a9b49a'),color,smooth(.99,1.18,lakeField(x,z)));return color;
  });
- alpineSlate(b,height,nearest);
+ alpineSlate(b,surface,nearest);
  // The lake is a continuous surface beneath a carved, non-elliptical basin.
- for(let z=-1;z<18;z+=.5)for(let x=-27;x<1;x+=.5)b.quad([x,1.86,z],[x,1.86,z+.5],[x+.5,1.86,z+.5],[x+.5,1.86,z],'#67988d',7,[0,1,0],[[0,0],[0,1],[1,1],[1,0]]);
+ for(let z=-1;z<18;z+=.5)for(let x=-27;x<1;x+=.5){
+  const points=[[x,1.86,z],[x,1.86,z+.5],[x+.5,1.86,z+.5],[x+.5,1.86,z]],colors=points.map(p=>lerpV(col('#568e85'),col('#a0b5a0'),smooth(.55,1.03,lakeField(p[0],p[2]))));
+  for(const i of[0,1,2,0,2,3])b.vertex(points[i],[0,1,0],colors[i],7);
+ }
  const waterPoints=[];for(let z=12.8;z<=33;z+=1.2)waterPoints.push([streamX(z),1.76,z]);const stream=new Edge('Bergwald lake outflow',splineCurves(waterPoints,false,.72));ribbon(b,stream,.99,0,0,'#6f9b8d',7,0,stream.length,.24);
- for(const [start,end]of bridgeRange(edge,a=>upperBridge(a.p)))alpineViaduct(b,edge,start,end,height);
+ for(const [start,end]of bridgeRange(edge,a=>upperBridge(a.p)))alpineViaduct(b,edge,start,end,surface);
  for(const [start,end]of bridgeRange(edge,a=>lowerBridge(a.p))){
   ribbon(b,edge,1.7,0,-.23,'#7f7552',22,start,end,.28);
   for(let d=start;d<=end;d+=1.75){const a=edge.at(d),h=a.p[1]-1.48;b.matrix(basis(a.p,a.f));for(const side of[-1,1]){b.beam([side*.63,-.25,0],[side*.86,-h,0],.095,'#69745a',22,6);b.beam([side*.63,-.25,0],[-side*.86,-h,0],.046,'#ac9465',22,6);}b.pop();}
@@ -170,55 +176,73 @@ function alpineRoom(scene,b){
  createRail(b,edge);
  // A small triangular station square, with houses sited around lanes rather
  // than arranged in a showroom row. The lake is their shared view.
- const lane=[[-37,-1],[-31,1],[-28,6],[-29,12],[-30,17]];housePath(b,lane,1.2,height,'#bcb596');housePath(b,[[-30,11],[-24,15],[-18,16.4],[-10,16],[-4,12]],.67,height,'#b2af8c');
+ const lane=[[-37,-1],[-31,1],[-28,6],[-29,12],[-30,17]];housePath(b,lane,1.2,surface,'#bcb596');housePath(b,[[-30,11],[-24,15],[-18,16.4],[-10,16],[-4,12]],.67,surface,'#b2af8c');
  for(const [i,x,z,w,d,h,a]of[[0,-36.0,1.9,4.8,4.2,3.7,-.30],[1,-29.3,-1.8,4.7,4.2,3.5,.30],[2,-24.2,2.0,4.1,3.8,3.2,-.60],[3,-34.3,9.2,5.2,4.7,4.0,.22],[4,-27.0,11.9,3.7,3.4,3.3,-.42]]){
-  const y=height(x,z);b.box(x,y-.11,z,w+.55,.32,d+.55,'#a2aa91',4);alpineChalet(b,x,y+.05,z,w,d,h,a,i===3);
+  const y=surface(x,z);b.box(x,y-.11,z,w+.55,.32,d+.55,'#a2aa91',4);alpineChalet(b,x,y+.05,z,w,d,h,a,i===3);
  }
  houseStation(scene,b,-29.6,2.52,17.2,'alpine-station',true);b.box(-29.6,2.66,19.4,12,.23,1.4,'#c4c6aa',4);
- for(const [x,z]of[[-31.1,6.1],[-30.2,8.7]]){cafeScene(b,x,height(x,z)+.05,z,.24);scene.population+=3;}
- const fy=height(-29,10.1);b.cylinder(-29,fy+.18,10.1,.73,.73,.36,'#a7b09b',4,16);b.cylinder(-29,fy+.39,10.1,.59,.59,.06,'#799f91',7,16);b.cylinder(-29,fy+.69,10.1,.14,.13,.68,'#9dab95',4,10);b.sphere(-29,fy+1.13,10.1,.23,.27,.23,'#c1c4a9',4,10,6);
- for(const [x,z]of[[-34,18.6],[-25.3,18.6],[-31,3.6],[-23,14.4]])houseLamp(b,x,height(x,z)+.05,z,2.0);
+ for(const [x,z]of[[-31.1,6.1],[-30.2,8.7]]){cafeScene(b,x,surface(x,z)+.05,z,.24);scene.population+=3;}
+ const fy=surface(-29,10.1);b.cylinder(-29,fy+.18,10.1,.73,.73,.36,'#a7b09b',4,16);b.cylinder(-29,fy+.39,10.1,.59,.59,.06,'#799f91',7,16);b.cylinder(-29,fy+.69,10.1,.14,.13,.68,'#9dab95',4,10);b.sphere(-29,fy+1.13,10.1,.23,.27,.23,'#c1c4a9',4,10,6);
+ for(const [x,z]of[[-34,18.6],[-25.3,18.6],[-31,3.6],[-23,14.4]])houseLamp(b,x,surface(x,z)+.05,z,2.0);
  // An old mountain chapel anchors the upper end of the village.
- b.push(-38.4,height(-38.4,-6.1),-6.1,0,.22);b.box(0,1.9,0,3.5,3.8,4.5,'#c2c4ac',4);gable(b,3.6,4.8,3.8,1.45,'#6b7868');b.box(-2,2.8,.7,1.6,5.6,1.7,'#b6bea5',4);b.cylinder(-2,6.45,.7,1.27,0,2.0,'#596d60',5,4);windowPane(b,-2,4.35,1.58,.65,.76);b.box(0,.82,2.28,.65,1.64,.07,'#62745d',22);for(const x of[-1.05,1.05])windowPane(b,x,2.28,2.28,.53,1.20);b.pop();
+ b.push(-38.4,surface(-38.4,-6.1),-6.1,0,.22);b.box(0,1.9,0,3.5,3.8,4.5,'#c2c4ac',4);gable(b,3.6,4.8,3.8,1.45,'#6b7868');b.box(-2,2.8,.7,1.6,5.6,1.7,'#b6bea5',4);b.cylinder(-2,6.45,.7,1.27,0,2.0,'#596d60',5,4);windowPane(b,-2,4.35,1.58,.65,.76);b.box(0,.82,2.28,.65,1.64,.07,'#62745d',22);for(const x of[-1.05,1.05])windowPane(b,x,2.28,2.28,.53,1.20);b.pop();
  // Jetty and boat house: small stories belong to specific shore locations.
  const jettyX=-20.8;for(let i=0;i<18;i++)b.box(jettyX,2.15,7.4+i*.19,1.18,.13,.17,'#a79061',22);for(const side of[-1,1])for(const z of[7.65,10.50])b.cylinder(jettyX+side*.46,1.87,z,.067,.067,.89,'#7f7454',22,7);
  for(let i=0;i<17;i++)b.box(-24.0+i*.2,2.15,7.45,.18,.13,.83,'#a79061',22);
  for(let i=0;i<2;i++)scenePerson(scene,b,jettyX-.23+i*.48,2.225,10.68,'perch',0,i?.75:1);
  b.push(-17.5,1.96,10.4,0,.7);b.sphere(0,0,0,.43,.17,1.08,'#a78155',22,14,7);b.sphere(0,.11,0,.34,.025,.94,'#d1b889',22,12,5);b.box(0,.17,-.17,.61,.05,.13,'#7d7752',22);b.beam([-.74,.25,.25],[.74,.25,-.31],.02,'#cbb181',22,6);b.pop();
- alpineChalet(b,-22.6,height(-22.6,5.4),5.4,2.4,2.9,2.2,PI/2);
+ alpineChalet(b,-22.6,surface(-22.6,5.4),5.4,2.4,2.9,2.2,PI/2);
  // Irregular shore stones, reeds on the sheltered edge, and a picnic clearing.
- for(let i=0;i<90;i++){const a=i*TAU/90,x=-13.6+Math.cos(a)*(10.3+.37*Math.sin(a*3)),z=7.9+Math.sin(a)*(6.9+.3*Math.cos(a*4));if(i%4===0||nearest(x,z).dist<1.7)continue;const y=height(x,z);b.sphere(x,y+.05,z,.16+hash(i,67)*.31,.13+hash(i,91)*.2,.16+hash(i,27)*.25,'#a7b39e',4,7,5,true);}
+ for(let i=0;i<90;i++){const a=i*TAU/90,x=-13.6+Math.cos(a)*(10.3+.37*Math.sin(a*3)),z=7.9+Math.sin(a)*(6.9+.3*Math.cos(a*4));if(i%4===0||nearest(x,z).dist<1.7)continue;const y=surface(x,z);b.sphere(x,y+.05,z,.16+hash(i,67)*.31,.13+hash(i,91)*.2,.16+hash(i,27)*.25,'#a7b39e',4,7,5,true);}
  for(let i=0;i<28;i++){const x=-9.2+i*.13,z=13.3+Math.sin(i*1.7)*.35;for(let j=0;j<3;j++)b.beam([x,1.7,z],[x+.05*j,2.1+hash(i,j)*.43,z+.06*j],.01,'#88966b',8,4);}
- const picnicY=height(-8,16.2);bench(b,-8,picnicY+.03,16.2,.45);scenePerson(scene,b,-8,picnicY+.15,16.2,'sit',.45);scenePerson(scene,b,-7.4,picnicY+.03,16.8,'bag',1.9);littleDog(b,-7.1,picnicY+.04,16.5,1.2);
+ const picnicY=surface(-8,16.2);bench(b,-8,picnicY+.03,16.2,.45);scenePerson(scene,b,-8,picnicY+.15,16.2,'sit',.45);scenePerson(scene,b,-7.4,picnicY+.03,16.8,'bag',1.9);littleDog(b,-7.1,picnicY+.04,16.5,1.2);
  // Purposeful forest zones: village edge, northern catchment, gorge, eastern
  // spur, and the river's lower bank. High stone and open grass stay exposed.
  const groves=[[-45,3,5,13,36],[-35,-24,13,6,44],[-16,-12,10,7,36],[39,-3,8,15,56],[43,24,7,7,30],[15,-7,9,5,24],[-4,27,12,4,26]];
- for(let g=0;g<groves.length;g++){const [cx,cz,rx,rz,count]=groves[g];for(let i=0;i<count;i++){const a=i*2.399963,r=Math.sqrt((i+.5)/count),x=cx+Math.cos(a)*rx*r,z=cz+Math.sin(a)*rz*r,y=height(x,z);if(Math.abs(x)>50||Math.abs(z)>31||nearest(x,z).dist<2.1||y>19||lakeField(x,z)<1.20||(x<-22&&x>-40&&z>-9&&z<17))continue;alpineFir(b,x,y,z,2.9+hash(i,g+17)*3.1,i+g);}}
+ for(let g=0;g<groves.length;g++){const [cx,cz,rx,rz,count]=groves[g];for(let i=0;i<count;i++){const a=i*2.399963,r=Math.sqrt((i+.5)/count),x=cx+Math.cos(a)*rx*r,z=cz+Math.sin(a)*rz*r,y=surface(x,z);if(Math.abs(x)>50||Math.abs(z)>31||nearest(x,z).dist<2.1||y>19||lakeField(x,z)<1.20||(x<-22&&x>-40&&z>-9&&z<17))continue;alpineFir(b,x,y,z,2.9+hash(i,g+17)*3.1,i+g);}}
  // Broken talus along the base of the main rock wall, following the contour.
- for(let i=0;i<70;i++){const x=13+i*.40,z=-11.7+Math.sin(i*.21)*2.8+hash(i,74)*1.3,y=height(x,z);if(nearest(x,z).dist<1.55||y<5)continue;b.sphere(x,y+.08,z,.25+hash(i,2)*.53,.27+hash(i,5)*.48,.28+hash(i,7)*.45,['#8f9a89','#aeb49f','#778879'][i%3],4,6,4,true);}
+ for(let i=0;i<70;i++){const x=13+i*.40,z=-11.7+Math.sin(i*.21)*2.8+hash(i,74)*1.3,y=surface(x,z);if(nearest(x,z).dist<1.55||y<5)continue;b.sphere(x,y+.08,z,.25+hash(i,2)*.53,.27+hash(i,5)*.48,.28+hash(i,7)*.45,['#8f9a89','#aeb49f','#778879'][i%3],4,6,4,true);}
+ // Heather and meadow flowers collect in sheltered pockets, with short
+ // grasses at the forest edge. Tiny color accents leave the viaduct foreground open.
+ for(const [cx,cz,rx,rz,count]of[[-17,-13,4,2,22],[33,-3,3,4,24],[-39,25,3,1.8,18],[23,26,5,1.4,24]])for(let i=0;i<count;i++){
+  const a=i*2.39996,r=Math.sqrt((i+.5)/count),x=cx+Math.cos(a)*rx*r,z=cz+Math.sin(a)*rz*r,y=surface(x,z);
+  if(nearest(x,z).dist<2.0||y>15||lakeField(x,z)<1.25)continue;
+  for(let j=0;j<3;j++){
+   const dx=(j-1)*.10,h=.14+hash(i,j)*.16;
+   b.tri([x+dx-.025,y,z],[x+dx+.08,y+h,z+.12],[x+dx+.025,y,z],i%2?'#a1aa70':'#78875a',8);
+   if(i%3===0)b.sphere(x+dx+.08,y+h,z+.12,.046,.035,.046,cz<0?'#ac9fa9':'#d6c99a',8,5,3);
+  }
+ }
+ // A handful of low boulders gives the stream banks a different texture from
+ // the grazing meadow. Keep the footbridge approach and both rail levels clear.
+ for(let i=0;i<24;i++){
+  const z=17.2+i*.61,x=streamX(z)+(i%2?1:-1)*(.8+hash(i,972)*.23),y=surface(x,z);
+  if(Math.abs(z-27.8)<1.2||nearest(x,z).dist<1.9)continue;
+  b.sphere(x,y+.035,z,.15+hash(i,36)*.15,.13,.18,'#96a48d',4,6,3,true);
+ }
  // A marked hiking traverse to a stone refuge, kept away from the railway.
- const trail=housePath(b,[[11,7],[16,5],[21,2],[26,0],[28,-4],[26,-8],[27,-12],[30,-15]],.52,height,'#b9b59a');
- for(let i=0;i<9;i++){const a=trail.at(trail.length*(i+.5)/10),p=a.p;if(nearest(p[0],p[2]).dist<2)continue;scenePerson(scene,b,p[0],height(p[0],p[2])+.04,p[2],i%3?'bag':'wave',Math.atan2(a.f[0],a.f[2]));b.beam([p[0]+.13,p[1]+.35,p[2]],[p[0]+.22,p[1],p[2]+.16],.008,'#a58f60',22,5);}
- const hutX=31,hutZ=-17,hutY=height(hutX,hutZ);b.box(hutX,hutY-.10,hutZ,5.8,.3,5.0,'#a7b09b',4);alpineChalet(b,hutX,hutY+.06,hutZ,3.4,3.2,2.6,-.18,true);houseRailing(b,[[28.2,-14.5],[34,-14.5],[34,-18.8]],hutY+.06,.68,'#a9a681');scenePerson(scene,b,29.3,hutY+.10,-15,'bag',.5);scenePerson(scene,b,30,hutY+.1,-14.8,'wave',.6);
+ const trail=housePath(b,[[11,7],[16,5],[21,2],[26,0],[28,-4],[26,-8],[27,-12],[30,-15]],.52,surface,'#b9b59a');
+ for(let i=0;i<9;i++){const a=trail.at(trail.length*(i+.5)/10),p=a.p;if(nearest(p[0],p[2]).dist<2)continue;scenePerson(scene,b,p[0],surface(p[0],p[2])+.04,p[2],i%3?'bag':'wave',Math.atan2(a.f[0],a.f[2]));b.beam([p[0]+.13,p[1]+.35,p[2]],[p[0]+.22,p[1],p[2]+.16],.008,'#a58f60',22,5);}
+ const hutX=31,hutZ=-17,hutY=surface(hutX,hutZ);b.box(hutX,hutY-.10,hutZ,5.8,.3,5.0,'#a7b09b',4);alpineChalet(b,hutX,hutY+.06,hutZ,3.4,3.2,2.6,-.18,true);houseRailing(b,[[28.2,-14.5],[34,-14.5],[34,-18.8]],hutY+.06,.68,'#a9a681');scenePerson(scene,b,29.3,hutY+.10,-15,'bag',.5);scenePerson(scene,b,30,hutY+.1,-14.8,'wave',.6);
  // A few resting sheep occupy the sheltered pasture, not the summit.
- for(let i=0;i<8;i++){const x=-18+(i%4)*1.2,z=-20+Math.floor(i/4)*1.3,y=height(x,z);if(nearest(x,z).dist<2)continue;b.sphere(x,y+.21,z,.21,.20,.34,'#c8cbb1',23,9,6);b.sphere(x+.02,y+.29,z+.35,.12,.11,.14,'#8e9679',23,7,5);for(const side of[-1,1])for(const zz of[-.20,.20])b.beam([x+side*.12,y+.20,z+zz],[x+side*.12,y,z+zz],.021,'#787e66',23,5);}
+ for(let i=0;i<8;i++){const x=-18+(i%4)*1.2,z=-20+Math.floor(i/4)*1.3,y=surface(x,z);if(nearest(x,z).dist<2)continue;b.sphere(x,y+.21,z,.21,.20,.34,'#c8cbb1',23,9,6);b.sphere(x+.02,y+.29,z+.35,.12,.11,.14,'#8e9679',23,7,5);for(const side of[-1,1])for(const zz of[-.20,.20])b.beam([x+side*.12,y+.20,z+zz],[x+side*.12,y,z+zz],.021,'#787e66',23,5);}
  // Grazing meadows continue below the railway. Their stone boundaries follow
  // contours, leaving a broad clear foreground for the high viaduct.
- alpineStoneWall(b,[[-47,17],[-43,23],[-35,28],[-26,30.1],[-16,29.5],[-12,27]],height,nearest);
- alpineStoneWall(b,[[7,29],[15,30],[24,28.8],[32,26],[36.5,21]],height,nearest);
- housePath(b,[[-40,21],[-33,25],[-25,27.1],[-17,28],[-10,28.5],[-2.8,28]],.56,height,'#ada986');
- housePath(b,[[4,28],[10,28.5],[18,27.9],[28,25]],.55,height,'#aaa986');
+ alpineStoneWall(b,[[-47,17],[-43,23],[-35,28],[-26,30.1],[-16,29.5],[-12,27]],surface,nearest);
+ alpineStoneWall(b,[[7,29],[15,30],[24,28.8],[32,26],[36.5,21]],surface,nearest);
+ housePath(b,[[-40,21],[-33,25],[-25,27.1],[-17,28],[-10,28.5],[-2.8,28]],.56,surface,'#ada986');
+ housePath(b,[[4,28],[10,28.5],[18,27.9],[28,25]],.55,surface,'#aaa986');
  for(const [x,z,a]of[[-32,26.2,.8],[-28.2,27.3,-.4],[-25.8,25.6,.1],[-21.8,27.8,.7],[-19.2,26.4,-.5]]){
-  const y=height(x,z);b.push(x,y,z,0,a);b.sphere(0,.28,0,.26,.25,.44,'#c7cab0',23,9,6);b.sphere(.01,.38,.43,.13,.13,.16,'#829078',23,8,5);for(const side of[-1,1])for(const zz of[-.29,.28])b.beam([side*.17,.25,zz],[side*.17,.01,zz],.023,'#748269',23,5);b.pop();
+  const y=surface(x,z);b.push(x,y,z,0,a);b.sphere(0,.28,0,.26,.25,.44,'#c7cab0',23,9,6);b.sphere(.01,.38,.43,.13,.13,.16,'#829078',23,8,5);for(const side of[-1,1])for(const zz of[-.29,.28])b.beam([side*.17,.25,zz],[side*.17,.01,zz],.023,'#748269',23,5);b.pop();
  }
  const footZ=27.8,footX=streamX(footZ),footY=2.57;
  for(let i=0;i<22;i++)b.box(footX-2.4+i*.23,footY,footZ,.21,.13,1.0,'#a69362',22);
  for(const side of[-1,1]){for(const xx of[-2.15,0,2.15])b.box(footX+xx,footY+.34,footZ+side*.48,.045,.68,.045,'#9ca17a',22);b.beam([footX-2.3,footY+.64,footZ+side*.48],[footX+2.4,footY+.64,footZ+side*.48],.024,'#b8b695',22,5);}
  scenePerson(scene,b,footX+.4,footY+.08,footZ,'talk',-.4);scenePerson(scene,b,footX-.25,footY+.08,footZ,'wave',1.6,.72);littleDog(b,footX+1.05,footY+.08,footZ,.5,.85);
- scenePerson(scene,b,-22.5,height(-22.5,28.4)+.04,28.4,'bag',.7);b.beam([-22.35,height(-22.5,28.4)+.48,28.4],[-22.18,height(-22.5,28.4),28.55],.012,'#96895f',22,5);
- for(const [x,z,h]of[[-46,22.5,3.9],[-38,27.2,3.2],[-35,29.6,2.9],[16,29.5,3.0]]){alpineFir(b,x,height(x,z),z,h,2);for(let i=0;i<6;i++){const a=i*TAU/6,xx=x+Math.cos(a)*1.3,zz=z+Math.sin(a)*.9;b.sphere(xx,height(xx,zz)+.12,zz,.19,.14,.17,'#929e7b',8,6,4);}}
+ scenePerson(scene,b,-22.5,surface(-22.5,28.4)+.04,28.4,'bag',.7);b.beam([-22.35,surface(-22.5,28.4)+.48,28.4],[-22.18,surface(-22.5,28.4),28.55],.012,'#96895f',22,5);
+ for(const [x,z,h]of[[-46,22.5,3.9],[-38,27.2,3.2],[-35,29.6,2.9],[16,29.5,3.0]]){alpineFir(b,x,surface(x,z),z,h,2);for(let i=0;i<6;i++){const a=i*TAU/6,xx=x+Math.cos(a)*1.3,zz=z+Math.sin(a)*.9;b.sphere(xx,surface(xx,zz)+.12,zz,.19,.14,.17,'#929e7b',8,6,4);}}
  for(let i=0;i<13;i++)scenePerson(scene,b,-34+i*.67,2.85,19.45,i%4?'bag':'wave',i*.63,i%6===0?.72:1);
- for(const [x,z,pose,a]of[[-32,6,'bag',.7],[-31.4,6.5,'talk',1.2],[-36,4,'wave',.1],[-25,13.4,'bag',2.1],[-24.6,13.7,'talk',.4]])scenePerson(scene,b,x,height(x,z)+.04,z,pose,a);
+ for(const [x,z,pose,a]of[[-32,6,'bag',.7],[-31.4,6.5,'talk',1.2],[-36,4,'wave',.1],[-25,13.4,'bag',2.1],[-24.6,13.7,'talk',.4]])scenePerson(scene,b,x,surface(x,z)+.04,z,pose,a);
  for(let i=0;i<5;i++)scene.actors.push({a:[-33.2,2.84,19.18],b:[-25.8,2.84,19.18],speed:.10,offset:i*.23,variant:i,scale:1});
  b.box(0,-3.2,34.7,29,4.1,.62,'#444e3d',22);roomSign(b,'mountain-sign',0,-3.15,35.04,27,3.45);
  scene.spots=[{name:'The lakeside hamlet',detail:'A village gathered around its station and mountain water.',target:[-29,5,7],distance:45,yaw:.26,pitch:.60},{name:'The high traverse',detail:'A red train above the valley, crossing its own long way home.',target:[10,9,13],distance:47,yaw:.50,pitch:.56},{name:'The mountain refuge',detail:'A small warm shelter below the weathered ridge.',target:[29,15,-16],distance:40,yaw:.75,pitch:.54},{name:'Still water',detail:'Two readers, a rowing boat, and the hush of the pines.',target:[-14,3,8],distance:33,yaw:.3,pitch:.67}];
