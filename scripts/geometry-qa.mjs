@@ -113,12 +113,14 @@ function worker(mode,output){
    meshes.push({file:name,group,count:data.length/12});return{count:data.length/12};
   }});
  context.window=context;context.addEventListener=noop;
+ vm.runInContext(read('src/community-core.js'),context);context.HOUSE_COMMUNITY=JSON.parse(read('contributions/world.json'));
  vm.runInContext(read('src/railway.js'),context,{filename:'src/railway.js'});
  vm.runInContext('gl=glStub;upload=record;disposeMesh=function(){};',context);
  vm.runInContext(nearestReference,context);
  if(mode==='reference')vm.runInContext(legacy,context,{filename:'pre-optimization-builder'});
  vm.runInContext('const qaCreateGround=createGround;createGround=function(){return profileGeometryStage("createGround",()=>qaCreateGround());};',context);
- for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','trains.js'])vm.runInContext(read('src/'+file),context,{filename:'src/'+file});
+ const moduleFiles=[...read('index.html').matchAll(/<script src="(src\/[^"?]+\.js)"/g)].map(m=>m[1]);
+ for(const file of moduleFiles){if(file==='src/hobby.js')break;if(!['src/community-core.js','src/railway.js'].includes(file))vm.runInContext(read(file),context,{filename:file});}
  function run(name,code){group=name;const start=performance.now();vm.runInContext(code,context,{filename:'geometry-qa:'+name});timings[name]=Math.round((performance.now()-start)*10)/10;}
  run('primitives-and-transforms',primitives);
  run('nearest-track-queries',nearestQueries);
@@ -130,7 +132,7 @@ function worker(mode,output){
   run('train-collection','buildTrains();');
   run('selectable-trains',"for(const q of TRAIN_COLLECTION)for(let livery=0;livery<q.liveries.length;livery++)for(const part of Object.values(collectionGeometry({id:q.id,livery,cars:q.cars})))upload(part.data);");
   run('room-atlas','initHouseArt();');
-  for(const key of['coast','alpine','studio'])run(key,`getHouseScene('${key}');`);
+  for(const key of vm.runInContext('[...HOUSE_ROOM_BUILDERS.keys()]',context))run(key,`getHouseScene(${JSON.stringify(key)});`);
  }
  fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify({meshes,timings}));
 }

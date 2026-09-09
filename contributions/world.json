@@ -1,0 +1,58 @@
+{
+  "format": "whistlevale-community",
+  "version": 1,
+  "works": [
+    {
+      "id": "village-shops",
+      "title": "The village bakery and inn",
+      "kind": "building",
+      "room": "valley",
+      "source": "contributions/world.json",
+      "credits": [{"name": "Whistlevale contributors", "note": "Original village scenery."}],
+      "workshop": [
+        {"type": "bakery", "at": [-8.3, 5.6], "angle": -0.22, "scale": 1.08},
+        {"type": "inn", "at": [-7.5, -5.3], "angle": 0.2, "scale": 1.05}
+      ]
+    },
+    {
+      "id": "harbor-life", "title": "Mending the morning nets", "kind": "vignette", "room": "coast",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "harbor", "at": [-18.4, 6.1], "angle": 0.25, "y": 1.35}]
+    },
+    {
+      "id": "ferry-luggage", "title": "Luggage for the island ferry", "kind": "vignette", "room": "coast",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "porter", "at": [-17.1, 13.1], "angle": 1.12, "y": 1.35}]
+    },
+    {
+      "id": "lakeside-trail", "title": "Choosing the lakeside trail", "kind": "vignette", "room": "alpine",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "mapParty", "at": [-29.1, 3.6], "angle": 0.22}]
+    },
+    {
+      "id": "alpine-reading", "title": "A book above the water", "kind": "vignette", "room": "alpine",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "reading", "at": [-23.3, 13.8], "angle": 0.53}]
+    },
+    {
+      "id": "saturday-workshop", "title": "Saturday model-making in the village", "kind": "vignette", "room": "studio",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "atelier", "at": [-41, 8.3], "angle": -0.15}]
+    },
+    {
+      "id": "meadow-reading", "title": "A shared chapter in the meadow", "kind": "vignette", "room": "studio",
+      "source": "src/people.js", "credits": [{"name": "Whistlevale contributors"}],
+      "miniatures": [{"builder": "reading", "at": [-21.8, 14.4], "angle": 0.24}]
+    },
+    {
+      "id": "willowbank-pottery", "title": "Willowbank Pottery", "kind": "building", "room": "commons",
+      "source": "src/scenery/willowbank.js",
+      "credits": [
+        {"name": "nickfromlater", "platform": "x", "handle": "nickfromlater", "note": "The first contribution to The Commons."},
+        {"name": "Whistlevale contributors", "note": "Shared geometry and window details."}
+      ],
+      "miniatures": [{"builder": "willowbank", "at": [-27, 8], "angle": 0.16}],
+      "view": {"distance": 19, "yaw": 0.45, "pitch": 0.48}
+    }
+  ]
+}

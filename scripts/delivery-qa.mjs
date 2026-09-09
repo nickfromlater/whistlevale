@@ -20,6 +20,9 @@ async function build(){
  const html=await readFile(path.join(fixture,'dist/index.html'),'utf8'),window={};
  const catalog=html.match(/<script id="audioCatalog">([\s\S]*?)<\/script>/);assert.ok(catalog,'built page has the audio catalog');
  vm.runInNewContext(catalog[1],{window});
+ const community=html.match(/<script id="communityCatalog">([\s\S]*?)<\/script>/);assert.ok(community,'built page embeds the reviewed contribution catalogue');
+ vm.runInNewContext(community[1],{window});
+ assert.deepEqual(JSON.parse(JSON.stringify(window.HOUSE_COMMUNITY)),JSON.parse(await readFile(path.join(fixture,'contributions/world.json'),'utf8')),'contribution data and credits survive the public build');
  const files=(await walk(path.join(fixture,'dist'))).map(file=>path.relative(path.join(fixture,'dist'),file).split(path.sep).join('/')).sort();
  const refs=external(html);
  for(const url of refs)await readFile(path.join(fixture,'dist',url));
@@ -39,6 +42,8 @@ async function build(){
 try{
  await mkdir(path.join(fixture,'scripts'),{recursive:true});
  await cp(path.join(root,'scripts/build.mjs'),path.join(fixture,'scripts/build.mjs'));
+ await cp(path.join(root,'scripts/community-lib.mjs'),path.join(fixture,'scripts/community-lib.mjs'));
+ await cp(path.join(root,'contributions'),path.join(fixture,'contributions'),{recursive:true});
  const originalHTML=await readFile(path.join(root,'index.html'),'utf8');await writeFile(path.join(fixture,'index.html'),originalHTML);
  await cp(path.join(root,'src'),path.join(fixture,'src'),{recursive:true,filter:file=>!path.basename(file).startsWith('.')});
  await cp(path.join(root,'assets'),path.join(fixture,'assets'),{recursive:true,filter:file=>!path.basename(file).startsWith('.')&&!file.endsWith('.mp3')});

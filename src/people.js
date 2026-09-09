@@ -172,16 +172,20 @@ function miniatureTrackClear(scene,x,z,radius=0){
  return true;
 }
 function buildRoomLifeDetails(key,scene){
- const b=new Builder(),details=[];let population=0;
- const place=(name,fn,x,z,angle=0,radius=1,y=null)=>{
-  if(!miniatureTrackClear(scene,x,z,radius))return;
-  let surface=y??scene.height(x,z)+.012;if(!Number.isFinite(surface))return;
+ const b=new Builder(),details=[],omitted=[];let population=0;
+ let communityVertices=0;
+ const place=(name,fn,x,z,angle=0,radius=1,y=null,credits=[],contribution=null,placement=null)=>{
+  const before=b.data.length;
+  const reject=reason=>{if(contribution)omitted.push({id:contribution,placement,at:[x,z],reason});};
+  if(scene.canPlace&&!scene.canPlace(x,z,radius))return reject(scene.placementIssue?.(x,z,radius)||'The footprint is outside this room’s buildable ground.');
+  if(!miniatureTrackClear(scene,x,z,radius))return reject('The footprint is too close to a railway.');
+  let surface=y??scene.height(x,z)+.012;if(!Number.isFinite(surface))return reject('The placement has no finite ground height.');
   // A tiny arrangement only occupies stable ground. Explicit deck heights
   // identify existing paving, never a guessed height over water or a slope.
-  const terrace=fn===littleAtelierScene||fn===littleReadingScene;
+  const terrace=fn===littleAtelierScene||fn===littleReadingScene||fn.communityTerrace;
   const boundary=[[-1,-.72],[-.72,-1],[.72,-1],[1,-.72],[1,.72],[.72,1],[-.72,1],[-1,.72]].map(([dx,dz])=>[x+dx*radius,z+dz*radius]);
   const heights=boundary.map(([x,z])=>scene.height(x,z));
-  if(y===null&&heights.some(h=>!Number.isFinite(h)||Math.abs(h-surface)>.30))return;
+  if(y===null&&heights.some(h=>!Number.isFinite(h)||Math.abs(h-surface)>.30))return reject('The ground changes by more than 0.30 across the footprint. Choose flatter ground.');
   if(y===null&&terrace){
    // A modest stone terrace levels the bench or the cottage worktable. Its
    // low retaining edge meets the actual slope instead of leaving feet aloft.
@@ -189,25 +193,22 @@ function buildRoomLifeDetails(key,scene){
    for(let i=0;i<boundary.length;i++){const a=boundary[i],q=boundary[(i+1)%boundary.length];b.tri([x,surface-.003,z],[q[0],surface-.003,q[1]],[a[0],surface-.003,a[1]],color,4);b.quad([a[0],scene.height(...a)-.014,a[1]],[q[0],scene.height(...q)-.014,q[1]],[q[0],surface-.003,q[1]],[a[0],surface-.003,a[1]],shade(color,.88),4);}
    for(const side of[-1,1])b.beam([x+side*radius*.40,surface-.001,z-radius*.92],[x+side*radius*.40,surface-.001,z+radius*.92],.006,shade(color,.84),4,4);
   }
-  const count=fn(b,x,surface,z,angle)||0;population+=count;details.push({name,x,y:surface,z,population:count});
+  const count=fn(b,x,surface,z,angle)||0;
+  if(contribution){communityVertices+=(b.data.length-before)/12;if(communityVertices>COMMUNITY_LIMITS.vertices)throw new Error(key+' community scenery exceeds its vertex budget.');}
+  population+=count;details.push({name,x,y:surface,z,population:count,credits,contribution,placement});
  };
+ communityMiniatures(key,place);
  if(key==='coast'){
-  place('Mending the morning nets',littleHarborScene,-18.4,6.1,.25,1.1,1.35);
-  place('Luggage for the island ferry',littlePorterScene,-17.1,13.1,1.12,1.0,1.35);
   // An existing harbor bench supplies its own correct seat level.
   littlePerson(b,-13.25,1.34,5.8,{pose:'read',seatHeight:.353,variant:24,color:'#ac946e',angle:PI/2});population++;
   littleBird(b,-11.28,1.37,5.1,1.1);littleBird(b,-11.25,1.37,5.48,-.5);littleRope(b,-11.31,1.38,12.1,.19,3);
  }else if(key==='alpine'){
-  place('Choosing the lakeside trail',littleMapParty,-29.1,3.6,.22,.92);
-  place('A book above the water',littleReadingScene,-23.3,13.8,.53,1.15);
   // The refuge terrace is a constructed level surface in alpineRoom.
   const hutY=scene.height(31,-17)+.06;place('A photographer at the refuge',(b,x,y,z,a)=>{littlePerson(b,x,y,z,{pose:'camera',variant:27,color:'#83958b',angle:a});littlePack(b,x+.43,y+.10,z-.10,'#a29669');return 1;},32.5,-14.9,-.35,.50,hutY);
  }else if(key==='studio'){
-  place('Saturday model-making in the village',littleAtelierScene,-41.0,8.3,-.15,1.0);
-  place('A shared chapter in the meadow',littleReadingScene,-21.8,14.4,.24,1.15);
   place('Watching the pond',(b,x,y,z,a)=>{littlePerson(b,x,y,z,{pose:'camera',variant:26,color:'#8b9b76',angle:a});littlePerson(b,x+.35,scene.height(x+.35,z+.37)+.012,z+.37,{pose:'point',variant:25,scale:.66,color:'#b69c71',angle:a});littleBird(b,x-.40,scene.height(x-.40,z-.23)+.012,z-.23,.8);return 2;},-12.9,12.1,-1.9,.68);
  }
- return {mesh:b.mesh(),population,details};
+ return {mesh:b.mesh(),population,details,omitted,communityVertices};
 }
 
 function valleyFigureClear(x,z,radius=.18,deck=false){

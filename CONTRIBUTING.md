@@ -3,16 +3,43 @@
 Whistlevale is a house of miniature railway worlds. Contributions should make
 it a calmer, more convincing place to explore.
 
+## Start with an idea
+
+[Agents start here](AGENTS.md) · [Add a train](docs/contributing/trains.md) ·
+[Add a building](docs/contributing/buildings.md) · [Grow The Commons](docs/contributing/commons.md) · [Layouts and scenery](contributions/README.md)
+
+Small fixes, original trains, paint schemes, buildings and miniature scenes are
+welcome. Describe your idea in an issue or make a focused pull request. For a
+whole room, district, new audio pipeline or major renderer change, agree on a
+proposal first. That lets us find a good place for the work before you invest in it.
+
+Codex, Claude Code and Copilot can follow the same end-to-end recipes. Start with
+`npm run contribute -- --list`, then `npm run contribute -- train` (or `building`).
+The agent needs no runtime API keys, paid services or recordings. A human author
+remains responsible for the result, its sources and the checks reported in the PR.
+
+Give the work your chosen public credit; a pseudonym without a profile link is
+fine. Follow [the attribution contract](docs/contributing/attribution.md), preserve
+source credits, and check that they survive exports. The app lists credits under
+**More → The builders**. Respect the [community guidelines](CODE_OF_CONDUCT.md).
+
+Use the PR template to describe the result, credit, evidence and limitations.
+Maintainer review decides acceptance; submission does not publish or deploy it.
+The repository is private while this workflow is prepared.
+
 ## Local development
 
 Use Node.js 24 and Python 3. Run `npm run dev`, then open
 http://127.0.0.1:4174/. No package installation or API key is needed to run the
 renderer. Optional recorded audio is described in `assets/audio/README.md`.
 
-Before opening a pull request, run:
+Before opening a pull request, run `npm test` for the full CI sequence, or run
+its individual checks:
 
 ```sh
 npm run check
+npm run check:contributions
+npm run test:contributions
 npm run test:audio
 npm run test:delivery
 npm run test:geometry
@@ -88,7 +115,7 @@ triangle interiors.
 
 Cinema input lives in `src/hobby.js`. Its captured gestures must keep the cinema
 lifecycle active and preserve sound, throttle and pause. Manual framing follows
-the active room’s train; automatic shots resume only on request. Keep the camera
+the active room’s train, or the landscape target in a room without a railway; automatic shots resume only on request. Keep the camera
 slot compact on phones, preserve keyboard focus when replacing its control, and
 release pointers on cancellation, blur and exit. Run `npm run test:cinema` after
 changing these controls, then verify drag, pinch, keyboard and the return to an
@@ -117,11 +144,17 @@ registerHouseRoom('marsh', {
 ```
 
 `build(scene, builder)` adds landscape and furniture to the supplied `Builder`.
-Every room must populate `scene.trains` with at least one valid train. Each train
+Railway rooms must populate `scene.trains` with at least one valid train. Each train
 needs an `edge` with an `at(distance)` function and a positive finite `length`,
 plus finite `distance` and `speed` values. A speed of zero is valid for a stationary
 exhibit. Invalid trains are rejected with a room-specific error before scenery
 upload; allocated shell walls are released and the partial room is not cached.
+A landscape-only room may explicitly declare `railway: false`.
+It must leave both `scene.trains` and `scene.routes` empty. Train controls,
+selection, particles, headlight and train audio are inactive; cinema frames the
+landscape and still accepts camera input. Remove that declaration when adding
+its first railway. `scene.canPlace(x,z,radius)` may protect water, vegetation and
+board boundaries for community miniatures.
 Also populate `scene.routes`, `scene.spots` and `scene.height(x, z)` as appropriate.
 A place in `scene.spots` has a name, target, camera distance and
 optionally detail, yaw and pitch. The framework uploads the finished scene,
@@ -136,6 +169,11 @@ shell spans approximately X ±78 and Z ±64; provide map footprint metadata when
 your room differs. A shell is optional and falls back to the shared room shell,
 but a new room should earn its own architectural character.
 
+Room metadata can set `phoneDistance` for a deliberate portrait overview;
+otherwise phones use `distance * 1.78`. Individual camera spots also accept
+`phoneDistance`; their default is `distance * 1.7`. Use an explicit distance for
+views that need to show the entire layout. Inspect both 390px and 320px widths.
+
 Add the new script to `index.html` after `src/rooms.js` and before startup, next
 to the other room modules. Register every room before the atlas and scene build
 begins. Keep its script included in portable exports too: the export gathers the
@@ -143,8 +181,10 @@ page’s app script assets, so check the exported HTML after adding a module.
 The static build copies `src/` automatically. No map menu or fixed position list
 needs to be extended for another room.
 
-The current script order is the renderer, people and shared room registry,
-individual room modules, trains/audio/playlist, then `hobby.js`. The live map
+The current script order is the embedded contribution catalogue and credit validator,
+then the renderer, people and shared room registry,
+individual room modules, trains/audio/playlist, contributed scenery modules,
+the contribution adapter, then `hobby.js`. The live map
 modules `shop-house.js`, `shop-map-ui.js` and `shop-map.js` load after `hobby.js`
 and before its delayed startup runs. The earlier `house-map*` SVG files are
 legacy artwork and are not the active map.

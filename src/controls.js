@@ -33,13 +33,14 @@ function openQuietPanel(id,opener,back){
  const backButton=panel.querySelector('[data-panel-back]');if(backButton)backButton.hidden=!back;
  if(id==='layoutPanel'){$('diagramToggle').setAttribute('aria-pressed','true');drawMap();}
  if(id==='playlistPanel')playlistPaint();
+ if(id==='buildersPanel')paintBuilders();
  if(id==='soundPanel')wakeCinema();
  (panel.querySelector('.control-panel-head h2')||panel.querySelector('h2,h3'))?.focus({preventScroll:true});
 }
 
 function initQuietControls(){
  if(quietControls.ready)return;quietControls.ready=true;
- const titles={viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide'};
+ const titles={viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide',buildersPanel:'The builders',contributePanel:'Want to contribute?'};
  for(const [id,title]of Object.entries(titles)){
   const panel=$(id);if(!panel)continue;
   panel.classList.add('quiet-panel');panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label',title);panel.removeAttribute('aria-modal');
@@ -54,7 +55,7 @@ function initQuietControls(){
   };
   quietControls.panels.push(panel);
  }
- const bindings={viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help'};
+ const bindings={viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help',buildersButton:'buildersPanel',contributeButton:'contributePanel',buildersContribute:'contributePanel'};
  for(const [id,panel]of Object.entries(bindings)){
   const button=$(id);if(!button)continue;
   button.dataset.quietOpener='';button.setAttribute('aria-controls',panel);button.setAttribute('aria-expanded','false');
@@ -71,6 +72,7 @@ function initQuietControls(){
  closeHelp=()=>{if(quietControls.panel===$('help'))closeQuietControls(true);};
  const originalHideUI=hideUI;
  hideUI=()=>{closeQuietControls();originalHideUI();(hidden?$('restore'):$('moreBtn')).focus({preventScroll:true});};
+ $('visitCommons').onclick=()=>{closeQuietControls();visitHouseRoom('commons');};
  $('quietHide').onclick=hideUI;$('restore').onclick=hideUI;
  // Cinema remains one tap away, beside pause, without its own floating row.
  $('railControls').insertBefore($('cinemaStart'),$('moreBtn'));
@@ -86,5 +88,6 @@ function initQuietControls(){
   // A key used inside a disclosure belongs to that control, not the train's
   // global shortcuts. Keep native slider, select and button key behavior.
   if(quietControls.panel?.contains(event.target))event.stopPropagation();
+  if(HOUSE_ROOMS[hobby.room]?.railway===false&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.target.matches('input,textarea,select')&&!(event.key===' '&&event.target.closest('button,a,summary'))&&[' ','h','r','s'].includes(event.key.toLowerCase())){event.preventDefault();event.stopImmediatePropagation();}
  },true);
 }
