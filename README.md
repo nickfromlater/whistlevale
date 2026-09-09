@@ -6,10 +6,10 @@ trains, and take the long way round.
 [Visit Whistlevale](https://whistlevale.com) · [Contribute](CONTRIBUTING.md) ·
 [Agents start here](AGENTS.md)
 
-Four rooms, each with its own railway: the market town of **Alder Valley**, the
-harbor of the **Coastal Gallery**, the mountains of the **Mountain Loft**, and
-the workbenches of the **Makers’ Shop**. Choose a train, explore the house, or
-settle into cinema mode. Alder Valley also has a layout editor and shareable exports.
+Explore the railways of **Alder Valley**, the **Coastal Gallery**, the **Mountain
+Loft**, and the **Makers’ Shop**. **The Commons** starts with a quiet landscape
+for the community to grow. Choose a train, wander the house, or settle into
+cinema mode. Alder Valley also has a layout editor and shareable exports.
 
 Built with plain JavaScript and a custom WebGL 2 renderer. No package dependencies,
 account, or API key needed.
@@ -40,7 +40,7 @@ Copilot, or another coding agent, point it at this repository and ask:
 
 [Train recipe](docs/contributing/trains.md) ·
 [Building recipe](docs/contributing/buildings.md) ·
-[Layouts and scenery](contributions/README.md)
+[Grow The Commons](docs/contributing/commons.md)
 
 Larger changes, including whole rooms, start with a proposal. Every contribution
 is reviewed; the repository is currently private while this workflow is prepared.

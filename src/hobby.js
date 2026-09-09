@@ -4,8 +4,9 @@ const hobby={room:'valley',life:null,ready:false,cinema:false,shot:'drift',scene
 const baseHobbyStart=start,baseHobbySetView=setView,baseHobbyCamera=updateCamera,baseHobbySimulation=updateSimulation,baseHobbyUI=updateUI,baseHobbyBuild=enterBuild,baseManualOrbit=beginManualOrbit;
 const icon=(name)=>`<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
-function hobbyTrainInfo(){return hobby.room==='valley'||!hobby.scene?leadInfo:houseTrainAt(hobby.scene.trains[0]);}
-function hobbyTrainMatrix(){return hobby.room==='valley'||!hobby.scene?trainModels[0]:circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance);}
+function hobbyHasTrain(){return hobby.room==='valley'||!!hobby.scene?.trains.length;}
+function hobbyTrainInfo(){return hobby.room==='valley'||!hobby.scene?leadInfo:hobbyHasTrain()?houseTrainAt(hobby.scene.trains[0]):{p:HOUSE_ROOMS[hobby.room].target,f:[0,0,1]};}
+function hobbyTrainMatrix(){return hobby.room==='valley'||!hobby.scene?trainModels[0]:hobbyHasTrain()?circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance):I;}
 function hobbyTrainInTunnel(){return hobby.room==='valley'&&leadInfo&&inTunnel(leadInfo.edge,leadInfo.d,2);}
 function hobbyTrainLabel(key=hobby.room){
  if(typeof collectionTrainLabel==='function')return collectionTrainLabel(key);
@@ -25,6 +26,7 @@ function drawHobbyTrains(p){
  else if(hobby.scene){drawHouseTrains(hobby.scene,p);drawWalkingFigures(hobby.scene.actors,p);}
 }
 function drawHobbyParticles(){
+ if(!hobbyHasTrain())return;
  if(hobby.room==='valley'){if(typeof collectionPower!=='function'||collectionPower('valley')==='steam')drawSteam();return;}
  // Reuse the steam system at the active exhibit locomotive, including room dust.
  const savedSteam=steam.map(p=>p.p),source=trainModels[0],destination=hobbyTrainMatrix();
@@ -34,12 +36,13 @@ function drawHobbyParticles(){
 
 function houseOrbit(room,close=false){
  const q=HOUSE_ROOMS[room],phone=innerWidth<700;
- orbit.target=q.target.slice();orbit.distance=q.distance*(phone?1.78:1)*(close?.82:1);orbit.pitch=phone?Math.max(.74,q.pitch):q.pitch;orbit.yaw=phone?.12:q.yaw;
+ orbit.target=q.target.slice();orbit.distance=(phone?(q.phoneDistance??q.distance*1.78):q.distance)*(close?.82:1);orbit.pitch=phone?Math.max(.74,q.pitch):q.pitch;orbit.yaw=phone?.12:q.yaw;
 }
 
 setView=function(mode,announce=true){
  if(hobby.cinema)leaveCinema(false);
  if(hobby.room==='valley'){baseHobbySetView(mode,announce);return;}
+ if(!hobbyHasTrain()&&!['room','overview','tour'].includes(mode))mode='overview';
  viewMode=mode;currentPlace='';
  if(mode==='room'||mode==='overview')houseOrbit(hobby.room,mode==='overview');
  if(mode==='tour'){enterCinema();return;}
@@ -63,6 +66,7 @@ function activateHouseRoom(key){
  if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
  hobby.room=key;hobby.scene=scene;hobby.spot=-1;
+ syncRoomControls();
  document.body.classList.toggle('annex',key!=='valley');document.body.dataset.room=key;shadowDirty=true;
  setView('room',false);houseOrbit(key);cameraTarget=orbit.target.slice();cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);
  renderRoomPlaces();updateUI();
@@ -96,6 +100,16 @@ function renderRoomPlaces(){
  }
 }
 
+function syncRoomControls(){
+ const railway=hobbyHasTrain();document.body.classList.toggle('landscape-room',!railway);
+ $('railControls').setAttribute('aria-label',railway?'Railway controls':'Landscape controls');
+ $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
+ for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
+ for(const button of document.querySelectorAll('[data-camera]'))button.hidden=!railway&&!['room','overview','tour'].includes(button.dataset.camera);
+ const names=railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view'];
+ for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
+}
+
 function enterCinema(){
  if(hobby.cinema||!hobby.ready)return;if(building)baseHobbyBuild(false);
  if(typeof closeQuietControls==='function')closeQuietControls();
@@ -103,7 +117,7 @@ function enterCinema(){
  hobby.cinema=true;resumeCinemaCamera();hobby.cinemaStart=roomClock;hobby.heading=hobbyTrainInfo().f.slice();hobby.tunnelBlend=hobbyTrainInTunnel()?1:0;hobby.shotBlend={side:9,back:-14,height:8.5};
  viewMode='cinema';document.body.classList.add('cinematic');document.body.classList.remove('hidden-ui','train-focus');hidden=false;
  $('trainInspector').hidden=true;$('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;
- setThrottle(Math.min(throttle||28,28));if(paused)togglePause();if(!audio?.active)enableSound(true);
+ if(hobbyHasTrain()){setThrottle(Math.min(throttle||28,28));if(paused)togglePause();}if(!audio?.active)enableSound(true);
  $('cinemaRoom').textContent=HOUSE_ROOMS[hobby.room].layout;$('cinemaSubtitle').textContent=HOUSE_ROOMS[hobby.room].tag;
  $('cinemaStart').setAttribute('aria-pressed','true');$('cinemaExit').focus();wakeCinema();window.railwayAnalytics?.sync?.();
 }
@@ -209,6 +223,10 @@ function cinemaCamera(dt){
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
  const manual=cinemaOrbit.manual,target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
+ if(!hobbyHasTrain()){
+  const angle=.35+(reduceMotion?0:Math.sin(elapsed*.025)*.13),distance=(hobby.shot==='wide'?94:hobby.shot==='side'?61:hobby.shot==='tail'?120:73)*portrait;
+  desired=add(p,[Math.sin(angle)*distance,.62*distance,Math.cos(angle)*distance]);
+ }
  if(manual){const {yaw,pitch,distance}=manual;desired=add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance]);}
  const ground=(x,z)=>hobby.room==='valley'?naturalH(x,z):hobby.scene.height(x,z);
  desired[1]=Math.max(desired[1],ground(desired[0],desired[2])+3.3);
@@ -256,7 +274,7 @@ updateUI=function(){
  if(hobby.room!=='valley'){
   const spot=hobby.scene.spots[hobby.spot];$('locationTitle').textContent=spot?spot.name:room.layout+'.';$('locationOverline').textContent=room.tag;$('locationDetail').textContent=spot?spot.detail:room.description;
   $('engineStatus').textContent=paused?'Taking a little breather':[stock.type,stock.service].filter(Boolean).join(' · ');
-  $('speedValue').textContent=Math.round((paused?0:speed)*hobby.scene.trains[0].speed*8.073);$('runState').textContent=paused?'Railway paused':stock.service||'Scenic service';
+  $('speedValue').textContent=Math.round((paused?0:speed)*(hobby.scene.trains[0]?.speed??0)*8.073);$('runState').textContent=hobbyHasTrain()?(paused?'Railway paused':stock.service||'Scenic service'):'A landscape to explore';
  }
  if(typeof collectionPower==='function'){
   const steamTrain=collectionPower(hobby.room)==='steam';
@@ -364,7 +382,8 @@ function startHouse(){
   if(typeof initQuietControls==='function')initQuietControls();
   if(typeof restoreCollectionSelections==='function')restoreCollectionSelections();
   if(typeof initTrainCabinet==='function')initTrainCabinet();
-  window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyTrainInfo().p.slice(),sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
+  syncRoomControls();
+  window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyHasTrain()?hobbyTrainInfo().p.slice():null,sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
   document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);window.railwayAnalytics?.sync?.();
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
 }

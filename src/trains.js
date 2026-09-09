@@ -393,6 +393,7 @@ function collectionDefault(room){
 function collectionChoice(room){return selectedCollection[room]||collectionDefault(room);}
 function collectionTrainLabel(room){const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
 function collectionPower(room){
+ if(HOUSE_ROOMS[room]?.railway===false)return null;
  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
  return room==='valley'||roomScenes.get(room)?.trains[0]?.type==='steam'?'steam':'electric';
 }
@@ -409,20 +410,20 @@ function restoreCollectionSelections(){
  try{const embedded=$('embeddedTrainCollection')?.textContent;data=embedded&&embedded.trim()!=='null'?JSON.parse(embedded):JSON.parse(localStorage.getItem(collectionStorageKey)||'null');}catch{return;}
  if(data?.version!==1||!data.rooms||typeof data.rooms!=='object')return;
  for(const [room,value]of Object.entries(data.rooms)){
-  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||!choice)continue;
+  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||!choice)continue;
   // Build only the train in the initial room; other saved choices are lazy.
   try{if(room==='valley')ensureRunningCollection(choice);selectedCollection[room]=choice;}catch{}
  }
 }
 function applyCollectionToScene(scene){
- const choice=selectedCollection[scene.key];if(!choice||scene.trains[0].collectionChoice===choice)return;
+ const choice=selectedCollection[scene.key];if(!choice||!scene.trains[0]||scene.trains[0].collectionChoice===choice)return;
  ensureRunningCollection(choice);const q=collectionById.get(choice.id),train=scene.trains[0];
  train.collectionChoice=choice;train.cars=choice.cars;train.type=q.power==='electric'?'mountain':q.power;train.stock='collection:'+q.id;
 }
 const collectionGetHouseScene=getHouseScene;
 getHouseScene=function(key){const scene=collectionGetHouseScene(key);if(scene)applyCollectionToScene(scene);return scene;};
 function chooseCollectionTrain(room,value){
- const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room))throw new Error('This train choice is unavailable.');
+ const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false)throw new Error('This train choice is unavailable.');
  ensureRunningCollection(choice);selectedCollection[room]=choice;
  if(room!=='valley'&&roomScenes.has(room))applyCollectionToScene(roomScenes.get(room));
  shadowDirty=true;let saved=true;
@@ -661,7 +662,7 @@ buildTrains=function(){
  for(const stock of runningCollectionMeshes.values())for(const mesh of Object.values(stock))disposeMesh(mesh);
  runningCollectionMeshes.clear();
  if(selectedCollection.valley)ensureRunningCollection(selectedCollection.valley);
- for(const scene of roomScenes.values())if(selectedCollection[scene.key]){scene.trains[0].collectionChoice=null;applyCollectionToScene(scene);}
+ for(const scene of roomScenes.values())if(selectedCollection[scene.key]&&scene.trains[0]){scene.trains[0].collectionChoice=null;applyCollectionToScene(scene);}
 };
 
 // Hidden steam is unnecessary work while inspecting a diesel/electric service.

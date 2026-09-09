@@ -72,6 +72,7 @@ function initQuietControls(){
  closeHelp=()=>{if(quietControls.panel===$('help'))closeQuietControls(true);};
  const originalHideUI=hideUI;
  hideUI=()=>{closeQuietControls();originalHideUI();(hidden?$('restore'):$('moreBtn')).focus({preventScroll:true});};
+ $('visitCommons').onclick=()=>{closeQuietControls();visitHouseRoom('commons');};
  $('quietHide').onclick=hideUI;$('restore').onclick=hideUI;
  // Cinema remains one tap away, beside pause, without its own floating row.
  $('railControls').insertBefore($('cinemaStart'),$('moreBtn'));
@@ -87,5 +88,6 @@ function initQuietControls(){
   // A key used inside a disclosure belongs to that control, not the train's
   // global shortcuts. Keep native slider, select and button key behavior.
   if(quietControls.panel?.contains(event.target))event.stopPropagation();
+  if(HOUSE_ROOMS[hobby.room]?.railway===false&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.target.matches('input,textarea,select')&&!(event.key===' '&&event.target.closest('button,a,summary'))&&[' ','h','r','s'].includes(event.key.toLowerCase())){event.preventDefault();event.stopImmediatePropagation();}
  },true);
 }
