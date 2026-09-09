@@ -69,6 +69,14 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 - `src/hobby.js` and `.css` connect rooms, cinema, controls and portable export.
 - `src/soundscape.js` owns mixer buses and loops; `src/playlist.js` owns score
   selection. Preserve their `scoreMix`, `load` and `updateStatus` integration.
+- **Resolve every asset through `houseRecordingURL(id)`, never a literal path.**
+  The build content-versions assets, so `assets/audio/<id>.mp3` resolves locally
+  and returns 404 in production. The failure is silent: no console error, the
+  feature is simply mute. CI cannot catch it because the local path is real.
+- **Serve with `npm run dev` (`scripts/serve.py`), not a bare static server.**
+  The dev server and the build inject `window.HOUSE_AUDIO_AVAILABLE`; without
+  that injection `houseRecordingAvailable()` reports every recording missing and
+  audio UI renders empty, which looks exactly like a bug in your own change.
 - Keep large human figures out of the shop. Miniature figures inside layouts
   should be subtle and respect track/building clearances.
 - Room map metadata may override order, uniform scale, local footprint and focus.
@@ -80,6 +88,11 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 - Run `npm run check`, `npm run test:audio`, `npm run test:rooms`, `npm run test:map`, and
   `npm run build` after relevant changes. Check the live 3D map and entered rooms
   in a real browser at desktop and phone sizes.
+- **A green CI run is not a merge signal.** The checks validate data, geometry
+  and budgets; they do not prove a scene reads well, performs on a phone, or that
+  a change is wanted. Branch protection is not currently enforced, so nothing
+  mechanically stops an unreviewed merge. Contributions wait for the maintainer
+  named in `.github/CODEOWNERS`; agents never merge.
 
 ## Repository access, private files and deployment
 
