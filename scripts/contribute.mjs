@@ -2,8 +2,11 @@
 // A discoverable task map for humans and agents. Recipes remain the authority;
 // this command never edits, uploads, commits or installs anything.
 const args=process.argv.slice(2),kind=args.find(a=>!a.startsWith('--'));
+const hallRoute={recipe:'docs/contributing/grandhall.md',files:['src/scenery/','src/grandhall-exhibits.js','index.html','grandhall.html'],brief:'npm run bay -- <id>',checks:['test:hall','test:rooms','test:map','test:geometry:full']};
 const routes={
  commons:{recipe:'docs/contributing/commons.md',files:['contributions/world.json','src/scenery/','src/rooms/commons.js','src/community-core.js','src/community.js','index.html'],checks:['test:contributions','test:rooms','test:map','test:cinema','test:geometry:full']},
+ hall:hallRoute,
+ exhibit:hallRoute,
  train:{recipe:'docs/contributing/trains.md',files:['src/trains.js','src/train-cabinet.js','assets/trains/'],checks:['test:trains','test:geometry:full']},
  livery:{recipe:'docs/contributing/trains.md',files:['src/trains.js'],checks:['test:trains','test:geometry:full']},
  building:{recipe:'docs/contributing/buildings.md',files:['contributions/world.json','src/scenery/','src/community-core.js','src/community.js','index.html','src/railway.js','src/rooms.js'],checks:['test:startup','test:geometry:full']},
@@ -19,12 +22,13 @@ const routes={
  room:{recipe:'CONTRIBUTING.md#adding-a-room',proposal:true,files:['src/rooms/','src/rooms.js','index.html'],checks:['test:rooms','test:map','test:geometry:full']},
  art:{recipe:'CONTRIBUTING.md#trains-and-illustrations',files:['src/rooms.js','src/railway.js','src/rooms/'],checks:['test:rooms','test:geometry:full']},
  audio:{recipe:'assets/audio/README.md',proposal:true,files:['src/soundscape.js','src/playlist.js','assets/audio/README.md'],checks:['test:audio','test:delivery']},
- code:{recipe:'CONTRIBUTING.md',files:['AGENTS.md'],checks:[]}
+ code:{recipe:'CONTRIBUTING.md',files:['src/','scripts/','AGENTS.md'],checks:[]},
+ docs:{recipe:'CONTRIBUTING.md',files:['AGENTS.md','README.md','CONTRIBUTING.md','docs/','.github/'],checks:[]}
 };
 if(args.includes('--list'))console.log(args.includes('--json')?JSON.stringify(routes,null,2):Object.entries(routes).map(([key,r])=>key.padEnd(12)+r.recipe+(r.proposal?' (proposal first)':'')).join('\n'));
-else if(!kind||args.includes('--help'))console.log('Usage: npm run contribute -- <train|building|layout|…> [--json]\n       npm run contribute -- --list [--json]\n\nRead AGENTS.md first. No installation or credentials required. This command only prints guidance.');
+else if(!kind||args.includes('--help'))console.log('Usage: npm run contribute -- <train|building|hall|room|…> [--json]\n       npm run contribute -- --list [--json]\n\nRead AGENTS.md first. No installation or credentials required. This command only prints guidance.');
 else if(!routes[kind]){console.error('Unknown contribution kind: '+kind+'. Use --list.');process.exitCode=2;}
 else{
- const recipe={kind,...routes[kind],attribution:'docs/contributing/attribution.md',geometry:'docs/contributing/geometry.md',review:'docs/contributing/review.md',evidence:'evidence/<work-id>/',scaffolds:false,requiredChecks:['check:contributions','test'],prTemplate:'.github/PULL_REQUEST_TEMPLATE.md',preview:'python3 scripts/serve.py --port 4175',completion:['Actual requested model/behavior','Chosen public credits preserved in exports','Relevant automated checks passed','Desktop and phone visual evidence','Focused PR for maintainer review']};
- console.log(args.includes('--json')?JSON.stringify(recipe,null,2):'Read '+recipe.recipe+'\nEdit: '+recipe.files.join(', ')+'\nCredit: '+recipe.attribution+'\nReview: '+recipe.review+'\nEvidence: '+recipe.evidence+'\nThis command prints guidance; it does not scaffold files.\nRun: npm run check:contributions -- --json; npm test'+recipe.checks.map(c=>'; npm run '+c).join('')+'\nPreview: '+recipe.preview+'\nSubmit with '+recipe.prTemplate);
+ const recipe={kind,...routes[kind],attribution:'docs/contributing/attribution.md',geometry:'docs/contributing/geometry.md',review:'docs/contributing/review.md',evidence:'evidence/<work-id>/',scaffolds:false,requiredChecks:kind==='docs'?[]:['check:contributions','test'],prTemplate:'.github/PULL_REQUEST_TEMPLATE.md',preview:kind==='docs'?null:'python3 scripts/serve.py --port 4175',completion:[kind==='docs'?'Documentation matches the implementation; commands and links verified':'Actual requested model/behavior','Existing credits preserved; new credited work uses the supplied public identity','Relevant automated checks passed; unavailable checks identified',kind==='docs'?'No scene screenshots required for documentation-only changes':'Desktop and phone evidence for affected app behavior','Focused commit/PR prepared; push or open only when authorized']};
+ console.log(args.includes('--json')?JSON.stringify(recipe,null,2):'Read '+recipe.recipe+(recipe.proposal?' (proposal first)':'')+(recipe.brief?'\nBay brief: '+recipe.brief:'')+'\nRelevant files: '+recipe.files.join(', ')+'\nCredit: '+recipe.attribution+'\nReview: '+recipe.review+'\nEvidence: '+recipe.evidence+'\nThis command prints guidance; it does not scaffold files.'+(kind==='docs'?'':'\nRun: npm run check:contributions -- --json; npm test'+recipe.checks.filter(c=>c==='test:geometry:full').map(c=>'; npm run '+c).join(''))+(recipe.proposal?'\nProposal: required for a new room/district or major audio change; not routine fixes.':'')+(recipe.preview?'\nPreview for app changes: '+recipe.preview:'\nReview: verify documentation commands, links and examples.')+'\nPrepare with '+recipe.prTemplate+'; push/open only when authorized.');
 }

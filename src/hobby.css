@@ -243,6 +243,15 @@
 .contribute-link{display:flex;align-items:center;min-height:44px;color:#e7cc92;text-underline-offset:4px;font-size:14px}
 .contribute-link:focus-visible{outline:2px solid #e7cc92;outline-offset:3px}
 .contribute-agent{margin-top:12px;font-size:12px}
+.hall-invitation{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:calc(max(24px,env(safe-area-inset-bottom)) + 78px);z-index:4;display:flex;width:320px;max-width:calc(100% - 32px);border:1px solid #dbcaa354;border-radius:15px;background:#20372fef;color:#eee5cf;box-shadow:0 8px 28px #12282025;pointer-events:auto}
+.hall-invitation a{display:flex;flex:1;flex-direction:column;gap:6px;min-width:0;padding:15px 0 15px 17px;color:inherit;text-decoration:none}
+.hall-invitation strong{font:20px/1.2 Georgia,serif;font-weight:400;color:#f1dfb8}
+.hall-invitation a>span{font:12px/1.5 Arial,sans-serif;color:#d6decc}
+.hall-invitation button{flex:0 0 44px;align-self:flex-start;min-height:44px;color:#c6c9b7;font-size:22px;border-radius:12px}
+.hall-invitation a:hover strong{color:#fff2d7}.hall-invitation button:hover{background:#dfd4b415}
+.hall-invitation a:focus-visible,.hall-invitation button:focus-visible{outline:2px solid #e7cc92;outline-offset:3px;border-radius:12px}
+.hall-invitation[hidden],body:not([data-room=valley]) .hall-invitation,.building .hall-invitation,.hidden-ui .hall-invitation,.cinematic .hall-invitation,body:has(.quiet-panel:not([hidden])) .hall-invitation{display:none}
+@media(max-width:700px){.hall-invitation{left:16px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 73px);width:calc(100% - 32px)}.hall-invitation a{padding:12px 0 12px 14px;gap:5px}.hall-invitation strong{font-size:18px}.hall-invitation a>span{font-size:11px}}
 
 .builders-panel summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:13px;color:#d6d9c4}
 .builders-works{list-style:none;margin:0;padding:0 0 0 12px}.builders-works strong,.builders-works span{display:block;font-size:13px;line-height:1.6}.builders-works span{font-size:11px;color:#b7c3ac}.builders-author-link{display:inline-flex;align-items:center;min-height:44px}

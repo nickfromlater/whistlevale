@@ -75,8 +75,21 @@ function activateHouseRoom(key){
  return scene;
 }
 
+function visitHouseDestination(key){
+ const path=HOUSE_ROOMS[key]?.map?.destination;if(!path)return false;
+ if(path==='grandhall.html'&&typeof window.HOUSE_EMBEDDED_HALL==='string'&&window.HOUSE_EMBEDDED_HALL){
+  const safe=value=>JSON.stringify(value).replace(/</g,'\\u003c');
+  const context='<script>window.HOUSE_RETURN_URL='+safe(location.href)+';window.HOUSE_HALL_FROM='+safe(hobby.room)+';</script>';
+  const html=window.HOUSE_EMBEDDED_HALL.replace(/<head\b[^>]*>/i,head=>head+context);
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));location.assign(url);return true;
+ }
+ const url=new URL(path,location.href);if(url.origin!==location.origin)throw new Error('House destinations must stay on this site.');
+ url.searchParams.set('from',hobby.room);location.assign(url.href);return true;
+}
+
 function visitHouseRoom(key,after){
  if(!HOUSE_ROOMS[key]||hobby.transition)return;
+ if(visitHouseDestination(key))return;
  if(typeof closeHouseMap==='function')closeHouseMap();
  if(key===hobby.room){setView('room',false);after?.();return;}
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
@@ -331,9 +344,32 @@ function createHobbyUI(){
 }
 
 // Exports stay portable even though the editable source is split into files.
+async function packHouseHall(){
+ if(typeof window.HOUSE_EMBEDDED_HALL==='string'&&window.HOUSE_EMBEDDED_HALL)return window.HOUSE_EMBEDDED_HALL;
+ if(!Object.values(HOUSE_ROOMS).some(room=>room.map?.destination==='grandhall.html'))return null;
+ const url=new URL('grandhall.html',location.href),response=await fetch(url.href);
+ if(!response.ok)throw new Error('Could not pack the Grand Hall');
+ const page=new DOMParser().parseFromString(await response.text(),'text/html'),source=page.documentElement;
+ for(const node of source.querySelectorAll('script[src]')){
+  const result=await fetch(new URL(node.getAttribute('src'),url).href);if(!result.ok)throw new Error('Could not pack a Hall script');
+  node.textContent=(await result.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');
+ }
+ for(const node of source.querySelectorAll('link[rel=stylesheet]')){
+  const result=await fetch(new URL(node.getAttribute('href'),url).href);if(!result.ok)throw new Error('Could not pack Hall styles');
+  const style=page.createElement('style');style.textContent=await result.text();node.replaceWith(style);
+ }
+ for(const node of source.querySelectorAll('link[rel~="icon"]')){
+  const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;
+  const result=await fetch(new URL(href,url).href);if(!result.ok)throw new Error('Could not pack the Hall icon');
+  node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await result.text()));
+ }
+ return '<!DOCTYPE html>\n'+source.outerHTML;
+}
 exportPlayable=async function(){
  try{
   toast('Packing your little world, including its soundtrack…');const source=document.documentElement.cloneNode(true);
+  const hall=await packHouseHall();source.querySelector('#embeddedHouseHall')?.remove();
+  if(hall){const payload=document.createElement('script');payload.id='embeddedHouseHall';payload.textContent='window.HOUSE_EMBEDDED_HALL='+JSON.stringify(hall).replace(/</g,'\\u003c')+';';source.querySelector('head').append(payload);}
   for(const node of source.querySelectorAll('script[src]')){const r=await fetch(node.getAttribute('src'));if(!r.ok)throw new Error('Could not pack a script');node.textContent=(await r.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');}
   for(const node of source.querySelectorAll('link[rel=stylesheet]')){const r=await fetch(node.getAttribute('href'));if(!r.ok)throw new Error('Could not pack styles');const style=document.createElement('style');style.textContent=await r.text();node.replaceWith(style);}
   for(const node of source.querySelectorAll('link[rel~="icon"]')){const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;const r=await fetch(href);if(!r.ok)throw new Error('Could not pack the shop icon');node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await r.text()));}
@@ -378,7 +414,15 @@ function startHouse(){
   if(typeof initTrainCabinet==='function')initTrainCabinet();
   syncRoomControls();
   window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyHasTrain()?hobbyTrainInfo().p.slice():null,sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
-  document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);
+  document.body.dataset.room='valley';const initialParams=houseInitialParams(),initialRoom=initialParams.get('room');const openRequestedMap=()=>{const key=initialParams.get('map');if(key&&typeof openHouseMap==='function')openHouseMap().then(()=>{if(HOUSE_ROOMS[key])shopMapSelect(key);});};if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom,openRequestedMap);else openRequestedMap();
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
+}
+function houseInitialParams(){
+ const params=new URLSearchParams(location.search);
+ if(location.protocol==='blob:'){
+  const returned=new URLSearchParams(location.hash.slice(1)),map=returned.get('map');
+  if(map&&HOUSE_ROOMS[map]){params.set('map',map);const room=returned.get('room');if(room&&HOUSE_ROOMS[room])params.set('room',room);}
+ }
+ return params;
 }
 setTimeout(startHouse,50);

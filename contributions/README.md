@@ -7,36 +7,33 @@ There are two contribution paths: reviewed scene data for existing builders,
 and reviewed JavaScript for new models and behavior. Both go through a pull
 request. Nothing submitted here is automatically published or loaded remotely.
 
-## Claim a bay in the Grand Exhibition
+## Find a bay in the Grand Hall
 
-`grandhall.html` is the front door: seven galleries and one hundred numbered
-display bays, all currently open. Open it, find an empty bay, and take its id.
+The [Grand Hall](../docs/contributing/grandhall.md) has seven distinct galleries
+and 112 numbered display bays. Willowbank Pottery, by
+[nickfromlater](https://x.com/nickfromlater), occupies **GH-08**; the other bays
+begin empty. Enter from the house map, select a bay and copy its agent prompt.
+The terminal prints the same prompt:
 
-Then get the brief for that bay and hand it to your coding agent:
-
-```
+```sh
 npm run bay -- CC-07
 ```
 
-It prints a self-contained block with the bay's gallery, its floor position, the
-allowlisted builders, the three rules that fail review most often, and the checks
-to run. **Its first instruction is that the agent asks you what you want to build
-there** — a brief that guesses produces a generic bench.
+The brief supplies the selected bay's gallery, display dimensions and position,
+native model recipe and required checks. It asks what you want to build and which
+public name to credit if you have not already supplied them. Choosing a bay
+does not reserve or publish it; confirm it remains empty on current `main`.
 
-Contributions are repository pull requests. Nothing is uploaded and no asset is
-stored in the browser: your work lands in `contributions/world.json` (or
-`src/scenery/` for an original building) and is reviewed like any other change.
+Hall contributions are reviewed native source changes in `src/scenery/`, with
+the builder and credited exhibit registered in `src/grandhall-exhibits.js`.
+Follow the Hall recipe to include the model in both the house map and the
+entered exhibition. Hall coordinates do not belong in `contributions/world.json`.
+There is no upload or browser-draft step; the obsolete `grandhall:align`
+conversion is disabled.
 
-If you drafted in the Hall and have one of its exports, align it to this
-repository's format first:
-
-```
-npm run grandhall:align -- my-export.json --out contributions/world.json
-```
-
-That translates `whistlevale.community.v1` entries into `whistlevale-community`
-works and runs them through the real validator, so you learn whether a bay will
-land before you open a pull request.
+Open **room plots** on the full house map have a separate prompt for a complete
+future room. They require an accepted proposal and a registered room using the
+selected `map.plot` ID. See the Hall recipe for that larger contribution path.
 
 ## A shared place to begin
 

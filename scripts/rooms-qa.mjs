@@ -180,3 +180,106 @@ const result=vm.runInContext(`(()=>{
 })()`,context,{filename:'rooms-qa:regressions'});
 
 console.log(`Room QA passed: ${result.rooms} registered rooms, fifth/sixth-room expansion, finite transforms, aligned floors, nonoverlap, map metadata, default/custom shells, cache replacement and disposal, malformed-train rejection and cleanup, failed-build recovery, and train stock fallback. ${result.connectorVertices.toLocaleString()} connector vertices.`);
+
+// The real Hall owns its scale and the center of an expanding house.
+vm.runInContext(await read('src/community-core.js'),context);
+vm.runInContext(await read('src/grandhall-data.js'),context);
+vm.runInContext(await read('src/grandhall-exhibits.js'),context);
+const loadedHallSources=new Set();
+async function loadHallSources(readSource=read){
+ const sources=vm.runInContext('[...new Set(GRAND_HALL_EXHIBITS.map(exhibit=>exhibit.source))]',context);
+ for(const source of sources){if(loadedHallSources.has(source))continue;vm.runInContext(await readSource(source),context,{filename:source});loadedHallSources.add(source);}
+}
+await loadHallSources();
+for(const helper of ['windowPane','ringX','ringZ'])vm.runInContext(declaration(railway,helper),context);
+vm.runInContext(await read('src/rooms/grandhall.js'),context);
+vm.runInContext(`function checkHallGeometryBudgets(model){
+ const records=GRAND_HALL_EXHIBITS.slice(),architecture=new Builder();
+ GRAND_HALL_EXHIBITS.length=0;
+ try{buildGrandHallMap({},architecture);}finally{GRAND_HALL_EXHIBITS.push(...records);}
+ const architectureVertices=architecture.data.length/12;
+ let exhibitVertices=0;for(const exhibit of records){const b=new Builder(),bay=GRAND_HALL_BAYS.find(q=>q.id===exhibit.bay);exhibitVertices+=grandHallPlaceExhibit(exhibit,b,bay);}
+ assert.ok(architectureVertices<60000,'Hall preview architecture stays lightweight');
+ assert.ok(exhibitVertices<=COMMUNITY_LIMITS.vertices,'Hall reviewed exhibits stay within the existing per-room community allowance');
+ assert.equal(model.mesh.count,architectureVertices+exhibitVertices,'Hall scene accounts for architecture and every native exhibit');
+ assert.ok(model.mesh.count<60000+COMMUNITY_LIMITS.vertices,'Hall preview stays within its combined architecture and exhibit budgets');
+ return{architectureVertices,exhibitVertices,totalVertices:model.mesh.count};
+}`,context);
+vm.runInContext(`(()=>{
+ const layout=createShopHouseLayout(),hall=layout.byKey.grandhall;
+ assert.equal(layout.centralKey,'grandhall');assert.equal(hall.center[0],0);assert.equal(hall.center[2],0);
+ assert.equal(hall.bounds.x1-hall.bounds.x0,grandHallMapBounds[0]*.4);
+ assert.equal(hall.bounds.z1-hall.bounds.z0,grandHallMapBounds[1]*.4);
+ assert.ok(GRAND_HALL_BAYS.length>100,'freed display positions add usable bays');
+ assert.equal(new Set(GRAND_HALL_BAYS.map(b=>b.id)).size,GRAND_HALL_BAYS.length);
+ const model=getHouseScene('grandhall');assert.equal(model.trains.length,0);const budget=checkHallGeometryBudgets(model);
+ const more={...HOUSE_ROOMS};for(let i=0;i<20;i++)more['fixture-'+i]={...HOUSE_ROOMS.coast};
+ const expanded=createShopHouseLayout(more);assert.equal(expanded.rooms.length,Object.keys(more).length);
+ assert.deepEqual(expanded.byKey.grandhall.footprint,hall.footprint,'growth never shrinks the Hall');
+ for(const r of expanded.rooms){
+  assert.ok(Math.abs(transform([0,FLOOR,0],r.model)[1]-expanded.floorY)<.00002);
+  for(const q of expanded.rooms){if(q===r)continue;assert.ok(r.bounds.x1<=q.bounds.x0||r.bounds.x0>=q.bounds.x1||r.bounds.z1<=q.bounds.z0||r.bounds.z0>=q.bounds.z1,'central and wing rooms never overlap');}
+ }
+ // Vacant sites are architecture, not rooms or extra scene allocations. A
+ // contribution should replace the site its author selected, without moving
+ // all of the established rooms around a newly expanded bounding rectangle.
+ function checkSites(house){
+  assert.equal(house.plots.length,3,'the house keeps three open room sites');
+  assert.equal(new Set(house.plots.map(p=>p.id)).size,3,'open site IDs are unique');
+  for(const plot of house.plots){
+   assert.ok(!house.byKey[plot.id],'an open floor does not masquerade as a registered room');
+   assert.ok([...plot.center,...plot.doorway,...plot.labelAnchor].every(Number.isFinite),'site geometry has finite anchors');
+   assert.equal(plot.center[1],house.floorY,'unbuilt floors align with the house');
+   const a=plot.bounds;
+   assert.ok(a.x0>=house.bounds.x0&&a.x1<=house.bounds.x1&&a.z0>=house.bounds.z0&&a.z1<=house.bounds.z1,'overview includes every open site');
+   for(const other of [...house.rooms,...house.plots]){if(other===plot)continue;const b=other.bounds;
+    assert.ok(a.x1<=b.x0||a.x0>=b.x1||a.z1<=b.z0||a.z0>=b.z1,'sites never overlap rooms or other sites');
+   }
+  }
+ }
+ checkSites(layout);checkSites(expanded);
+ for(const plot of layout.plots){
+  const filled=createShopHouseLayout({...HOUSE_ROOMS,contributed:{name:'An original room',map:{plot:plot.id,scale:plot.scale,footprint:plot.footprint}}});
+  const room=filled.byKey.contributed;checkSites(filled);
+  for(const axis of [0,2])assert.ok(Math.abs(room.center[axis]-plot.center[axis])<.00002,'a contribution replaces the chosen site at its authored scale');
+  assert.ok(!filled.plots.some(p=>p.id===plot.id),'occupied sites stop inviting another room');
+  for(const before of layout.rooms)for(const axis of [0,2])assert.ok(Math.abs(filled.byKey[before.key].center[axis]-before.center[axis])<.00002,'filling a site preserves existing room positions');
+ }
+ const far=createShopHouseLayout({...HOUSE_ROOMS,distant:{name:'The farthest gallery',map:{plot:'east-12'}}});checkSites(far);
+ assert.equal(far.byKey.distant.column,1);assert.equal(far.byKey.distant.row,11);
+ for(const room of far.rooms){const a=room.bounds;assert.ok(a.x0>=far.bounds.x0&&a.x1<=far.bounds.x1&&a.z0>=far.bounds.z0&&a.z1<=far.bounds.z1,'far claimed sites remain inside the overview');
+  for(const other of far.rooms){if(other===room)continue;const b=other.bounds;assert.ok(a.x1<=b.x0||a.x0>=b.x1||a.z1<=b.z0||a.z0>=b.z1,'a distant claimed site never overlaps automatic rooms');}
+ }
+ assert.throws(()=>createShopHouseLayout({...HOUSE_ROOMS,first:{map:{plot:'east-12'}},second:{map:{plot:'east-12'}}}),/Two rooms cannot occupy house site/);
+ for(const plot of ['north-3','east-0','west-100','east-3-extra',null])assert.throws(()=>createShopHouseLayout({...HOUSE_ROOMS,invalid:{map:{plot}}}),/map.plot must name a site/);
+ assert.throws(()=>createShopHouseLayout({...more,duplicate:{...HOUSE_ROOMS.grandhall}}),/exactly one central/);
+ console.log('Room site QA passed: replacement, stable placement, nonoverlap, distant claims, invalid IDs and conflicting claims.');
+ console.log('Central Hall QA passed: authored scale, aligned floors, 20-room expansion, nonoverlap, stable bays and '+budget.totalVertices+' preview vertices ('+budget.architectureVertices+' architecture + '+budget.exhibitVertices+' reviewed exhibits).');
+})()`,context);
+
+// An unpublished source exercises the same registry discovery as the next
+// contributor. Keep it in this isolated VM, never in the public catalogue.
+const fixtureSource='src/scenery/qa-hall-fixture.js';
+vm.runInContext(`GRAND_HALL_EXHIBITS.push({id:'qa-hall-fixture',title:'Unpublished Hall test',credits:[{name:'QA fixture'}],builder:'qa-hall-fixture',scale:1,source:'${fixtureSource}',bay:GRAND_HALL_BAYS.find(b=>!GRAND_HALL_EXHIBITS.some(e=>e.bay===b.id)).id});`,context);
+await loadHallSources(source=>source===fixtureSource?Promise.resolve(`function qaHallFixture(b){
+ b.box(0,.04,0,.8,.08,.8,'#7e6850',22);b.cylinder(0,.24,0,.035,.035,.40,'#bda167',41,8);
+ ringZ(b,0,.31,0,.16,.18,.018,'#bda167',41,12);
+ for(let i=0;i<6;i++){const a=i*Math.PI/3;b.sphere(Math.cos(a)*.26,.44,Math.sin(a)*.26,.045,.045,.045,'#bda167',41,8,5);}
+}`):read(source));
+vm.runInContext(`(()=>{
+ const original=grandHallBuildExhibit,fixture=GRAND_HALL_EXHIBITS.at(-1),bay=GRAND_HALL_BAYS.find(b=>b.id===fixture.bay),before=getHouseScene('grandhall').mesh.count;
+ const definition={...HOUSE_ROOMS.grandhall,build:HOUSE_ROOM_BUILDERS.get('grandhall'),shell:ROOM_SHELLS.grandhall};
+ try{
+  grandHallBuildExhibit=(name,b)=>name===fixture.builder?qaHallFixture(b):original(name,b);
+  const b=new Builder(),vertices=grandHallPlaceExhibit(fixture,b,bay),ca=Math.cos(bay.yaw),sa=Math.sin(bay.yaw);let minY=Infinity;
+  for(let i=0;i<b.data.length;i+=12){const dx=b.data[i]-bay.x,dz=b.data[i+2]-bay.z,x=ca*dx-sa*dz,z=sa*dx+ca*dz,y=b.data[i+1]-bay.surfaceY;
+   assert.ok(Math.abs(x)<bay.usableWidth/2&&Math.abs(z)<bay.usableDepth/2,'new Hall fixture fits its actual bay');
+   if(bay.usableRadius!=null)assert.ok(Math.hypot(x,z)<bay.usableRadius,'new Hall fixture fits a circular bay');
+   assert.ok(y<=bay.maxHeight,'new Hall fixture clears its display ceiling');minY=Math.min(minY,y);
+  }
+  assert.ok(Math.abs(minY)<1e-6,'new Hall fixture rests on its display');
+  registerHouseRoom('grandhall',definition);const model=getHouseScene('grandhall'),budget=checkHallGeometryBudgets(model);
+  assert.equal(model.mesh.count,before+vertices,'the next discovered source contributes its complete native model');
+  console.log('New Hall contribution QA passed: source discovered from its registry path, '+vertices+' fixture vertices, surface contact, bay bounds and '+budget.totalVertices+' total preview vertices within separate budgets.');
+ }finally{grandHallBuildExhibit=original;GRAND_HALL_EXHIBITS.pop();registerHouseRoom('grandhall',definition);}
+})()`,context);

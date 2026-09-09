@@ -16,6 +16,10 @@
       "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]
     },
     {
+      "source": "/grandhall.html",
+      "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]
+    },
+    {
       "source": "/src/(.*)",
       "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]
     },
