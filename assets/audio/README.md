@@ -25,6 +25,31 @@ that they have permission to use and distribute.
 `npm run check -- --require-audio` verifies a complete local audio collection.
 Normal source and audio-routing tests do not require recorded files.
 
+## Hosted builds
+
+Vercel's production and preview environments set `WHISTLEVALE_AUDIO_ORIGIN` to
+`https://whistlevale.com`. Before building, `scripts/hosted-audio.mjs` retrieves
+the existing recordings from that origin's immutable asset paths. The reviewed
+`scripts/hosted-audio.json` contains only their IDs, byte lengths and SHA-256
+checksums. Every file must match before the build proceeds. Matching local
+masters are reused; an unavailable or mismatched recording fails the build,
+leaving the current production deployment live.
+
+This adds no runtime request or generation step: each deployment serves its own
+fingerprinted copies as before. Without the environment variable, development,
+forks and CI keep their usual optional-recording behavior and make no request to
+the hosted site. `npm run test:hosted-audio` exercises verification, bounded
+downloads and failure cleanup with mocked responses.
+
+The live site is a preservation source, not a backup. Keep the original masters
+separately. A domain outage or a rollback that removes these assets can block the
+next hosted build; restore a known-good deployment or build from the matching
+local masters before retrying. When deliberately adding or replacing recordings,
+review their rights, update the metadata to match the new local masters, and
+publish that complete collection from the maintainer's machine first. Automatic
+Git builds can then retrieve the new immutable paths. Never commit the recordings
+or regenerate them as part of a build.
+
 ElevenLabs recordings have separate [Sound Effects Terms](https://elevenlabs.io/sound-effects-terms),
 [Music Terms](https://elevenlabs.io/music-terms), and a
 [Prohibited Use Policy](https://elevenlabs.io/use-policy), including restrictions
