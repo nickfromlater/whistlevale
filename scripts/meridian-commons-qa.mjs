@@ -9,11 +9,13 @@ prepareCommunityGeometry(geometry);
 Object.assign(geometry.context,{assert,URL,URLSearchParams,location:{href:'https://whistlevale.com/grandhall.html?bay=AR-03'}});
 geometry.run('initTracks();');
 const report=geometry.run(`(()=>{
+ // The input catalogue crosses the VM boundary; compare JSON values rather than Array prototypes.
+ const plain=value=>JSON.parse(JSON.stringify(value));
  const id='meridian-hill-observatory',work=communityCatalogue.works.find(w=>w.id===id),hall=GRAND_HALL_EXHIBITS.find(w=>w.id===id);
  assert.ok(work&&hall,'the approved observatory exists in both catalogues');
  assert.equal(work.room,'commons');assert.equal(hall.bay,'AR-03');
  assert.equal(work.source,hall.source,'both locations use the same approved source');
- assert.deepEqual(validateCredits(work.credits),grandHallExhibitCredits(hall),'preserve every original author and note');
+ assert.deepEqual(plain(validateCredits(work.credits)),plain(grandHallExhibitCredits(hall)),'preserve every original author and note');
  assert.equal(work.miniatures.length,1,'one Commons placement, not a second contribution identity');
  const piece=work.miniatures[0],scale=piece.scale??1,angle=piece.angle??0,radius=COMMUNITY_BUILDERS[piece.builder]*scale,[x,z]=piece.at;
  assert.equal(piece.builder,hall.builder);assert.equal(scale,1,'keep the native full-size model');
@@ -71,7 +73,7 @@ const report=geometry.run(`(()=>{
   }
  }finally{if(savedReturn===undefined)delete window.HOUSE_RETURN_URL;else window.HOUSE_RETURN_URL=savedReturn;}
  const roundTrip=validateCommunity(JSON.parse(JSON.stringify(communityCatalogue))).works.find(w=>w.id===id);
- assert.deepEqual(roundTrip,work,'catalogue serialization retains identity, source, placement, camera and credits');
+ assert.deepEqual(plain(roundTrip),plain(work),'catalogue serialization retains identity, source, placement, camera and credits');
  const original=communityCatalogue.works;let baselineVertices;
  try{
   communityCatalogue.works=original.filter(w=>w.id!==id);
