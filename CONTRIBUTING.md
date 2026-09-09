@@ -6,7 +6,7 @@ it a calmer, more convincing place to explore.
 ## Start with an idea
 
 [Agents start here](AGENTS.md) · [Add a train](docs/contributing/trains.md) ·
-[Add a building](docs/contributing/buildings.md) · [Layouts and scenery](contributions/README.md)
+[Add a building](docs/contributing/buildings.md) · [Grow The Commons](docs/contributing/commons.md) · [Layouts and scenery](contributions/README.md)
 
 Small fixes, original trains, paint schemes, buildings and miniature scenes are
 welcome. Describe your idea in an issue or make a focused pull request. For a
@@ -115,7 +115,7 @@ triangle interiors.
 
 Cinema input lives in `src/hobby.js`. Its captured gestures must keep the cinema
 lifecycle active and preserve sound, throttle and pause. Manual framing follows
-the active room’s train; automatic shots resume only on request. Keep the camera
+the active room’s train, or the landscape target in a room without a railway; automatic shots resume only on request. Keep the camera
 slot compact on phones, preserve keyboard focus when replacing its control, and
 release pointers on cancellation, blur and exit. Run `npm run test:cinema` after
 changing these controls, then verify drag, pinch, keyboard and the return to an
@@ -144,11 +144,17 @@ registerHouseRoom('marsh', {
 ```
 
 `build(scene, builder)` adds landscape and furniture to the supplied `Builder`.
-Every room must populate `scene.trains` with at least one valid train. Each train
+Railway rooms must populate `scene.trains` with at least one valid train. Each train
 needs an `edge` with an `at(distance)` function and a positive finite `length`,
 plus finite `distance` and `speed` values. A speed of zero is valid for a stationary
 exhibit. Invalid trains are rejected with a room-specific error before scenery
 upload; allocated shell walls are released and the partial room is not cached.
+A landscape room may explicitly declare `railway: false`, as The Commons does.
+It must leave both `scene.trains` and `scene.routes` empty. Train controls,
+selection, particles, headlight and train audio are inactive; cinema frames the
+landscape and still accepts camera input. Remove that declaration when adding
+its first railway. `scene.canPlace(x,z,radius)` may protect water, vegetation and
+board boundaries for community miniatures.
 Also populate `scene.routes`, `scene.spots` and `scene.height(x, z)` as appropriate.
 A place in `scene.spots` has a name, target, camera distance and
 optionally detail, yaw and pitch. The framework uploads the finished scene,
@@ -162,6 +168,9 @@ Keep the room floor at `FLOOR` and use the existing rail gauge. The standard
 shell spans approximately X ±78 and Z ±64; provide map footprint metadata when
 your room differs. A shell is optional and falls back to the shared room shell,
 but a new room should earn its own architectural character.
+
+Room metadata can set `phoneDistance` for a deliberate portrait overview;
+otherwise phones use `distance * 1.78`. Inspect both 390px and 320px widths.
 
 Add the new script to `index.html` after `src/rooms.js` and before startup, next
 to the other room modules. Register every room before the atlas and scene build

@@ -28,11 +28,11 @@ window.ShopMapUI=(()=>{
   root.setAttribute('role','region');root.setAttribute('aria-label','Shop map');
   root.innerHTML=`
    <header class="sm-heading"><span class="sm-brand">Whistlevale</span><h1 id="smTitle" tabindex="-1">Choose a room<span class="sm-title-dot" aria-hidden="true"></span></h1><p id="smRoomCount"></p></header>
-   <button type="button" class="sm-back">${icons.back}<span class="sm-back-full">Back to the railway</span><span class="sm-back-short">Back</span></button>
+   <button type="button" class="sm-back">${icons.back}<span class="sm-back-full">Back to the room</span><span class="sm-back-short">Back</span></button>
    <div class="sm-markers" aria-label="Room entrances"></div>
    <section class="sm-preview" aria-labelledby="smRoomName">
     <div class="sm-preview-summary"><span class="sm-room-number" id="smRoomNumber"></span><h2 id="smRoomName"></h2><button type="button" class="sm-info" aria-label="About this room" aria-controls="smDetails" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 7.5v.5"/></svg></button><button type="button" class="sm-enter"><span id="smEnterLabel">Enter</span>${icons.arrow}</button></div>
-    <div id="smDetails" hidden><div class="sm-preview-top"><span id="smRoomTag"></span><span class="sm-current" id="smCurrent">Your railway</span></div><p class="sm-description" id="smDescription"></p><button type="button" class="sm-cinema">${icons.play}<span>Watch cinema</span></button></div>
+    <div id="smDetails" hidden><div class="sm-preview-top"><span id="smRoomTag"></span><span class="sm-current" id="smCurrent">Your room</span></div><p class="sm-description" id="smDescription"></p><button type="button" class="sm-cinema">${icons.play}<span>Watch cinema</span></button></div>
    </section>
    <div class="sm-view-tools"><span class="sm-orbit-hint"><span class="sm-mouse-hint">Drag to turn · Scroll to explore</span><span class="sm-touch-hint">Drag to turn · Pinch to explore</span></span><button type="button" class="sm-reset" aria-label="Reset view">${icons.orbit}<span>Reset view</span></button></div>
    <nav class="sm-directory" aria-label="Room directory"></nav>

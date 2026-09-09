@@ -11,12 +11,14 @@ const ROOM_SHELLS={};
 const HOUSE_ROOM_BUILDERS=new Map();
 let houseRoomRevision=0;
 function houseRoomLights(key){return HOUSE_ROOMS[key]?.lights||roomLightPositions;}
+function houseLayoutLights(key){return HOUSE_ROOMS[key]?.layoutLights||lampPositions.slice(0,8);}
 
 // Register a room once; navigation, the 3D house and scene loading discover it.
 function registerHouseRoom(key,definition){
  if(!/^[a-z][a-z0-9-]*$/.test(key))throw new Error('Room keys must be lowercase URL-safe names.');
  if(!definition||typeof definition.build!=='function')throw new Error('A room needs a build(scene, builder) function.');
  const {build,shell,...metadata}=definition;
+ if(metadata.railway!==undefined&&typeof metadata.railway!=='boolean')throw new Error('Room railway must be a boolean.');
  if(metadata.credits!==undefined)metadata.credits=validateCredits(metadata.credits);
  HOUSE_ROOMS[key]={number:String(Object.keys(HOUSE_ROOMS).length+1).padStart(2,'0'),name:key,layout:key,tag:'A LITTLE WORLD',description:'A railway waiting to be explored.',color:'#99ad83',distance:150,target:[0,0,0],pitch:.65,yaw:.35,ambient:'forest',...HOUSE_ROOMS[key],...metadata};
  HOUSE_ROOM_BUILDERS.set(key,build);if(shell)ROOM_SHELLS[key]=shell;
@@ -177,7 +179,8 @@ function getHouseScene(key){
  try{
   scene.walls=(ROOM_SHELLS[key]||((builder)=>roomShell(key,builder)))(b);
   build(scene,b);
-  if(!Array.isArray(scene.trains)||!scene.trains.length)throw new Error('Room "'+key+'" needs at least one train.');
+  if(!Array.isArray(scene.trains)||(!scene.trains.length&&HOUSE_ROOMS[key].railway!==false))throw new Error('Room "'+key+'" needs at least one train.');
+  if(HOUSE_ROOMS[key].railway===false&&(scene.trains.length||scene.routes.length))throw new Error('Room "'+key+'" declares no railway; remove railway: false before adding routes or trains.');
   for(const [i,train]of scene.trains.entries()){
    if(!train?.edge||typeof train.edge.at!=='function'||!Number.isFinite(train.edge.length)||train.edge.length<=0)
     throw new Error('Room "'+key+'", train '+(i+1)+' needs a route edge with at(distance) and a positive finite length.');

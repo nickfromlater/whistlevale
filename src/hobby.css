@@ -246,3 +246,7 @@
 
 .builders-panel summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:13px;color:#d6d9c4}
 .builders-works{list-style:none;margin:0;padding:0 0 0 12px}.builders-works strong,.builders-works span{display:block;font-size:13px;line-height:1.6}.builders-works span{font-size:11px;color:#b7c3ac}.builders-author-link{display:inline-flex;align-items:center;min-height:44px}
+
+/* Scenery rooms keep only controls that act on their visible world. */
+.landscape-room #trainBtn,.landscape-room #playBtn,.landscape-room #cinemaPause,.landscape-room .cinema-separator,.landscape-room .speed-badge,.landscape-room .engine-medallion{display:none!important}
+.landscape-room [data-camera][hidden]{display:none!important}

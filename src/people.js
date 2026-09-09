@@ -176,6 +176,7 @@ function buildRoomLifeDetails(key,scene){
  let communityVertices=0;
  const place=(name,fn,x,z,angle=0,radius=1,y=null,credits=[],contribution=null)=>{
   const before=b.data.length;
+  if(scene.canPlace&&!scene.canPlace(x,z,radius))return;
   if(!miniatureTrackClear(scene,x,z,radius))return;
   let surface=y??scene.height(x,z)+.012;if(!Number.isFinite(surface))return;
   // A tiny arrangement only occupies stable ground. Explicit deck heights

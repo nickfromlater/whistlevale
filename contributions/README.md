@@ -7,6 +7,13 @@ There are two contribution paths: reviewed scene data for existing builders,
 and reviewed JavaScript for new models and behavior. Both go through a pull
 request. Nothing submitted here is automatically published or loaded remotely.
 
+## A shared place to begin
+
+[The Commons](../docs/contributing/commons.md) starts with landscape alone and
+welcomes its first buildings, miniature scenes and details. Use `room: "commons"`
+and a `miniatures` entry; the recipe gives starting coordinates and placement
+checks. It remains a reviewed shared scene, not a second live layout editor.
+
 ## Layouts
 
 Copy [the starter](layouts/starter/starter.railway.json), or use **More → Build

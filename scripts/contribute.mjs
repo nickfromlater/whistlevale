@@ -3,6 +3,7 @@
 // this command never edits, uploads, commits or installs anything.
 const args=process.argv.slice(2),kind=args.find(a=>!a.startsWith('--'));
 const routes={
+ commons:{recipe:'docs/contributing/commons.md',files:['contributions/world.json','src/rooms/commons.js','src/community.js'],checks:['test:contributions','test:rooms','test:map','test:cinema','test:geometry:full']},
  train:{recipe:'docs/contributing/trains.md',files:['src/trains.js','src/train-cabinet.js','assets/trains/'],checks:['test:trains','test:geometry:full']},
  livery:{recipe:'docs/contributing/trains.md',files:['src/trains.js'],checks:['test:trains','test:geometry:full']},
  building:{recipe:'docs/contributing/buildings.md',files:['contributions/world.json','src/railway.js','src/rooms.js','src/rooms/'],checks:['test:startup','test:geometry:full']},

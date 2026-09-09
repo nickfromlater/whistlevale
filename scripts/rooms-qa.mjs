@@ -167,6 +167,15 @@ const result=vm.runInContext(`(()=>{
   assert.ok(drawn.includes(expected+(type==='steam'?'-loco':'-motor')),'new room gets the expected locomotive');
   assert.ok(drawn.includes(expected+(type==='steam'?'-tail':'-trailer')),'new room gets matching coaches');
  }
+ assert.throws(()=>registerHouseRoom('empty',{railway:'false',build(){}}),/boolean/);
+ registerHouseRoom('empty',{railway:false,build(){},shell:()=>[]});
+ const empty=getHouseScene('empty');assert.equal(empty.trains.length,0);assert.equal(empty.routes.length,0);assert.equal(getHouseScene('empty'),empty);
+ registerHouseRoom('empty',{railway:false,build(scene){scene.trains=[valid];},shell:()=>[]});
+ assert.throws(()=>getHouseScene('empty'),/declares no railway/);assert.ok(!roomScenes.has('empty'));
+ registerHouseRoom('empty',{railway:false,build(scene){scene.routes=[route];},shell:()=>[]});
+ assert.throws(()=>getHouseScene('empty'),/declares no railway/);
+ registerHouseRoom('empty',{railway:true,build(scene){scene.routes=[route];scene.trains=[valid];},shell:()=>[]});
+ assert.equal(getHouseScene('empty').trains.length,1,'a landscape can graduate to a valid railway');
  return{rooms:six.rooms.length,connectorVertices:sixHouse.mesh.count};
 })()`,context,{filename:'rooms-qa:regressions'});
 

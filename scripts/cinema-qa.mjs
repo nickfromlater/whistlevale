@@ -57,4 +57,10 @@ for(let i=0;i<40;i++){fire('wheel',{deltaY:i%2?1e8:-1e8});fire('keydown',{key:i%
 assert.equal(run('[...cameraPos,...cameraTarget,...VP].every(Number.isFinite)'),true,'phone/reduced-motion and extreme zoom produce a finite camera');
 assert.ok(run('hobby.scene.trains[0].distance')>8,'annex trains keep advancing');assert.ok(run('cameraPos[1]')>=7.3-1e-4,'camera stays above terrain');
 run('leaveCinema(false);enterCinema()');assert.equal(run('cinemaOrbit.manual'),null,'a new cinema visit starts automatically');
+run(`leaveCinema(false);HOUSE_ROOMS.commons={layout:'The Commons',tag:'Room to grow',railway:false,target:[0,1,0]};hobby.room='commons';hobby.scene={height:()=>1,trains:[]};paused=true;throttle=51;enterCinema();cinemaCamera(2)`);
+assert.equal(run('paused'),true,'landscape cinema preserves the other railways pause state');assert.equal(run('throttle'),51);
+assert.equal(run('hobbyHasTrain()'),false);assert.equal(run('[...cameraPos,...cameraTarget,...VP].every(Number.isFinite)'),true);
+fire('pointerdown');fire('pointermove',{clientX:760,clientY:470});fire('pointerup');fire('wheel',{deltaY:-30});run('cinemaCamera(1)');
+assert.equal(run('hobby.cinema'),true);assert.ok(run('cinemaOrbit.manual'),'landscape cinema accepts manual framing');
+fire('keydown',{key:'0'});run('cinemaCamera(1);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
 console.log('Cinema QA passed: drag, tap threshold, pinch/release, wheel, keyboard, moving train anchor, pause/audio preservation, auto return and focus, capture cleanup, lifecycle restoration and finite phone cameras.');

@@ -12,6 +12,7 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
 2. Run `npm run contribute -- train` or `npm run contribute -- building` for the
    file map, recipe and checks. `npm run contribute -- --list` lists all routes.
    Read the named recipe; inspect the closest working example before editing.
+   For The Commons, use `npm run contribute -- commons` and its room recipe.
 3. Implement the actual requested model or behavior. A renamed existing train
    is a paint variant, not a new geometry family. Keep changes focused and
    preserve room discovery, mesh disposal, deterministic seeds and quiet mobile UX.
@@ -50,7 +51,7 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 - `src/rooms.js` contains `registerHouseRoom`, scene caching, materials and geometry
   helpers. Register new room modules before startup; navigation and map layout
   discover the registry. Keep cache invalidation and mesh disposal intact.
-- `src/rooms/coastal.js`, `alpine.js`, and `studio.js` own their landscapes and
+- `src/rooms/coastal.js`, `alpine.js`, `studio.js`, and `commons.js` own their landscapes and
   room shells. Coordinate atlas allocations and edits to shared helpers.
 - `src/trains.js` owns room-specific stock, formations and working motion. Match
   steam/electric stock to its train type and retain roof/cutaway and bogie behavior.

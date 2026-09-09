@@ -3,6 +3,10 @@
 Read [AGENTS.md](../../AGENTS.md), then choose the smallest path that can produce
 the requested architecture. Ask for the contributor's public credit if absent.
 
+If the request is for the new shared room, start with the
+[Commons recipe](commons.md): it has open meadows, starting coordinates, and
+credited miniature placements. The editor path below is for Alder Valley.
+
 ## Place or customize an existing building
 
 1. Inspect `contributions/world.json`: `village-shops` is active data, containing

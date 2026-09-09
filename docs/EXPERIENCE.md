@@ -17,6 +17,11 @@ your framing keeps following the train. **Auto camera** resumes the selected
 cinematic shot. With the scene focused, arrow keys orbit, +/− zoom, and 0 resumes
 the automatic camera. Map room descriptions expand with the info button.
 
+**The Commons** is a fifth room with a stream, wooded hills and open meadows.
+It begins without a railway and has Views, Cinema and More controls. Visit it
+from the map or **More → Want to contribute?**; the [Commons recipe](contributing/commons.md)
+explains how reviewed contributions can grow it.
+
 The house grows from a room registry. Additional rooms get their own place in
 the building, connecting corridors, room selection and camera framing; see
 [Adding a room](../CONTRIBUTING.md#adding-a-room) for the registration contract.
