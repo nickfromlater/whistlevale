@@ -64,8 +64,9 @@ geometry is capped at 300,000 vertices per room. These are guardrails, not a
 promise of phone performance; compare `?profile` on the same device and camera.
 `npm run check:contributions -- --json` validates data, credits, sources, train
 portraits, layout imports, shared workshop clearances and actual annex placement.
-It builds contributed scenes, reports geometry counts and rejects omitted work
-with its coordinates and the reason. The scene tests also verify model footprints.
+It builds contributed scenes, reports per-placement model vertices and measured
+radii, and rejects omitted work with its coordinates and the reason. Room totals
+include any supporting terrain terraces. The scene tests also verify model footprints.
 
 The dev server and build embed this JSON into the page; the browser never
 fetches it. Portable HTML includes it. Refresh after data edits and use **Restore

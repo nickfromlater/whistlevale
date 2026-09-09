@@ -54,4 +54,18 @@ export function inspectCommunityScenes({run},keys){
   result.push({room:key,placements,vertices:scene.lifeDetails.communityVertices});
  }return result;})()`);
 }
+// Check-time model measurements, not a browser startup or frame-loop task.
+// Room totals above also include any terrain terrace added by the adapter.
+export function inspectCommunityModels({run},keys){
+ return run(`(()=>{const result=[],savedSeed=seed;try{for(const key of ${JSON.stringify(keys)}){
+  communityMiniatures(key,(name,fn,x,z,angle,declaredRadius,y,credits,id,placement)=>{
+   const b=new Builder();fn(b,0,0,0,0);let measuredRadius=0;
+   for(let i=0;i<b.data.length;i+=12)measuredRadius=Math.max(measuredRadius,Math.hypot(b.data[i],b.data[i+2]));
+   communityAssert(b.data.length>0&&b.data.length%36===0&&b.data.every(Number.isFinite),id+' has invalid model geometry.');
+   communityAssert(measuredRadius<=declaredRadius+1e-8,id+' miniatures['+placement+'] exceeds its declared footprint: '+measuredRadius+' > '+declaredRadius+'.');
+   const work=communityCatalogue.works.find(w=>w.id===id);
+   result.push({id,room:key,placement,builder:work.miniatures[placement].builder,vertices:b.data.length/12,measuredRadius:Math.round(measuredRadius*10000)/10000,declaredRadius});
+  });
+ }return result;}finally{seed=savedSeed;}})()`);
+}
 export const scriptJSON=value=>JSON.stringify(value).replace(/</g,'\\u003c');

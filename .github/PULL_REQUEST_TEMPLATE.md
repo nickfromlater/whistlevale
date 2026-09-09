@@ -10,6 +10,10 @@ Preserve earlier credits for adapted work. Mention agent assistance if relevant.
 
 ## Evidence
 
+Use `docs/contributing/review.md` for the relevant checks.
+Keep local artifacts in ignored `evidence/<work-id>/`; attach selected evidence
+when submitting so reviewers can see it.
+
 - Automated checks actually run, with results:
 - Desktop and phone views checked (include screenshots for visual changes):
 - Geometry/performance before and after, same device and camera:

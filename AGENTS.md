@@ -27,6 +27,9 @@ Copilot and other coding agents. `CLAUDE.md` imports it.
    Inspect desktop and 390px/320px phone layouts, the live map and the changed
    rooms. For trains check roofs, motion, formations and each finish. Exercise
    save/import and playable export when the change affects persistence or credit.
+   The [review checklist](docs/contributing/review.md) distinguishes static scenery
+   from editable assets and gives the export menu route. Keep local screenshots,
+   measurements and draft notes in ignored `evidence/<work-id>/`.
 7. Prepare a focused commit and PR using `.github/PULL_REQUEST_TEMPLATE.md`.
    Include the request, result, screenshots, measured impact and checks actually
    run. Mark unavailable visual/device checks as unverified. Push/open the PR

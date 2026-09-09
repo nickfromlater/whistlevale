@@ -38,7 +38,11 @@ height as well as at ground level.
 ### Original buildings in The Commons or another annex
 
 Use [Willowbank Pottery](../../src/scenery/willowbank.js) and its row in
-`contributions/world.json` as a complete example:
+`contributions/world.json` as a complete example. For primitive dimensions,
+rotation order, winding and material IDs, use the compact
+[geometry reference](geometry.md).
+
+Register the source, page script, footprint and function mapping together:
 
 1. Add `src/scenery/<slug>.js` with a uniquely named builder
    `function yourBuilding(b,x,y,z,angle=0)`. Push the placement transform,
@@ -52,7 +56,8 @@ Use [Willowbank Pottery](../../src/scenery/willowbank.js) and its row in
    `src/community-core.js`, then map that key to the function in
    `communityMiniatures` in `src/community.js`. The radius is measured from the
    local origin to the farthest vertex, including roofs, steps and props.
-   `npm run test:contributions` checks the actual mesh against this radius.
+   `npm run check:contributions -- --json` reports its measured radius and
+   vertices; `npm run test:contributions` checks every mapped builder.
    The adapter owns placement rotation and scale; your mapped builder receives
    a local origin. Do not apply the catalogue transform a second time.
 4. Add a separate catalogue work with `source` pointing to the new source file,
@@ -79,11 +84,13 @@ npm test
 npm run test:geometry:full
 ```
 
-Check the actual room and 3D map at desktop and 390px/320px phone sizes, daylight
-and night, wide and low viewpoints. Compare frame time, draw calls and vertices
-using `?profile`; keep the device/camera identical. Test reset, duplicate,
-undo/redo and JSON round-trip for editor assets. Export playable HTML and check
-the credit and model there. Report unavailable physical touch checks honestly.
+Follow the [local review checklist](review.md) for your contribution type.
+Static annex buildings need terrain, roof, clearances, viewpoints, map and
+portable checks; editor reset/duplicate/undo/JSON checks apply to editable
+Alder Valley assets. Save local evidence in `evidence/<work-id>/`.
+
+From an annex, portable export is **More → Build in Alder Valley → Project
+menu → Export playable HTML**. The exported house includes every room.
 
 Use the PR template with before/after images, source/credit, positioning rationale,
 test results and measured impact. A bigger district or architectural change

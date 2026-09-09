@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {communityContext,loadCommunity,loadContributionDefinitions,inspectCommunityScenes} from './community-lib.mjs';
+import {communityContext,loadCommunity,loadContributionDefinitions,inspectCommunityScenes,inspectCommunityModels} from './community-lib.mjs';
 
 const state=await communityContext(),{context,run}=state,catalogue=await loadCommunity();
 await loadContributionDefinitions(state,catalogue);
@@ -25,11 +25,13 @@ const results=run(`(()=>{
   const commons=getHouseScene('commons');
   assert.equal(commons.trains.length,0,'the shared starting landscape has no trains');assert.equal(commons.routes.length,0);
   assert.equal(HOUSE_ROOMS.commons.railway,false);assert.ok(houseLayoutLights('commons').every(p=>p[1]<FLOOR),'no inherited village street lights in the starting meadow');
-  // Documented starting sites accept a cottage alongside existing contributions.
+  // Suggested coordinates describe suitable terrain, not permanently vacant plots.
+  // Validate the real catalogue above; isolate these terrain fixtures so accepting
+  // a contribution on a suggested site does not break an unrelated test.
   for(const at of[[-23,-3],[25,7],[18,-9]]){
-   communityCatalogue.works=[...original.filter(w=>w.room==='commons'),{id:'fixture-cottage',title:'QA cottage',kind:'building',source:'contributions/world.json',room:'commons',credits:[{name:'Test fixture'}],miniatures:[{builder:'cottage',at}]}];
+   communityCatalogue.works=[{id:'fixture-cottage',title:'QA cottage',kind:'building',source:'contributions/world.json',room:'commons',credits:[{name:'Test fixture'}],miniatures:[{builder:'cottage',at}]}];
    validateCommunity({format:'whistlevale-community',version:1,works:communityCatalogue.works});
-   const detail=buildRoomLifeDetails('commons',commons),placed=detail.details.find(d=>d.contribution==='fixture-cottage');assert.ok(placed,'documented site accepts a cottage beside existing works');
+   const detail=buildRoomLifeDetails('commons',commons),placed=detail.details.find(d=>d.contribution==='fixture-cottage');assert.ok(placed,'documented site has terrain suitable for a cottage');
    assert.equal(placed.credits[0].name,'Test fixture');assert.ok(detail.communityVertices>0);
   }
   for(const at of[[commonsStream(0),0],[54,0],[COMMONS_TREES[0].x,COMMONS_TREES[0].z]]){
@@ -64,5 +66,14 @@ const results=run(`(()=>{
  }finally{communityCatalogue.works=original;}
  return reports;
 })()`);
+const beforeMeasureSeed=run('seed'),models=inspectCommunityModels(state,['commons']);
+assert.equal(run('seed'),beforeMeasureSeed,'model measurement preserves the procedural sequence');
+assert.equal(models.length,catalogue.works.filter(w=>w.room==='commons').reduce((n,w)=>n+(w.miniatures?.length||0),0));
+for(const model of models){assert.ok(model.vertices>0&&Number.isInteger(model.vertices));assert.ok(model.measuredRadius>0&&model.measuredRadius<=model.declaredRadius+.0001);}
+const restoreMapping=run('communityMiniatures');
+try{
+ run('communityMiniatures=function(key,place){place("Oversized fixture",b=>b.box(0,0,0,4,1,4,"#aabbcc"),0,0,0,.1,null,[],"fixture-too-wide",0);}');
+ assert.throws(()=>inspectCommunityModels(state,['commons']),/fixture-too-wide.*exceeds its declared footprint/);
+}finally{context.restoreMapping=restoreMapping;run('communityMiniatures=restoreMapping');}
 console.table(results);
 console.log('Community scene QA passed: every registered annex, visible placements, finite geometry, all miniature builders and per-room budgets.');
