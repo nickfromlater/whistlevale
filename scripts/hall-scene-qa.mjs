@@ -116,9 +116,10 @@ run('const BAY_BY_ID=new Map(GRAND_HALL_BAYS.map(b=>[b.id,b]));');
 run(declaration(source,'buildPublishedPottery'));
 run(`(()=>{
  const before=records.length;buildPublishedPottery();
- const built=records.slice(before);assert.equal(built.length,GRAND_HALL_EXHIBITS.length,'every reviewed exhibit reaches the entered renderer');
- for(const [i,r]of built.entries()){
-  const exhibit=GRAND_HALL_EXHIBITS[i],bay=BAY_BY_ID.get(exhibit.bay),a=r.mesh.data;let minY=Infinity,maxY=-Infinity;
+ const built=records.slice(before);assert.equal(new Set(built.map(r=>r.exhibitId)).size,GRAND_HALL_EXHIBITS.length,'every reviewed exhibit reaches the entered renderer');
+ for(const exhibit of GRAND_HALL_EXHIBITS){
+  const bay=BAY_BY_ID.get(exhibit.bay),parts=built.filter(r=>r.exhibitId===exhibit.id),a=parts.flatMap(r=>Array.from(r.mesh.data));let minY=Infinity,maxY=-Infinity;
+  for(const part of parts){const data=part.mesh.data;for(let j=9;j<data.length;j+=12)assert.equal(data[j]===76,!!part.displayGlass,'architectural glazing uses its separate transparent pass');if(part.displayGlass)assert.equal(part.cast,false,'architectural glazing casts no opaque shadow');}
   assert.ok(a.length>0&&a.length%36===0&&a.every(Number.isFinite),exhibit.id+' builds finite entered-Hall triangles');
   for(let j=0;j<a.length;j+=12){minY=Math.min(minY,a[j+1]);maxY=Math.max(maxY,a[j+1]);}
   assert.ok(Math.abs(minY-bay.surfaceY)<1e-5,exhibit.id+' touches its actual display surface');

@@ -112,6 +112,7 @@
 <script src="src/grandhall-contribute.js"></script>
 <script type="application/x-whistlevale-exhibit" data-source="src/scenery/willowbank.js" data-src="src/scenery/willowbank.js"></script>
 <script type="application/x-whistlevale-exhibit" data-source="src/scenery/meridian-observatory.js" data-src="src/scenery/meridian-observatory.js"></script>
+<script type="application/x-whistlevale-exhibit" data-source="src/scenery/wintergarden.js" data-src="src/scenery/wintergarden.js"></script>
 <script src="src/grandhall-residency.js"></script>
 <script>
 
@@ -416,7 +417,7 @@ function visitRoom(ri,{instant=false,bay=null,tour=false}={}){hallFailedDestinat
 }
 const originalSelectExhibit=selectExhibit;
 selectExhibit=function(i,fromTour=false){setWalk(false,false);state.bay=null;$('bayDetail').classList.remove('open');if(state.room!==0){state.room=0;updateRoomUI();}originalSelectExhibit(i,fromTour);$('detailCount').textContent='ORIGINAL EXHIBIT '+exhibits[state.selected].no+' · FICTIONAL MAKER';};
-function selectBay(id,travel=true){const b=BAY_BY_ID.get(id);if(!b)return;stopTour();if(travel&&state.room!==b.room){visitRoom(b.room,{bay:id});return;}setWalk(false,false);clearInspection();state.room=b.room;state.bay=id;syncHallAddress();document.body.classList.add('inspect-mode');$('bayDetail').classList.add('open');$('bayDetail').scrollTop=0;renderBayDetail();setPose(b.camera,b.target);$('viewTitle').textContent=hallEntries.get(id)?.title||bayFormat(b);$('viewSubtitle').textContent='BAY '+id+' · '+ROOMS[b.room].short;recenterLight();$('closeBay').focus({preventScroll:true});}
+function selectBay(id,travel=true){const b=BAY_BY_ID.get(id);if(!b)return;stopTour();if(travel&&state.room!==b.room){visitRoom(b.room,{bay:id});return;}setWalk(false,false);clearInspection();state.room=b.room;state.bay=id;syncHallAddress();document.body.classList.add('inspect-mode');$('bayDetail').classList.add('open');$('bayDetail').scrollTop=0;renderBayDetail();const view=grandHallExhibitView(hallEntry(id),b);setPose(view.camera,view.target);$('viewTitle').textContent=hallEntries.get(id)?.title||bayFormat(b);$('viewSubtitle').textContent='BAY '+id+' · '+ROOMS[b.room].short;recenterLight();$('closeBay').focus({preventScroll:true});}
 function renderBayDetail(){
  if(!state.bay)return;const bay=BAY_BY_ID.get(state.bay),room=ROOMS[bay.room],entry=hallEntry(bay.id);
  $('bayDetail').classList.toggle('empty-space',!entry);$('bayCategory').textContent=room.short+' · BAY '+bay.id;
@@ -435,7 +436,7 @@ function renderBayDetail(){
  const row=document.createElement('div');row.className='nearby-bays';row.setAttribute('role','group');row.setAttribute('aria-label','Nearby display bays');row.innerHTML='<span>Nearby</span>';for(const b of nearby){const button=document.createElement('button');button.textContent=b.id;button.onclick=()=>selectBay(b.id);row.append(button);}$('bayContent').append(row);
 }
 function nextEmptyBay(id){const b=BAY_BY_ID.get(id),list=freeBays(b.room);if(!list.length){openMap('spaces');return;}const i=list.findIndex(q=>q.id===id);selectBay(list[(i+1)%list.length].id);}
-resize=function(){width=innerWidth;height=innerHeight;pixelRatio=Math.min(devicePixelRatio||1,mobile()?1.45:1.6);$('scene').width=Math.round(width*pixelRatio);$('scene').height=Math.round(height*pixelRatio);if(!state.walk){if(state.bay){const b=BAY_BY_ID.get(state.bay);setPose(b.camera,b.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else{const r=currentRoom();frameHallRoom(r);}}lightDirty=true;};
+resize=function(){width=innerWidth;height=innerHeight;pixelRatio=Math.min(devicePixelRatio||1,mobile()?1.45:1.6);$('scene').width=Math.round(width*pixelRatio);$('scene').height=Math.round(height*pixelRatio);if(!state.walk){if(state.bay){const b=BAY_BY_ID.get(state.bay),view=grandHallExhibitView(hallEntry(state.bay),b);setPose(view.camera,view.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else{const r=currentRoom();frameHallRoom(r);}}lightDirty=true;};
 function setWalk(on,reposition=true){on=Boolean(on);if(on===state.walk)return;state.walk=on;walkKeys.clear();document.body.classList.toggle('walking',on);$('walkBtn').setAttribute('aria-pressed',String(on));$('walkBtn').innerHTML=icon(on?'home':'walk')+(on?'Gallery view':'Walk the halls');if(on){stopTour();clearInspection();const r=currentRoom();walkingEye=[r.x,2.15,r.z+r.depth/2-3];state.walkYaw=PI;state.walkPitch=.02;updateRoomUI();}else if(reposition)galleryHome();}
 function roomAt(p){return ROOMS.findIndex(r=>Math.abs(p[0]-r.x)<r.width/2-.35&&Math.abs(p[2]-r.z)<r.depth/2-.35);}
 function canWalk(p){
@@ -579,7 +580,7 @@ function buildUI(){
   pointers.delete(e.pointerId);if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId);
  });for(const name of['pointercancel','lostpointercapture'])c.addEventListener(name,e=>pointers.delete(e.pointerId));
  c.addEventListener('wheel',e=>{e.preventDefault();stopTour();const d=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);if(state.walk){const amount=clamp(d,-150,150)*.018,p=[walkingEye[0]+Math.sin(state.walkYaw)*amount,walkingEye[1],walkingEye[2]+Math.cos(state.walkYaw)*amount];if(canWalk(p))walkingEye=p;}else desiredDistance=clamp(desiredDistance*Math.exp(clamp(d,-150,150)*.0014),3,52);},{passive:false});
- c.addEventListener('dblclick',()=>{if(state.bay){const b=BAY_BY_ID.get(state.bay);setPose(b.camera,b.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else if(!state.walk)galleryHome();});window.addEventListener('resize',resize);c.addEventListener('webglcontextlost',e=>{e.preventDefault();toast('The 3D view paused. Reload to return to the gallery.');});c.addEventListener('webglcontextrestored',()=>location.reload());
+ c.addEventListener('dblclick',()=>{if(state.bay){const b=BAY_BY_ID.get(state.bay),view=grandHallExhibitView(hallEntry(state.bay),b);setPose(view.camera,view.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else if(!state.walk)galleryHome();});window.addEventListener('resize',resize);c.addEventListener('webglcontextlost',e=>{e.preventDefault();toast('The 3D view paused. Reload to return to the gallery.');});c.addEventListener('webglcontextrestored',()=>location.reload());
  refreshAvailability();renderDirectory();
 };
 function windowPane(b,x,y,z,w,h){b.box(x,y,z,w+.10,h+.10,.06,'#e3d7b2',0);b.box(x,y,z+.037,w,h,.025,'#667f75',6);b.box(x,y,z+.06,.035,h,.025,'#e0d2ac',0);b.box(x,y-.02,z+.061,w,.034,.03,'#e0d2ac',0);b.box(x,y-h/2-.065,z+.035,w+.18,.08,.16,'#aaa688',4);}
@@ -588,7 +589,10 @@ function buildPublishedPottery(roomIndex=null,onlyId=null){
  grandHallPlaceExhibit(exhibit,b,bay);
  // Translate the shared model's surface codes into this renderer's palette.
  for(let i=9;i<b.data.length;i+=12){const m=b.data[i];b.data[i]=m===4?52:m===5?22:m===6?43:m;}
- addRecord(gpu(b.mesh()),I,bay.room,true);}
+ // Published architectural panes use the museum's clear, non-shadow glass pass.
+ const clear=new Builder(),opaque=new Builder();for(let i=0;i<b.data.length;i+=36){const target=b.data[i+9]===76?clear.data:opaque.data;for(let j=0;j<36;j++)target.push(b.data[i+j]);}
+ if(opaque.data.length)addRecord(gpu(opaque.mesh()),I,bay.room,true,{exhibitId:exhibit.id});
+ if(clear.data.length)addRecord(gpu(clear.mesh()),I,bay.room,false,{displayGlass:true,exhibitGlass:true,exhibitId:exhibit.id});}
 }
 
 // Source text is loaded once. GPU groups are owned by a small gallery cache.

@@ -3,8 +3,9 @@
 The Grand Hall is the central exhibition in the house map. Its connected
 galleries offer display spaces for original miniatures. Accepted examples include
 Willowbank Pottery in **GH-08**, by [nickfromlater](https://x.com/nickfromlater),
-and Meridian Hill Observatory in **AR-03**, by
-[nickfromlater](https://github.com/nickfromlater). The reviewed catalogue in
+Meridian Hill Observatory in **AR-03**, by
+[nickfromlater](https://github.com/nickfromlater), and Wintergarden Station in
+**LW-07**, which also stands beside the Commons railway. The reviewed catalogue in
 [`src/grandhall-exhibits.js`](../../src/grandhall-exhibits.js) on current `main`
 is the source of truth for occupied bays. An empty space is an invitation;
 selecting one does not reserve it or publish a contribution.
@@ -94,7 +95,7 @@ installation or API key is needed.
 
    Keep code initialization limited to definitions. Both renderers support
    `Builder` primitives, `ringX`/`ringZ`, `hash`/`shade` and `windowPane`. For the
-   Hall adapter use material IDs `0, 4, 5, 6, 8, 22, 23, 41`; do not assume railway
+   Hall adapter use material IDs `0, 4, 5, 6, 8, 10, 22, 23, 41, 76`; do not assume railway
    atlas labels or every room helper is available. Test the actual model.
    Compare the intended finishes in the Hall renderer and, for a railway
    placement or reviewed map preview, the house renderer. A supported material
@@ -115,6 +116,12 @@ installation or API key is needed.
    `source` as a reviewed railway miniature gains a link to that exact placement,
    with the camera focused on the built model. Do not replace an occupied bay or
    copy a credit you were not given.
+   An optional `view: {target: [x,y,z], distance, yaw, pitch}` gives an exhibit a
+   deliberate inspection camera. Target offsets and distance use native model
+   units: X/Z are relative to the bay center, and Y is height above the model's
+   lowest plane on the display surface. The Hall applies the bay position,
+   uniform scale and rotation. Omit it to use the
+   normal bay view. Check desktop and portrait framing after authoring it.
 4. Inspect the bay's actual display shape and its surroundings. Open tables,
    low or tall glass cases, wall cabinets and round cases offer different
    usable areas and heights. Scale the complete miniature inside those clear

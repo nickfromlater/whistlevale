@@ -58,10 +58,16 @@ const worksFor=author=>author.children[1].children[1].children;
 const notesFor=work=>work.children.filter(node=>node.tag==='p').map(node=>node.textContent);
 builders.run('paintBuilders()');
 const potteryAuthor=authorFor('nickfromlater'),potteryWorks=worksFor(potteryAuthor);
-assert.equal(potteryAuthor.children[1].children[0].textContent,'1 contribution','Willowbank counts once across the two catalogues');
-assert.equal(potteryWorks.length,1);assert.equal(potteryWorks[0].children[0].textContent,'Willowbank Pottery');
-assert.equal(potteryWorks[0].children[1].textContent,'The Commons · The Grand Hall','one work lists both display locations');
-assert.deepEqual(notesFor(potteryWorks[0]),catalogue.works.find(work=>work.id==='willowbank-pottery').credits.filter(credit=>credit.name==='nickfromlater').map(credit=>credit.note),'the original creator note is preserved without duplication');
+// The guarantee here is deduplication, not a fixed total: a work standing in
+// both the Commons and the Hall must appear once. Assert that by name, so the
+// check keeps its meaning as the catalogue grows.
+const titles=potteryWorks.map(work=>work.children[0].textContent);
+assert.equal(titles.filter(title=>title==='Willowbank Pottery').length,1,'Willowbank counts once across the two catalogues');
+assert.equal(potteryAuthor.children[1].children[0].textContent,potteryWorks.length+' contribution'+(potteryWorks.length===1?'':'s'),'the heading counts the works listed beneath it');
+const pottery=potteryWorks.find(work=>work.children[0].textContent==='Willowbank Pottery');
+assert.ok(pottery,'Willowbank is listed for its maker');
+assert.equal(pottery.children[1].textContent,'The Commons · The Grand Hall','one work lists both display locations');
+assert.deepEqual(notesFor(pottery),catalogue.works.find(work=>work.id==='willowbank-pottery').credits.filter(credit=>credit.name==='nickfromlater').map(credit=>credit.note),'the original creator note is preserved without duplication');
 const maker=note=>({name:'QA maker',platform:'github',handle:'qa-maker',note}),helper={name:'QA helper',note:'Shared foliage.'};
 builders.context.qaWorks=[
  {id:'qa-shared',title:'Same title',source:'src/scenery/qa-shared.js',room:'commons',credits:[maker('Original design.'),helper]},

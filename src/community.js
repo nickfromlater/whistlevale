@@ -10,7 +10,7 @@ function communityWorkshop(add){
  }
 }
 function communityMiniatures(key,place){
- const builders={willowbank:willowbankPottery,harbor:littleHarborScene,porter:littlePorterScene,mapParty:littleMapParty,reading:littleReadingScene,atelier:littleAtelierScene,
+ const builders={willowbank:willowbankPottery,wintergarden:wintergardenStation,harbor:littleHarborScene,porter:littlePorterScene,mapParty:littleMapParty,reading:littleReadingScene,atelier:littleAtelierScene,
   person:(b,x,y,z,a,p)=>{littlePerson(b,x,y,z,{pose:p.pose||'stand',angle:a,variant:p.variant??0,color:p.color||'#83958b'});return 1;},
   bird:littleBird,dog:littleDog,bicycle:littleBicycle,chair:littleChair,case:littleCase,pack:littlePack,book:littleBook,rope:littleRope,trolley:littleTrolley,
   cottage:(b,x,y,z,a)=>cottage(b,x,y,z,3.5,3,3,'#d6c4a0','#6a7e6b',a),tree:(b,x,y,z)=>roomTree(b,x,y,z,4),lamp:(b,x,y,z)=>houseLamp(b,x,y,z),bench};

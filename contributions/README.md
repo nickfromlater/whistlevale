@@ -11,8 +11,8 @@ request. Nothing submitted here is automatically published or loaded remotely.
 
 The [Grand Hall](../docs/contributing/grandhall.md) has seven distinct galleries
 and 112 numbered display bays. Willowbank Pottery, by
-[nickfromlater](https://x.com/nickfromlater), occupies **GH-08**; the other bays
-begin empty. Enter from the house map, select a bay and copy its agent prompt.
+[nickfromlater](https://x.com/nickfromlater), occupies **GH-08**. Wintergarden Station occupies **LW-08** in Little Worlds,
+with the same native model also placed beside the railway in The Commons. Enter from the house map, select a bay and copy its agent prompt.
 The terminal prints the same prompt:
 
 ```sh
