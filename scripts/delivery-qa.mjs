@@ -90,7 +90,7 @@ async function checkPortableHall(build){
  const context=vm.createContext(sandbox),run=code=>vm.runInContext(code,context);
  run(hobby.slice(hobby.indexOf('async function packHouseHall('),hobby.indexOf('\nexportPlayable=async function(')));
  run(hobby.slice(hobby.indexOf('function visitHouseDestination('),hobby.indexOf('\nfunction visitHouseRoom(')));
- run(hobby.slice(hobby.indexOf('function houseInitialParams('),hobby.indexOf('\nsetTimeout(startHouse,50)')));
+ run(hobby.slice(hobby.indexOf('function houseInitialParams('),hobby.indexOf('\nfunction scheduleHouseStartup(')));
  const packed=await run('packHouseHall()');
  assert.ok(packed.startsWith('<!DOCTYPE html>'),'portable Hall is a standalone HTML document');
  assert.deepEqual(external(packed),[],'portable Hall needs no external scripts, styles or icon');

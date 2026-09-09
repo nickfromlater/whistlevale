@@ -452,4 +452,8 @@ function houseInitialParams(){
  }
  return params;
 }
-setTimeout(startHouse,50);
+// Later classic scripts register controls, maps and the train cabinet. A slow
+// request can outlast a timer while the parser is still waiting for those files.
+function scheduleHouseStartup(){setTimeout(startHouse,50);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleHouseStartup,{once:true});
+else scheduleHouseStartup();
