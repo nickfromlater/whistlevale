@@ -328,6 +328,18 @@ Small fixes can go straight to a pull request. Describe the problem, what
 changes for the visitor, and how you verified it.
 
 
+## Production releases
+
+The Vercel project `endless-railroad` is connected to `nickfromlater/whistlevale`.
+A merge into `main` automatically builds and deploys production at
+[whistlevale.com](https://whistlevale.com). Treat the maintainer's merge as the
+publication step: finish the required checks and visual review before merging.
+Contributors submit a PR; they do not need Vercel access or a separate deploy command.
+
+Vercel runs `npm run build` and publishes only `dist/`, as configured in
+`vercel.json`. After a release, confirm the automatic production deployment is
+ready for the merged commit and check the affected behavior on the live site.
+
 ## Files that should stay local
 
 Never commit credentials, `.env`, `.vercel/`, private generation logs, or audio
