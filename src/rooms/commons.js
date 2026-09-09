@@ -23,7 +23,13 @@ for(const [cx,cz,n]of[[-42,-23,14],[37,-24,15],[-47,20,7],[45,22,6]])for(let i=0
  if(Math.abs(x)<=51&&Math.abs(z)<=30)COMMONS_TREES.push({x,z,h:3.3+hash(i,cx)*2.5,pine:i%5===0});
 }
 function commonsBuildable(x,z,radius=0){
- return Math.abs(x)+radius<COMMONS_WIDTH/2-1&&Math.abs(z)+radius<COMMONS_DEPTH/2-1&&commonsBank(x,z)>5.6+radius*1.5&&COMMONS_TREES.every(t=>Math.hypot(x-t.x,z-t.z)>radius+t.h*.3);
+ return commonsPlacementIssue(x,z,radius)===null;
+}
+function commonsPlacementIssue(x,z,radius=0){
+ if(Math.abs(x)+radius>=COMMONS_WIDTH/2-1||Math.abs(z)+radius>=COMMONS_DEPTH/2-1)return 'The footprint crosses the model-board margin.';
+ if(commonsBank(x,z)<=5.6+radius*1.5)return 'The footprint is too close to the stream. Keep the banks open.';
+ if(COMMONS_TREES.some(t=>Math.hypot(x-t.x,z-t.z)<=radius+t.h*.3))return 'The footprint overlaps established woodland.';
+ return null;
 }
 function commonsShell(b){
  const walls=[];b.box(0,FLOOR-.25,0,158,.45,130,'#b09a76',21);
@@ -73,8 +79,9 @@ function commonsRoom(scene,b){
  }
  scene.height=(x,z)=>Math.abs(x)<=54&&Math.abs(z)<=33?Math.max(COMMONS_WATER,commonsSurface(x,z)):FLOOR;
  scene.canPlace=commonsBuildable;
+ scene.placementIssue=commonsPlacementIssue;
  scene.spots=[
-  {name:'The open meadow',target:[-27,1,8],distance:43,pitch:.66,yaw:.25,detail:'Room for the first little building, a gathering, or a story. This landscape is ours to grow.'},
+  {name:'The open meadow',target:[-27,1,8],distance:43,pitch:.66,yaw:.25,detail:'A little pottery workshop begins the story. Leave room for the next thoughtful addition.'},
   {name:'The stream',target:[-3,1,3],distance:43,pitch:.63,yaw:.6,detail:'A gentle bend between grassy banks. Leave space for the water and whatever comes next.'},
   {name:'The eastern field',target:[25,1,7],distance:44,pitch:.68,yaw:-.35,detail:'Open ground below the wooded hill. A place for a thoughtful first contribution.'}
  ];

@@ -7,6 +7,7 @@ context.credit={name:'River Maker',platform:'github',handle:'river-maker',note:'
 assert.deepEqual(plain(run('validateCredits([credit])')),[context.credit]);
 assert.equal(run('communityCreditURL(credit)'),'https://github.com/river-maker');
 assert.equal(run('communityCreditURL({name:"A private builder"})'),null);
+assert.equal(run('communityCreditURL({name:"nickfromlater",platform:"x",handle:"nickfromlater"})'),'https://x.com/nickfromlater');
 for(const change of[{name:'<img src=x>'},{platform:'javascript'},{handle:'../redirect'},{handle:'x?tab=1'},{handle:'@person'},{note:'x'.repeat(161)},{name:'hello\nworld'},{url:'https://example.com'}]){
  context.bad={...context.credit,...change};assert.throws(()=>run('validateCredits([bad])'));
 }
@@ -28,6 +29,15 @@ for(const mutation of[c=>c.works.push(c.works[0]),c=>c.works[0].credits[0].name=
  context.bad=structuredClone(catalogue);mutation(context.bad);
  assert.throws(()=>run('validateCommunity(bad)'));
 }
+context.withView=structuredClone(catalogue);
+context.withView.works.find(w=>w.miniatures).view={distance:19,yaw:.45,pitch:.48};
+assert.deepEqual(plain(run('validateCommunity(withView).works.find(w=>w.view).view')),{distance:19,yaw:.45,pitch:.48});
+for(const view of[{distance:Infinity},{distance:9},{yaw:7},{pitch:.1},{target:[0,0,0]},null]){
+ context.bad=structuredClone(context.withView);context.bad.works.find(w=>w.miniatures).view=view;
+ assert.throws(()=>run('validateCommunity(bad)'),'reject invalid viewpoint metadata');
+}
+context.bad=structuredClone(catalogue);context.bad.works[0].view={distance:19};
+assert.throws(()=>run('validateCommunity(bad)'),'a workshop-only work cannot create an annex viewpoint');
 const hobby=await read('src/hobby.js');assert.match(hobby,/embeddedLayout.*JSON.stringify\(snapshot\(\)\).*replace/,'portable export embeds the credited snapshot with script-safe escaping');
 assert.match(hobby,/buildersList.*replaceChildren/,'portable export clears runtime credit markup before rebuilding');
 console.log('Contribution QA passed: bounded metadata, safe profile URLs, rejected malformed data/overlaps, legacy compatibility and credit round trips.');

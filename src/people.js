@@ -172,19 +172,20 @@ function miniatureTrackClear(scene,x,z,radius=0){
  return true;
 }
 function buildRoomLifeDetails(key,scene){
- const b=new Builder(),details=[];let population=0;
+ const b=new Builder(),details=[],omitted=[];let population=0;
  let communityVertices=0;
- const place=(name,fn,x,z,angle=0,radius=1,y=null,credits=[],contribution=null)=>{
+ const place=(name,fn,x,z,angle=0,radius=1,y=null,credits=[],contribution=null,placement=null)=>{
   const before=b.data.length;
-  if(scene.canPlace&&!scene.canPlace(x,z,radius))return;
-  if(!miniatureTrackClear(scene,x,z,radius))return;
-  let surface=y??scene.height(x,z)+.012;if(!Number.isFinite(surface))return;
+  const reject=reason=>{if(contribution)omitted.push({id:contribution,placement,at:[x,z],reason});};
+  if(scene.canPlace&&!scene.canPlace(x,z,radius))return reject(scene.placementIssue?.(x,z,radius)||'The footprint is outside this room’s buildable ground.');
+  if(!miniatureTrackClear(scene,x,z,radius))return reject('The footprint is too close to a railway.');
+  let surface=y??scene.height(x,z)+.012;if(!Number.isFinite(surface))return reject('The placement has no finite ground height.');
   // A tiny arrangement only occupies stable ground. Explicit deck heights
   // identify existing paving, never a guessed height over water or a slope.
   const terrace=fn===littleAtelierScene||fn===littleReadingScene||fn.communityTerrace;
   const boundary=[[-1,-.72],[-.72,-1],[.72,-1],[1,-.72],[1,.72],[.72,1],[-.72,1],[-1,.72]].map(([dx,dz])=>[x+dx*radius,z+dz*radius]);
   const heights=boundary.map(([x,z])=>scene.height(x,z));
-  if(y===null&&heights.some(h=>!Number.isFinite(h)||Math.abs(h-surface)>.30))return;
+  if(y===null&&heights.some(h=>!Number.isFinite(h)||Math.abs(h-surface)>.30))return reject('The ground changes by more than 0.30 across the footprint. Choose flatter ground.');
   if(y===null&&terrace){
    // A modest stone terrace levels the bench or the cottage worktable. Its
    // low retaining edge meets the actual slope instead of leaving feet aloft.
@@ -194,7 +195,7 @@ function buildRoomLifeDetails(key,scene){
   }
   const count=fn(b,x,surface,z,angle)||0;
   if(contribution){communityVertices+=(b.data.length-before)/12;if(communityVertices>COMMUNITY_LIMITS.vertices)throw new Error(key+' community scenery exceeds its vertex budget.');}
-  population+=count;details.push({name,x,y:surface,z,population:count,credits,contribution});
+  population+=count;details.push({name,x,y:surface,z,population:count,credits,contribution,placement});
  };
  communityMiniatures(key,place);
  if(key==='coast'){
@@ -207,7 +208,7 @@ function buildRoomLifeDetails(key,scene){
  }else if(key==='studio'){
   place('Watching the pond',(b,x,y,z,a)=>{littlePerson(b,x,y,z,{pose:'camera',variant:26,color:'#8b9b76',angle:a});littlePerson(b,x+.35,scene.height(x+.35,z+.37)+.012,z+.37,{pose:'point',variant:25,scale:.66,color:'#b69c71',angle:a});littleBird(b,x-.40,scene.height(x-.40,z-.23)+.012,z-.23,.8);return 2;},-12.9,12.1,-1.9,.68);
  }
- return {mesh:b.mesh(),population,details,communityVertices};
+ return {mesh:b.mesh(),population,details,omitted,communityVertices};
 }
 
 function valleyFigureClear(x,z,radius=.18,deck=false){

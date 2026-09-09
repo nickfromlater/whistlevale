@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {readFile,readdir} from 'node:fs/promises';
 import path from 'node:path';
-import {communityContext,loadCommunity,loadContributionDefinitions,read,root} from './community-lib.mjs';
+import {communityContext,loadCommunity,loadContributionDefinitions,prepareCommunityGeometry,inspectCommunityScenes,read,root} from './community-lib.mjs';
 
 const json=process.argv.includes('--json');
 try{
@@ -33,5 +33,7 @@ try{
  const walk=async directory=>{for(const entry of await readdir(path.join(root,directory),{withFileTypes:true})){const file=path.posix.join(directory,entry.name);if(entry.isDirectory())await walk(file);else if(entry.name.endsWith('.railway.json'))layouts.push(file);}};
  await walk('contributions/layouts');
  for(const file of layouts){context.layout=JSON.parse(await read(file));run('validateProject(layout);communityAssert(validateCredits(layout.credits).length>0,"Layout needs a public credit.");');}
- const result={ok:true,works:catalogue.works.length,...report,layouts};console.log(json?JSON.stringify(result,null,2):'Contribution checks passed: '+catalogue.works.length+' works, '+report.workshopPieces+' editable pieces, '+report.trains.length+' credited trains, '+layouts.length+' layouts.');
+ prepareCommunityGeometry({context,run});
+ const scenes=inspectCommunityScenes({run},[...new Set(catalogue.works.filter(w=>w.miniatures?.length).map(w=>w.room))]);
+ const result={ok:true,works:catalogue.works.length,...report,layouts,scenes};console.log(json?JSON.stringify(result,null,2):'Contribution checks passed: '+catalogue.works.length+' works, '+report.workshopPieces+' editable pieces, '+report.trains.length+' credited trains, '+layouts.length+' layouts, '+scenes.length+' placed scenes.');
 }catch(error){console.error(json?JSON.stringify({ok:false,error:error.message}):'Contribution check failed: '+error.message);process.exitCode=1;}

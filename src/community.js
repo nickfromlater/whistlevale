@@ -10,11 +10,11 @@ function communityWorkshop(add){
  }
 }
 function communityMiniatures(key,place){
- const builders={harbor:littleHarborScene,porter:littlePorterScene,mapParty:littleMapParty,reading:littleReadingScene,atelier:littleAtelierScene,
+ const builders={willowbank:willowbankPottery,harbor:littleHarborScene,porter:littlePorterScene,mapParty:littleMapParty,reading:littleReadingScene,atelier:littleAtelierScene,
   person:(b,x,y,z,a,p)=>{littlePerson(b,x,y,z,{pose:p.pose||'stand',angle:a,variant:p.variant??0,color:p.color||'#83958b'});return 1;},
   bird:littleBird,dog:littleDog,bicycle:littleBicycle,chair:littleChair,case:littleCase,pack:littlePack,book:littleBook,rope:littleRope,trolley:littleTrolley,
   cottage:(b,x,y,z,a)=>cottage(b,x,y,z,3.5,3,3,'#d6c4a0','#6a7e6b',a),tree:(b,x,y,z)=>roomTree(b,x,y,z,4),lamp:(b,x,y,z)=>houseLamp(b,x,y,z),bench};
- for(const work of communityCatalogue.works.filter(w=>w.room===key))for(const p of work.miniatures||[]){
+ for(const work of communityCatalogue.works.filter(w=>w.room===key))for(const [index,p]of (work.miniatures||[]).entries()){
   const original=builders[p.builder],scale=p.scale??1;
   const fn=scale===1&&['harbor','porter','mapParty','reading','atelier'].includes(p.builder)?original:(b,x,y,z,angle)=>{
    b.push(x,y,z,0,angle,0,scale);let count=0;
@@ -26,7 +26,14 @@ function communityMiniatures(key,place){
    }finally{b.pop();}return p.builder==='person'?1:['harbor','porter','mapParty','reading','atelier'].includes(p.builder)?count:0;
   };
   if(scale!==1&&['reading','atelier'].includes(p.builder))fn.communityTerrace=true;
-  place(work.title,fn,...p.at,p.angle??0,COMMUNITY_BUILDERS[p.builder]*scale,p.y??null,work.credits,work.id);
+  place(work.title,fn,...p.at,p.angle??0,COMMUNITY_BUILDERS[p.builder]*scale,p.y??null,work.credits,work.id,index);
+ }
+}
+function communityRoomPlaces(scene){
+ for(const work of communityCatalogue.works.filter(w=>w.room===scene.key&&w.view)){
+  const placed=scene.lifeDetails.details.find(d=>d.contribution===work.id&&d.placement===0);if(!placed)continue;
+  const p=work.miniatures[0],r=COMMUNITY_BUILDERS[p.builder]*(p.scale??1);
+  scene.spots.push({name:work.title,target:[placed.x,placed.y+Math.min(2,r*.35),placed.z],distance:Math.max(12,r*4),pitch:.55,yaw:.45,...work.view,detail:'Made by '+communityCreditLine(work.credits)+'.'});
  }
 }
 function communityCreditLine(credits){return validateCredits(credits).map(c=>c.name).join(', ');}
@@ -47,7 +54,11 @@ function paintBuilders(){
  }
  for(const {credit,works}of authors.values()){
   const item=document.createElement('li'),heading=document.createElement('h3'),url=communityCreditURL(credit),name=document.createElement(url?'a':'span');name.textContent=credit.name;
-  if(url){name.href=url;name.target='_blank';name.rel='noopener noreferrer';name.className='builders-author-link';}heading.append(name);item.append(heading);
+  if(url){
+   const platform={github:'GitHub',x:'X',bluesky:'Bluesky'}[credit.platform];
+   name.href=url;name.target='_blank';name.rel='noopener noreferrer';name.className='builders-author-link';name.setAttribute('aria-label',credit.name+' on '+platform+' (opens in a new tab)');
+   const tag=document.createElement('small');tag.textContent=platform+' ↗';name.append(tag);
+  }heading.append(name);item.append(heading);
   const details=document.createElement('details'),summary=document.createElement('summary'),workList=document.createElement('ul');summary.textContent=works.size===1?'1 contribution':works.size+' contributions';details.open=works.size<=3;details.append(summary);workList.className='builders-works';
   for(const work of works.values()){
    const row=document.createElement('li'),title=document.createElement('strong'),room=document.createElement('span');title.textContent=work.title;room.textContent=HOUSE_ROOMS[work.room]?.name||'Across the house';row.append(title,room);

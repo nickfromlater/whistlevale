@@ -37,4 +37,21 @@ export async function loadContributionDefinitions({context,run},catalogue){
   if(!['src/community-core.js','src/railway.js'].includes(file))run(await read(file));
  }
 }
+export function prepareCommunityGeometry({context,run}){
+ const noop=()=>{};context.communityGL=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});
+ context.communityUpload=data=>{
+  if(data.length%36||data.some(n=>!Number.isFinite(n)))throw new Error('A contribution scene contains invalid geometry.');
+  return {count:data.length/12};
+ };
+ run('gl=communityGL;upload=communityUpload;disposeMesh=function(){};initLabels();initRoomArt();initHouseArt();');
+}
+export function inspectCommunityScenes({run},keys){
+ const keySource=JSON.stringify(keys);
+ return run(`(()=>{const result=[];for(const key of ${keySource}){
+  const scene=getHouseScene(key),omitted=scene.lifeDetails.omitted||[];
+  if(omitted.length){const p=omitted[0];throw new Error(p.id+' miniatures['+p.placement+'] in '+key+' at ['+p.at.join(', ')+']: '+p.reason);}
+  const placements=scene.lifeDetails.details.filter(d=>d.contribution).length;
+  result.push({room:key,placements,vertices:scene.lifeDetails.communityVertices});
+ }return result;})()`);
+}
 export const scriptJSON=value=>JSON.stringify(value).replace(/</g,'\\u003c');
