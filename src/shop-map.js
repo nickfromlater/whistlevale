@@ -120,7 +120,7 @@ function shopRestore(){
 function closeShopMap(){
  if(!shopMap.open)return;
  shopMap.token++;shopMap.open=false;shopMap.active=false;shopMap.loading=false;shopMap.entry=null;shopMap.pointers.clear();shopMap.drag=null;
- canvas.style.cursor='';document.body.classList.remove('shop-map-open');ShopMapUI.setLoading(null);ShopMapUI.hide();shopRestore();updateUI();window.railwayAnalytics?.sync?.();
+ canvas.style.cursor='';document.body.classList.remove('shop-map-open');ShopMapUI.setLoading(null);ShopMapUI.hide();shopRestore();updateUI();
 }
 function closeHouseMap(){closeShopMap();}
 async function openHouseMap(){
@@ -131,7 +131,7 @@ async function openHouseMap(){
  shopMap.open=true;shopMap.loading=true;shopMap.selected=hobby.room;shopLightCache=new WeakMap();const token=++shopMap.token;
  for(const id of['soundPanel','playlistPanel','ambiencePanel','layoutPanel','trainInspector'])if($(id))$(id).hidden=true;
  // Capture the opener before hiding the room controls, which can blur it.
- document.body.classList.remove('hidden-ui');hidden=false;ShopMapUI.show(hobby.room);document.body.classList.add('shop-map-open');window.railwayAnalytics?.sync?.();
+ document.body.classList.remove('hidden-ui');hidden=false;ShopMapUI.show(hobby.room);document.body.classList.add('shop-map-open');
  try{
   // Re-read the registry after each yield: a new module may register while
   // earlier rooms are being prepared, including a replacement of a cached one.

@@ -72,7 +72,6 @@ function activateHouseRoom(key){
  renderRoomPlaces();updateUI();
  $('layoutPanel').hidden=true;$('ambiencePanel').hidden=true;
  try{sessionStorage.setItem('hobby-house-room',key);const url=new URL(location.href);url.searchParams.set('room',key);window.history.replaceState(null,'',url);}catch{}
- window.railwayAnalytics?.sync?.();
  return scene;
 }
 
@@ -81,12 +80,12 @@ function visitHouseRoom(key,after){
  if(typeof closeHouseMap==='function')closeHouseMap();
  if(key===hobby.room){setView('room',false);after?.();return;}
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
- hobby.transition=true;window.railwayAnalytics?.sync?.();$('roomTransition').classList.add('visible');$('transitionNumber').textContent=HOUSE_ROOMS[key].number;$('transitionName').textContent=HOUSE_ROOMS[key].name;
+ hobby.transition=true;$('roomTransition').classList.add('visible');$('transitionNumber').textContent=HOUSE_ROOMS[key].number;$('transitionName').textContent=HOUSE_ROOMS[key].name;
  setTimeout(()=>{
   try{
    activateHouseRoom(key);
   }catch(error){console.error(error);toast('This room could not open. Please try again.');}
-  requestAnimationFrame(()=>{requestAnimationFrame(()=>{$('roomTransition').classList.remove('visible');hobby.transition=false;after?.();window.railwayAnalytics?.sync?.();});});
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{$('roomTransition').classList.remove('visible');hobby.transition=false;after?.();});});
  },reduceMotion?0:260);
 }
 
@@ -119,7 +118,7 @@ function enterCinema(){
  $('trainInspector').hidden=true;$('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;
  if(hobbyHasTrain()){setThrottle(Math.min(throttle||28,28));if(paused)togglePause();}if(!audio?.active)enableSound(true);
  $('cinemaRoom').textContent=HOUSE_ROOMS[hobby.room].layout;$('cinemaSubtitle').textContent=HOUSE_ROOMS[hobby.room].tag;
- $('cinemaStart').setAttribute('aria-pressed','true');$('cinemaExit').focus();wakeCinema();window.railwayAnalytics?.sync?.();
+ $('cinemaStart').setAttribute('aria-pressed','true');$('cinemaExit').focus();wakeCinema();
 }
 function leaveCinema(restore=true){
  if(!hobby.cinema)return;clearCinemaPointers();cinemaOrbit.manual=null;clearTimeout(cinemaIdleTimer);hobby.cinema=false;document.body.classList.remove('cinematic','cinema-idle');$('cinemaStart').setAttribute('aria-pressed','false');
@@ -127,7 +126,6 @@ function leaveCinema(restore=true){
  if(saved){setThrottle(saved.throttle);if(paused!==saved.paused)togglePause();viewMode=saved.view==='cinema'?'room':saved.view;Object.assign(orbit,{target:saved.target,distance:saved.distance,pitch:saved.pitch,yaw:saved.yaw});}
  else viewMode='room';
  if(restore){$('cinemaStart').focus();updateUI();}
- window.railwayAnalytics?.sync?.();
 }
 let cinemaIdleTimer=0;
 function wakeCinema(){if(!hobby.cinema)return;document.body.classList.remove('cinema-idle');clearTimeout(cinemaIdleTimer);cinemaIdleTimer=setTimeout(()=>{if(hobby.cinema&&$('soundPanel').hidden&&!document.querySelector('#cinemaControls :focus-visible'))document.body.classList.add('cinema-idle');},5500);}
@@ -140,7 +138,6 @@ function beginCinemaOrbit(){
  const delta=sub(cameraPos,cameraTarget),distance=Math.max(.1,len(delta));
  cinemaOrbit.manual={offset:sub(cameraTarget,hobbyTrainInfo().p),distance,yaw:Math.atan2(delta[0],delta[2]),pitch:Math.asin(clamp(delta[1]/distance,-1,1))};
  $('cinemaShot').hidden=true;$('cinemaCameraLabel').hidden=true;$('cinemaAuto').hidden=false;wakeCinema();
- window.railwayAnalytics?.control?.('camera_manual');
  return cinemaOrbit.manual;
 }
 function clearCinemaPointers(){
@@ -149,7 +146,6 @@ function clearCinemaPointers(){
  canvas.style.cursor='';
 }
 function resumeCinemaCamera(){
- if(cinemaOrbit.manual)window.railwayAnalytics?.control?.('camera_auto');
  clearCinemaPointers();cinemaOrbit.manual=null;
  const restoreFocus=document.activeElement===$('cinemaAuto');
  $('cinemaAuto').hidden=true;$('cinemaShot').hidden=false;$('cinemaCameraLabel').hidden=false;
@@ -338,8 +334,6 @@ function createHobbyUI(){
 exportPlayable=async function(){
  try{
   toast('Packing your little world, including its soundtrack…');const source=document.documentElement.cloneNode(true);
-  // Hosting supplies analytics separately. A portable railway has no such route.
-  for(const node of source.querySelectorAll('#analyticsBootstrap,[data-railway-analytics],script[src="/_vercel/insights/script.js"]'))node.remove();
   for(const node of source.querySelectorAll('script[src]')){const r=await fetch(node.getAttribute('src'));if(!r.ok)throw new Error('Could not pack a script');node.textContent=(await r.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');}
   for(const node of source.querySelectorAll('link[rel=stylesheet]')){const r=await fetch(node.getAttribute('href'));if(!r.ok)throw new Error('Could not pack styles');const style=document.createElement('style');style.textContent=await r.text();node.replaceWith(style);}
   for(const node of source.querySelectorAll('link[rel~="icon"]')){const href=node.getAttribute('href');if(!href||href.startsWith('data:'))continue;const r=await fetch(href);if(!r.ok)throw new Error('Could not pack the shop icon');node.setAttribute('href','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(await r.text()));}
@@ -384,7 +378,7 @@ function startHouse(){
   if(typeof initTrainCabinet==='function')initTrainCabinet();
   syncRoomControls();
   window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyHasTrain()?hobbyTrainInfo().p.slice():null,sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
-  document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);window.railwayAnalytics?.sync?.();
+  document.body.dataset.room='valley';const initialRoom=new URLSearchParams(location.search).get('room');if(initialRoom&&HOUSE_ROOMS[initialRoom]&&initialRoom!=='valley')visitHouseRoom(initialRoom);
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
 }
 setTimeout(startHouse,50);
