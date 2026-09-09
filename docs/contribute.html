@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Make a train, a building or a little place for Whistlevale. Contribution guides for people and coding agents.">
+<title>Contribute to Whistlevale</title>
+<style>
+:root{
+  --ground:#1b2723; --panel:#22322c; --panel-2:#26382f;
+  --cream:#f2ebd8; --muted:#a9b6a4; --dim:#8a9788;
+  --gold:#d9b878; --gold-dim:#9d8452; --em:#f0dba8; --sage:#afc19f; --rose:#c98d7a;
+  --line:rgba(228,215,178,.15); --line-2:rgba(228,215,178,.28);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--cream);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.6;
+  background-image:radial-gradient(120% 80% at 50% -10%,rgba(217,184,120,.09),transparent 60%);
+  background-attachment:scroll}
+.wrap{max-width:1040px;margin:0 auto;padding:56px 26px 90px}
+.eyebrow{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-dim);font-weight:600;margin:0 0 14px}
+h1{font-family:Georgia,Georgia,serif;font-weight:600;font-size:clamp(32px,5vw,48px);line-height:1.06;
+  letter-spacing:-1.1px;margin:0 0 18px;text-wrap:balance}
+h1 em{font-style:italic;color:var(--gold)}
+.standfirst{max-width:66ch;color:var(--muted);font-size:16px;margin:0}
+.standfirst strong{color:var(--cream);font-weight:600}
+code{font-family:ui-monospace,ui-monospace,monospace;font-size:12.5px;color:var(--gold);
+  background:rgba(217,184,120,.1);padding:1px 6px;border-radius:4px}
+
+.finding{margin:32px 0 0;padding:20px 22px;border-left:2px solid var(--gold-dim);
+  background:linear-gradient(90deg,rgba(217,184,120,.08),transparent);border-radius:0 8px 8px 0}
+.finding h3{font-family:Georgia,Georgia,serif;font-weight:600;font-size:18px;margin:0 0 8px}
+.finding p{margin:0 0 10px;max-width:70ch;font-size:14.5px}
+.finding p:last-child{margin:0}
+
+h2{font-family:Georgia,Georgia,serif;font-weight:600;font-size:24px;letter-spacing:-.4px;margin:54px 0 6px}
+.sub{margin:0 0 22px;color:var(--dim);font-size:13px;max-width:66ch}
+
+/* tiers */
+.tier{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:14px;overflow:hidden}
+.tier-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 20px;
+  border-bottom:1px solid var(--line);background:rgba(0,0,0,.15)}
+.tier-letter{font-family:ui-monospace,monospace;font-size:11px;color:var(--gold-dim);letter-spacing:.1em}
+.tier-name{font-family:Georgia,Georgia,serif;font-size:18px;font-weight:600}
+.effort{margin-left:auto;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--line-2);border-radius:4px;padding:3px 9px;white-space:nowrap}
+.effort.ready{color:var(--sage);border-color:rgba(175,193,159,.42);background:rgba(175,193,159,.1)}
+.effort.small{color:var(--gold);border-color:rgba(217,184,120,.4)}
+.effort.big{color:var(--rose);border-color:rgba(201,141,122,.4)}
+
+.things{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:860px){.things{grid-template-columns:1fr}}
+.thing{padding:15px 20px;border-bottom:1px solid rgba(228,215,178,.08);border-right:1px solid rgba(228,215,178,.08)}
+.thing h4{font-family:Georgia,Georgia,serif;font-size:15.5px;font-weight:600;margin:0 0 5px}
+.thing p{margin:0 0 7px;font-size:12.5px;color:var(--muted);max-width:52ch}
+.fns{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);line-height:1.7;word-break:break-word}
+
+.attr{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:22px;margin-bottom:14px}
+.attr h3{font-family:Georgia,Georgia,serif;font-size:19px;font-weight:600;margin:0 0 10px}
+.attr p{margin:0 0 12px;font-size:14px;color:var(--muted);max-width:72ch}
+.attr p strong{color:var(--cream);font-weight:600}
+pre{margin:14px 0 0;padding:15px 17px;background:rgba(0,0,0,.28);border:1px solid var(--line);
+  border-radius:9px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12px;line-height:1.65;color:#d7dcc9}
+pre .k{color:var(--gold)}
+pre .c{color:var(--dim)}
+
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:22px 0 0}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 20px 46px;border-left:1px solid var(--line);margin-left:13px}
+ol.steps li:last-child{border-left-color:transparent;padding-bottom:0}
+ol.steps li:before{content:counter(s);position:absolute;left:-13px;top:-2px;width:26px;height:26px;border-radius:50%;
+  background:var(--panel-2);border:1px solid var(--line-2);color:var(--gold);
+  font-family:ui-monospace,monospace;font-size:11px;display:grid;place-items:center}
+ol.steps h4{font-family:Georgia,Georgia,serif;font-size:16.5px;font-weight:600;margin:0 0 5px}
+ol.steps p{margin:0;font-size:13.5px;color:var(--muted);max-width:70ch}
+
+.risk{display:flex;gap:13px;padding:14px 0;border-top:1px solid var(--line)}
+.risk-tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);
+  border:1px solid rgba(201,141,122,.36);border-radius:4px;padding:3px 8px;height:fit-content;white-space:nowrap}
+.risk p{margin:0;font-size:13.5px;color:var(--muted);max-width:70ch}
+.risk p b{color:var(--cream);font-weight:600}
+
+.foot{margin-top:52px;padding-top:24px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+.foot p{max-width:70ch;margin:0 0 11px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+a{color:var(--gold);text-underline-offset:4px}a:focus-visible{outline:2px solid var(--gold);outline-offset:5px}
+.tier-name{margin:0}.start-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px}.start-links a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid var(--line-2);border-radius:8px;text-decoration:none;font-size:14px}
+pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}code{overflow-wrap:anywhere}.sub,.fns,.foot{color:var(--muted)}
+@media(max-width:480px){.wrap{padding:32px 18px 56px}.risk{flex-direction:column;gap:8px}.risk-tag{align-self:flex-start}.tier-head,.thing{padding:15px}.effort{margin-left:0}ol.steps li{padding-left:30px}}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+ <p class="eyebrow">Whistlevale · the contribution atlas</p>
+ <h1>A little place for <em>something you made.</em></h1>
+ <p class="standfirst">A train with character. A bakery with a story. A few people waiting for the ferry. Help make this house a more convincing place to wander. <strong>People and their coding agents follow the same path.</strong></p>
+ <nav class="start-links" aria-label="Start contributing"><a href="../CONTRIBUTING.md">Contribution guide</a><a href="../AGENTS.md">Agents start here</a><a href="../CLAUDE.md">Using Claude Code</a><a href="https://github.com/nickfromlater/whistlevale">Repository ↗</a></nav>
+ <aside class="finding"><h2 style="margin:0 0 8px;font-size:21px">From an idea to a pull request</h2><p>Point Codex, Claude Code or Copilot at the repository and describe your train or building. <code>AGENTS.md</code> supplies the workflow; focused recipes name the real builders, data, preview tools and tests. Claude Code imports the same guide through <code>CLAUDE.md</code>.</p><p>The workflow is being prepared in a private repository. Public access, merging and site deployment are separate maintainer decisions. Contributions are reviewed before they appear in the house.</p></aside>
+ <h2>Choose something to make</h2><p class="sub">Existing builders accept reviewed data. New shapes and behavior need source changes and their own checks.</p>
+ <section class="tier"><div class="tier-head"><span class="tier-letter">START SMALL</span><h3 class="tier-name">A satisfying first contribution</h3><span class="effort ready">Worked examples</span></div><div class="things">
+  <div class="thing"><h4>A layout</h4><p>Build in Alder Valley, export a <code>.railway.json</code>, and submit it with a description and credit. A connected starter is included. Import validation checks the format, track continuity, dimensions and 2,400-piece cap; visual clearance and performance still need review.</p><a href="../contributions/README.md#layouts">Layout guide →</a></div>
+  <div class="thing"><h4>A building</h4><p>The bakery and inn are active entries in <code>contributions/world.json</code>. Place or customize an existing building, or add a real model through the editor’s asset and template path. Check its doors, roof, neighbors and the passing trains.</p><a href="contributing/buildings.md">Building recipe →</a></div>
+  <div class="thing"><h4>A train or a finish</h4><p><code>TRAIN_COLLECTION</code> defines the catalogue. A new train needs matching geometry, working motion, roofs, coupling spacing and sound. The local cabinet can save a portrait of the actual model. A new finish can reuse an existing chassis.</p><a href="contributing/trains.md">Train recipe →</a></div>
+  <div class="thing"><h4>People, props and vignettes</h4><p>Six existing miniature scenes now use the shared data path. Compose a harbor moment, reading corner, small figure or familiar prop using the allowlisted builders. New compositions can add a reviewed builder.</p><a href="../contributions/README.md#shared-buildings-people-and-scenery">Shared scenery guide →</a></div>
+ </div></section>
+ <section class="tier"><div class="tier-head"><span class="tier-letter">MORE OF THE HOUSE</span><h3 class="tier-name">Details with a sense of place</h3><span class="effort small">Code and visual review</span></div><div class="things">
+  <div class="thing"><h4>Planting and street furniture</h4><p>Room-specific trees, plants, benches and lamps give each layout its character. Sample the finished terrain, protect track and building clearances, and add static detail within the measured budget.</p><div class="fns">roomTree · houseLamp · bench · src/rooms/</div></div>
+  <div class="thing"><h4>Bridges, lineside and districts</h4><p>Stone viaducts, trusses, trestles and working signals are source contributions. Preserve the railway’s support and behavior. A district begins with an agreed proposal and checked camera views.</p><div class="fns">stoneViaduct · trussBridge · timberTrestle · signals</div></div>
+  <div class="thing"><h4>Posters and room decor</h4><p>Cabinets, books, workbenches and framed artwork reward a closer look. Posters use the shared illustration atlas: allocate before startup, respect its capacity, and rebuild dependent geometry if the atlas changes.</p><div class="fns">artSlot · roomFrame · initHouseArt · room shells</div></div>
+  <div class="thing"><h4>Music and ambience</h4><p>Discuss recording contributions first and document their source and permission. Keep mute, separate mixer controls, gentle transitions and procedural fallbacks. Optional recordings follow their own documented asset process.</p><a href="../assets/audio/README.md">Audio guide →</a></div>
+ </div></section>
+ <section class="tier"><div class="tier-head"><span class="tier-letter">A LARGER PROJECT</span><h3 class="tier-name">A new room, or the house itself</h3><span class="effort big">Proposal first</span></div><div class="things">
+  <div class="thing"><h4>A room with its own identity</h4><p>Landscape, architecture, lighting, stock and ambience work together. <code>registerHouseRoom</code> connects new rooms to navigation and the live map; the registry drives the house layout. Agree on the concept before building.</p><a href="../CONTRIBUTING.md#adding-a-room">Room contract →</a></div>
+  <div class="thing"><h4>The shared shop</h4><p>The house’s corridors, portals, welcome desk and overview camera affect everyone’s route. Changes need map and entered-room checks, including additional registered rooms and phone navigation.</p><div class="fns">src/shop-house.js · src/shop-map.js · src/shop-map-ui.js</div></div>
+ </div></section>
+ <h2>Your name travels with your work</h2><p class="sub">A small credit, chosen by the contributor. No floating labels over the railway.</p>
+ <div class="attr"><h3>One format, across contribution types</h3><p>Layouts, objects, trains, rooms and shared works can carry <code>credits</code>. Use a chosen public name; a pseudonym without a link is welcome. Keep earlier credits when adapting work. Profile links use validated handles on GitHub, X or Bluesky.</p><pre><code>"credits": [
+  {"name": "Your chosen public name", "platform": "github", "handle": "your-handle"}
+]</code></pre><p style="margin-top:14px">This is a format example, not a credit to copy unchanged. Read the <a href="contributing/attribution.md">attribution contract</a> for limits, source notes and corrections.</p></div>
+ <div class="attr"><h3>Discoverable in the house; preserved in exports</h3><p><strong>More → The builders</strong> lists contributors and their work. A train’s credit appears in the cabinet; a selected building’s credit appears in the editor inspector. <strong>Want to contribute?</strong> opens a quiet guide in the same More panel.</p><p>Validated credits survive saved layouts, duplication, undo/redo, JSON import/export and playable HTML. Shared data is embedded into the page and portable exports. There are no accounts, background fetches or new animation-loop tasks.</p></div>
+ <h2>A contribution’s journey</h2><ol class="steps">
+  <li><h4>Describe the idea</h4><p>Choose a small addition or agree on a proposal for a larger one. Say what you want to make, where it belongs, and which public credit you want.</p></li>
+  <li><h4>Follow the recipe</h4><p>Use <code>npm run contribute -- train</code> or <code>building</code>. The command names the files, recipe and checks; <code>--list --json</code> exposes every route for agents.</p></li>
+  <li><h4>Make it real</h4><p>Implement the requested shape and behavior, site it carefully, and add credit. New models need real geometry, not a renamed catalogue entry.</p></li>
+  <li><h4>Test in the actual house</h4><p>Run <code>npm run check:contributions -- --json</code>, <code>npm test</code>, and the full geometry suite for geometry changes. Inspect desktop and phone views, the map, motion, sound and portable exports. Report what was actually checked.</p></li>
+  <li><h4>Offer it for review</h4><p>Submit a focused PR with screenshots, credit and source notes, checks and measured impact. Maintainers review before merging; publication is a separate step.</p></li>
+ </ol>
+ <h2>What the checks protect</h2>
+ <div class="risk"><span class="risk-tag">Performance</span><p><b>Measured geometry and bounded data.</b> The catalogue has an initial 128-work curation cap and a placement cap; miniature builds enforce a separate per-room vertex budget. Device performance still needs a consistent before/after comparison.</p></div>
+ <div class="risk"><span class="risk-tag">Placement</span><p><b>Space for the railway.</b> Shared workshop buildings are checked against factory building footprints and the editor’s rail/water checks. Independent miniature footprints cannot overlap. Visual review covers authored terrain, roofs and camera paths.</p></div>
+ <div class="risk"><span class="risk-tag">Attribution</span><p><b>Plain text and deliberate links.</b> Credits have bounded fields and supported profile hosts. Imported layout data is validated and rendered as text. Existing exported copies cannot be recalled by editing the repository.</p></div>
+ <footer class="foot"><p>The authoritative instructions live in <a href="../AGENTS.md">AGENTS.md</a>, <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a> and the linked recipes. This atlas describes the implemented contribution path, not permission to publish.</p><p>Before public launch, follow the <a href="MAINTAINERS.md">maintainer checklist</a>. CODEOWNERS requests reviews; GitHub branch rules enforce required approval. File and history review remains part of launch preparation.</p></footer>
+</main>
+</body>
+</html>

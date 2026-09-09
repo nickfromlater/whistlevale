@@ -7,6 +7,8 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 
 const source=await readFile(new URL('../src/railway.js',import.meta.url),'utf8');
+const communitySource=await readFile(new URL('../src/community-core.js',import.meta.url),'utf8');
+const communityRuntime='window.HOUSE_COMMUNITY='+await readFile(new URL('../contributions/world.json',import.meta.url),'utf8')+';'+await readFile(new URL('../src/community.js',import.meta.url),'utf8');
 assert.match(source,/function start\(\)\{try\{initGL\(\);prepareWorkshopStartup\(\);buildWorld\(\);createRoom\(\);initializeWorkshop\(\);/,'startup prepares the saved world before its first build');
 assert.match(source,/view:viewMode,night,lightingMode,mood:/,'diagnostics expose automatic/manual lighting');
 const STORAGE_KEY='alder-valley-grand-division-v2',CACHE_KEY='whistlevale-factory-snapshot';
@@ -23,7 +25,7 @@ function fixture({storage=new Map(),embedded=null,denyCache=false,denyStorage=fa
  });
  context.window=context;context.addEventListener=noop;
  const run=code=>vm.runInContext(code,context);
- run(source);
+ run(communitySource);run(source);run(communityRuntime);
  run(`
   // Keep the actual buildWorld, initTracks and seedDivisionScenery. Replace only
   // expensive geometry/GL output, consistently for both startup paths.
@@ -43,7 +45,7 @@ assert.equal(fresh.records.builds.length,1,'fresh visits capture the factory onc
 assert.equal(fresh.records.builds[0].capture,true);assert.ok(fresh.factory().objects.length>600,'fixture uses the actual authored factory scenery');
 assert.equal(fresh.factory().coaches,6);assert.equal(fresh.run('captureScenery'),false);
 const pristine=fresh.factory(),cache=JSON.parse(fresh.storage.get(CACHE_KEY));
-assert.equal(cache.version,'grand-v2-factory-1');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
+assert.equal(cache.version,'grand-v2-factory-2-community');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
 const saved={...structuredClone(pristine),name:'My blue railway',flat:true,livery:'blue',coaches:2,services:{freight:false,mountain:true}};
 saved.objects=saved.objects.slice(0,5);saved.objects[0].x+=.25;
 const stored=()=>new Map([[STORAGE_KEY,JSON.stringify(saved)],[CACHE_KEY,JSON.stringify(cache)]]);

@@ -27,6 +27,8 @@ class Handler(SimpleHTTPRequestHandler):
             recordings = sorted(p.stem for p in (ROOT / 'assets' / 'audio').glob('*.mp3') if p.is_file() and not p.name.startswith('.'))
             catalog = json.dumps(recordings, separators=(',', ':')).replace('<', '\\u003c')
             html = re.sub(r'(<script id="audioCatalog">)[\s\S]*?(</script>)', lambda match: match[1] + 'window.HOUSE_AUDIO_AVAILABLE=' + catalog + ';' + match[2], resolved.read_text())
+            community = json.dumps(json.loads((ROOT / 'contributions/world.json').read_text()), separators=(',', ':')).replace('<', '\\u003c')
+            html = re.sub(r'(<script id="communityCatalog">)[\s\S]*?(</script>)', lambda match: match[1] + 'window.HOUSE_COMMUNITY=' + community + ';' + match[2], html)
             payload = html.encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')

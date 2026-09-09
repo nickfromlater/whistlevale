@@ -17,6 +17,7 @@ function registerHouseRoom(key,definition){
  if(!/^[a-z][a-z0-9-]*$/.test(key))throw new Error('Room keys must be lowercase URL-safe names.');
  if(!definition||typeof definition.build!=='function')throw new Error('A room needs a build(scene, builder) function.');
  const {build,shell,...metadata}=definition;
+ if(metadata.credits!==undefined)metadata.credits=validateCredits(metadata.credits);
  HOUSE_ROOMS[key]={number:String(Object.keys(HOUSE_ROOMS).length+1).padStart(2,'0'),name:key,layout:key,tag:'A LITTLE WORLD',description:'A railway waiting to be explored.',color:'#99ad83',distance:150,target:[0,0,0],pitch:.65,yaw:.35,ambient:'forest',...HOUSE_ROOMS[key],...metadata};
  HOUSE_ROOM_BUILDERS.set(key,build);if(shell)ROOM_SHELLS[key]=shell;
  const cached=roomScenes.get(key);

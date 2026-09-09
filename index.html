@@ -57,7 +57,18 @@
 <button id="mapBtn" class="round-btn" title="Track diagram" aria-label="Show track diagram" aria-expanded="false"><svg><use href="#i-route"/></svg><span>Railway network</span></button>
 <button id="photoBtn" class="round-btn" title="Save a photograph" aria-label="Save a photograph"><svg><use href="#i-photo"/></svg><span>Photograph</span></button>
 <button id="ambienceBtn" class="round-btn" title="Room atmosphere" aria-label="Open room atmosphere controls" aria-expanded="false"><svg><use href="#i-settings"/></svg><span>Atmosphere</span></button>
-</div><button id="quietSoundMixer" class="control-link"><svg><use href="#i-sound"/></svg><span>Sound & music</span></button><nav class="mode-switch" aria-label="Workshop mode"><button id="operateMode" class="selected"><svg><use href="#i-play"/></svg><span>Operate</span></button><button id="buildMode"><svg viewBox="0 0 24 24"><path d="m4 17 11-11 3 3L7 20H4v-3Zm9-9 3 3M4 20l4-1"/></svg><span>Build your railway</span></button></nav><button id="quietHide" class="control-link"><svg><use href="#i-room"/></svg><span>Hide controls</span></button><button id="quietHelp" class="control-link"><span>Controls & guide</span></button></section>
+</div><button id="quietSoundMixer" class="control-link"><svg><use href="#i-sound"/></svg><span>Sound & music</span></button><nav class="mode-switch" aria-label="Workshop mode"><button id="operateMode" class="selected"><svg><use href="#i-play"/></svg><span>Operate</span></button><button id="buildMode"><svg viewBox="0 0 24 24"><path d="m4 17 11-11 3 3L7 20H4v-3Zm9-9 3 3M4 20l4-1"/></svg><span>Build your railway</span></button></nav><button id="quietHide" class="control-link"><svg><use href="#i-room"/></svg><span>Hide controls</span></button><button id="buildersButton" class="control-link"><span>The builders</span></button><button id="contributeButton" class="control-link"><span>Want to contribute?</span></button><button id="quietHelp" class="control-link"><span>Controls & guide</span></button></section>
+<section id="buildersPanel" class="control-panel builders-panel" hidden><p class="builders-intro">A house made by many hands. The people behind its little worlds.</p><ul id="buildersList"></ul><button id="buildersContribute" class="control-link"><span>Want to contribute?</span></button></section>
+<section id="contributePanel" class="control-panel contribute-panel" hidden>
+ <p class="builders-intro">Leave a little of yourself in the house. Make a train, a building, or a place worth taking the long way round.</p>
+ <div class="contribute-path"><h3>A train of your own</h3><p>A new finish or an original locomotive, with working wheels, a proper interior, and a portrait for the collection.</p></div>
+ <div class="contribute-path"><h3>A place with a story</h3><p>A bakery, a little workshop, people waiting for a train. Start with the shared scenery data or an existing model.</p></div>
+ <div class="contribute-path"><h3>Your own railway</h3><p>Build in Alder Valley, export your layout JSON, and submit it with a short description and your chosen credit.</p></div>
+ <p class="contribute-credit">Your work carries your chosen name. Credits stay with shared layouts and playable exports, and appear in The builders.</p>
+ <a class="contribute-link" href="https://github.com/nickfromlater/whistlevale/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Start contributing ↗</a>
+ <a class="contribute-link" href="https://github.com/nickfromlater/whistlevale/blob/main/AGENTS.md" target="_blank" rel="noopener noreferrer">Agents start here ↗</a>
+ <p class="contribute-agent">Using Codex, Claude Code or Copilot? Point it at the repository and describe what you want to make. The agent guide covers implementation, credit, testing and a pull request. Larger projects begin with a proposal.</p>
+</section>
 <nav id="railControls" class="rail-controls" aria-label="Railway controls"><button id="viewsBtn" aria-controls="viewsPanel" aria-expanded="false"><svg><use href="#i-overview"/></svg><span>Views</span></button><button id="trainBtn" aria-controls="trainPanel" aria-expanded="false"><svg viewBox="0 0 40 40"><use href="#i-train"/></svg><span>Train</span></button><button id="playBtn" class="play" title="Pause / run (Space)" aria-label="Pause the railway" aria-pressed="false"><svg><use href="#i-pause"/></svg></button><button id="moreBtn" aria-controls="morePanel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>More</span></button></nav>
 
 <aside class="layout-panel" id="layoutPanel" hidden>
@@ -106,6 +117,8 @@
 <script id="embeddedTrainCollection" type="application/json">null</script>
 <script id="embeddedTrainPortraits" type="application/json">null</script>
 
+<script id="communityCatalog">window.HOUSE_COMMUNITY={"format":"whistlevale-community","version":1,"works":[]};</script>
+<script src="src/community-core.js"></script>
 <script src="src/railway.js"></script>
 <script src="src/people.js"></script>
 <script src="src/rooms.js"></script>
@@ -115,6 +128,7 @@
 <script src="src/trains.js"></script>
 <script src="src/soundscape.js"></script>
 <script src="src/playlist.js"></script>
+<script src="src/community.js"></script>
 <script src="src/hobby.js"></script>
 <script src="src/shop-house.js"></script>
 <script src="src/shop-map-ui.js"></script>

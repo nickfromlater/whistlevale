@@ -135,6 +135,15 @@
 .quiet-ui .control-panel #operateMode{display:none}
 .quiet-ui.annex #morePanel #mapBtn{display:none}
 .quiet-ui #morePanel .control-panel-head{margin-bottom:6px}
+.builders-panel .builders-intro{margin:0 0 14px;line-height:1.6;color:#c5cbb9;font-size:13px}
+#buildersList{list-style:none;padding:0;margin:0}
+#buildersList li{padding:14px 0;border-top:1px solid #d1c59e25}
+#buildersList h3{font:20px Georgia,serif;margin:3px 0 7px;color:#efdfbb}
+#buildersList p{font-size:13px;line-height:1.65;margin:3px 0;overflow-wrap:anywhere}
+#buildersList .builders-room{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#b7c3ac}
+.builders-panel a{color:#e7cc92;text-underline-offset:4px}
+.builders-panel a:focus-visible{outline:2px solid #e7cc92;outline-offset:4px;border-radius:2px}
+.builders-panel .builders-contribute{display:block;padding:14px 0;min-height:44px;font-size:13px}
 .quiet-ui .quiet-panel .setting{font-size:13px;min-height:44px;margin:8px 0;gap:12px}
 .quiet-ui .quiet-panel .setting output{font-size:12px}
 .quiet-ui .quiet-panel .toggle{flex-shrink:0;width:44px;height:44px;margin:0;border:0;background:none}
@@ -225,3 +234,15 @@
  .quiet-ui .cinema-caption .cinema-camera-hint{max-width:calc(100vw - 40px);font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.quiet-ui #cinemaControls,.quiet-ui.cinema-idle #cinemaControls{transition:none}}
+
+.contribute-panel .builders-intro{font-size:14px;line-height:1.65;margin:0 0 16px;color:#e9ddbd}
+.contribute-path{padding:12px 0;border-top:1px solid #d1c59e25}
+.contribute-path h3{font:20px Georgia,serif;margin:0 0 6px;color:#efdfbb}
+.contribute-path p,.contribute-credit,.contribute-agent{font-size:13px;line-height:1.65;color:#c5cbb9;margin:0}
+.contribute-credit{margin:12px 0}
+.contribute-link{display:flex;align-items:center;min-height:44px;color:#e7cc92;text-underline-offset:4px;font-size:14px}
+.contribute-link:focus-visible{outline:2px solid #e7cc92;outline-offset:3px}
+.contribute-agent{margin-top:12px;font-size:12px}
+
+.builders-panel summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:13px;color:#d6d9c4}
+.builders-works{list-style:none;margin:0;padding:0 0 0 12px}.builders-works strong,.builders-works span{display:block;font-size:13px;line-height:1.6}.builders-works span{font-size:11px;color:#b7c3ac}.builders-author-link{display:inline-flex;align-items:center;min-height:44px}

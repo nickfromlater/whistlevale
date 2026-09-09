@@ -12,9 +12,10 @@ const uploads=[],disposed=[],memory=new Map();let failUpload=false,failUploadAt=
 const context=vm.createContext({assert,console,document,matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:900,devicePixelRatio:1,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop,localStorage:{getItem:key=>memory.get(key)||null,setItem:(key,value)=>memory.set(key,value)},glStub:new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop}),
  record(data){if(failUpload&&uploads.length>=failUploadAt)throw Error('GPU allocation failed');const m={vao:{},buf:{},count:data.length/12};uploads.push(m);return m;},dispose:m=>disposed.push(m)});
 context.window=context;context.addEventListener=noop;
+context.HOUSE_COMMUNITY=JSON.parse(read('contributions/world.json'));
 const run=code=>vm.runInContext(code,context);
-run(read('src/railway.js'));run('gl=glStub;upload=record;disposeMesh=dispose;');
-for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','trains.js'])run(read('src/'+file));
+run(read('src/community-core.js'));run(read('src/railway.js'));run('gl=glStub;upload=record;disposeMesh=dispose;');
+for(const file of['people.js','rooms.js','rooms/coastal.js','rooms/alpine.js','rooms/studio.js','trains.js','community.js'])run(read('src/'+file));
 run(`
  assert.equal(runningCollectionMeshes.size,0,'catalogue does not allocate stock at startup');
  initLabels();
@@ -96,7 +97,7 @@ run(`
  const setItem=localStorage.setItem;localStorage.setItem=()=>{throw Error('private mode');};assert.equal(chooseCollectionTrain('valley',{id:'wren',livery:0,cars:2}),false);assert.equal(collectionChoice('valley').id,'wren');localStorage.setItem=setItem;
  console.table(qaBudget);
 `);
-console.log('Train collection QA passed: 24 finite livery models, atlas bounds, working wheels and roofs, room isolation, shared mesh ownership/disposal, failure recovery, state preservation, persistence, and portable selection precedence.');
+console.log('Train collection QA passed: '+run('TRAIN_COLLECTION.reduce((n,q)=>n+q.liveries.length,0)')+' finite livery models, atlas bounds, working wheels and roofs, room isolation, shared mesh ownership/disposal, failure recovery, state preservation, persistence, and portable selection precedence.');
 
 // Exercise the real preview renderer and captured pointer handlers without a GPU.
 const frames=new Map();let nextFrame=0,draws=0,gpuDeleted=0,observed=0;
@@ -129,8 +130,8 @@ const hobbySource=read('src/hobby.js'),packStart=hobbySource.indexOf("  if(typeo
 let portraitRequests=0;context.fetch=async url=>{portraitRequests++;const bytes=fs.readFileSync(new URL('../'+url,import.meta.url));return{ok:true,blob:async()=>({bytes,type:'image/webp'})};};
 context.FileReader=class{readAsDataURL(blob){this.result='data:'+blob.type+';base64,'+blob.bytes.toString('base64');this.onload();}};
 await run('(async()=>{const source={querySelector:selector=>$(selector.slice(1))};'+hobbySource.slice(packStart,packEnd)+'})()');
-const packed=JSON.parse(nodes.get('embeddedTrainPortraits').textContent);assert.equal(portraitRequests,8);let totalBytes=0;
+const packed=JSON.parse(nodes.get('embeddedTrainPortraits').textContent);assert.equal(portraitRequests,run('TRAIN_COLLECTION.length'));let totalBytes=0;
 for(const [id,data]of Object.entries(packed)){const bytes=Buffer.from(data.split(',')[1],'base64');assert.deepEqual(bytes,fs.readFileSync(new URL('../assets/trains/'+id+'.webp',import.meta.url)));totalBytes+=bytes.length;}
 assert.ok(totalBytes<160000,'collection portraits stay within a small lazy-loaded asset budget');
-await run('(async()=>{const source={querySelector:selector=>$(selector.slice(1))};'+hobbySource.slice(packStart,packEnd)+'})()');assert.equal(portraitRequests,8,'repacking an offline export makes no portrait requests');
-console.log('Portable portrait QA passed: all eight images retain their exact bytes; offline repacking uses the embedded copies.');
+await run('(async()=>{const source={querySelector:selector=>$(selector.slice(1))};'+hobbySource.slice(packStart,packEnd)+'})()');assert.equal(portraitRequests,run('TRAIN_COLLECTION.length'),'repacking an offline export makes no portrait requests');
+console.log('Portable portrait QA passed: all '+Object.keys(packed).length+' images retain their exact bytes; offline repacking uses the embedded copies.');

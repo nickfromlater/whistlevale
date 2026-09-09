@@ -342,7 +342,7 @@ exportPlayable=async function(){
   for(const node of source.querySelectorAll('.quiet-generated'))node.remove();
   for(const node of source.querySelectorAll('.quiet-panel'))node.hidden=true;
   for(const node of source.querySelectorAll('[data-quiet-opener]'))node.setAttribute('aria-expanded','false');
-  source.querySelector('#roomPlaces').replaceChildren();
+  source.querySelector('#roomPlaces').replaceChildren();source.querySelector('#buildersList')?.replaceChildren();
   for(const node of source.querySelectorAll('dialog'))node.removeAttribute('open');for(const id of['builderUI','trainInspector','projectMenu','workshopBusy','worldTip'])source.querySelector('#'+id).hidden=true;
   // A new runtime starts running at its default throttle, with sound off.
   // Saved preferences can then update these controls together during startup.
