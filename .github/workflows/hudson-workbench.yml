@@ -1,0 +1,17 @@
+name: Hudson room workbench
+on:
+  push:
+    branches: [contrib/hudson-terminal-acela]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: git archive --format=zip --output=whistlevale-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hudson-workbench-source
+          path: whistlevale-source.zip
+          retention-days: 1
