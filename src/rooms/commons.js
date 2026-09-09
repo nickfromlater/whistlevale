@@ -223,7 +223,7 @@ function commonsRoom(scene,b){
  scene.canPlace=commonsBuildable;
  scene.placementIssue=commonsPlacementIssue;
  scene.spots=[
-  {name:'The Commons circuit',target:[0,1,0],distance:108,pitch:.66,yaw:.25,detail:'A little pottery workshop begins the story. Leave room for the next thoughtful addition.'},
+  {name:'The Commons circuit',target:[0,1,0],distance:108,phoneDistance:345,pitch:.66,yaw:.25,detail:'A little pottery workshop begins the story. Leave room for the next thoughtful addition.'},
   {name:'Willowbank Halt',target:[-28,2,23],distance:27,pitch:.45,yaw:.25,detail:'A little platform beside the pottery workshop. Two coaches make an unhurried circuit around the shared landscape.'},
   {name:'The woodland edge',target:[32,4,-16],distance:38,pitch:.47,yaw:-.4,detail:'Birches, oaks and conifers follow the folded ground. Their shade gives way to open meadow.'},
   {name:'The stream',target:[-3,1,3],distance:43,pitch:.63,yaw:.6,detail:'A gentle bend between grassy banks. Leave space for the water and whatever comes next.'},
