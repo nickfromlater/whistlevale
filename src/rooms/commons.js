@@ -165,6 +165,23 @@ function commonsHalt(b){
  // A footpath joins the first workshop to the inside of the halt, never the rails.
  housePath(b,[[-27.7,12.5],[-28.6,17],[-28,21.9]],.85,commonsSurface,'#bdb394');
 }
+function commonsWintergardenApproach(b){
+ // The conservatory faces a real branch-line platform across an open garden.
+ // Its masonry follows the finished ground; the existing circuit stays fixed.
+ const x=24,z=23.1,top=COMMONS_RAIL_Y+.13;
+ const bottom=Math.min(...[16.65,31.35].flatMap(xx=>[22.15,24.05].map(zz=>commonsSurface(xx,zz))))-.08;
+ b.box(x,(bottom+top)/2,z,14.7,top-bottom,1.9,'#aaa78e',4);
+ for(let i=0;i<18;i++)b.box(17.06+i*.817,top+.027,z,.798,.054,1.91,i%3?'#c6c1a5':'#bdb89c',4);
+ b.box(x,top+.062,24.08,14.8,.055,.17,'#e3d7b8',23);
+ b.box(x,top+.038,22.13,14.8,.08,.14,'#b3b196',4);
+ // Broad low steps meet the gravel walk, away from the running edge.
+ for(let i=0;i<3;i++){
+  const zz=21.02+i*.37,yy=top-.48+i*.16,base=commonsSurface(x,zz)-.035;
+  b.box(x,(base+yy)/2,zz,1.8,Math.max(.08,yy-base),.45,'#b7b398',4);
+ }
+ bench(b,28.6,top+.055,22.68,PI);
+ housePath(b,[[24,15.48],[24.6,17.2],[24,20.88]],1.25,commonsSurface,'#c3b99a');
+}
 function commonsRails(b){
  const edge=COMMONS_ROUTE;
  ribbon(b,edge,1.36,0,-.13,'#858b79',9,0,edge.length,.36);
@@ -207,7 +224,7 @@ function commonsRoom(scene,b){
    for(const k of[0,1,2,0,2,3])b.vertex(points[k],[0,1,0],lerpV(col('#648c83'),col('#a0b5a0'),Math.abs(k<2?l:r)/4.5),7);
   }
  }
- commonsRails(b);commonsBridges(b);commonsHalt(b);
+ commonsRails(b);commonsBridges(b);commonsHalt(b);commonsWintergardenApproach(b);
  scene.routes=[COMMONS_ROUTE];scene.trains=[{edge:COMMONS_ROUTE,distance:30,speed:.72,type:'steam',stock:'coast',cars:2}];
  // Deliberate woodland edges leave both banks available for later scenes.
  for(const t of COMMONS_TREES)commonsTree(b,t);
@@ -223,11 +240,11 @@ function commonsRoom(scene,b){
  scene.canPlace=commonsBuildable;
  scene.placementIssue=commonsPlacementIssue;
  scene.spots=[
-  {name:'The Commons circuit',target:[0,1,0],distance:108,phoneDistance:345,pitch:.66,yaw:.25,detail:'A little pottery workshop begins the story. Leave room for the next thoughtful addition.'},
+  {name:'The Commons circuit',target:[0,1,0],distance:108,phoneDistance:345,pitch:.66,yaw:.25,detail:'A pottery workshop and a glass-roofed garden station begin the story. Open meadows leave room for the next thoughtful addition.'},
   {name:'Willowbank Halt',target:[-28,2,23],distance:27,pitch:.45,yaw:.25,detail:'A little platform beside the pottery workshop. Two coaches make an unhurried circuit around the shared landscape.'},
   {name:'The woodland edge',target:[32,4,-16],distance:38,pitch:.47,yaw:-.4,detail:'Birches, oaks and conifers follow the folded ground. Their shade gives way to open meadow.'},
   {name:'The stream',target:[-3,1,3],distance:43,pitch:.63,yaw:.6,detail:'A gentle bend between grassy banks. Leave space for the water and whatever comes next.'},
-  {name:'The eastern field',target:[25,1,7],distance:44,pitch:.68,yaw:-.35,detail:'Open ground below the wooded hill. A place for a thoughtful first contribution.'}
+  {name:'The garden platform',target:[24,2,20.5],distance:34,pitch:.48,yaw:-.32,detail:'Follow the garden walk to Wintergarden Station. The little steam service passes across the conservatory foreground.'}
  ];
 }
 registerHouseRoom('commons',{
@@ -235,7 +252,10 @@ registerHouseRoom('commons',{
  description:'A railway around a landscape we make together, a winding stream, and open meadows. A shared room with space for the places we will make together.',
  color:'#a6b58a',ambient:'forest',target:[0,1,0],distance:146,phoneDistance:345,pitch:.66,yaw:.3,
  credits:[{name:'Whistlevale contributors',note:'Original landscape and room.'}],
- // The two miniature lights match the halt lamps; unused shader slots stay dark.
- layoutLights:[[-32.4,3.79,22.6],[-23.6,3.79,22.6],...Array.from({length:6},()=>[0,-10000,0])],
+ // Each point corresponds to a modeled lamp: the original halt, then the
+ // conservatory canopy, fountain pendant and stationmaster's desk lamp.
+ layoutLights:[[-32.4,3.79,22.6],[-23.6,3.79,22.6],...[
+  [-1.8,2.28,5.62],[1.8,2.28,5.62],[0,4.75,0],[-6.09,1.545,1.97]
+ ].map(([x,y,z])=>[24+x*.9,commonsSurface(24,9)+y*.9,9+z*.9]),[0,-10000,0],[0,-10000,0]],
  build:commonsRoom,shell:commonsShell,lights:[[-28,24.78,0],[28,24.78,0],[-45,16,-61],[0,16,-61],[45,16,-61],[0,18,61]]
 });

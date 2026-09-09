@@ -53,6 +53,16 @@
       ],
       "miniatures": [{"builder": "willowbank", "at": [-27, 8], "angle": 0.16}],
       "view": {"distance": 19, "yaw": 0.45, "pitch": 0.48}
+    },
+    {
+      "id": "wintergarden-station", "title": "Wintergarden Station", "kind": "building", "room": "commons",
+      "source": "src/scenery/wintergarden.js",
+      "credits": [
+        {"name": "nickfromlater", "platform": "x", "handle": "nickfromlater", "note": "Wintergarden Station: a railway conservatory for the shared landscape."},
+        {"name": "Whistlevale contributors", "note": "Shared geometry primitives and railway landscape."}
+      ],
+      "miniatures": [{"builder": "wintergarden", "at": [24, 9], "angle": 0, "scale": 0.9}],
+      "view": {"distance": 29, "yaw": -0.32, "pitch": 0.48}
     }
   ]
 }

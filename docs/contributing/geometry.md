@@ -24,11 +24,20 @@ Materials are shader IDs, not texture files. Useful existing choices:
 | `0` | Plain painted surface |
 | `4` | Rough masonry with mortar pattern |
 | `5` | Roof courses |
-| `6` | Glazing that warms and glows at night; use intentionally |
+| `6` | Opaque window surface that warms and glows at night in railway rooms; the Hall remaps it to reflective glazing |
 | `20` | Subtle plaster texture |
+| `10` | Small luminous lamp surfaces; use on modeled bulbs and lanterns |
 | `22` | Timber grain |
 | `23` | Matte detail surface |
 | `41` | Reflective metal |
+| `76` | Clear architectural glazing: transparent in both renderers, with no opaque shadow; use for greenhouse panes with visible interiors |
+
+Use material `76` only on complete triangles or quads. Thin single-surface panes
+work best; do not overlap duplicate glass faces. The renderer keeps these panes
+in a separate transparent pass after opaque geometry. Their buffers belong to
+the normal mesh and are released with it; no custom per-frame builder is needed.
+Material `6` remains useful for warm ticket windows and lanterns that should not
+reveal an interior.
 
 Do not use atlas materials `15`, `32` or `33` without allocated UVs. Existing
 foliage material `8` sways in the shader; it is unsuitable for rigid architecture.

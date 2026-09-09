@@ -19,7 +19,28 @@ const GRAND_HALL_EXHIBITS=[{
  ],
  story:'A copper dome opens over a brass refractor. A winding stair climbs from the limestone terrace; below, charts, an armillary sphere and a lamplit workroom await the next clear night.',
  builder:'meridian',scale:.15,source:'src/scenery/meridian-observatory.js',mapPreview:true
+},{
+
+ bay:'LW-07',id:'wintergarden-station',title:'Wintergarden Station',
+ credits:[
+  {name:'nickfromlater',platform:'x',handle:'nickfromlater',note:'Original station and botanical conservatory.'},
+  {name:'Whistlevale contributors',note:'Shared native geometry primitives and railway landscape.'}
+ ],
+ story:'A station for taking the slower train. Beyond the copper clock tower, a complete iron-and-glass vault shelters palms, citrus trees and a little fountain. Follow the tiled garden paths past hanging plants and the ticket window, to luggage waiting beneath the platform canopy. This same miniature has a home beside the railway in The Commons.',
+ view:{target:[-1,4.4,.8],distance:24,yaw:.48,pitch:.35},
+ builder:'wintergarden',scale:.205,source:'src/scenery/wintergarden.js',mapPreview:true
 }];
+// View targets are offsets from the bay center/display surface in native units:
+// Y is height above the model's lowest plane, not its original modeling origin.
+// Framing therefore travels with a miniature when its placement is resized/rotated.
+function grandHallExhibitView(exhibit,bay){
+ if(!exhibit?.view)return{camera:bay.camera,target:bay.target};
+ const v=exhibit.view;
+ if(!Array.isArray(v.target)||v.target.length!==3||!v.target.every(Number.isFinite)||!Number.isFinite(v.distance)||v.distance<=0||!Number.isFinite(v.yaw)||!Number.isFinite(v.pitch)||v.pitch<.15||v.pitch>1.35)throw new Error('An exhibit view needs a finite target, positive distance and valid camera angles.');
+ const s=exhibit.scale,a=bay.yaw||0,c=Math.cos(a),n=Math.sin(a),[x,y,z]=v.target;
+ const target=[bay.x+(x*c+z*n)*s,bay.surfaceY+y*s,bay.z+(z*c-x*n)*s],yaw=v.yaw+a,d=v.distance*s;
+ return{target,camera:[target[0]+Math.sin(yaw)*Math.cos(v.pitch)*d,target[1]+Math.sin(v.pitch)*d,target[2]+Math.cos(yaw)*Math.cos(v.pitch)*d]};
+}
 function grandHallExhibitCredits(exhibit){
  let credits=exhibit.credits;
  if(credits===undefined){
@@ -53,7 +74,7 @@ function grandHallRailwayLocations(exhibit){
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }

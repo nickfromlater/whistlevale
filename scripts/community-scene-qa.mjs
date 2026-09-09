@@ -33,7 +33,28 @@ const results=run(`(()=>{
   assert.ok(Math.hypot(...loop.at(0).p.map((v,i)=>v-loop.at(loop.length).p[i]))<1e-8,'continuous circuit');
   for(let d=0;d<loop.length;d+=.25){const p=loop.at(d).p,h=commonsSurface(p[0],p[2]);assert.ok(h<=p[1]-.12,'terrain never buries the rails');if(commonsBank(p[0],p[2])>6.3)assert.ok(h>=p[1]-.40,'land sections support the ballast');else assert.ok(COMMONS_BRIDGES.some(q=>Math.abs(p[2]-q.z)<.01&&Math.abs(p[0]-q.x)<=q.half),'water crossings have bridge decks');}
   for(const t of COMMONS_TREES){assert.ok(miniatureTrackClear(commons,t.x,t.z,t.h*.52),'tree canopy clears the trains');const mesh=new Builder();commonsTree(mesh,t);for(let i=0;i<mesh.data.length;i+=12)assert.ok(Math.hypot(mesh.data[i]-t.x,mesh.data[i+2]-t.z)<=t.h*.52,'tree geometry fits its protected footprint');}
-  assert.notEqual(HOUSE_ROOMS.commons.railway,false);assert.equal(houseLayoutLights('commons').filter(p=>p[1]>FLOOR).length,2,'only the actual halt lamps illuminate the miniature');
+  assert.notEqual(HOUSE_ROOMS.commons.railway,false);
+  const lights=houseLayoutLights('commons').filter(p=>p[1]>FLOOR);
+  assert.deepEqual(lights.slice(0,2),[[-32.4,3.79,22.6],[-23.6,3.79,22.6]],'the original halt lamps retain their positions');
+  const station=original.find(work=>work.id==='wintergarden-station'&&work.room==='commons');assert.ok(station,'Wintergarden has a reviewed Commons placement');
+  const placement=station.miniatures[0],scale=placement.scale??1,angle=placement.angle??0,[px,pz]=placement.at;
+  const lampModel=new Builder();wintergardenStation(lampModel,0,0,0);
+  // Measure each contiguous emissive lantern body in the actual model. The
+  // expected point lights follow its emitted geometry and catalogue transform,
+  // rather than copying the four constants from the room's lighting registry.
+  const centers=[];let glow=null;
+  for(let i=0;i<=lampModel.data.length;i+=12){
+   if(i<lampModel.data.length&&lampModel.data[i+9]===10){
+    glow??={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};
+    for(let axis=0;axis<3;axis++){glow.min[axis]=Math.min(glow.min[axis],lampModel.data[i+axis]);glow.max[axis]=Math.max(glow.max[axis],lampModel.data[i+axis]);}
+   }else if(glow){centers.push(glow.min.map((n,axis)=>(n+glow.max[axis])/2));glow=null;}
+  }
+  assert.ok(centers.length>=4,'the station has modeled lantern bodies for the four added point lights');
+  const expected=centers.map(([x,y,z])=>[px+(x*Math.cos(angle)+z*Math.sin(angle))*scale,commonsSurface(px,pz)+y*scale,pz+(z*Math.cos(angle)-x*Math.sin(angle))*scale]);
+  assert.equal(lights.length,6,'the original halt keeps two lights and Wintergarden adds four');
+  const remaining=expected.slice();
+  // Builder transforms use float32 matrices; allow their sub-millimetre rounding.
+  for(const light of lights.slice(2)){const i=remaining.findIndex(point=>light.every((n,axis)=>Math.abs(n-point[axis])<1e-5));assert.ok(i>=0,'each station light matches a distinct modeled lantern after placement, scale and surface height');remaining.splice(i,1);}
   // Suggested coordinates describe suitable terrain, not permanently vacant plots.
   // Validate the real catalogue above; isolate these terrain fixtures so accepting
   // a contribution on a suggested site does not break an unrelated test.

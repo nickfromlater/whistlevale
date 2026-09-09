@@ -9,7 +9,7 @@ import {communityContext,loadContributionDefinitions,loadReviewedHallSources,pre
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
 const [html,index,data,exhibits,prompts,core]=await Promise.all(['grandhall.html','index.html','src/grandhall-data.js','src/grandhall-exhibits.js','src/grandhall-contribute.js','src/community-core.js'].map(read));
 for(const [,script]of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(script);
-const catalog=vm.runInNewContext([core,data,exhibits,prompts].join('\n')+';({rooms:GRAND_HALL_GALLERIES,bays:GRAND_HALL_BAYS,featured:GRAND_HALL_FEATURED_BAY,exhibits:GRAND_HALL_EXHIBITS,prompt:grandHallAgentPrompt,roomPrompt:grandHallRoomPrompt,credits:grandHallExhibitCredits,creditURL:communityCreditURL})');
+const catalog=vm.runInNewContext([core,data,exhibits,prompts].join('\n')+';({rooms:GRAND_HALL_GALLERIES,bays:GRAND_HALL_BAYS,featured:GRAND_HALL_FEATURED_BAY,exhibits:GRAND_HALL_EXHIBITS,prompt:grandHallAgentPrompt,roomPrompt:grandHallRoomPrompt,credits:grandHallExhibitCredits,creditURL:communityCreditURL,view:grandHallExhibitView})');
 const roomIds=new Set(),bayIds=new Set(),workIds=new Set(),occupied=new Set();
 const displayFormats=new Set(['open-table','low-vitrine','tall-vitrine','wall-case','round-vitrine']);
 const finiteVector=(vector,length,label)=>assert.ok(Array.isArray(vector)&&vector.length===length&&vector.every(Number.isFinite),label);
@@ -79,6 +79,16 @@ for(const exhibit of catalog.exhibits){
  assert.ok(/^src\/scenery\/[a-z][a-z0-9-]*\.js$/.test(exhibit.source),'native exhibit declares its source');
  await read(exhibit.source);
  checkSourceDeclarations(exhibit,index,html,community.works);
+}
+// Authored framing follows the bay's rotation/scale; ordinary bays keep theirs.
+{
+ const bay={x:10,z:20,surfaceY:2,yaw:Math.PI/2,camera:[1,2,3],target:[4,5,6]};
+ const same=catalog.view(undefined,bay);assert.equal(same.camera,bay.camera);assert.equal(same.target,bay.target);
+ const framed=catalog.view({scale:.5,view:{target:[2,4,0],distance:8,yaw:0,pitch:.4}},bay);
+ assert.ok(Math.abs(framed.target[0]-10)<1e-8&&Math.abs(framed.target[1]-4)<1e-8&&Math.abs(framed.target[2]-19)<1e-8,'view target follows native scale and bay rotation');
+ assert.ok(Math.abs(Math.hypot(...framed.camera.map((v,i)=>v-framed.target[i]))-4)<1e-8,'view camera distance follows exhibit scale');
+ for(const view of [{target:[0,0],distance:2,yaw:0,pitch:.4},{target:[0,0,0],distance:0,yaw:0,pitch:.4},{target:[0,0,0],distance:4,yaw:NaN,pitch:.4},{target:[0,0,0],distance:4,yaw:0,pitch:2}])assert.throws(()=>catalog.view({scale:.5,view},bay));
+ for(const exhibit of catalog.exhibits){const ownBay=catalog.bays.find(b=>b.id===exhibit.bay),view=catalog.view(exhibit,ownBay);finiteVector(view.camera,3,exhibit.id+' inspection camera');finiteVector(view.target,3,exhibit.id+' inspection target');}
 }
 const first=catalog.exhibits.find(e=>e.id==='willowbank-pottery');
 assert.ok(first,'the original Willowbank contribution remains');assert.equal(first.bay,catalog.featured);assert.equal(first.maker,'nickfromlater');assert.equal(first.link,'https://x.com/nickfromlater');assert.equal(first.builder,'willowbank');
