@@ -7,6 +7,37 @@ There are two contribution paths: reviewed scene data for existing builders,
 and reviewed JavaScript for new models and behavior. Both go through a pull
 request. Nothing submitted here is automatically published or loaded remotely.
 
+## Claim a bay in the Grand Exhibition
+
+`grandhall.html` is the front door: seven galleries and one hundred numbered
+display bays, all currently open. Open it, find an empty bay, and take its id.
+
+Then get the brief for that bay and hand it to your coding agent:
+
+```
+npm run bay -- CC-07
+```
+
+It prints a self-contained block with the bay's gallery, its floor position, the
+allowlisted builders, the three rules that fail review most often, and the checks
+to run. **Its first instruction is that the agent asks you what you want to build
+there** — a brief that guesses produces a generic bench.
+
+Contributions are repository pull requests. Nothing is uploaded and no asset is
+stored in the browser: your work lands in `contributions/world.json` (or
+`src/scenery/` for an original building) and is reviewed like any other change.
+
+If you drafted in the Hall and have one of its exports, align it to this
+repository's format first:
+
+```
+npm run grandhall:align -- my-export.json --out contributions/world.json
+```
+
+That translates `whistlevale.community.v1` entries into `whistlevale-community`
+works and runs them through the real validator, so you learn whether a bay will
+land before you open a pull request.
+
 ## A shared place to begin
 
 [The Commons](../docs/contributing/commons.md) has a stream, open meadows and its
