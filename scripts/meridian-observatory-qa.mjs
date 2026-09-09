@@ -27,7 +27,7 @@ const report=geometry.run(`(()=>{
  assert.deepEqual(Array.from(nested.m),saved);assert.equal(nested.stack.length,level);nested.pop();
  // Rays start beyond the telescope and leave the dome. A filled hemisphere
  // must fail the front ray; deleting the entire roof must fail the back ray.
- const intersections=(origin,direction)=>{
+ const intersections=(origin,direction,maxDistance=Infinity,material=null)=>{
   let hits=0;
   for(let i=0;i<b.data.length;i+=36){
    const a=b.data.slice(i,i+3),v=b.data.slice(i+12,i+15),w=b.data.slice(i+24,i+27);
@@ -35,13 +35,28 @@ const report=geometry.run(`(()=>{
    if(Math.abs(det)<1e-8)continue;
    const t=sub(origin,a),u=dot(t,p)/det;if(u<0||u>1)continue;
    const q=cross(t,e1),vv=dot(direction,q)/det;if(vv<0||u+vv>1)continue;
-   if(dot(e2,q)/det>1e-5)hits++;
+   const distance=dot(e2,q)/det;
+   if(distance>1e-5&&distance<=maxDistance&&(material===null||b.data[i+9]===material))hits++;
   }
   return hits;
  };
  const aim=-.42,forward=[Math.sin(aim),0,Math.cos(aim)];
  assert.equal(intersections([-.62+forward[0]*1.9,7.30,-.60+forward[2]*1.9],forward),0,'the observing slit is physically open');
  assert.ok(intersections([-.62-forward[0]*1.9,7.30,-.60-forward[2]*1.9],mul(forward,-1))>0,'the back of the dome is present');
+ // Probe the former daylight gaps above the annex walls. Limit each ray to
+ // that wall, so the tower or another part of the roof cannot hide a gap.
+ const annexRoofY=z=>3.11+(3.05-z)*.43/3.42;
+ for(const z of[.2,1.2,2.4])for(const t of[.2,.75,.94]){
+  const y=2.96+(annexRoofY(z)-2.96)*t;
+  assert.ok(intersections([4.5,y,z],[-1,0,0],.8,4)>0,'right sloping gable meets the roof');
+  if(z>1)assert.ok(intersections([1.4,y,z],[1,0,0],.5,4)>0,'left sloping gable meets the roof');
+ }
+ for(const t of[.2,.75,.94]){
+  assert.ok(intersections([2.87,2.96+(annexRoofY(-.17)-2.96)*t,-.5],[0,0,1],.7,4)>0,'rear wall bears the high roof end');
+  assert.ok(intersections([2.87,3+(annexRoofY(2.88)-3)*t,3.3],[0,0,-1],.65,4)>0,'front lintel bears the low roof end');
+ }
+ assert.equal(intersections([2.90,2.35,3.35],[0,0,-1],.7),0,'the chart room retains its open front');
+ assert.ok(intersections([3.54,4,1.15],[0,-1,0],.8,41)>0,'the standing-seam roof uses copper metal in both renderers');
  const bay=GRAND_HALL_BAYS.find(e=>e.id===work.bay),placed=new Builder();grandHallPlaceExhibit(work,placed,bay);
  const bounds=[[Infinity,-Infinity],[Infinity,-Infinity],[Infinity,-Infinity]],ca=Math.cos(bay.yaw),sa=Math.sin(bay.yaw);
  for(let i=0;i<placed.data.length;i+=12){

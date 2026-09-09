@@ -18,7 +18,7 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
  ],
  story:'A copper dome opens over a brass refractor. A winding stair climbs from the limestone terrace; below, charts, an armillary sphere and a lamplit workroom await the next clear night.',
- builder:'meridian',scale:.15,source:'src/scenery/willowbank.js',mapPreview:true
+ builder:'meridian',scale:.15,source:'src/scenery/meridian-observatory.js',mapPreview:true
 }];
 function grandHallExhibitCredits(exhibit){
  let credits=exhibit.credits;
