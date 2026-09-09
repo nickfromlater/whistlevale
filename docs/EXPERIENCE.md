@@ -18,7 +18,8 @@ cinematic shot. With the scene focused, arrow keys orbit, +/− zoom, and 0 resu
 the automatic camera. Map room descriptions expand with the info button.
 
 **The Commons** is a fifth room with a stream, wooded hills and open meadows.
-It begins without a railway and has Views, Cinema and More controls. Visit it
+A modest steam train circles the whole board, crossing the stream on two low
+bridges. The interior stays open for contributions around Willowbank Pottery. Visit it
 from the map or **More → Want to contribute?**; the [Commons recipe](contributing/commons.md)
 explains how reviewed contributions can grow it.
 

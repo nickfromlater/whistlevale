@@ -3,7 +3,8 @@
 The Commons (`commons`) is the house's shared starting landscape: a winding
 stream, low wooded hills and open meadows. Willowbank Pottery, by
 [nickfromlater](https://x.com/nickfromlater), is its first contribution. The rest
-of the landscape stays open for considered additions; there are no tracks yet.
+of the landscape stays open for considered additions. A single steam service
+runs around the whole board, with two low stream bridges and Willowbank Halt.
 
 Read [AGENTS.md](../../AGENTS.md) and [attribution](attribution.md). Start locally
 with `npm run contribute -- commons`. Run
@@ -20,7 +21,7 @@ Coordinates are model units; `at` is `[x,z]`, and angles are radians.
 | --- | --- | --- |
 | Western meadow | `[-23, -3]` | Level ground north of Willowbank Pottery, with room to breathe |
 | Eastern field | `[25, 7]` | Open ground below the woodland, suitable for a small workshop or garden |
-| Northern clearing | `[18, -9]` | A quieter space near the hill, suitable for a small scene |
+| Northern clearing | `[18, -3]` | Open interior ground, with the wooded hill farther behind |
 
 These are terrain examples, not reserved plots or a fixed town plan. Check
 the latest catalogue before choosing a location: an accepted contribution may
@@ -28,7 +29,8 @@ already occupy one. The scene test checks these ground samples independently;
 it does not promise that they remain vacant. Updating a suggestion when it fills
 is helpful, but a contribution must not require moving an unrelated test fixture. Keep open space between works,
 retain views across the water, and leave the riverbanks and established trees
-clear. A railway or large district should start with an agreed proposal.
+clear. The perimeter railway stays fixed; rerouting it or adding a large district
+should start with an agreed proposal.
 
 ## Add a small contribution
 
@@ -65,12 +67,17 @@ continues to edit Alder Valley.
 
 The landscape and shell live in `src/rooms/commons.js`. `commonsHeight` generates
 terrain; `commonsSurface` samples its emitted triangles. Keep those aligned.
-Natural details use coordinate hashes, never shared random-sequence consumption.
-The room declares `railway: false`; camera, sound and selection respect that
-capability. An eventual railway must remove that declaration and supply valid
-routes and trains together. Its eight `layoutLights` slots start below the
-floor; when contributing a working lamp, place its light at the actual fixture
-without exceeding those eight slots.
+Oaks, birches, conifers and two riverside willows use room-local geometry and
+protected canopy footprints. Roots follow the finished surface; woodland
+understory and bank sedges stay out of the open plots. Natural details use
+coordinate hashes, never shared random-sequence consumption.
+The room has one continuous circuit with normal train selection, camera and
+sound behavior. `COMMONS_ROUTE` follows a rounded rectangle at X ±47 and Z ±26;
+its rails stay at Y 1.5. `commonsRailDistance` shapes the supported track bench,
+while the stream bed remains open below the two bridges. Preserve the bridge
+abutments and the halt at `[-28,23.1]`. The two miniature light slots correspond
+to its real lamps; unused slots stay below the floor. Keep independent scenery
+clear of the track, halt, woodland and other contributed footprints.
 
 ## Check the work
 

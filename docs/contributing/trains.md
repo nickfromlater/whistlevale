@@ -65,7 +65,7 @@ npm test
 npm run test:geometry:full
 ```
 
-The train suite iterates all models/finishes. Check the real model in every railway room (The Commons has no trains),
+The train suite iterates all models/finishes. Check the real model in every railway room, including The Commons,
 both directions of curves, roofs, motion, steam/motor sound, shortest/longest
 formation, all finishes, failed selection recovery, reload and portable export.
 Inspect the map and cabinet at desktop and 390px/320px widths; test keyboard focus,

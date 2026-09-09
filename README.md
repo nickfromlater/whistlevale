@@ -7,7 +7,7 @@ trains, and take the long way round.
 [Agents start here](AGENTS.md)
 
 Explore the railways of **Alder Valley**, the **Coastal Gallery**, the **Mountain
-Loft**, and the **Makers’ Shop**. **The Commons** starts with a quiet landscape
+Loft**, and the **Makers’ Shop**. **The Commons** has a gentle circuit around an open landscape
 for the community to grow. Choose a train, wander the house, or settle into
 cinema mode. Alder Valley also has a layout editor and shareable exports.
 
