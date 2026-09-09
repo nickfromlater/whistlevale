@@ -1,10 +1,13 @@
 # Contribute to the Grand Hall
 
 The Grand Hall is the central exhibition in the house map. Its connected
-galleries offer empty display spaces for original miniatures. Willowbank Pottery,
-by [nickfromlater](https://x.com/nickfromlater), is the first exhibit in **GH-08**.
-All other bays begin empty. An empty space is an invitation; selecting one does
-not reserve it or publish a contribution.
+galleries offer display spaces for original miniatures. Accepted examples include
+Willowbank Pottery in **GH-08**, by [nickfromlater](https://x.com/nickfromlater),
+and Meridian Hill Observatory in **AR-03**, by
+[nickfromlater](https://github.com/nickfromlater). The reviewed catalogue in
+[`src/grandhall-exhibits.js`](../../src/grandhall-exhibits.js) on current `main`
+is the source of truth for occupied bays. An empty space is an invitation;
+selecting one does not reserve it or publish a contribution.
 
 ## Choose a bay and copy its prompt
 
@@ -17,7 +20,7 @@ before authoring.
 The same prompt is available in the terminal:
 
 ```sh
-npm run bay -- AR-03
+npm run bay -- AR-04
 ```
 
 Both actions use `grandHallAgentPrompt()` in `src/grandhall-contribute.js` and
@@ -29,6 +32,12 @@ older page may already have an accepted exhibit.
 Contributions are source changes reviewed in pull requests. There is no asset
 upload, browser draft, account or reservation step. The copied prompt describes
 the complete path from your idea to a reviewable native model.
+
+A PR preview has its own review URL and does not update the production site.
+A maintainer's merge to `main` publishes production through the connected build.
+Do not edit `vercel.json` or project deployment settings to disable previews as
+part of a contribution. If a preview is unavailable, state that in the PR and
+provide the local checks you could complete.
 
 ## Propose a whole room beside the Hall
 
@@ -64,8 +73,9 @@ from current `main`. Follow the existing classic-script loading order; no npm
 installation or API key is needed.
 
 1. Write `src/scenery/<slug>.js` with a uniquely named procedural builder. Use
-   [Willowbank Pottery](../../src/scenery/willowbank.js) as a complete original
-   model example. Shared `Builder` primitives live in `src/railway.js`; room
+   [Willowbank Pottery](../../src/scenery/willowbank.js) and
+   [Meridian Hill Observatory](../../src/scenery/meridian-observatory.js) as
+   original model examples. Shared `Builder` primitives live in `src/railway.js`; room
    helpers live in `src/rooms.js`. Balance every transform push/pop and build
    around a local origin. The exhibition adapter positions and scales the work.
 2. Register the source in `grandhall.html` before inline startup as a deferred
@@ -86,6 +96,9 @@ installation or API key is needed.
    `Builder` primitives, `ringX`/`ringZ`, `hash`/`shade` and `windowPane`. For the
    Hall adapter use material IDs `0, 4, 5, 6, 8, 22, 23, 41`; do not assume railway
    atlas labels or every room helper is available. Test the actual model.
+   Compare the intended finishes in the Hall renderer and, for a railway
+   placement or reviewed map preview, the house renderer. A supported material
+   ID alone does not establish that copper, stone, wood or glazing looks right.
 3. Add a dispatch mapping to `grandHallBuildExhibit()` in
    `src/grandhall-exhibits.js`. Wrap the builder reference in a function so other
    unloaded sources are never resolved eagerly, for example
@@ -109,6 +122,9 @@ installation or API key is needed.
    the glass and frame. Leave room for walking and for neighboring exhibits to
    be seen. A catalogue record alone does not create a new model: the geometry
    and its renderer mapping must exist.
+   For buildings, inspect low and side views to confirm roofs bear on walls or
+   beams, roof/wall joints close without unintended gaps, and stairs have
+   visible support. Deliberate openings should remain clear from those views.
 
 Hall builders use their own registry. A Hall-only miniature does not need an
 entry in `COMMUNITY_BUILDERS` or `communityMiniatures`; those serve railway room
@@ -176,13 +192,14 @@ offline visits. Keep script initialization limited to definitions; building
 meshes or creating large caches at file load would defeat gallery loading.
 
 The house map uses a lightweight overview; enter the Hall for full exhibit
-inspection. A Hall-only contribution marks its occupied display with a small
-brass edge plaque, without constructing the full model in the map. The optional
-`mapPreview: true` record field explicitly opts a reviewed native model into
-the overview; Willowbank retains that preview. Such a preview needs its source
-available at main-house startup. Ordinary Hall-only source can wait for entry
-to its gallery. Preserve the complete entered model, chosen credits and portable
-export when adding or changing a preview.
+inspection. By default, a Hall-only contribution marks its occupied display with
+a small brass edge plaque. Use `mapPreview: true` only for an explicitly reviewed
+full-model preview, accounting for its added geometry in the overview. Willowbank
+and Meridian retain those previews. Such a preview needs its source available at
+main-house startup. Ordinary Hall-only source can wait for entry to its gallery.
+Always preserve the complete entered model, chosen credit and portable export.
+The main Builders list retains the credit whether the map shows a marker or a
+full preview.
 
 The gallery-count limit is not a byte or frame-time guarantee. Keep the existing
 geometry budgets and measure the complete emitted model, including its props.
@@ -215,6 +232,12 @@ Use another free port if 4175 is already occupied. The supplied server injects
 the optional audio manifest; a bare static server does not. No recordings are
 required for these checks.
 
+The JSON contribution report currently measures railway placements; it omits
+Hall-only exhibits. Include the Hall measurements printed by `npm run test:hall`
+as well. For Meridian's focused measurements, run
+`node scripts/meridian-observatory-qa.mjs`; its output includes vertex count,
+vertex-buffer size and the placed model's dimensions.
+
 Inspect the live house map, Hall entry and return, direct bay links, pointer and
 keyboard bay selection, your complete miniature, credit and creator link. Check
 desktop and **390px/320px** phone widths, with no overflowing controls or blocked
@@ -223,6 +246,9 @@ the change. Keep existing budgets; simplify unnecessary geometry if needed.
 Use the [review checklist](review.md) for export and attribution checks affected
 by shared source changes. Mark physical touch or other unavailable checks as
 unverified rather than treating desktop resizing as a device test.
+If WebGL/GPU review is unavailable, say so explicitly. A Canvas fallback or
+standalone model preview does not verify the actual Hall or house renderer's
+appearance or performance.
 
 The main map loads a lightweight Hall overview through its own scene renderer.
 Entering the Hall opens its dedicated page with the complete native exhibits.
