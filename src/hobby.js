@@ -94,7 +94,7 @@ function renderRoomPlaces(){
  const container=$('roomPlaces');container.replaceChildren();if(hobby.room==='valley')return;
  for(const [i,spot]of hobby.scene.spots.entries()){
   const button=document.createElement('button');button.textContent=spot.name;button.onclick=()=>{
-   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=(spot.distance??HOUSE_ROOMS[hobby.room].distance)*(innerWidth<700?1.7:1);orbit.pitch=spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
+   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
    for(const b of container.querySelectorAll('button'))b.classList.toggle('chosen',b===button);updateUI();
   };container.append(button);
  }

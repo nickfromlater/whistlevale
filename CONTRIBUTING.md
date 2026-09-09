@@ -170,7 +170,9 @@ your room differs. A shell is optional and falls back to the shared room shell,
 but a new room should earn its own architectural character.
 
 Room metadata can set `phoneDistance` for a deliberate portrait overview;
-otherwise phones use `distance * 1.78`. Inspect both 390px and 320px widths.
+otherwise phones use `distance * 1.78`. Individual camera spots also accept
+`phoneDistance`; their default is `distance * 1.7`. Use an explicit distance for
+views that need to show the entire layout. Inspect both 390px and 320px widths.
 
 Add the new script to `index.html` after `src/rooms.js` and before startup, next
 to the other room modules. Register every room before the atlas and scene build
