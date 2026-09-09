@@ -235,8 +235,13 @@ function grandHallRoof(b,r){
   for(const side of[-1,1]){
    b.quad([side*w,edge,-d],[side*opening,base,cz-opening],[side*opening,base,cz+opening],[side*w,edge,d],octagon?'#9a977f':'#c9ccb2',72);
    b.quad([-w,edge,side*d],[-opening,base,cz+side*opening],[opening,base,cz+side*opening],[w,edge,side*d],octagon?'#9a977f':'#c9ccb2',72);
-   for(const z of[-d,0,d])b.beam([side*w,edge-.14,z],[side*opening,base-.14,cz+z/d*opening],.11,p.trim,22,6);
-   for(const x of[-w,0,w])b.beam([x,edge-.14,side*d],[x/w*opening,base-.14,cz+side*opening],.11,p.trim,22,6);
+   const corner=octagon?radius*(Math.cos(Math.PI/8)+Math.sin(Math.PI/8))/2:opening;
+   for(const z of[-d,0,d]){
+    const reach=z===0?opening:corner;
+    b.beam([side*w,edge-.14,z],[side*reach,base-.14,cz+(z===0?0:Math.sign(z)*corner)],.11,p.trim,22,6);
+   }
+   // The corner rafters already meet each chamfer; add the end's centre rafter.
+   b.beam([0,edge-.14,side*d],[0,base-.14,cz+side*opening],.11,p.trim,22,6);
   }
   for(const z of[-d+2,-1.8,d-2]){b.beam([-w,edge-.16,z],[w,edge-.16,z],.10,p.trim,22,6);}
   if(octagon){for(const x of[-7.9,7.9])for(const z of[-10.5,-3.7,5.1])pendant(b,x,4.9,z);}
