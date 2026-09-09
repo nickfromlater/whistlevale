@@ -13,7 +13,8 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const fixture=await mkdtemp(path.join(os.tmpdir(),'whistlevale-delivery-'));
 const digest=buffer=>createHash('sha256').update(buffer).digest('hex').slice(0,16);
 const walk=async directory=>(await Promise.all((await readdir(directory,{withFileTypes:true})).map(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):path.join(directory,entry.name)))).flat();
-const external=html=>[...html.matchAll(/\s(?:src|href|data-src)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url));
+const external=html=>[...html.replace(/(<script\b[^>]*>)[\s\S]*?<\/script>/gi,'$1</script>').matchAll(/\s(?:src|href|data-src)=["']([^"']+)["']/g)].map(match=>match[1]).filter(url=>!url.startsWith('#')&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url));
+assert.deepEqual(external('<script>const example=\' data-src="example-only.js"\';</script><script type="application/x-whistlevale-exhibit" data-src="real-source.js"></script>'),['real-source.js'],'source examples inside scripts are not network requests');
 const attributes=text=>new Map([...text.matchAll(/(?:^|\s)([a-z][a-z0-9-]*)\s*=\s*(["'])(.*?)\2/gi)].map(match=>[match[1],match[3]]));
 // A small DOM adapter for asset replacement only. The real Hall document and
 // renderer source are packed; inline scripts are never executed by this parser.
