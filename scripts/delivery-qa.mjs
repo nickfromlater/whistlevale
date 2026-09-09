@@ -153,7 +153,7 @@ async function checkPortableHall(build){
  await assert.rejects(run('packHouseHall()'),/Could not pack the Grand Hall/,'a missing Hall aborts an incomplete export');
 }
 async function build(){
- execFileSync(process.execPath,['scripts/build.mjs'],{cwd:fixture,stdio:'pipe'});
+ execFileSync(process.execPath,['scripts/build.mjs'],{cwd:fixture,stdio:'pipe',env:{...process.env,WHISTLEVALE_AUDIO_ORIGIN:''}});
  const html=await readFile(path.join(fixture,'dist/index.html'),'utf8'),hallHTML=await readFile(path.join(fixture,'dist/grandhall.html'),'utf8'),window={};
  const catalog=html.match(/<script id="audioCatalog">([\s\S]*?)<\/script>/);assert.ok(catalog,'built page has the audio catalog');
  vm.runInNewContext(catalog[1],{window});
@@ -202,6 +202,7 @@ try{
  attributeProbe.removeAttribute('data-src');assert.equal(attributeProbe.hasAttribute('data-src'),false);assert.deepEqual([...attributes(attributeProbe.attributes).keys()],['type','data-source'],'packing removes only the deferred URL attribute');
  await mkdir(path.join(fixture,'scripts'),{recursive:true});
  await cp(path.join(root,'scripts/build.mjs'),path.join(fixture,'scripts/build.mjs'));
+ await cp(path.join(root,'scripts/hosted-audio.mjs'),path.join(fixture,'scripts/hosted-audio.mjs'));
  await cp(path.join(root,'scripts/serve.py'),path.join(fixture,'scripts/serve.py'));
  await cp(path.join(root,'scripts/community-lib.mjs'),path.join(fixture,'scripts/community-lib.mjs'));
  await cp(path.join(root,'contributions'),path.join(fixture,'contributions'),{recursive:true});

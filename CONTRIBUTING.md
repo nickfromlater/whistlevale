@@ -60,6 +60,7 @@ npm run check
 npm run check:contributions
 npm run test:contributions
 npm run test:audio
+npm run test:hosted-audio
 npm run test:delivery
 npm run test:geometry
 npm run test:lighting
@@ -337,8 +338,11 @@ publication step: finish the required checks and visual review before merging.
 Contributors submit a PR; they do not need Vercel access or a separate deploy command.
 
 Vercel runs `npm run build` and publishes only `dist/`, as configured in
-`vercel.json`. After a release, confirm the automatic production deployment is
-ready for the merged commit and check the affected behavior on the live site.
+`vercel.json`. Hosted builds preserve the separately supplied recordings using
+the opt-in process in [the audio guide](assets/audio/README.md#hosted-builds).
+Ordinary clones still run and build offline without those recordings. After a
+release, confirm the automatic production deployment is ready for the merged
+commit and check the affected behavior on the live site.
 
 ## Files that should stay local
 
