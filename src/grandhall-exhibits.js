@@ -11,6 +11,14 @@ const GRAND_HALL_EXHIBITS=[{
  ],
  story:'A small pottery workshop, with a covered worktable, greenware and a carefully stocked window. The first contribution to Whistlevale.',
  builder:'willowbank',scale:.28,source:'src/scenery/willowbank.js',mapPreview:true
+},{
+ bay:'AR-03',id:'meridian-hill-observatory',title:'Meridian Hill Observatory',
+ credits:[
+  {name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original observatory design.'},
+  {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
+ ],
+ story:'A copper dome opens over a brass refractor. A winding stair climbs from the limestone terrace; below, charts, an armillary sphere and a lamplit workroom await the next clear night.',
+ builder:'meridian',scale:.15,source:'src/scenery/willowbank.js',mapPreview:true
 }];
 function grandHallExhibitCredits(exhibit){
  let credits=exhibit.credits;
@@ -45,7 +53,7 @@ function grandHallRailwayLocations(exhibit){
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }
