@@ -10,9 +10,9 @@ Vercel settings. Do not declare the launch complete based only on these files.
    recordings and material that should remain private. A scanner result is
    evidence, not a guarantee that everything is appropriate for publication.
    Confirm ownership/permission for artwork and the existing license notices.
-3. Confirm the owner's decision to change repository visibility. AGENTS.md
-   currently requires keeping it private until explicitly requested otherwise.
-   Update the README's preparation status when the public launch actually occurs.
+3. Preserve the repository's existing visibility unless the owner explicitly
+   requests a change. Verify public-facing documentation matches the current
+   access and contribution workflow; remove outdated preparation-only notices.
 4. Configure the default branch's rules: pull requests, required `check` CI,
    approval from the maintainer, stale-review dismissal, and blocked force pushes
    or deletion. Decide documented emergency bypass access. Verify the rule by
