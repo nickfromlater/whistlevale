@@ -23,6 +23,12 @@ welcome. Choose the shortest path:
   and agree on the scope with the maintainer before building. Then submit a PR
   linked to that issue.
 
+For your first contribution, fork `nickfromlater/whistlevale`, make the change
+on a branch in your fork, and open a PR targeting **`nickfromlater/whistlevale`
+→ `main`**. The PR appears in the original repository; your changes enter it
+when the maintainer merges. No upstream write access is needed. Issues can be
+opened directly in the original repository without a fork.
+
 Issues are for discussion; PRs contain the actual code, artwork or documentation.
 The maintainer reviews and merges PRs. Opening an issue or PR does not publish a
 change or reserve a place in the house.
