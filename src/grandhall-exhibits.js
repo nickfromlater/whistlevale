@@ -33,7 +33,7 @@ const GRAND_HALL_EXHIBITS=[{
  bay:'LW-01',id:'the-night-post',title:'The Night Post',
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Blender miniature, created with Codex assistance.'}],
  story:'Letters to places without addresses. Under a blue-glass vault, letters descend from the dead-letter office through a spiral chute, cancelling press and dispatch belt to a waiting postal train. Beyond the brass gates: an autumn footbridge, a lunar observatory, and a cottage kitchen where one letter has finally arrived. Yesterday. The Moon. Home Again.',
- view:{target:[0,3.8,0],distance:28,yaw:.38,pitch:.38},
+ view:{target:[0,3.8,0],distance:32,yaw:.38,pitch:.38},
  builder:'nightPost',scale:.245,source:'src/scenery/night-post.js'
 }];
 // View targets are offsets from the bay center/display surface in native units:
