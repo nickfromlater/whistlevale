@@ -30,6 +30,7 @@ Materials are shader IDs, not texture files. Useful existing choices:
 | `22` | Timber grain |
 | `23` | Matte detail surface |
 | `41` | Reflective metal |
+| `77` | Miniature pinlights and low-level illuminated enamel. Vertex UV is `[phaseRadians, amplitude]`, with amplitude 0 for steady light or at most 0.24 for gentle twinkle; reduced motion freezes it. No texture slot needed. |
 | `76` | Clear architectural glazing: transparent in both renderers, with no opaque shadow; use for greenhouse panes with visible interiors |
 
 Use material `76` only on complete triangles or quads. Thin single-surface panes

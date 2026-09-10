@@ -42,7 +42,7 @@ function communityWorkView(scene,id,placement=0){
  const matches=(scene.lifeDetails?.details||[]).filter(detail=>detail.contribution===id&&detail.placement===placement);if(matches.length!==1)return null;
  const placed=matches[0],radius=COMMUNITY_BUILDERS[piece.builder]*(piece.scale??1);
  if(![placed.x,placed.y,placed.z,radius].every(Number.isFinite)||radius<=0)return null;
- return{name:work.title,contribution:id,placement,target:[placed.x,placed.y+Math.min(2,radius*.35),placed.z],distance:Math.max(12,radius*4),pitch:.55,yaw:.45,...(placement===0?work.view:{})};
+ return{name:work.title,contribution:id,placement,target:[placed.x,placed.y+(placement===0&&work.view?.targetHeight!==undefined?work.view.targetHeight*(piece.scale??1):Math.min(2,radius*.35)),placed.z],distance:Math.max(12,radius*4),pitch:.55,yaw:.45,...(placement===0?work.view:{})};
 }
 function communityCreditLine(credits){return validateCredits(credits).map(c=>c.name).join(', ');}
 function paintBuilders(){

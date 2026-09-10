@@ -128,6 +128,8 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  // Clear architectural glazing is an opt-in surface, drawn after opaque rooms.
  // Its reflection is independent of a room's lamp uniforms during the map pass.
  if(m==76.){vec3 v=normalize(uEye-p);float fresnel=pow(1.-abs(dot(n,v)),4.);vec3 reflection=mix(vec3(.34,.47,.43),vec3(.035,.070,.10),dusk);reflection+=vec3(.20,.17,.10)*pow(max(dot(n,normalize(uSun+v)),0.),100.)*sunlight;frag=vec4(reflection,.055+fresnel*.22);return;}
+ // Miniature pinlights: bounded twinkle below the coarse bloom threshold; time honours pause/reduced motion.
+ if(m==77.){float pulse=1.+vUV.y*sin(uTime*.7+vUV.x);frag=vec4(min(vec3(.83),pow(max(base,vec3(0)),vec3(2.2))*2.5)*pulse,1.);return;}
  vec3 v=normalize(uEye-p),l=uSun,h=normalize(l+v);float nl=max(dot(n,l),0.),nv=max(dot(n,v),.02);float sh=shadow(n);
  // Sunset removes direct daylight before the workshop lamps take over.
  // Cool sky fill preserves the shape of unlit scenery and the room corners.

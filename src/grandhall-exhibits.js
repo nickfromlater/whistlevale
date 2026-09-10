@@ -17,7 +17,8 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original observatory design.'},
   {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
  ],
- story:'A copper dome opens over a brass refractor. A winding stair climbs from the limestone terrace; below, charts, an armillary sphere and a lamplit workroom await the next clear night.',
+ story:'A little observatory with its own universe. Above the copper dome, a brass-framed night-enamel theatre holds hundreds of gently twinkling pinlights, constellation tracery, a flowing Milky Way, a ringed planet, a crescent moon and a split-tailed comet. A decorative miniature sky, not a live star chart. Below: a brass refractor, winding stair and lamplit chart room.',
+ view:{target:[0,7.15,0],distance:29,yaw:-.20,pitch:.25},
  builder:'meridian',scale:.15,source:'src/scenery/meridian-observatory.js',mapPreview:true
 },{
 
