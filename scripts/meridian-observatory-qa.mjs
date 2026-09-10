@@ -19,7 +19,7 @@ const report=geometry.run(`(()=>{
  assert.equal(b.stack.length,0);assert.equal(b.normalStack.length,0);
  assert.deepEqual(b.data,again.data,'the model is deterministic');
  const vertices=b.data.length/12;assert.ok(vertices<40000,'keep the original 40,000-vertex ceiling');
- const materials=new Set([0,4,5,6,8,10,22,23,41,77]);
+ const materials=new Set([0,4,5,6,8,10,22,23,41,77,78,79,80,81,82]);
  for(let i=9;i<b.data.length;i+=12)assert.ok(materials.has(b.data[i]),'only materials available in both renderers');
  const nested=new Builder();nested.push(2,3,4,.1,.2,.3,.4);
  const saved=Array.from(nested.m),level=nested.stack.length;

@@ -17,8 +17,8 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original observatory design.'},
   {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
  ],
- story:'A little observatory with its own universe. Above the copper dome, a brass-framed night-enamel theatre holds hundreds of gently twinkling pinlights, constellation tracery, a flowing Milky Way, a ringed planet, a crescent moon and a split-tailed comet. A decorative miniature sky, not a live star chart. Below: a brass refractor, winding stair and lamplit chart room.',
- view:{target:[0,7.15,0],distance:29,yaw:-.20,pitch:.25},
+ story:'A little night of its own. Amber windows glow beneath a suspended miniature universe: deep blue nebulae, drifting starlight, distant worlds and an occasional meteor. The night sky is an imagined miniature, not a live star chart.',
+ view:{target:[0,6.4,0],distance:23,yaw:-.18,pitch:.23},
  builder:'meridian',scale:.15,source:'src/scenery/meridian-observatory.js',mapPreview:true
 },{
 

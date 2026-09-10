@@ -25,7 +25,7 @@ function meridianObservatory(b,x,y,z,angle=0){
  const lamp=(xx,yy,zz)=>{
   b.cylinder(xx,yy+.035,zz,.115,.085,.07,iron,41,8);
   b.cylinder(xx,yy+.46,zz,.025,.022,.85,iron,41,6);
-  b.box(xx,yy+.91,zz,.18,.25,.18,'#edc780',6);
+  b.box(xx,yy+.91,zz,.18,.25,.18,'#efb878',10);
   for(const dx of[-.10,.10])for(const dz of[-.10,.10])b.box(xx+dx,yy+.91,zz+dz,.025,.30,.025,iron,41);
   b.cylinder(xx,yy+1.10,zz,.18,.025,.13,iron,41,4);
  };
@@ -87,7 +87,7 @@ function meridianObservatory(b,x,y,z,angle=0){
   }else b.box(0,1.93,0,w,1.74,.27,stone,4);
   // A dark reveal behind the warm, narrow instrument-room windows.
   b.box(0,3.30,-.065,w-.08,.91,.04,'#4b6058',23);
-  b.box(0,3.30,-.033,w-.16,.85,.025,'#b2b38b',6);
+  b.box(0,3.30,-.033,w-.16,.85,.025,'#dfa265',10);
   b.box(0,3.32,.015,.035,.98,.035,iron,41);
   b.box(0,3.29,.016,w-.07,.033,.035,iron,41);
   for(const side of[-1,1])b.box(side*(w/2+.05),3.30,.06,.10,1.04,.38,lightStone,4);
@@ -98,7 +98,7 @@ function meridianObservatory(b,x,y,z,angle=0){
    const p=(rad,t,zz)=>[Math.cos(t)*rad,spring+Math.sin(t)*rad,zz];
    b.quad(p(rr,aa,.195),p(rr+.13,aa,.195),p(rr+.13,qq,.195),p(rr,qq,.195),k%2?lightStone:stone,4);
    b.quad(p(rr,qq,-.13),p(rr,qq,.195),p(rr,aa,.195),p(rr,aa,-.13),darkStone,4);
-   b.tri([0,spring,-.07],p(rr,aa,-.07),p(rr,qq,-.07),'#767f65',6);
+   b.tri([0,spring,-.07],p(rr,aa,-.07),p(rr,qq,-.07),'#c79260',10);
    // Close the spandrel above the curved opening all the way through the wall.
    b.quad(p(rr,aa,.135),[Math.cos(aa)*rr,top,.135],[Math.cos(qq)*rr,top,.135],p(rr,qq,.135),stone,4);
    b.quad(p(rr,qq,-.135),[Math.cos(qq)*rr,top,-.135],[Math.cos(aa)*rr,top,-.135],p(rr,aa,-.135),stone,4);
@@ -262,11 +262,11 @@ function meridianObservatory(b,x,y,z,angle=0){
  b.box(1.43,.088,3.75,.89,.012,.30,iron,23);
  for(let i=0;i<3;i++)b.box(1.16+i*.26,.098,3.75,.14,.006,.016,brass,41);
  meridianCelestialTheatre(b);
+ meridianLanternGlow(b);
  b.pop();return 0;
 }
 
-// Joined metal sweeps avoid hidden end caps at every bend. All frames are
-// local to this work; no shared Builder primitive or renderer cache is changed.
+// Continuous local sweeps omit invisible caps without changing shared primitives.
 function meridianWire(b,points,r,color,mat=41){
  const add=(a,q)=>a.map((v,i)=>v+q[i]),sub=(a,q)=>a.map((v,i)=>v-q[i]);
  const unit=a=>{const d=Math.hypot(...a)||1;return a.map(v=>v/d);};
@@ -280,128 +280,83 @@ function meridianWire(b,points,r,color,mat=41){
  b.quad(...rings[0].slice().reverse(),color,mat);b.quad(...rings.at(-1),color,mat);
 }
 
-// A hand-built celestial theatre, not the room's sky and not a live sky chart.
-// Every pinlight, orbit, planet and support is real miniature geometry, inside
-// the original XZ footprint. Material 77 only modulates light: no moving bounds,
-// frame-loop builders, extra textures, downloads or separately owned buffers.
+// A small, open volume of night. There is no disc, frame or rigid constellation
+// board: translucent, depth-tested light lives between the little worlds.
+// All geometry is deterministic and static. Only fragment light evolves.
 function meridianCelestialTheatre(b){
- const pi=Math.PI,tau=pi*2,gold='#cbaa70',pale='#f4dc9c';
- const sky=(u,v,lift=0)=>[u*4.06,11.74+v*2.65,-1.13-2.02*Math.sqrt(Math.max(0,1-u*u-v*v))+lift];
- const tint=(u,v)=>{
-  const cloud=Math.exp(-((v-.29*Math.sin(u*3.6)-u*.42)**2)/.09);
-  const violet=.5+.5*Math.sin(u*3.1);
-  return [.031+cloud*(.045+violet*.022),.062+cloud*.065,.108+cloud*.112];
+ const pi=Math.PI,tau=2*pi;
+ const sky=(u,v,z=0)=>[u*4.02,11.57+v*2.65,-2.52+.72*(u*u+v*v)+z];
+ const sheet=(depth,tint)=>{
+  const rings=5,sectors=28,p=(r,a)=>[r*Math.cos(a),r*Math.sin(a)];
+  const tri=(a,c,d)=>{for(const q of[a,c,d])b.vertex(sky(q[0],q[1],depth),[0,0,1],tint,78,q);};
+  for(let j=0;j<rings;j++)for(let i=0;i<sectors;i++){
+   const a=i*tau/sectors,c=(i+1)*tau/sectors,r=j/rings,R=(j+1)/rings;
+   if(j===0)tri([0,0],p(R,a),p(R,c));
+   else{tri(p(r,a),p(R,a),p(R,c));tri(p(r,a),p(R,c),p(r,c));}
+  }
  };
- const front=[0,0,1];
- const triangle=(a,c,d)=>{for(const q of[a,c,d])b.vertex(sky(...q),front,tint(...q),77,[0,0]);};
- // A shallow, open-front night-enamel shell. A continuous dark rear skin is
- // supplied by the same two-sided sheet; the rim has real depth and end faces.
- const sectors=36,rings=5;
- for(let j=0;j<rings;j++)for(let i=0;i<sectors;i++){
-  const a=i*tau/sectors,c=(i+1)*tau/sectors,r=Math.sin(j*pi/(2*rings)),R=Math.sin((j+1)*pi/(2*rings));
-  const p=(s,t)=>[Math.cos(t)*s,Math.sin(t)*s];
-  if(j===0)triangle([0,0],p(R,a),p(R,c));
-  else{triangle(p(r,a),p(R,a),p(R,c));triangle(p(r,a),p(R,c),p(r,c));}
- }
- // Brass bezel, engraved graduations and a small northern finial.
- for(let i=0;i<48;i++){
-  const a=i*tau/48,c=(i+1)*tau/48;
-  const p=(r,t,z)=>[4.06*r*Math.cos(t),11.74+2.65*r*Math.sin(t),z];
-  b.quad(p(.995,a,-1.095),p(1.013,a,-1.095),p(1.013,c,-1.095),p(.995,c,-1.095),gold,41);
-  b.quad(p(1.013,a,-1.16),p(1.013,a,-1.095),p(1.013,c,-1.095),p(1.013,c,-1.16),'#776c54',41);
-  const rr=i%4===0?.936:.964,w=i%4===0?.006:.0027;
-  b.quad(sky(rr*Math.cos(a-w),rr*Math.sin(a-w),.035),sky(.988*Math.cos(a-w),.988*Math.sin(a-w),.035),sky(.988*Math.cos(a+w),.988*Math.sin(a+w),.035),sky(rr*Math.cos(a+w),rr*Math.sin(a+w),.035),i%4===0?pale:gold,41);
- }
- // Two fine, continuous risers grow from the rear of the existing plinth.
- for(const side of[-1,1]){
-  b.cylinder(side*4.04,.085,-3.54,.14,.11,.13,gold,41,8);
-  meridianWire(b,[[side*4.04,.15,-3.54],[side*4.04,7.7,-3.54],[side*4.10,9.35,-2.90],[side*4.13,10.75,-1.86],[side*4.10,11.74,-1.13]],.045,gold);
-  b.sphere(side*4.10,11.74,-1.10,.105,.105,.105,pale,41,6,4);
- }
- // Pinlights lie slightly ahead of the enamel, so their light stays readable
- // in daylight as well as at night. Tiny ones are triangles; guide stars have
- // four distinct rays. UV carries deterministic phase and modulation depth.
- const pin=(u,v,r,color,phase=0,guide=false,lift=.065)=>{
-  const p=sky(u,v,lift),uv=[phase,guide?.12:.24];
-  const vertex=q=>b.vertex(q,front,color,77,uv);
-  if(guide){
-   const outline=[[0,r],[r*.19,r*.19],[r*.72,0],[r*.19,-r*.19],[0,-r],[-r*.19,-r*.19],[-r*.72,0],[-r*.19,r*.19]];
-   for(let i=0;i<8;i++){vertex(p);for(const q of[outline[i],outline[(i+1)%8]])vertex([p[0]+q[0],p[1]+q[1],p[2]]);}
-  }else for(const [x,y]of[[0,r],[-r*.84,-r*.52],[r*.84,-r*.52]])vertex([p[0]+x,p[1]+y,p[2]]);
- };
- // A broad field, then a much finer, flowing Milky-Way ribbon. Coordinate
- // hashes are independent of the railway's random sequence and page order.
- for(let i=0;i<310;i++){
-  const a=hash(i,151)*tau,r=Math.sqrt(hash(i,152))*.925,u=Math.cos(a)*r,v=Math.sin(a)*r;
-  pin(u,v,.010+Math.pow(hash(i,153),5)*.047,['#d7edf0','#b5d8ef','#f1d5a0'][i%3],hash(i,154)*tau);
- }
- for(let i=0;i<245;i++){
-  const u=(hash(i,161)*2-1)*.84,v=.29*Math.sin(u*3.6)+u*.42+(hash(i,162)-.5)*.38;
+ sheet(0,[1,1,1]);
+ // Suspended stars have actual depth, so orbiting reveals their parallax.
+ for(let i=0;i<460;i++){
+  const a=hash(i,301)*tau,r=Math.sqrt(hash(i,302))*.92;
+  let u=Math.cos(a)*r,v=Math.sin(a)*r;
+  if(i>275){u=(hash(i,310)*2-1)*.85;v=u*.40+.16*Math.sin(u*4)+(hash(i,311)-.5)*.48;}
   if(u*u+v*v>.88)continue;
-  pin(u,v,.009+hash(i,163)*.014,i%4?'#9bbcd9':'#e4c7da',hash(i,164)*tau);
+  const p=sky(u,v,.18+hash(i,303)*2.4),h=hash(i,304),size=.022+Math.pow(h,5)*.095;
+  meridianLightCard(b,p,size,size,['#b2c8e1','#e3d5b7','#809ebf','#d6e0eb'][i%4],79,i%120);
  }
- // Constellations are decorative, recognisable arrangements, not apparent
- // positions for a date or location. Thin warm wires do not swamp the stars.
- const line=(a,c)=>{
-  const p=sky(a[0],a[1],.086),q=sky(c[0],c[1],.086),dx=q[0]-p[0],dy=q[1]-p[1],d=Math.hypot(dx,dy)||1,w=.007;
-  const o=[-dy/d*w,dx/d*w,0];
-  b.quad(p.map((n,i)=>n+o[i]),p.map((n,i)=>n-o[i]),q.map((n,i)=>n-o[i]),q.map((n,i)=>n+o[i]),'#8eaaac',77);
- };
- const constellations=[
-  {p:[[-.70,.09],[-.62,.33],[-.47,.27],[-.38,.47],[-.25,.34]],e:[[0,1],[1,2],[2,3],[3,4]]},
-  {p:[[-.57,-.25],[-.33,-.24],[-.49,-.46],[-.43,-.46],[-.37,-.45],[-.61,-.76],[-.31,-.70]],e:[[0,1],[0,2],[1,4],[2,3],[3,4],[2,5],[4,6],[5,6]]},
-  {p:[[.22,.65],[.40,.64],[.47,.44],[.31,.40],[.15,.29],[.03,.35],[-.08,.21]],e:[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]]},
-  {p:[[.64,.18],[.78,-.06],[.59,-.23],[.43,-.16]],e:[[0,1],[1,2],[2,3],[3,0]]}
- ];
- for(const [k,c]of constellations.entries()){
-  for(const [i,j]of c.e)line(c.p[i],c.p[j]);
-  for(const [i,q]of c.p.entries())pin(...q,i===0?.12:.067,i===0&&k===1?'#f7bc84':pale,k+i*.73,true,.105);
+ // Fewer, carefully placed guide stars, rather than a uniform glitter cloud.
+ for(const [i,p]of [[-2.6,12.25,-.75],[-1.05,10.35,.1],[.9,12.64,-.3],[2.55,12.1,-.5],[-.3,13.65,-1],[1.05,10.35,.4]].entries())
+  meridianLightCard(b,p,.22,.22,i%2?'#cde0f2':'#f5dda9',79,120+i);
+ // A few dust motes rise from the observing slit into the star field. Their
+ // slow phase is light only, so bounds, picking and shadow caches stay fixed.
+ for(let i=0;i<28;i++){
+  const t=i/27,y=8.53+t*1.55;
+  meridianLightCard(b,[-.62+Math.sin(i*2.4)*(.06+t*.34),y,-.72+Math.cos(i*2.4)*.21],.024,.047,'#a7c2d0',79,i+40);
  }
- pin(0,.93,.20,pale,1,true,.10);
- // A gently tilted, complete orbital ellipse in front of the star field.
- const orbit=(xx,yy,zz,rx,ry,rz,start=0,end=tau,color=gold,width=.016)=>{
-  for(let i=0;i<48;i++){
-   const a=start+(end-start)*i/48,c=start+(end-start)*(i+1)/48;
-   const p=(t,d)=>[xx+(rx+d)*Math.cos(t),yy+(ry+d)*Math.sin(t),zz+rz*Math.sin(t)];
-   b.quad(p(a,-width),p(a,width),p(c,width),p(c,-width),color,41);
+ meridianLightCard(b,[-.62,9.30,-.70],.60,.78,'#527c96',80,0);
+ const planet=(x,y,z,r,kind)=>{
+  const segments=16,rings=9;
+  const point=(a,t)=>[x+r*Math.sin(t)*Math.cos(a),y+r*Math.cos(t),z+r*Math.sin(t)*Math.sin(a)];
+  const vertex=(a,t)=>{const q=point(a,t);b.vertex(q,q.map((n,k)=>(n-[x,y,z][k])/r),kind,81,[a/tau,t/pi]);};
+  for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){
+   const a=i*tau/segments,c=(i+1)*tau/segments,t=j*pi/rings,v=(j+1)*pi/rings;
+   if(j>0){vertex(a,t);vertex(c,t);vertex(a,v);}
+   if(j<rings-1){vertex(c,t);vertex(c,v);vertex(a,v);}
   }
  };
- orbit(0,11.30,-.40,3.23,.90,.72,0,tau,'#a3a47d',.012);
- // The little planets float in front of the enamel along a brass orbit, not a
- // second vast solar system. A disk-cut crescent is authored geometry.
- const orb=(x,y,z,r,colors)=>{
-  const segments=12,bands=6;
-  const p=(a,t)=>[x+r*Math.sin(t)*Math.cos(a),y+r*Math.cos(t),z+r*Math.sin(t)*Math.sin(a)];
-  for(let j=0;j<bands;j++)for(let i=0;i<segments;i++){
-   const a=i*tau/segments,c=(i+1)*tau/segments,t=j*pi/bands,v=(j+1)*pi/bands;
-   const color=colors[j%colors.length];
-   const tri=(A,B,C)=>b.tri(A,B,C,color,41,[A,B,C].map(q=>q.map((n,k)=>(n-[x,y,z][k])/r)));
-   if(j>0)tri(p(a,t),p(a,v),p(c,t));if(j<bands-1)tri(p(c,t),p(a,v),p(c,v));
-  }
- };
- orb(2.07,11.12,.42,.42,['#c7a577','#e5c392','#ac8c69','#e7c699','#cfac7e','#f0d2a0']);
- b.push(2.07,11.12,.42,.31,0,-.28);
- for(const [inner,outer,color]of[[.55,.65,'#d0b384'],[.68,.83,'#ead2a1'],[.86,.90,'#93866b']])for(let i=0;i<40;i++){
-  const a=i*tau/40,c=(i+1)*tau/40,p=(r,t)=>[r*Math.cos(t),0,r*Math.sin(t)];
-  b.quad(p(inner,a),p(outer,a),p(outer,c),p(inner,c),color,41);
+ // Cool terminators and fine cloud belts make these feel like distant worlds,
+ // not painted beads. UVs remain native as the model rotates in either room.
+ planet(2.15,10.62,.55,.45,'#d8b786');
+ b.push(2.15,10.62,.55,.30,0,-.23);
+ for(const [inner,outer,c]of[[.57,.65,'#8b8173'],[.68,.89,'#b6a68b'],[.915,.95,'#776e63']])for(let i=0;i<36;i++){
+  const a=i*tau/36,q=(i+1)*tau/36,p=(r,t)=>[Math.cos(t)*r,0,Math.sin(t)*r];
+  b.quad(p(inner,a),p(outer,a),p(outer,q),p(inner,q),c,41);
  }
  b.pop();
- orb(-1.62,12.30,.28,.34,['#7bc1d0','#477f9e','#89afa0','#527e8f','#82bcb2','#a2d7da']);
- orb(-2.77,10.52,-.12,.20,['#ad795a','#d2a17b','#b78661']);
- orb(.20,10.28,.52,.17,['#a5c9d0','#76a6b8','#bedfe1']);
- // Crescent: an offset inner arc, not a dark sphere masking a bright one.
- b.push(2.05,13.27,-.12,0,0,-.40);
- for(let i=0;i<24;i++){
-  const a=-pi/2+i*pi/24,c=-pi/2+(i+1)*pi/24,p=(t,inner)=>[(inner?.16:.40)*Math.cos(t),.40*Math.sin(t),0];
-  b.quad(p(a,false),p(c,false),p(c,true),p(a,true),'#f3dfa9',77);
+ planet(-2.10,12.30,.18,.32,'#468cb1');
+ planet(.85,13.43,-.55,.155,'#a3a7ac');
+ meridianLightCard(b,[-2.10,12.30,.08],.46,.46,'#507b9f',80,0);
+ // A real, localized meteor passage, not a permanent bright line. The shader
+ // owns only radiance/alpha inside this fixed rectangle, once every 19 seconds.
+ const a=[-2.95,13.44,.9],q=[2.60,11.55,.9],normal=[0,0,1],uv=[[0,0],[1,0],[1,1],[0,1]],points=[[a[0],a[1]+.10,a[2]],[q[0],q[1]+.10,q[2]],[q[0],q[1]-.10,q[2]],[a[0],a[1]-.10,a[2]]];
+ for(const i of[0,1,2,0,2,3])b.vertex(points[i],normal,'#d8e6ef',82,uv[i]);
+}
+
+// Per-card phase occupies integer UV cells; local [0,2] coordinates never
+// cross a cell boundary. Larger practical-light pools use material 80.
+function meridianLightCard(b,p,rx,ry,color,material=79,phase=0){
+ const xy=[[-1,-1],[1,-1],[1,1],[-1,1]];
+ for(const i of[0,1,2,0,2,3]){
+  const [x,y]=xy[i];b.vertex([p[0]+x*rx,p[1]+y*ry,p[2]],[0,0,1],color,material,[phase*4+x+1,y+1]);
  }
- b.pop();
- // A split dust/ion tail sweeps across the upper left, with a luminous core.
- const comet=[-.43,.68],head=sky(...comet,.43);
- for(const [dy,color,width]of[[0,'#8bb9c5',.10],[.05,'#d5ba8c',.06]]){
-  const tail=[head[0]-1.42,head[1]+.38+dy,head[2]-.18];
-  b.tri([head[0],head[1]+width,head[2]],tail,[head[0],head[1]-width,head[2]],color,77);
+}
+function meridianLanternGlow(b){
+ // Warm light on the near side of each actual lantern, never a full-scene tint.
+ for(const [x,y,z,rx,ry]of[[.51,.98,3.82,.34,.49],[3.63,2.29,2.46,.32,.42],[-.62,3.35,1.66,.34,.67]])
+  meridianLightCard(b,[x,y,z],rx,ry,'#f2b673',80,0);
+ // The smallest ground pools sit on the existing paving, inside its outline.
+ for(const [x,z,s]of[[.51,3.48,.60],[3.52,2.52,.52]]){
+  b.push(x,.044,z,-Math.PI/2);meridianLightCard(b,[0,0,0],s,s,'#c99d6d',80,0);b.pop();
  }
- pin(...comet,.14,'#d9f6eb',2,true,.46);
- for(let i=0;i<15;i++)pin(comet[0]-.03-i*.020,comet[1]+i*.0045,.022-i*.0009,'#a7d9dc',i*.37,false,.46);
 }

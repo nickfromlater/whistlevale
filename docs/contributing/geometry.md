@@ -30,7 +30,12 @@ Materials are shader IDs, not texture files. Useful existing choices:
 | `22` | Timber grain |
 | `23` | Matte detail surface |
 | `41` | Reflective metal |
-| `77` | Miniature pinlights and low-level illuminated enamel. Vertex UV is `[phaseRadians, amplitude]`, with amplitude 0 for steady light or at most 0.24 for gentle twinkle; reduced motion freezes it. No texture slot needed. |
+| `77` | Legacy miniature pinlights: UV `[phaseRadians, amplitude]`; bounded brightness and reduced-motion support |
+| `78` | Local nebula veil: UV in the unit disk; deterministic, softly evolving light |
+| `79` | Soft star cards: UV X stores `phase * 4 + localX`, with local coordinates 0–2 |
+| `80` | Local practical-light haze, using the same card coordinates as 79 |
+| `81` | Miniature world surfaces, native spherical UVs; opaque |
+| `82` | Intermittent meteor: UV 0–1 along a fixed track |
 | `76` | Clear architectural glazing: transparent in both renderers, with no opaque shadow; use for greenhouse panes with visible interiors |
 
 Use material `76` only on complete triangles or quads. Thin single-surface panes
@@ -74,3 +79,8 @@ under the model. Inspect all foundation edges on the finished terrain and keep i
 Do not call `b.mesh()` inside a contribution: the room owns upload and disposal.
 Keep procedural detail deterministic with coordinate hashes; avoid consuming
 the shared random sequence.
+
+Celestial materials 78–80 and 82 use the existing transparent pass, with depth
+testing, no depth writes, no opaque shadows and the same buffer disposal as glazing.
+All effect geometry must fit its declared footprint. Both renderers share the
+same bounded linear-light shader functions; the model never owns a frame loop.

@@ -98,6 +98,63 @@ uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
 float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float shadow(vec3 n){vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;float bias=max(.00024,.00064*(1.-dot(n,uSun)));float s=0.;vec2 texel=1./vec2(textureSize(uShadow,0));for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){float w=(x==0?2.:1.)*(y==0?2.:1.);s+=w*(p.z-bias<texture(uShadow,p.xy+vec2(x,y)*texel*1.05).r?1.:0.);}return s/16.;}
+// MERIDIAN_ATMOSPHERE_BEGIN: identical linear-light effect functions in both renderers.
+float meridianHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float meridianNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(meridianHash(i),meridianHash(i+vec2(1,0)),f.x),mix(meridianHash(i+vec2(0,1)),meridianHash(i+vec2(1,1)),f.x),f.y);}
+float meridianFbm(vec2 p){float v=0.,w=.55;mat2 m=mat2(.8,-.6,.6,.8);for(int i=0;i<4;i++){v+=w*meridianNoise(p);p=m*p*2.12+vec2(2.8,4.6);w*=.48;}return v;}
+vec4 meridianAtmosphere(float material,vec2 uv,vec3 tint,float time){
+ if(material==78.){
+  vec2 p=uv;float r=length(p);if(r>=1.)discard;
+  float t=time*.014,angle=-.34;mat2 turn=mat2(cos(angle),-sin(angle),sin(angle),cos(angle));
+  vec2 q=turn*p;q.y*=1.30;
+  vec2 warp=vec2(meridianFbm(q*2.2+vec2(t,-t*.41)),meridianFbm(q*2.2+vec2(7.3-t*.28,3.2)));
+  float mist=meridianFbm(q*4.7+warp*1.6+vec2(t*.31,0));
+  float strand=q.y-.14*sin(q.x*3.4+t*.36)+.10*(warp.x-.5);
+  float ribbon=exp(-strand*strand*23.);float core=exp(-dot(q*vec2(1.85,3.7),q*vec2(1.85,3.7)));
+  float filaments=pow(max(0.,mist),2.9)*ribbon;
+  float dust=meridianFbm(q*10.+warp*2.8);float lane=exp(-pow((strand+.075+.03*sin(q.x*8.))*22.,2.))*.68;
+  vec3 blue=mix(vec3(.025,.042,.095),vec3(.12,.23,.34),smoothstep(.27,.73,mist));
+  vec3 c=vec3(.005,.009,.024)+blue*(.10+filaments*2.3);
+  c+=vec3(.47,.36,.22)*core*(.25+mist*.75)*(1.-lane);
+  c+=vec3(.10,.18,.27)*ribbon*pow(dust,5.)*.9;
+  c*=1.-lane*.76;
+  float edge=(1.-smoothstep(.44,.98,r))*(.86+.14*mist);
+  float alpha=edge*(.26+ribbon*.48+core*.18);
+  return vec4(min(c,vec3(.95)),clamp(alpha,0.,.89));
+ }
+ if(material==79.||material==80.){
+  float phase=floor(uv.x*.25);vec2 p=vec2(mod(uv.x,4.),uv.y)-1.;float d=dot(p,p);if(d>1.)discard;
+  if(material==80.){float glow=exp(-d*4.3)*(1.-smoothstep(.52,1.,d));return vec4(pow(tint,vec3(2.2))*.65,glow*.23);}
+  float pulse=.88+.12*sin(time*.55+phase*1.731);
+  float core=exp(-d*80.);float halo=exp(-d*8.)*.26;
+  float rays=phase>=120.?(.07*exp(-abs(p.x)*64.)*exp(-abs(p.y)*5.)+.05*exp(-abs(p.y)*64.)*exp(-abs(p.x)*5.)):0.;
+  float a=clamp((core+halo+rays)*pulse,0.,1.)*(1.-smoothstep(.7,1.,d));
+  return vec4(min(vec3(.95),pow(tint,vec3(1.5))*.94),a);
+ }
+ // Occasional meteor: head and tapered tail fade smoothly in and out; the
+ // reduced-motion clock is zero, at which the meteor is intentionally absent.
+ float cycle=mod(time+5.,19.);float meteorVisibility=smoothstep(0.,.24,cycle)*(1.-smoothstep(2.0,2.55,cycle));
+ float head=cycle*.42;float behind=head-uv.x;
+ float tail=exp(-max(0.,behind)*16.)*smoothstep(-.008,.02,behind)*(1.-smoothstep(.0,.018,-behind));
+ float line=exp(-pow((uv.y-.5)*16.,2.));float core=exp(-pow((uv.x-head)*100.,2.)-pow((uv.y-.5)*8.,2.));
+ return vec4(vec3(.64,.79,.92),clamp((tail*line*.68+core)*meteorVisibility,0.,.94));
+}
+vec3 meridianPlanet(vec2 uv,vec3 tint,vec3 n,vec3 view,float time){
+ vec2 q=uv;vec3 c=tint;float light=max(dot(n,normalize(vec3(-.7,.8,1.4))),0.);
+ if(tint.b>tint.r*1.4){
+  float land=meridianFbm(vec2(q.x*8.+time*.006,q.y*5.));
+  c=mix(vec3(.07,.21,.34),vec3(.18,.31,.28),smoothstep(.54,.62,land));
+  float cloud=meridianFbm(vec2(q.x*17.+time*.009,q.y*13.)+land);
+  c=mix(c,vec3(.70,.78,.81),smoothstep(.64,.76,cloud)*.74);
+ }else if(tint.r>tint.b*1.2){
+  float bands=.88+.09*sin(q.y*90.+sin(q.x*19.+time*.015)*.8)+.035*sin(q.y*230.);
+  c=tint*bands;
+ }else c*=.70+.35*meridianFbm(q*24.);
+ vec3 lit=pow(max(c,vec3(0.)),vec3(2.2))*(.035+light*.95);
+ float rim=pow(1.-max(dot(n,view),0.),3.5);
+ return min(vec3(.95),lit+vec3(.027,.070,.13)*rim*light);
+}
+// MERIDIAN_ATMOSPHERE_END
 void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
  if(m==1.||m==11.){rough=.3;metal=.72;}
@@ -128,8 +185,9 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  // Clear architectural glazing is an opt-in surface, drawn after opaque rooms.
  // Its reflection is independent of a room's lamp uniforms during the map pass.
  if(m==76.){vec3 v=normalize(uEye-p);float fresnel=pow(1.-abs(dot(n,v)),4.);vec3 reflection=mix(vec3(.34,.47,.43),vec3(.035,.070,.10),dusk);reflection+=vec3(.20,.17,.10)*pow(max(dot(n,normalize(uSun+v)),0.),100.)*sunlight;frag=vec4(reflection,.055+fresnel*.22);return;}
- // Miniature pinlights: bounded twinkle below the coarse bloom threshold; time honours pause/reduced motion.
  if(m==77.){float pulse=1.+vUV.y*sin(uTime*.7+vUV.x);frag=vec4(min(vec3(.83),pow(max(base,vec3(0)),vec3(2.2))*2.5)*pulse,1.);return;}
+ if(m==78.||m==79.||m==80.||m==82.){frag=meridianAtmosphere(m,vUV,base,uTime);return;}
+ if(m==81.){frag=vec4(meridianPlanet(vUV,base,n,normalize(uEye-p),uTime),1.);return;}
  vec3 v=normalize(uEye-p),l=uSun,h=normalize(l+v);float nl=max(dot(n,l),0.),nv=max(dot(n,v),.02);float sh=shadow(n);
  // Sunset removes direct daylight before the workshop lamps take over.
  // Cool sky fill preserves the shape of unlit scenery and the room corners.
@@ -188,12 +246,13 @@ void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
 function program(vs,fs){function compile(s,t){let sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,compile(vs,gl.VERTEX_SHADER));gl.attachShader(p,compile(fs,gl.FRAGMENT_SHADER));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));p.u={};return p}
 function uniform(p,n){return p.u[n]??(p.u[n]=gl.getUniformLocation(p,n))}const uf=(p,n,x)=>gl.uniform1f(uniform(p,n),x), uv3=(p,n,v)=>gl.uniform3fv(uniform(p,n),v), um=(p,n,m)=>gl.uniformMatrix4fv(uniform(p,n),false,m);
 function uploadTriangles(data){let vao=gl.createVertexArray();gl.bindVertexArray(vao);let buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);let stride=48;[3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,stride,[0,12,24,36,40][i])});gl.bindVertexArray(null);return{vao,buf,count:data.length/12}}
-// Material 76 is clear architectural glazing. Existing meshes keep their exact
+// Material 76 is glazing; 78–80 and 82 are local celestial alpha effects.
+// Existing meshes keep their exact
 // upload path; only opted-in triangles own an additional GPU buffer/index set.
 function upload(data){
- let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76){first=i-9;break;}
+ let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82){first=i-9;break;}
  if(first<0)return uploadTriangles(data);
- const opaque=[],clear=[];for(let i=0;i<data.length;i+=36){const target=data[i+9]===76?clear:opaque;for(let j=0;j<36;j++)target.push(data[i+j]);}
+ const opaque=[],clear=[];for(let i=0;i<data.length;i+=36){const target=(data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82)?clear:opaque;for(let j=0;j<36;j++)target.push(data[i+j]);}
  let mesh,glass;
  try{
   mesh=uploadTriangles(opaque);glass=uploadTriangles(clear);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;

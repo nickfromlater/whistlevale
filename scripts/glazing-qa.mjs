@@ -59,3 +59,11 @@ assert.ok(source.includes('drawArchitecturalGlass();drawHobbyParticles();'),'cle
 assert.ok(source.indexOf('drawArchitecturalGlass();drawHobbyParticles();')<source.indexOf('if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);'),'glass is resolved through the existing MSAA and cinematic postprocess');
 assert.ok(source.includes("webglcontextlost',e=>{e.preventDefault();architecturalGlassDraws.length=0;"),'context loss releases queued model references and retains the existing reload flow');
 console.log('Architectural glazing QA passed: original opaque bytes, split counts, no opaque shadows, captured map transforms, cached far-to-near triangle order, blend/depth recovery, and full GPU ownership cleanup.');
+
+// Celestial haze and light share the existing alpha lifecycle. The planet
+// material remains opaque, while no fog/star/meteor quad casts a hard shadow.
+calls.length=0;
+run("const fx=new Builder();for(const m of[78,79,80,81,82])fx.quad([-1,0,m],[1,0,m],[1,1,m],[-1,1,m],'#6688aa',m);const effects=fx.mesh();assert.equal(effects.opaqueCount,6);assert.equal(effects.glass.count,24);draw(effects,I,'shadow');assert.equal(architecturalGlassDraws.length,0);draw(effects);drawArchitecturalGlass();disposeMesh(effects);");
+assert.deepEqual(calls.filter(q=>q.op==='opaque').map(q=>q.count),[6,6]);
+assert.deepEqual(calls.filter(q=>q.op==='glass').map(q=>q.count),[24]);
+console.log('Celestial transparency QA passed: bounded alpha batches, opaque worlds, no hard effect shadows, complete cleanup.');
