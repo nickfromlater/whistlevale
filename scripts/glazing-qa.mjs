@@ -55,8 +55,8 @@ run("draw(mesh,I,'shadow');draw(mesh);draw(legacy);drawArchitecturalGlass();asse
 assert.equal(calls.filter(q=>q.op==='opaque'||q.op==='glass').length,4,'profile draw count matches actual opaque and clear GPU draws');
 run('disposeMesh(mesh);');
 assert.equal(deleted.length,5,'opaque vao/buffer plus clear vao/buffer/index are released');assert.equal(new Set(deleted).size,5);
-assert.ok(source.includes('drawArchitecturalGlass();drawHobbyParticles();'),'clear panes render after opaque world and before particles');
-assert.ok(source.indexOf('drawArchitecturalGlass();drawHobbyParticles();')<source.indexOf('if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);'),'glass is resolved through the existing MSAA and cinematic postprocess');
+assert.ok(source.includes('drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();'),'clear panes render after opaque world and before particles');
+assert.ok(source.indexOf('drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();')<source.indexOf('if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);'),'glass is resolved through the existing MSAA and cinematic postprocess');
 assert.ok(source.includes("webglcontextlost',e=>{e.preventDefault();architecturalGlassDraws.length=0;"),'context loss releases queued model references and retains the existing reload flow');
 console.log('Architectural glazing QA passed: original opaque bytes, split counts, no opaque shadows, captured map transforms, cached far-to-near triangle order, blend/depth recovery, and full GPU ownership cleanup.');
 

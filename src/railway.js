@@ -167,12 +167,16 @@ vec3 moonlightPicture(vec2 uv,float time){
  return pow(vec3(1.,.982,.926)*grey,vec3(2.2))*paper*vignette*pulse*1.22;
 }
 // MOONLIGHT_PICTURE_END
-// MOONLIGHT_BEAM_BEGIN: three softly feathered sheets, no volume march.
+// MOONLIGHT_BEAM_BEGIN: feathered film-lit haze behind the drifting motes.
 vec4 moonlightBeam(vec2 uv,float night){
- float edge=pow(max(0.,sin(clamp(uv.x,0.,1.)*3.141593)),1.8);
- float ends=smoothstep(0.,.045,uv.y)*(1.-smoothstep(.82,1.,uv.y));
- float density=mix(1.,.42,uv.y)*mix(.009,.060,smoothstep(.1,.85,night));
- return vec4(.46,.49,.40,edge*ends*density*step(.5,uMoonlightReady));
+ float edge=pow(max(0.,sin(clamp(uv.x,0.,1.)*3.141593)),2.4);
+ float ends=smoothstep(0.,.035,uv.y)*(1.-smoothstep(.88,1.,uv.y));
+ float folds=.73+.17*sin(uv.y*19.+sin(uv.x*11.-uTime*.13)*1.4-uTime*.21)+.10*sin(uv.y*37.+uv.x*13.+uTime*.16);
+ vec2 q=vec2(clamp(uv.x,.05,.95),.5);
+ vec3 picture=(texture(uMoonlightFilm,q).rgb+texture(uMoonlightFilm,q+vec2(.04,.12)).rgb+texture(uMoonlightFilm,q-vec2(.04,.12)).rgb)/3.;
+ float light=.32+.68*pow(dot(picture,vec3(.299,.587,.114)),.8);
+ float density=mix(1.,.42,uv.y)*mix(.010,.080,smoothstep(.1,.85,night));
+ return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
 }
 // MOONLIGHT_BEAM_END
 void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
@@ -469,10 +473,18 @@ function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.rou
 function render(){updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
- gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawHobbyParticles();
+ gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
  if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
 // Movie decoding is limited to a nearby, front-facing screen. Map views keep
 // the static picture, and object transforms follow edits instead of a fixed site.
+function drawMoonlightHouseAir(){
+ if(!houseMoonlight||hobby.room!=='valley'||(typeof isShopMapActive==='function'&&isShopMapActive()))return;
+ for(const o of moonlightObjects){
+  const model=mm(objectMatrix(o),scaling(.32)),center=transform([0,8.1,-9.805],model),p=project(center);
+  if(!p.visible||len(sub(cameraPos,center))>32*(o.scale??1))continue;
+  houseMoonlight.drawAir({vp:VP,model,eye:cameraPos,height:screenH,night,restoreProgram:mainProgram,restoreUnit:2});
+ }
+}
 function updateMoonlightHouse(){
  if(!houseMoonlight)return;
  if(moonlightObjectList!==objects||moonlightObjectCount!==objects.length){moonlightObjectList=objects;moonlightObjectCount=objects.length;moonlightObjects=objects.filter(o=>o.type==='moonlight');}
@@ -1502,7 +1514,7 @@ function bindWorkshop(){
 // Bump this version when factory placements, tracks, stock/services or seeded
 // generation changes. Only a validated pristine snapshot can skip factory capture;
 // the cache contains editable layout data, never GPU meshes or generated artwork.
-const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-3-moonlight-lane',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
+const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-3-moonlight-facing',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
 let workshopStartup=null;
 function workshopFactoryChecksum(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return(hash>>>0).toString(16);}
 function readWorkshopStartupLayout(){
@@ -1865,7 +1877,9 @@ function getTemplate(o){
 function moonlightValleyApproach(){
  if(typeof communityCatalogue==='undefined')return null;
  const piece=communityCatalogue.works.find(w=>w.id==='moonlight-drive-in'&&w.room==='valley')?.workshop?.find(p=>p.type==='moonlight');if(!piece)return null;
- const [x,z]=piece.at,s=(piece.scale??1)*.32,a=piece.angle??0,end=[x+(-Math.cos(a)+14.10*Math.sin(a))*s,terrainH(x,z)+.45*s+.005,z+(Math.sin(a)+14.10*Math.cos(a))*s];
+ // Enter from the town behind the raised screen, into the existing asphalt.
+ // Its open span leaves the driveway clear while the picture faces the room.
+ const [x,z]=piece.at,s=(piece.scale??1)*.32,a=piece.angle??0,end=[x+(-Math.cos(a)-11*Math.sin(a))*s,terrainH(x,z)+.41*s+.005,z+(Math.sin(a)-11*Math.cos(a))*s];
  const edge=new Edge('moonlight-lane',[[[-5,.812,9],[-5,.81,10.45],[end[0],end[1],11.25],end]]);
  return{edge,width:t=>1.34+.20*(1-smooth(0,.25,t))+.38*smooth(.68,1,t)};
 }

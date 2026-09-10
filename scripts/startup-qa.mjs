@@ -45,7 +45,7 @@ assert.equal(fresh.records.builds.length,1,'fresh visits capture the factory onc
 assert.equal(fresh.records.builds[0].capture,true);assert.ok(fresh.factory().objects.length>600,'fixture uses the actual authored factory scenery');
 assert.equal(fresh.factory().coaches,6);assert.equal(fresh.run('captureScenery'),false);
 const pristine=fresh.factory(),cache=JSON.parse(fresh.storage.get(CACHE_KEY));
-assert.equal(cache.version,'grand-v2-factory-3-moonlight-lane');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
+assert.equal(cache.version,'grand-v2-factory-3-moonlight-facing');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
 assert.equal(pristine.objects.filter(o=>o.contribution==='moonlight-drive-in').length,1,'fresh visits and factory reset include the reviewed drive-in');
 const saved={...structuredClone(pristine),name:'My blue railway',flat:true,livery:'blue',coaches:2,services:{freight:false,mountain:true}};
 saved.objects=saved.objects.slice(0,5);saved.objects[0].x+=.25;

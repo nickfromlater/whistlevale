@@ -34,6 +34,13 @@ function fixture({frames=true,rejectPlay=false,saved={},storageBlocked=false,emb
   createTexture(){const texture={id:textures.length};textures.push(texture);return texture;},deleteTexture(texture){deleted.push(texture);},
   texImage2D(...args){uploads.push(args.at(-1));},texParameteri(){}
  };
+ const gpu={uploads:[],draws:[],deleted:[],uniforms:{},program:null,vao:null,depth:true,blend:false};
+ Object.assign(gl,{VERTEX_SHADER:20,FRAGMENT_SHADER:21,COMPILE_STATUS:22,LINK_STATUS:23,ARRAY_BUFFER:24,STATIC_DRAW:25,FLOAT:26,BLEND:27,SRC_ALPHA:28,ONE:29,ONE_MINUS_SRC_ALPHA:30,POINTS:31,
+  createShader:()=>({}),shaderSource(){},compileShader(){},getShaderParameter:()=>true,attachShader(){},deleteShader(){},createProgram:()=>({}),linkProgram(){},getProgramParameter:()=>true,getUniformLocation:(p,n)=>n,
+  createBuffer:()=>({}),createVertexArray:()=>({}),bindVertexArray:v=>gpu.vao=v,bindBuffer(){},bufferData:(target,data,usage)=>gpu.uploads.push({data,usage}),enableVertexAttribArray(){},vertexAttribPointer(){},
+  useProgram:p=>gpu.program=p,uniformMatrix4fv:(n,t,v)=>gpu.uniforms[n]=v,uniform3fv:(n,v)=>gpu.uniforms[n]=v,uniform1f:(n,v)=>gpu.uniforms[n]=v,uniform1i:(n,v)=>gpu.uniforms[n]=v,
+  enable:()=>gpu.blend=true,disable:()=>gpu.blend=false,depthMask:v=>gpu.depth=v,blendFunc:(a,b)=>gpu.blendMode=[a,b],drawArrays:(mode,start,count)=>{if(gpu.fail)throw Error('draw interrupted');gpu.draws.push({mode,count,uniforms:{...gpu.uniforms},depth:gpu.depth,blend:gpu.blendMode});},
+  deleteBuffer:v=>gpu.deleted.push(v),deleteVertexArray:v=>gpu.deleted.push(v),deleteProgram:v=>gpu.deleted.push(v)});
  document.createElement=tag=>{
   if(tag==='canvas'){const canvas=new Element('canvas'),context={text:[],fillRect(){},strokeRect(){},fillText(text){this.text.push(text);},measureText(text){return{width:Array.from(text).length*parseInt(this.font,10)*.6};}};canvas.getContext=()=>context;canvas.context=context;canvases.push(canvas);return canvas;}
   if(tag!=='video')return new Element(tag);
@@ -48,9 +55,29 @@ function fixture({frames=true,rejectPlay=false,saved={},storageBlocked=false,emb
   HOUSE_EMBEDDED_MOONLIGHT:embeddedFilm?{film:embeddedFilm}:undefined,localStorage:{getItem(key){if(storageBlocked)throw new Error('blocked');return stored.get(key)||null;},setItem(key,value){if(storageBlocked)throw new Error('blocked');stored.set(key,value);}},
   addEventListener:globalEvents.addEventListener.bind(globalEvents),removeEventListener:globalEvents.removeEventListener.bind(globalEvents)});
  vm.runInContext(source,context);const controller=vm.runInContext('createMoonlightProjection',context)(gl);
- return{context,controller,document,images,videos,canvases,uploads,textures,deleted,gl,bindings,globalEvents,stored};
+ return{gpu,context,controller,document,images,videos,canvases,uploads,textures,deleted,gl,bindings,globalEvents,stored};
 }
 const viewing={visible:true,active:true,paused:false,reduced:false};
+{
+ const f=fixture(),c=f.controller,g=f.gpu,model=[.3,0,0,0,0,.3,0,0,0,0,.3,0,-2.5,1,17,1],vp=Array(16).fill(0),program={name:'room'};
+ const options={vp,model,eye:[0,6,24],height:900,night:1,restoreProgram:program,restoreUnit:2};
+ c.drawAir(options);assert.equal(g.uploads.length,0,'unseen exhibits allocate no dust buffer');
+ c.update({visible:true,active:false});f.images[0].onload();c.drawAir(options);assert.equal(g.uploads.length,0,'map and distant views omit projection dust');
+ c.update({...viewing,now:100});c.drawAir(options);
+ assert.equal(g.uploads.length,1);assert.equal(g.uploads[0].data.byteLength,86400,'dust has a fixed small buffer');assert.equal(g.uploads[0].usage,f.gl.STATIC_DRAW);
+ assert.deepEqual(Array.from(g.uploads[0].data),Array.from(vm.runInContext('moonlightAirSeeds()',f.context)),'seed generation is repeatable without consuming the scenery random sequence');
+ assert.ok(g.uploads[0].data.every(Number.isFinite));assert.equal(g.draws[0].count,3600);assert.equal(g.draws[0].depth,false,'particles cannot write opaque depth');assert.deepEqual(g.draws[0].blend,[f.gl.SRC_ALPHA,f.gl.ONE]);
+ assert.equal(g.draws[0].uniforms.uModel,model,'dust follows the actual placed model transform');assert.equal(g.draws[0].uniforms.uVP,vp);assert.equal(g.draws[0].uniforms.uFilm,4,'dust samples the same picture as the screen');
+ for(let now=116;now<500;now+=16){c.update({...viewing,now});c.drawAir(options);}
+ assert.equal(g.uploads.length,1,'animation never reuploads particle data');assert.ok(g.draws.at(-1).uniforms.uTime>g.draws[0].uniforms.uTime,'drift advances through the existing renderer update');
+ const time=g.draws.at(-1).uniforms.uTime;c.toggle();c.update({...viewing,now:600});c.drawAir(options);assert.equal(g.draws.at(-1).uniforms.uTime,time,'visitor pause freezes dust drift');assert.equal(g.draws.at(-1).uniforms.uPower,.28);
+ c.update({...viewing,reduced:true,now:700});c.drawAir(options);assert.equal(g.draws.at(-1).uniforms.uTime,0,'reduced motion renders stationary dust');
+ const count=g.draws.length;f.document.hidden=true;f.document.dispatch('visibilitychange');c.drawAir(options);assert.equal(g.draws.length,count,'hidden tabs cannot draw');f.document.hidden=false;
+ f.globalEvents.dispatch('pagehide',{persisted:true});c.drawAir(options);assert.equal(g.draws.length,count,'BFCache suspension cannot draw');f.globalEvents.dispatch('pageshow');
+ g.fail=true;assert.throws(()=>c.drawAir(options),/draw interrupted/);assert.equal(g.depth,true);assert.equal(g.blend,false);assert.equal(g.vao,null);assert.equal(g.program,program);assert.equal(f.gl.active,2,'even interrupted draws restore the renderer pass');g.fail=false;
+ c.dispose();assert.equal(g.deleted.length,3,'disposal releases the owned dust buffer, VAO and shader program');c.dispose();assert.equal(g.deleted.length,3);c.drawAir(options);assert.equal(g.draws.length,count);
+}
+
 {
  const f=fixture(),c=f.controller,prior=f.bindings.get(7);c.update({visible:false,active:false});
  assert.equal(f.images.length+f.videos.length+f.textures.length,0,'unseen models allocate no media or texture');

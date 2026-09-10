@@ -11,6 +11,8 @@ const baseline=geometry.run(`(()=>{
  try{buildWorld();return JSON.stringify({objects,tracks:trackDesign,roads:roads.map(e=>e.curves)});}finally{communityCatalogue.works=works;}
 })()`);
 geometry.context.moonlightBaseline=JSON.parse(baseline);
+geometry.context.document.body=geometry.context.document.getElementById('body');
+geometry.run('updateUI=()=>{};');
 geometry.run('objects=[];objectSerial=0;captureScenery=true;buildWorld();');
 const report=geometry.run(`(()=>{
  const plain=value=>JSON.parse(JSON.stringify(value)),id='moonlight-drive-in';
@@ -45,6 +47,16 @@ const report=geometry.run(`(()=>{
  assert.deepEqual(data,direct.data,'the editor uses the same authored miniature with its landscape base');assert.equal(seed,oldSeed,'building the theater does not consume procedural scenery randomness');
  assert.equal(direct.stack.length,0);assert.equal(direct.normalStack.length,0);
  const matrix=objectMatrix(object),ca=Math.cos(object.angle),sa=Math.sin(object.angle),w=asset.w*object.scale/2,d=asset.d*object.scale/2;
+ // Execute the actual startup room-camera presets for desktop and both phone
+ // widths: the movie, rather than its timber back, must face the arriving eye.
+ const screen=transform([0,8.1*.32,-9.805*.32],matrix),normal=[sa,0,ca];
+ for(const [width,height]of[[1440,900],[390,844],[320,711]]){
+  innerWidth=width;innerHeight=height;workshopSetView('room',false);
+  const cp=Math.cos(orbit.pitch),eye=add(orbit.target,[Math.sin(orbit.yaw)*cp*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*cp*orbit.distance]);
+  assert.ok(dot(norm(sub(eye,screen)),normal)>.6,'the projected face is clearly visible from the '+width+'px opening camera');
+ }
+ innerWidth=1440;innerHeight=900;
+
  let trackClearance=Infinity;
  for(const edge of edges)for(let offset=0;offset<=edge.length;offset+=.35){const p=edge.at(Math.min(offset,edge.length)).p,dx=p[0]-object.x,dz=p[2]-object.z,xx=ca*dx-sa*dz,zz=sa*dx+ca*dz;trackClearance=Math.min(trackClearance,Math.hypot(Math.max(0,Math.abs(xx)-w),Math.max(0,Math.abs(zz)-d)));}
  assert.ok(trackClearance>1.3,'every track clears the full garden footprint, not just its center');
@@ -68,9 +80,9 @@ const report=geometry.run(`(()=>{
  assert.ok(streetClearance>1.45,'the garden clears both traffic lanes and the existing raised curb');
  assert.ok(lakeClearance>.8,'the whole garden remains above the sheltered lake bank');
  const laneMesh=new Builder();buildMoonlightValleyApproach(laneMesh);roads.pop();assert.ok(laneMesh.data.every(Number.isFinite)&&laneMesh.data.length/12<2000,'the access lane stays a small static mesh');
- const start=approach.edge.at(0).p,street=roads[4].at(0).p,end=approach.edge.at(approach.edge.length).p,gate=transform([-.32,.45*.32,14.10*.32],matrix);
+ const start=approach.edge.at(0).p,street=roads[4].at(0).p,end=approach.edge.at(approach.edge.length).p,gate=transform([-.32,.41*.32,-11*.32],matrix);
  assert.ok(Math.hypot(start[0]-street[0],start[2]-street[2])<1e-6&&start[1]-street[1]<.05,'the lane opens directly onto the existing street at curb height');
- assert.ok(Math.hypot(end[0]-gate[0],end[2]-gate[2])<1e-6&&Math.abs(end[1]-gate[1]-.005)<1e-6,'the approach meets the authored entrance with no plinth step');
+ assert.ok(Math.hypot(end[0]-gate[0],end[2]-gate[2])<1e-6&&Math.abs(end[1]-gate[1]-.005)<1e-6,'the town approach meets the rear asphalt with no plinth step');
  let laneTrackClearance=Infinity;
  for(let d=0;d<=approach.edge.length;d+=.10){const p=approach.edge.at(d).p,width=approach.width(d/approach.edge.length)/2+.20;
   for(const edge of edges)for(let offset=0;offset<=edge.length;offset+=.5){const q=edge.at(Math.min(offset,edge.length)).p;laneTrackClearance=Math.min(laneTrackClearance,Math.hypot(p[0]-q[0],p[2]-q[2])-width);}

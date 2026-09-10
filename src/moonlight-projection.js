@@ -29,6 +29,7 @@ async function packMoonlightMedia(){
  return media;
 }
 function createMoonlightProjection(gl){
+ let air=null,airTime=0,lastAirNow=null;
  let texture=null,poster=null,video=null,button=null,dirty=false,frameCallback=null,epoch=0,disposed=false,lost=false,pageSuspended=false;
  let nameTexture=null,nameCanvas=null,nameDirty=true,programme=null,nameStored=true;const preferences=moonlightPreferences();moonlightCurrentSelection=preferences.film;
  let posterStarted=false,hasPicture=false,blocked=false,failed=false,userPlay=null,lastPosition=0,lastMediaTime=-1,lastUpload=-Infinity;
@@ -107,6 +108,7 @@ function createMoonlightProjection(gl){
   if(disposed||lost)return;
   state.visible=Boolean(next.visible);state.active=Boolean(next.active);state.nameplateVisible=Boolean(next.nameplateVisible??next.visible);state.paused=Boolean(next.paused);state.reduced=Boolean(next.reduced);reconcile();
   const now=next.now??performance.now();
+  if(lastAirNow!==null&&!state.reduced&&wantsPlay())airTime+=Math.max(0,Math.min(.065,(now-lastAirNow)/1000));lastAirNow=now;
   // Some browsers stop reporting video frames for the hidden texture source.
   // Advancing media time must still refresh the screen, within the same 24fps cap.
   if(video&&video.readyState>=2&&now-lastUpload>=1000/24-1&&(dirty||video.currentTime!==lastMediaTime)){
@@ -119,6 +121,11 @@ function createMoonlightProjection(gl){
  }
  function bindNameplate(unit=5,fallbackTexture=null,restoreUnit=null){
   const active=restoreUnit===null?gl.getParameter(gl.ACTIVE_TEXTURE):gl.TEXTURE0+restoreUnit;gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,nameTexture||fallbackTexture);gl.activeTexture(active);return Boolean(nameTexture);
+ }
+ function drawAir(options){
+  if(disposed||lost||pageSuspended||document.hidden||!state.visible||!state.active||!hasPicture)return;
+  if(!air)air=createMoonlightAir(gl);
+  air.draw({...options,texture,time:state.reduced?0:airTime,power:wantsPlay()?1:.28});
  }
  function persist(){try{if(!globalThis.localStorage)return false;globalThis.localStorage.setItem(MOONLIGHT_STORAGE_KEY,JSON.stringify(preferences));return true;}catch{return false;}}
  function selectFilm(id){
@@ -156,15 +163,87 @@ function createMoonlightProjection(gl){
  }
  function toggle(){if(disposed||lost)return;userPlay=!(canPlay()&&!blocked&&!failed);blocked=false;failed=false;reconcile();}
  function setControl(next){if(button===next)return;if(button)button.removeEventListener('click',toggle);button=next;controlText='';controlPressed='';controlState='';if(button){button.addEventListener('click',toggle);syncControl();}}
- function onVisibility(){reconcile();}
+ function onVisibility(){lastAirNow=null;reconcile();}
  function onPageHide(event){if(event.persisted){pageSuspended=true;releaseVideo();syncControl();}else dispose();}
  function onPageShow(){if(!pageSuspended)return;pageSuspended=false;reconcile();}
- function onLost(){lost=true;releaseVideo();texture=null;nameTexture=null;syncControl();}
+ function onLost(){air?.dispose();air=null;lost=true;releaseVideo();texture=null;nameTexture=null;syncControl();}
  function dispose(){
-  if(disposed)return;disposed=true;releaseVideo();if(poster){poster.onload=poster.onerror=null;poster.src='';poster=null;}
+  if(disposed)return;disposed=true;air?.dispose();air=null;releaseVideo();if(poster){poster.onload=poster.onerror=null;poster.src='';poster=null;}
   if(!lost&&!gl.isContextLost()){if(texture)gl.deleteTexture(texture);if(nameTexture)gl.deleteTexture(nameTexture);}texture=null;nameTexture=null;nameCanvas=null;setProgramme(null);setControl(null);
   document.removeEventListener('visibilitychange',onVisibility);globalThis.removeEventListener('pagehide',onPageHide);globalThis.removeEventListener('pageshow',onPageShow);gl.canvas.removeEventListener('webglcontextlost',onLost);
  }
  document.addEventListener('visibilitychange',onVisibility);globalThis.addEventListener('pagehide',onPageHide);globalThis.addEventListener('pageshow',onPageShow);gl.canvas.addEventListener('webglcontextlost',onLost);
- return{update,bind,bindNameplate,toggle,setControl,createProgramme,setProgramme,selectFilm,setName,dispose};
+ return{update,bind,bindNameplate,drawAir,toggle,setControl,createProgramme,setProgramme,selectFilm,setName,dispose};
+}
+
+// The original film-lit dust, kept in native model coordinates. Seeds stay on
+// the GPU; slow curling drift and flutter need no CPU particle/frame loop.
+function moonlightAirSeeds(){
+ let seed=481516;const rand=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296),data=new Float32Array(3600*6);
+ for(let i=0;i<data.length;i+=6){data[i]=rand()*15.2-7.6;data[i+1]=1.3+rand()*12.3;data[i+2]=rand()*21.2-10.7;data[i+3]=rand()*Math.PI*2;data[i+4]=rand()>.91?1.05+rand()*.85:.20+rand()*.52;data[i+5]=.35+rand()*.65;}
+ return data;
+}
+function createMoonlightAir(gl){
+ const vs=`#version 300 es
+ precision highp float;
+ layout(location=0)in vec3 aPosition;layout(location=1)in vec3 aParams;
+ uniform mat4 uVP,uModel;uniform vec3 uEye;uniform float uTime,uHeight;
+ out vec2 movieUV;out float opacityBase,flutter,rotation,elongation,scatter;
+ void main(){
+  float t=uTime;vec3 p=aPosition;
+  // Broad, slow currents with individual drift; every path stays bounded.
+  p.x+=sin(t*.13+aPosition.z*.23)*.72+sin(t*.21+aParams.x)*.16;
+  p.y+=cos(t*.11+aPosition.x*.31)*.43+sin(t*.17+aParams.x)*.12;
+  p.z+=sin(t*.09+aPosition.y*.30+aParams.x)*.38;
+  vec3 lens=vec3(-.6,3.52,9.59);float f=(p.z-lens.z)/(-9.805-lens.z);
+  movieUV=(p.xy-mix(lens.xy,vec2(0.,8.1),f))/(vec2(12.6,9.45)*max(f,.002)+vec2(.025))+.5;
+  opacityBase=aParams.z*step(.005,f)*step(f,.995);
+  flutter=.56+.44*pow(abs(sin(t*(.32+aParams.z*.23)+aParams.x)),.65);
+  rotation=aParams.x+t*.21;elongation=mix(1.,.42,smoothstep(.9,1.8,aParams.y));
+  vec3 world=(uModel*vec4(p,1.)).xyz,worldLens=(uModel*vec4(lens,1.)).xyz;
+  float mu=dot(normalize(world-worldLens),normalize(uEye-world));
+  scatter=.33+.22*.8775/pow(1.1225-.7*mu,1.5);
+  gl_Position=uVP*vec4(world,1.);
+  float scale=length(uModel[0].xyz);
+  gl_PointSize=clamp(aParams.y*uHeight*.10*scale/max(.02,gl_Position.w),.7,9.);
+ }`;
+ const fs=`#version 300 es
+ precision highp float;
+ uniform sampler2D uFilm;uniform float uPower,uTime;
+ in vec2 movieUV;in float opacityBase,flutter,rotation,elongation,scatter;out vec4 frag;
+ void main(){
+  vec2 q=gl_PointCoord-.5;float cs=cos(rotation),sn=sin(rotation);q=mat2(cs,-sn,sn,cs)*q;q.y/=elongation;
+  float r=length(q)*2.;if(r>1.||opacityBase==0.)discard;
+  float edge=smoothstep(0.,.045,movieUV.x)*smoothstep(0.,.045,movieUV.y)*smoothstep(0.,.045,1.-movieUV.x)*smoothstep(0.,.045,1.-movieUV.y);
+  if(edge<.001)discard;
+  float l=dot(texture(uFilm,clamp(movieUV,.001,.999)).rgb,vec3(.299,.587,.114));
+  float spot=exp(-r*r*5.5)*.84+exp(-r*r*1.8)*.16;
+  float lit=(.025+.975*pow(l,.72))*(.997+.003*sin(uTime*19.));
+  float a=spot*lit*opacityBase*edge*uPower*flutter*scatter;
+  frag=vec4(vec3(.93,.955,.80)*1.5,a*.92);
+ }`;
+ let program=null,vao=null,buffer=null;const uniforms={};
+ function dispose(){if(!gl.isContextLost()){if(buffer)gl.deleteBuffer(buffer);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);}buffer=vao=program=null;}
+ try{
+  program=gl.createProgram();
+  for(const [type,source]of[[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){
+   const shader=gl.createShader(type);try{gl.shaderSource(shader,source);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));gl.attachShader(program,shader);}finally{gl.deleteShader(shader);}
+  }
+  gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
+  for(const name of ['uVP','uModel','uEye','uTime','uHeight','uFilm','uPower'])uniforms[name]=gl.getUniformLocation(program,name);
+  vao=gl.createVertexArray();buffer=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,moonlightAirSeeds(),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);
+ }catch(error){dispose();throw error;}finally{gl.bindVertexArray(null);gl.bindBuffer(gl.ARRAY_BUFFER,null);}
+ // Called between transparent scene geometry and the existing room particles:
+ // depth test remains enabled; restore the caller's program/texture unit and
+ // the pass's normal blend/depth-write baseline, including when drawing fails.
+ function draw({vp,model,eye,height,night,time,power,texture,restoreProgram,restoreUnit}){
+  if(!program)return;
+  try{
+   gl.useProgram(program);gl.uniformMatrix4fv(uniforms.uVP,false,vp);gl.uniformMatrix4fv(uniforms.uModel,false,model);gl.uniform3fv(uniforms.uEye,eye);
+   gl.uniform1f(uniforms.uTime,time);gl.uniform1f(uniforms.uHeight,height);gl.uniform1f(uniforms.uPower,power*(.22+.78*night));gl.uniform1i(uniforms.uFilm,4);
+   gl.activeTexture(gl.TEXTURE0+4);gl.bindTexture(gl.TEXTURE_2D,texture);gl.bindVertexArray(vao);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);gl.drawArrays(gl.POINTS,0,3600);
+  }finally{gl.depthMask(true);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.disable(gl.BLEND);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0+restoreUnit);gl.useProgram(restoreProgram);}
+ }
+ return{draw,dispose};
 }

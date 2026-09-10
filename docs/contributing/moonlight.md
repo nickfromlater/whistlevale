@@ -29,8 +29,10 @@ with a shallow earth edge; the native bottom is −0.25, turf top 0.36 and lot t
 [`contributions/world.json`](../../contributions/world.json). Use the normal
 editor to move, rotate or resize it. Its **Views → Places** camera and the Hall's
 railway link follow the actual saved placement. A removed model has no invented
-destination. Its short gravel entrance connects to the old town’s existing street;
-the placement preserves every house and track, clearing 28 uncredited trees and
+destination. The projected face looks toward the default desktop and phone
+arrival cameras. Its short gravel lane connects the old town’s street to the
+rear asphalt through the screen’s open, raised span. The placement preserves
+every house and track, clearing 28 uncredited trees and
 one café table group while keeping the miniature’s 18 authored trees.
 Preserve the shared contribution ID, source path and original
 [public credit](attribution.md) across both locations and portable exports.
@@ -43,13 +45,20 @@ do not change them to conceal an oversized revision.
 ## Picture and verification
 
 The single screen uses material **83**, facing native +Z with UVs 0–1.
-Three static, transparent sheets use material **84** to suggest the original
-projector beam with just 18 vertices. UV X crosses a sheet and UV Y runs from
-the actual lens toward the screen. The shared shader fades their edges and
-controls nighttime brightness; no particle loop or volumetric render pass is
-added. Keep this light restrained and within the picture's projection volume.
-[`src/moonlight-projection.js`](../../src/moonlight-projection.js) owns its shared
-silent texture and playback lifecycle. The supplied film and poster are retained
+Three feathered transparent sheets use material **84** for soft, slowly shifting,
+film-lit haze (18 vertices). UV X crosses a sheet and UV Y runs from the actual
+lens toward the screen. The shared projection controller also draws **3,600
+film-lit dust motes** with the reference's soft flecks, flutter and directional
+scattering. Their native positions follow the actual Hall/Valley transform;
+GPU currents animate one static **86,400-byte** seed buffer with one depth-tested,
+additive draw per nearby theater. Bright picture areas illuminate the dust;
+dark areas let it disappear. No CPU particle updates or extra animation loop.
+
+[`src/moonlight-projection.js`](../../src/moonlight-projection.js) owns the dust
+resources, shared silent texture and playback lifecycle. Dust is allocated only
+for a nearby visible exhibit, omitted from distant/map views, stationary with
+reduced motion, and frozen when playback is paused. Context loss and disposal
+release its resources. The supplied film and poster are retained
 unchanged; two small railway shorts give the programme three choices. Only the
 selected picture is decoded. See [media attribution and provenance](../../assets/moonlight/README.md).
 

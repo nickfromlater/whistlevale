@@ -352,12 +352,16 @@ vec3 moonlightPicture(vec2 uv,float time){
  return pow(vec3(1.,.982,.926)*grey,vec3(2.2))*paper*vignette*pulse*1.22;
 }
 // MOONLIGHT_PICTURE_END
-// MOONLIGHT_BEAM_BEGIN: three softly feathered sheets, no volume march.
+// MOONLIGHT_BEAM_BEGIN: feathered film-lit haze behind the drifting motes.
 vec4 moonlightBeam(vec2 uv,float night){
- float edge=pow(max(0.,sin(clamp(uv.x,0.,1.)*3.141593)),1.8);
- float ends=smoothstep(0.,.045,uv.y)*(1.-smoothstep(.82,1.,uv.y));
- float density=mix(1.,.42,uv.y)*mix(.009,.060,smoothstep(.1,.85,night));
- return vec4(.46,.49,.40,edge*ends*density*step(.5,uMoonlightReady));
+ float edge=pow(max(0.,sin(clamp(uv.x,0.,1.)*3.141593)),2.4);
+ float ends=smoothstep(0.,.035,uv.y)*(1.-smoothstep(.88,1.,uv.y));
+ float folds=.73+.17*sin(uv.y*19.+sin(uv.x*11.-uTime*.13)*1.4-uTime*.21)+.10*sin(uv.y*37.+uv.x*13.+uTime*.16);
+ vec2 q=vec2(clamp(uv.x,.05,.95),.5);
+ vec3 picture=(texture(uMoonlightFilm,q).rgb+texture(uMoonlightFilm,q+vec2(.04,.12)).rgb+texture(uMoonlightFilm,q-vec2(.04,.12)).rgb)/3.;
+ float light=.32+.68*pow(dot(picture,vec3(.299,.587,.114)),.8);
+ float density=mix(1.,.42,uv.y)*mix(.010,.080,smoothstep(.1,.85,night));
+ return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
 }
 // MOONLIGHT_BEAM_END
 void main(){vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 v=normalize(uEye-vPosition),base=vColor;float alpha=1.,metal=abs(vMat-41.)<.5?.75:.09,rough=abs(vMat-41.)<.5?.26:.63;
@@ -427,6 +431,13 @@ function resize(){width=innerWidth;height=innerHeight;pixelRatio=Math.min(device
 function cameraUpdate(dt){const k=reduced?1:1-Math.exp(-dt*4.5);target=lerpV(target,desiredTarget,k);yaw=mix(yaw,desiredYaw,k);pitch=mix(pitch,desiredPitch,k);distance=mix(distance,desiredDistance,k);eye=add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance]);eye[0]=clamp(eye[0],-12.45,12.45);eye[1]=clamp(eye[1],1.0,10.6);eye[2]=clamp(eye[2],-24.5,43);const proj=perspective(mobile()?1.13:.88,width/height,.07,130);if(state.selected>=0){if(mobile())proj[9]=-.32;else proj[8]=-.24;}vp=mm(proj,lookAt(eye,target));}
 function project(p){const m=vp,x=m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],y=m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],w=m[3]*p[0]+m[7]*p[1]+m[11]*p[2]+m[15];return{x:(x/w*.5+.5)*width,y:(.5-y/w*.5)*height,w};}
 function markersUpdate(){const used=[];for(const [i,e]of exhibits.entries()){const node=$('marker'+i),p=project(e.marker),small=mobile()&&i>0;node.classList.toggle('compact',small);let hide=p.w<0||p.x<35||p.x>width-35||p.y<105||p.y>height-104||state.selected>=0;const ww=small?38:(i===0?168:180),hh=43;if(!hide){for(const u of used)if(Math.abs(p.x-u.x)<(ww+u.w)/2&&Math.abs(p.y-u.y)<55)hide=true;if(!hide)used.push({x:p.x,y:p.y,w:ww});}node.classList.toggle('hidden',hide);node.style.transform=`translate(${Math.round(p.x)}px,${Math.round(p.y)}px) translate(-50%,-50%)`;node.setAttribute('tabindex',hide?'-1':'0');}}
+function drawMoonlightHallAir(){
+ if(!hallMoonlight)return;
+ const exhibit=GRAND_HALL_EXHIBITS.find(e=>e.id==='moonlight-drive-in'),bay=exhibit&&BAY_BY_ID.get(exhibit.bay);
+ if(!bay||!hallResidency?.has(bay.room)||!roomVisible(bay.room))return;
+ const model=mm(trans(bay.x,bay.surfaceY+1.18*exhibit.scale,bay.z),mm(ry(bay.yaw),scaling(exhibit.scale)));
+ hallMoonlight.drawAir({vp,model,eye,height:$('scene').height,night:state.night,restoreProgram:main,restoreUnit:1});
+}
 function updateMoonlightHall(now){
  if(!hallMoonlight)return;
  const exhibit=GRAND_HALL_EXHIBITS.find(e=>e.id==='moonlight-drive-in'),bay=exhibit&&BAY_BY_ID.get(exhibit.bay);let visible=false,active=false,nameplateVisible=false;
@@ -442,7 +453,7 @@ function frame(now){if(document.hidden){lastTime=0;requestAnimationFrame(frame);
  GL.enable(GL.DEPTH_TEST);GL.disable(GL.BLEND);GL.depthMask(true);
  // Static exhibits need new shadows only when the visible gallery changes.
  if(lightDirty){GL.bindFramebuffer(GL.FRAMEBUFFER,shadowBuffer);GL.viewport(0,0,shadowSize,shadowSize);GL.clear(GL.DEPTH_BUFFER_BIT);GL.enable(GL.POLYGON_OFFSET_FILL);GL.polygonOffset(1.1,2);paint(shadow,shadowVP,shadowMeshes);GL.disable(GL.POLYGON_OFFSET_FILL);lightDirty=false;}
- GL.bindFramebuffer(GL.FRAMEBUFFER,null);GL.viewport(0,0,$('scene').width,$('scene').height);GL.clearColor(.19,.24,.20,1);GL.clear(GL.COLOR_BUFFER_BIT|GL.DEPTH_BUFFER_BIT);GL.useProgram(main);GL.uniform3fv(uniform(main,'uEye'),eye);GL.uniform1f(uniform(main,'uNight'),state.night);GL.uniform1f(uniform(main,'uTime'),reduced?0:t);GL.uniform1f(uniform(main,'uResetPress'),resetExhibit.depression);GL.uniform1f(uniform(main,'uShadowSize'),shadowSize);GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,atlasTexture);GL.uniform1i(uniform(main,'uAtlas'),0);GL.activeTexture(GL.TEXTURE1);GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.uniform1i(uniform(main,'uShadow'),1);updateMoonlightHall(now);GL.uniform1i(uniform(main,'uMoonlightFilm'),4);GL.uniform1f(uniform(main,'uMoonlightReady'),hallMoonlight?.bind(4,atlasTexture,1)?1:0);GL.uniform1i(uniform(main,'uMoonlightNameplate'),5);hallMoonlight?.bindNameplate(5,atlasTexture,1);paint(main,vp,staticMeshes);paintHallGlass(vp);drawParticles(vp,dt,reduced?0:t);resetExhibit.frame({dt,project,width,height,obscured:state.clean||Boolean(currentModal())||hallTravelPending||hallGraphicsLost});if(frameNo%2===0)markersUpdate();GL.bindVertexArray(null);frameNo++;if(frameNo===2){$('loading').classList.add('done');window.hallReady=true;}}
+ GL.bindFramebuffer(GL.FRAMEBUFFER,null);GL.viewport(0,0,$('scene').width,$('scene').height);GL.clearColor(.19,.24,.20,1);GL.clear(GL.COLOR_BUFFER_BIT|GL.DEPTH_BUFFER_BIT);GL.useProgram(main);GL.uniform3fv(uniform(main,'uEye'),eye);GL.uniform1f(uniform(main,'uNight'),state.night);GL.uniform1f(uniform(main,'uTime'),reduced?0:t);GL.uniform1f(uniform(main,'uResetPress'),resetExhibit.depression);GL.uniform1f(uniform(main,'uShadowSize'),shadowSize);GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,atlasTexture);GL.uniform1i(uniform(main,'uAtlas'),0);GL.activeTexture(GL.TEXTURE1);GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.uniform1i(uniform(main,'uShadow'),1);updateMoonlightHall(now);GL.uniform1i(uniform(main,'uMoonlightFilm'),4);GL.uniform1f(uniform(main,'uMoonlightReady'),hallMoonlight?.bind(4,atlasTexture,1)?1:0);GL.uniform1i(uniform(main,'uMoonlightNameplate'),5);hallMoonlight?.bindNameplate(5,atlasTexture,1);paint(main,vp,staticMeshes);paintHallGlass(vp);drawMoonlightHallAir();drawParticles(vp,dt,reduced?0:t);resetExhibit.frame({dt,project,width,height,obscured:state.clean||Boolean(currentModal())||hallTravelPending||hallGraphicsLost});if(frameNo%2===0)markersUpdate();GL.bindVertexArray(null);frameNo++;if(frameNo===2){$('loading').classList.add('done');window.hallReady=true;}}
 function persist(){try{localStorage.setItem('alder-grand-hall-v1',JSON.stringify(saved));}catch{toast('This browser could not save your collection.');}}
 let toastTimer;function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2500);}
 function paintActions(){if(state.selected<0)return;const e=exhibits[state.selected],liked=saved.likes.includes(e.id),bookmarked=saved.bookmarks.includes(e.id);$('likeBtn').innerHTML=icon('heart')+(e.likes+(liked?1:0)).toLocaleString();$('likeBtn').setAttribute('aria-pressed',String(liked));$('likeBtn').setAttribute('aria-label',(liked?'Unlike ':'Like ')+e.name);$('saveBtn').innerHTML=icon(bookmarked?'check':'bookmark')+(bookmarked?'In your collection':'Save this creation');$('saveBtn').setAttribute('aria-pressed',String(bookmarked));}
