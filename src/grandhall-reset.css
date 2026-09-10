@@ -1,5 +1,5 @@
 .reset-controls{margin:18px 0 8px}
-.reset-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:54px;border:1px solid #bdd2b9;border-radius:9px;background:#214b40;color:#e9f6db;padding:13px 16px;box-shadow:0 4px 0 #122e27,0 8px 18px #172d2522;text-align:left;font:600 13px inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.reset-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:54px;border:1px solid #bdd2b9;border-radius:9px;background:#214b40;color:#e9f6db;padding:13px 16px;box-shadow:0 4px 0 #122e27,0 8px 18px #172d2522;text-align:left;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s}
 .reset-trigger:hover{background:#2b6251}.reset-trigger:active{transform:translateY(3px);box-shadow:0 1px 0 #122e27}.reset-trigger:focus-visible,.reset-pin:focus-visible{outline:3px solid #d1a24e;outline-offset:5px}
 .reset-trigger[aria-disabled=true]{cursor:progress;background:#34594c}.reset-trigger span:last-child{font:25px Georgia,serif}
 .reset-caption{display:block;margin-top:12px;font-size:11px;line-height:1.5;color:#756e60}

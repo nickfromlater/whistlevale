@@ -25,7 +25,7 @@ function codexResetEngine(b,x,y,z,angle=0){
  b.tri([.07,.59,-.95],[.41,.59,-.52],[-.2,.59,-.5],ink,0);b.pop();
  // Rear dial: a freestanding astronomical reset meter with visible supports.
  for(const xx of[-1.4,1.4]){b.box(xx,1.55,-1.8,.24,1.85,.28,brass,41);b.box(xx,.76,-1.8,.6,.21,.6,brass,41);}
- b.push(0,3.35,-1.8,Math.PI/2);
+ b.push(0,3.35,-1.8,-Math.PI/2);
  b.cylinder(0,0,0,1.86,1.86,.18,brass,41,64);
  b.cylinder(0,-.115,0,1.7,1.7,.07,dark,23,64);
  b.cylinder(0,-.16,0,1.58,1.58,.035,ink,0,64);
