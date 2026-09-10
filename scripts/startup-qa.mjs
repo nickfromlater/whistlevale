@@ -148,7 +148,8 @@ console.log('Contribution invitation verified: visible on every new page, page-o
 // Model a slow parser-blocking script after hobby.js. Timer time can advance
 // while controls/map/cabinet definitions are absent; startup must wait for them.
 const hobbySource=await readFile(new URL('../src/hobby.js',import.meta.url),'utf8');
-const houseStartup=hobbySource.slice(hobbySource.indexOf('function startHouse('));
+const analyticsAdapter=hobbySource.slice(hobbySource.indexOf('function syncHouseAnalytics('),hobbySource.indexOf('function hobbyHasTrain('));
+const houseStartup=analyticsAdapter+hobbySource.slice(hobbySource.indexOf('function startHouse('));
 for(const readyState of ['loading','interactive','complete']){
  const page=invitationPage({bootControls:false}),events=new Map(),jobs=[],calls=[],inserted=[];let now=0;
  Object.assign(page.context,{URLSearchParams,location:{protocol:'https:',search:'',hash:''},hobby:{room:'valley'},shadowDirty:false,
