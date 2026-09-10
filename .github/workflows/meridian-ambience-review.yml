@@ -39,9 +39,10 @@ jobs:
           (out/'expected.json').write_text(json.dumps(candidate['expected'],indent=2))
           (out/'build-preview.py').write_text(candidate['generator'])
           (out/'browser.cjs').write_text(candidate['browser'])
-          refinement=pathlib.Path('.review/meridian-ambience/refine.py')
-          assert hashlib.sha256(refinement.read_bytes()).hexdigest()=='47dcec6cb749c3451b8da45ee3135b937bce8f1d85bb81d1f1b7d609b6bfec55'
-          subprocess.run(['python3',str(refinement.resolve())],check=True)
+          for name,digest in [('refine.py','47dcec6cb749c3451b8da45ee3135b937bce8f1d85bb81d1f1b7d609b6bfec55'),('refine2.py','fb6481d50f02e411a68caf18d2a7f252d3309b913ecc3c2f99c9d2f5004db698')]:
+            refinement=pathlib.Path('.review/meridian-ambience')/name
+            assert hashlib.sha256(refinement.read_bytes()).hexdigest()==digest
+            subprocess.run(['python3',str(refinement.resolve())],check=True)
           subprocess.run(['python3',str(out/'build-preview.py')],cwd=work,check=True)
           PY
       - name: Full Node 24 checks and unchanged geometry budgets
