@@ -19,14 +19,19 @@ exporting the existing file does not.
 
 ## What is built
 
-- An open station under a blue-glass barrel vault, brass roof ribs, corner
-  towers, suspended lanterns, a large clock and a miniature celestial mechanism.
-- A sorting office with filled pigeonholes, folded and sealed envelopes, a
-  spiral mail slide, roller conveyor, dispatch desk, parcels and mail sacks.
-- A burgundy locomotive and two postal coaches on a continuous rounded circuit.
-- Three circular destination dioramas: **Yesterday** (autumn trees and a bridge),
-  **The Moon** (craters, observatory and postal pennant), and **Home Again** (a
-  lamplit kitchen window, red door, flowers and rain).
+- A blue-glass station with double-chord roof trusses, an open central cutaway,
+  glazed ridge lantern, copper dispatch turret and envelope weather vane. A
+  smaller clock stands beside the vault, leaving the central destination clear.
+- A connected sorting line: pigeonholes, descending spiral slide, transfer tray,
+  roller conveyor, cancelling press with flywheel, and rising dispatch belt.
+  A loading trolley waits beside the train; timber work floors and tile borders
+  distinguish the workshop from the concourse.
+- A burgundy locomotive and postal coach on a continuous rounded circuit, with
+  smokebox, handrails, driving rods, coach door panels and curved coach roof.
+- Three deep circular destination dioramas: **Yesterday** has an autumn riverbank,
+  arched timber bridge and park bench; **The Moon** has cratered terrain, a raised
+  observatory and distant globe; **Home Again** has a garden, tiled cottage roof,
+  red door and an open kitchen window with a lamp and delivered letter inside.
 
 The Blender timeline includes a train circuit, a clock hand and a letter on the
 conveyor. These are motion studies. The **Hall exhibit is a static frame-1
@@ -58,7 +63,7 @@ still emits ordinary Whistlevale vertices. No new renderer or runtime loader is
 required. The existing Hall loader requests it only when Little Worlds is needed,
 and playable exports embed it. Do not edit generated vertices by hand.
 
-## Rebuild the original recipe and studio render
+## Rebuild the authoring recipe and studio render
 
 Only after preserving any edits to the `.blend`:
 

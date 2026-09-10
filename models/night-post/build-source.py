@@ -17,7 +17,7 @@ scene.unit_settings.system = 'METRIC'
 collections = {}
 for name in ['EXPORT', 'STUDIO']:
     c = bpy.data.collections.new(name); scene.collection.children.link(c); collections[name] = c
-for name in ['01 Architecture', '02 Iron and glass', '03 Clockwork', '04 Postal works', '05 Railway', '06 Yesterday', '07 The Moon', '08 Home Again', '09 Typography']:
+for name in ['01 Architecture', '02 Iron and glass', '03 Clockwork', '04 Postal works', '05 Railway', '06 Yesterday', '07 The Moon', '08 Home Again', '09 Typography', '10 Dispatch tower']:
     c = bpy.data.collections.new(name); collections['EXPORT'].children.link(c); collections[name] = c
 current = '01 Architecture'
 materials = {}
@@ -83,7 +83,8 @@ def box(name, loc, dims, material, edge=0, rot=None):
     if edge and min(dims)>.12 and max(dims)>1.5: bevel(o, edge)
     return o
 
-def cyl(name, loc, radius, depth, material, vertices=16, rotation=None, r2=None):
+def cyl(name, loc, radius, depth, material, vertices=12, rotation=None, r2=None):
+    vertices=min(vertices,32)
     if radius<.25: vertices=min(vertices,8)
     if r2 is None:
         bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc)
@@ -115,7 +116,7 @@ def line(name, points, radius, material, sides=6, closed=False):
     o=bpy.data.objects.new(name,data); collections[current].objects.link(o); data.materials.append(materials[material]);return o
 
 def beam(name, a, b, radius, material, sides=6):
-    a,b=Vector(a),Vector(b);o=cyl(name,(a+b)/2,radius,(b-a).length,material,min(sides,4) if radius<.04 else sides)
+    a,b=Vector(a),Vector(b);o=cyl(name,(a+b)/2,radius,(b-a).length,material,min(sides,4) if radius<.08 else sides)
     o.rotation_euler=(b-a).to_track_quat('Z','Y').to_euler();return o
 
 def ring(name, center, radius, tube, material, segments=40, plane='XZ', start=0, end=2*pi):
@@ -163,6 +164,28 @@ for x in [-7.65,7.65]:
     for z,w in [(6.5,.8),(7.05,.64),(7.42,.44)]: box('Tower stepped crown',(x,2.7,z),(w,1.2 if z<7 else .9,.26),'Old brass',.025)
     sphere('Tower finial',(x,2.7,7.75),(.18,.18,.26),'Light brass')
 
+# Brick courses, a raised loading floor, and a repeating tile border give scale.
+for x in [-7.45,-2.5,2.5,7.45]:
+    for i in range(8):
+        box('Pier stone joint',(x,3.414,1.45+i*.43),(.39,.025,.055),'Warm limestone')
+for x in [-5.95,5.95]:
+    for i in range(13):
+        box('Concourse ivory border tile',(x,-2.9+i*.43,.834),(.24,.24,.014),'Warm limestone',rot=(0,0,pi/4))
+for x in [-4.2,4.05]:
+    box('Postal work floor',(x,-.12,.87),(3.35,2.5,.09),'Walnut')
+    for i in range(8):box('Work floor board seam',(x-1.4+i*.4,-.12,.92),(.012,2.43,.009),'Deep petrol')
+# A narrow dispatch turret rises between worlds, giving the station an asymmetric silhouette.
+current='10 Dispatch tower'
+box('Dispatch turret shaft',(2.5,3.77,6.36),(.91,.84,2.3),'Midnight enamel')
+for x in [2.05,2.95]:box('Turret limestone quoin',(x,3.31,6.36),(.12,.13,2.3),'Warm limestone')
+for z in [5.42,7.4]:box('Turret projecting cornice',(2.5,3.77,z),(1.2,1.1,.17),'Old brass')
+box('Turret louvred opening',(2.5,3.32,6.55),(.58,.025,1.12),'Deep petrol')
+for i in range(6):box('Turret louvre blade',(2.5,3.26,6.09+i*.17),(.59,.12,.045),'Oxidised teal',rot=(.35,0,0))
+mesh('Turret copper spire',[(1.82,3.13,7.5),(3.18,3.13,7.5),(3.18,4.41,7.5),(1.82,4.41,7.5),(2.5,3.77,9.13)],[(0,1,4),(1,2,4),(2,3,4),(3,0,4)],'Oxidised teal')
+beam('Turret weather vane pole',(2.5,3.77,9.1),(2.5,3.77,9.62),.025,'Old brass',4)
+mesh('Envelope weather vane',[(2.15,3.77,9.33),(2.85,3.77,9.33),(2.85,3.77,9.61),(2.15,3.77,9.61)],[(0,1,2,3)],'Old brass')
+line('Weather vane envelope fold',[(2.15,3.755,9.61),(2.5,3.755,9.4),(2.85,3.755,9.61)],.014,'Deep petrol')
+
 # The train-shed roof is a shallow barrel vault; front stays open for inspection.
 current='02 Iron and glass'
 for y in [-2.1,.2,2.5]:
@@ -179,28 +202,40 @@ for y in [-2.1,.2,2.5]:
 for j in range(12):
     a=pi*j/12;b=pi*(j+1)/12
     for y0,y1 in [(.28,2.42),(-2.02,.12)]:
-        # Omit the two front centre panes intentionally for the cutaway.
-        if y0<0 and j in [5,6]: continue
+        # Open the central front roof so the destination worlds remain visible.
+        if y0<0 and j in [3,4,5,6,7,8]: continue
         mesh('Blue vault glazing',[(6.23*cos(a),y0,5.1+2.35*sin(a)),(6.23*cos(b),y0,5.1+2.35*sin(b)),(6.23*cos(b),y1,5.1+2.35*sin(b)),(6.23*cos(a),y1,5.1+2.35*sin(a))],[(0,1,2,3)],'Window blue')
     line('Longitudinal roof seam',[(6.25*cos(a),-2.12,5.1+2.35*sin(a)+.025),(6.25*cos(a),2.53,5.1+2.35*sin(a)+.025)],.028,'Old brass')
 line('Ridge spine',[(0,-2.45,7.52),(0,2.8,7.52)],.07,'Light brass')
 for x in [-6.25,6.25]:
     line('Eave gutter',[(x,-2.4,5.13),(x,2.85,5.13)],.08,'Old brass')
+# Double-depth ribs and cross-bracing read as actual iron roof trusses.
+for y in [-2.1,2.5]:
+    line('Vault lower chord',[(6.1*cos(pi*i/20),y,4.96+2.13*sin(pi*i/20)) for i in range(21)],.055,'Midnight enamel')
+    for i in range(1,10):
+        a=pi*i/10;b=pi*(i+.5)/10
+        beam('Vault diagonal web',(6.1*cos(a),y,4.96+2.13*sin(a)),(6.25*cos(b),y,5.1+2.35*sin(b)),.024,'Old brass',4)
+# Ventilated ridge lantern: repeated glazing and a copper cap.
+box('Clerestory sill',(0,.25,7.55),(1.46,4.5,.14),'Midnight enamel')
+for x in [-.62,.62]:
+    box('Clerestory blue glass',(x,.25,7.84),(.035,4.4,.48),'Window blue')
+    for y in [-1.95,-.85,.25,1.35,2.45]:box('Clerestory mullion',(x,y,7.84),(.06,.075,.58),'Old brass')
+mesh('Clerestory copper ridge',[(-.85,-2.15,8.12),(0,-2.15,8.4),(.85,-2.15,8.12),(-.85,2.65,8.12),(0,2.65,8.4),(.85,2.65,8.12)],[(0,3,4,1),(1,4,5,2),(0,1,2),(3,5,4)],'Oxidised teal')
 # Front arch carries the title, tiny brass stars and a suspended timepiece.
 current='09 Typography'
 box('Station enamel nameplate',(0,-2.24,7.78),(6.6,.22,.62),'Midnight enamel',.065)
 box('Nameplate lower trim',(0,-2.385,7.48),(6.65,.035,.045),'Old brass')
 text('The Night Post title','T H E   N I G H T   P O S T',(0,-2.38,7.81),.38,'Ivory')
-text('Station motto','LETTERS BEYOND TIME',(0,-2.39,7.58),.103,'Light brass',0)
+
 
 current='03 Clockwork'
-beam('Clock suspension', (0,-2.16,7.45),(0,-2.16,6.84),.065,'Old brass')
+
 cyl('Clock bronze housing',(0,-2.14,5.86),1.11,.23,'Old brass',48,(pi/2,0,0))
 cyl('Clock ink dial',(0,-2.29,5.86),.98,.045,'Deep petrol',48,(pi/2,0,0))
 ring('Clock outer bezel',(0,-2.35,5.86),1.025,.055,'Light brass',48)
-ring('Clock inner minute track',(0,-2.36,5.86),.83,.012,'Old brass',48)
-for i in range(60):
-    a=2*pi*i/60; major=i%5==0
+
+for i in range(12):
+    a=2*pi*i/12; major=True
     p=(.86*sin(a),-2.37,5.86+.86*cos(a));q=((.74 if major else .81)*sin(a),-2.37,5.86+(.74 if major else .81)*cos(a))
     beam('Clock hour' if major else 'Clock minute',p,q,.018 if major else .009,'Ivory',4)
 for body,x,z in [('XII',0,6.5),('III',.63,5.86),('VI',0,5.23),('IX',-.63,5.86)]:text('Clock numeral '+body,body,(x,-2.39,z),.16,'Ivory',0)
@@ -210,11 +245,17 @@ clockpivot=empty('ANIM Clock minute pivot',(0,-2.43,5.86));parent_keep([minute],
 clockpivot.rotation_euler[1]=0;clockpivot.keyframe_insert('rotation_euler',frame=1,index=1)
 clockpivot.rotation_euler[1]=-2*pi;clockpivot.keyframe_insert('rotation_euler',frame=721,index=1)
 sphere('Clock spindle',(0,-2.49,5.86),(.07,.05,.07),'Amber light')
+# A smaller side-mounted clock keeps all three destination worlds visible.
+clockMount=empty('Station clock mounting',(0,-2.14,5.86))
+parent_keep([o for o in list(collections['03 Clockwork'].objects) if o!=clockMount and o.parent is None],clockMount)
+clockMount.scale=(.76,.76,.76);clockMount.location=(-6.65,-.4,6.42)
+beam('Side clock bracket',(-6.25,-.4,5.12),(-6.65,-.4,5.12),.06,'Old brass',4)
+beam('Side clock stand',(-6.65,-.4,5.12),(-6.65,-.4,5.63),.06,'Old brass',4)
 # A little planetary escapement sits above the vault.
-ring('Celestial orbit',(0,1.1,8.13),.68,.027,'Old brass',36)
-ring('Celestial horizontal orbit',(0,1.1,8.13),.5,.022,'Light brass',32,plane='XY')
-sphere('Escapement moon',(0,1.1,8.13),(.19,.19,.19),'Moon light',16,8)
-beam('Orrery stem',(0,1.1,7.48),(0,1.1,7.7),.07,'Old brass')
+ring('Celestial orbit',(0,1.1,8.93),.68,.027,'Old brass',36)
+ring('Celestial horizontal orbit',(0,1.1,8.93),.5,.022,'Light brass',32,plane='XY')
+sphere('Escapement moon',(0,1.1,8.93),(.19,.19,.19),'Moon light',16,8)
+beam('Orrery stem',(0,1.1,8.38),(0,1.1,8.5),.07,'Old brass')
 
 # Three portals: framed apertures containing small, physically authored worlds.
 for idx,(x,title,label,color) in enumerate([(-5,'Yesterday','01  /  YESTERDAY','Autumn ochre'),(0,'The Moon','02  /  THE MOON','Moon light'),(5,'Home Again','03  /  HOME AGAIN','Amber light')]):
@@ -222,6 +263,13 @@ for idx,(x,title,label,color) in enumerate([(-5,'Yesterday','01  /  YESTERDAY','
     ring(title+' portal rim',(x,3.58,3.06),1.9,.14,'Midnight enamel',40)
     ring(title+' portal brass',(x,3.39,3.06),1.76,.055,'Light brass',40)
     ring(title+' luminous threshold',(x,3.44,3.06),1.66,.025,color,40)
+    shell=[]
+    for y in [3.58,4.14]:
+        shell.extend([(x+1.84*cos(2*pi*i/32),y,3.06+1.84*sin(2*pi*i/32)) for i in range(32)])
+    mesh(title+' deep cylindrical reveal',shell,[(i,(i+1)%32,(i+1)%32+32,i+32) for i in range(32)],'Oxidised teal')
+    for i in range(8):
+        a=2*pi*i/8
+        beam(title+' axial collar rib',(x+1.9*cos(a),3.54,3.06+1.9*sin(a)),(x+1.9*cos(a),4.17,3.06+1.9*sin(a)),.04,'Old brass',4)
     for side in [-1,1]:
         box(title+' gate foot',(x+side*1.65,3.63,1.18),(.48,.9,.64),'Midnight enamel',.035)
         cyl(title+' foot rivet',(x+side*1.65,3.14,1.2),.07,.04,'Old brass',8,(pi/2,0,0))
@@ -231,55 +279,92 @@ for idx,(x,title,label,color) in enumerate([(-5,'Yesterday','01  /  YESTERDAY','
     current='09 Typography'
     box(title+' destination board',(x,3.05,5.05),(3.75,.16,.45),'Deep petrol',.03)
     text(title+' address',label,(x,2.95,5.08),.205,'Ivory',.002)
-    text(title+' departure', ['LAST LIGHT','NO RETURN','WELCOME HOME'][idx],(x,2.94,4.88),.075,'Light brass',0)
+
+
+# Each portal has a projecting, faceted terrain shelf with actual surface depth.
+def terrain(name,x,material):
+    outline=[(-1.45,3.55,2.05),(-1.1,3.0,1.85),(0,2.8,1.7),(1.1,3.0,1.85),(1.45,3.55,2.05),(1.1,4.05,2.22),(0,4.08,2.35),(-1.1,4.05,2.22)]
+    verts=[(x+a,b,c) for a,b,c in outline]+[(x,3.58,2.27),(x,3.6,1.42)]
+    mesh(name,verts,[(i,(i+1)%8,8) for i in range(8)]+[(i,9,(i+1)%8) for i in range(8)],material)
 
 current='06 Yesterday'
-# An autumn afternoon contained within the left gate: bridge, stream, tree, bench.
-mesh('Yesterday rolling bank',[(-6.45,3.84,2.35),(-5.9,3.75,2.48),(-5.3,3.76,2.3),(-4.5,3.78,2.48),(-3.58,3.83,2.2),(-4.0,3.83,1.78),(-5,3.83,1.4),(-6.1,3.83,1.77)],[(0,1,2,3,4,5,6,7)],'Moss')
-box('Yesterday footbridge',(-5.18,3.48,2.21),(1.15,.46,.12),'Walnut')
-for x in [-5.67,-4.7]:beam('Bridge post',(x,3.29,2.23),(x,3.29,2.63),.033,'Old brass',6)
-beam('Bridge handrail',(-5.7,3.29,2.63),(-4.67,3.29,2.63),.025,'Old brass')
-line('River of remembered light',[(-5.35,3.64,2.25),(-5.18,3.64,2.0),(-5.37,3.64,1.65)],.09,'Rain silver')
-for x,z,s in [(-6.06,2.48,1),(-4.14,2.3,.74)]:
-    beam('Autumn tree trunk',(x,3.7,z),(x+.08,3.7,z+1.2*s),.065*s,'Walnut',7)
-    for dx,dz in [(-.32,.7),(.32,.85),(-.15,1.13)]:
-        beam('Autumn branch',(x,3.7,z+.4),(x+dx*s,3.7,z+dz*s),.035,'Walnut',6)
-    for j,(dx,dz) in enumerate([(-.32,.84),(.28,.99),(-.1,1.23),(.08,.73)]):
-        sphere('Autumn leaf crown',(x+dx*s,3.66,z+dz*s),(.35*s,.19,.32*s),'Autumn ochre' if j%2 else 'Autumn red',10,5)
-cyl('Yesterday sun',(-4.48,3.96,4.03),.29,.04,'Amber light',24,(pi/2,0,0))
-for x in [-5.85,-4.2]:
-    box('Park bench seat',(x,3.4,2.37),(.43,.22,.07),'Warm limestone')
-    box('Park bench back',(x,3.51,2.53),(.43,.06,.22),'Warm limestone')
+terrain('Autumn riverbank island',-5,'Moss')
+# A stream runs down through a real arched bridge and spills over the island.
+mesh('Remembered river',[(-5.27,4.05,2.36),(-4.91,4.05,2.36),(-4.99,3.55,2.3),(-5.38,3.55,2.3),(-5.15,2.91,1.9),(-5.46,2.91,1.9)],[(0,1,2,3),(3,2,4,5)],'Rain silver')
+for y in [3.27,3.66]:
+    line('Bridge arch',[(-5.92+i*.16,y,2.21+.26*sin(pi*i/9)) for i in range(10)],.065,'Walnut')
+    line('Bridge curved railing',[(-5.92+i*.16,y,2.62+.26*sin(pi*i/9)) for i in range(10)],.025,'Old brass')
+    for i in [0,3,6,9]:
+        x=-5.92+i*.16;z=2.21+.26*sin(pi*i/9)
+        beam('Bridge baluster',(x,y,z),(x,y,z+.41),.02,'Walnut',4)
+for i in range(10):box('Bridge timber plank',(-5.92+i*.16,3.465,2.25+.26*sin(pi*i/9)),(.14,.5,.055),'Warm limestone')
+for x,y,z,scale in [(-6.04,3.75,2.27,1),(-4.05,3.74,2.27,.76)]:
+    beam('Autumn trunk',(x,y,z),(x+.08,y,z+1.22*scale),.07*scale,'Walnut',6)
+    for j,(dx,dy,dz) in enumerate([(-.3,0,.85),(.28,.04,1.04),(-.05,.04,1.3),(.03,-.18,.78)]):
+        beam('Autumn branch',(x,y,z+.35),(x+dx*scale,y+dy,z+dz*scale),.035,'Walnut',4)
+        sphere('Copper autumn crown',(x+dx*scale,y+dy,z+dz*scale),(.36*scale,.3*scale,.32*scale),'Autumn ochre' if j%2 else 'Autumn red')
+cyl('Yesterday setting sun',(-4.48,4.02,4.06),.29,.025,'Amber light',24,(pi/2,0,0))
+for i in range(9):
+    box('Fallen copper leaf',(-6.13+(i%3)*.35,3.0+(i//3)*.28,2.18),(.075,.05,.015),'Autumn ochre',rot=(0,0,i*.9))
+# A bench under the left tree, with legs and separated wooden slats.
+for z,y in [(2.46,3.38),(2.63,3.53),(2.76,3.53)]:box('Memory bench slat',(-6.0,y,z),(.5,.095,.07),'Walnut')
+for x in [-6.18,-5.82]:beam('Memory bench leg',(x,3.4,2.23),(x,3.4,2.49),.025,'Dark steel',4)
 
 current='07 The Moon'
-# The moon is a relief disk with nested crater rims and a tiny observatory.
-cyl('Lunar disc',(.22,3.77,3.36),1.08,.12,'Moon stone',40,(pi/2,0,0))
-for x,z,r in [(-.32,3.71,.21),(.52,3.92,.16),(.81,3.23,.18),(-.18,2.91,.14),(.28,3.32,.12),(.44,2.62,.09),(-.58,3.29,.11)]:
-    cyl('Crater shadow',(x,3.688,z),r,.012,'Lunar dark',12,(pi/2,0,0))
-    ring('Crater rim',(x,3.65,z),r,.025,'Moon stone',12)
-mesh('Lunar foreground',[(-1.42,3.63,2.28),(-.92,3.53,2.5),(-.43,3.53,2.35),(.24,3.53,2.46),(1.39,3.63,2.23),(.95,3.63,1.71),(0,3.63,1.42),(-.95,3.63,1.71)],[(0,1,2,3,4,5,6,7)],'Lunar dark')
-cyl('Moon observatory drum',(-.73,3.35,2.44),.19,.32,'Ivory',12)
-sphere('Moon observatory dome',(-.73,3.35,2.62),(.21,.21,.18),'Old brass',12,6)
-beam('Lunar telescope',(-.74,3.28,2.67),(-.42,3.16,2.86),.055,'Ivory',8)
-beam('Moon flag mast',(.7,3.32,2.25),(.7,3.32,2.92),.02,'Ivory',6)
-mesh('Lunar postal pennant',[(.71,3.32,2.91),(1.06,3.32,2.91),(.96,3.32,2.76),(.71,3.32,2.76)],[(0,1,2,3)],'Burgundy mail')
-for x,z in [(-1.18,3.63),(-.95,4.08),(.98,4.06),(.13,4.52),(1.4,3.43),(-1.36,2.96)]:sphere('Faraway star',(x,3.87,z),(.025,.015,.025),'Moon light',8,4)
+terrain('Lunar rock island',0,'Lunar dark')
+# A small hanging planet beyond the landscape establishes distance, not a flat icon.
+sphere('Distant lunar globe',(.55,3.97,3.8),(.66,.27,.66),'Moon stone')
+for x,z,r in [(.3,4.01,.15),(.76,3.79,.13),(.42,3.48,.1)]:
+    cyl('Distant crater shadow',(x,3.69,z),r,.018,'Lunar dark',12,(pi/2,0,0))
+    ring('Distant crater rim',(x,3.66,z),r,.019,'Moon stone',12)
+for x,y,z,r in [(-.22,3.1,1.98,.22),(.86,3.53,2.23,.18),(-1,3.67,2.28,.13)]:
+    cyl('Terrain crater basin',(x,y,z),r,.028,'Night sky',12)
+    ring('Terrain crater lip',(x,y,z+.025),r,.025,'Moon stone',12,plane='XY')
+cyl('Observatory raised foundation',(-.65,3.6,2.4),.4,.28,'Moon stone',12)
+cyl('Observatory drum',(-.65,3.6,2.72),.32,.5,'Ivory',16)
+sphere('Observatory copper dome',(-.65,3.6,3.02),(.35,.35,.32),'Oxidised teal')
+box('Observatory open slit',(-.65,3.265,3.04),(.09,.03,.3),'Night sky')
+beam('Lunar telescope',(-.65,3.27,3.06),(-.38,2.99,3.38),.073,'Ivory',8)
+cyl('Telescope objective',(-.38,2.99,3.38),.09,.08,'Old brass',8,rotation=(.65,.6,0))
+for i in range(4):box('Observatory entry steps',(-.65,3.13-i*.14,2.4-i*.08),(.29,.18,.13),'Moon stone')
+beam('Moon flag mast',(.7,3.32,2.18),(.7,3.32,3.06),.022,'Ivory',4)
+mesh('Lunar postal pennant',[(.71,3.32,3.05),(1.13,3.37,3.05),(1.0,3.29,2.85),(.71,3.32,2.85)],[(0,1,2,3)],'Burgundy mail')
+for x,z in [(-1.18,3.63),(-.95,4.08),(.13,4.52),(1.4,3.43)]:sphere('Faraway star',(x,3.87,z),(.025,.015,.025),'Moon light')
 
 current='08 Home Again'
-# A lit kitchen window, rain, a tiled roof and a red door.
-box('Home cottage',(5.03,3.77,2.74),(1.63,.4,1.57),'Warm limestone',.03)
-mesh('Home gable',[(4.13,3.55,3.46),(5.03,3.55,4.17),(5.94,3.55,3.46),(4.13,3.97,3.46),(5.03,3.97,4.17),(5.94,3.97,3.46)],[(0,1,2),(3,5,4),(0,3,4,1),(1,4,5,2)],'Oxblood edge')
-for a,b in [((4.05,3.47,3.45),(5.03,3.47,4.21)),((5.03,3.47,4.21),(6.01,3.47,3.45))]:beam('Home roof fascia',a,b,.07,'Old brass',6)
-box('Kitchen window glow',(4.65,3.526,2.94),(.6,.035,.64),'Amber light')
-for x in [4.33,4.65,4.97]:box('Kitchen window frame',(x,3.48,2.94),(.045,.055,.71),'Walnut')
-for z in [2.59,2.94,3.28]:box('Kitchen crossbar',(4.65,3.48,z),(.68,.055,.045),'Walnut')
-box('Home red door',(5.53,3.53,2.57),(.43,.07,1.12),'Burgundy mail',.02)
-sphere('Home door handle',(5.4,3.48,2.55),(.027,.02,.027),'Old brass',8,4)
-box('Home chimney',(5.62,3.86,3.94),(.24,.29,.75),'Warm limestone')
-for z in [2.02,1.93,1.84]:box('Home approach',(5.51,3.45-(2.02-z)*1.6,z),(.6,.4,.12),'Warm limestone')
-box('Kitchen flowerbox',(4.64,3.36,2.5),(.72,.22,.17),'Oxidised teal')
-for x in [4.42,4.61,4.81]:sphere('Windowsill geranium',(x,3.35,2.65),(.11,.08,.11),'Autumn red',8,4)
-for x,z in [(3.85,3.2),(4.03,4.0),(5.18,4.5),(6.15,3.6),(6.3,2.8),(3.94,2.52),(5.93,4.02)]:beam('Silver rain',(x,3.38,z),(x-.045,3.38,z-.15),.012,'Rain silver',4)
+terrain('Home garden island',5,'Moss')
+# Walls surround an actual kitchen opening with a table, lamp and a letter inside.
+box('Kitchen back wall',(5.03,4.02,2.93),(1.66,.08,1.62),'Walnut')
+box('Kitchen floor',(5.03,3.62,2.15),(1.65,.85,.09),'Warm limestone')
+for x in [4.2,5.86]:box('Cottage side wall',(x,3.6,2.92),(.13,.86,1.64),'Warm limestone')
+box('Cottage window sill',(4.68,3.2,2.44),(.97,.18,.53),'Warm limestone')
+box('Cottage window lintel',(4.68,3.2,3.5),(.97,.18,.37),'Warm limestone')
+box('Cottage door jamb',(5.22,3.2,2.91),(.14,.16,1.64),'Warm limestone')
+box('Door lintel',(5.53,3.2,3.53),(.58,.16,.4),'Warm limestone')
+mesh('Cottage roof',[ (4.05,3.08,3.67),(5.03,3.08,4.33),(6.02,3.08,3.67),(4.05,4.2,3.67),(5.03,4.2,4.33),(6.02,4.2,3.67)],[(0,1,2),(3,5,4),(0,3,4,1),(1,4,5,2)],'Oxblood edge')
+for t in [.25,.5,.75]:
+    for side in [-1,1]:
+        x=5.03+side*.99*t;z=4.33-.66*t
+        beam('Roof tile course',(x,3.07,z+.015),(x,4.2,z+.015),.018,'Burgundy mail',4)
+for x in [4.3,4.7,5.1]:box('Kitchen window mullion',(x,3.1,3.0),(.045,.06,.66),'Walnut')
+for z in [2.66,3.34]:box('Kitchen frame',(4.7,3.1,z),(.87,.06,.045),'Walnut')
+box('Kitchen table',(4.72,3.66,2.77),(.66,.4,.055),'Old brass')
+box('Letter finally delivered',(4.68,3.58,2.809),(.2,.14,.013),'Letter cream')
+beam('Kitchen lamp cord',(4.7,3.7,3.65),(4.7,3.7,3.32),.013,'Walnut',4)
+cyl('Kitchen pendant shade',(4.7,3.7,3.3),.17,.14,'Amber light',8,r2=.055)
+box('Warm kitchen wall',(4.7,3.97,3.04),(.9,.025,1.09),'Amber light')
+box('Home red door',(5.56,3.18,2.84),(.43,.07,1.25),'Burgundy mail')
+for z in [2.47,2.99]:box('Door recessed panel',(5.56,3.136,z),(.31,.018,.39),'Oxblood edge')
+sphere('Home door handle',(5.4,3.12,2.83),(.03,.02,.03),'Old brass')
+box('Home chimney',(5.62,3.86,4.1),(.24,.29,.75),'Warm limestone')
+box('Chimney cap',(5.62,3.86,4.49),(.32,.36,.07),'Old brass')
+for i in range(3):box('Front door steps',(5.52,3.02-i*.17,2.18-i*.09),(.59,.21,.13),'Warm limestone')
+box('Kitchen flowerbox',(4.69,2.99,2.59),(.8,.23,.14),'Oxidised teal')
+for x in [4.42,4.68,4.93]:sphere('Windowsill geranium',(x,2.99,2.73),(.11,.08,.11),'Autumn red')
+for x in [4.02,6.12]:
+    for y in [3.0,3.3,3.6]:box('Garden picket',(x,y,2.35),(.045,.055,.4),'Ivory')
+    beam('Garden fence rail',(x,2.94,2.39),(x,3.67,2.39),.025,'Ivory',4)
+for x,z in [(3.85,3.2),(4.03,4.0),(5.18,4.5),(6.3,2.8)]:beam('Silver rain',(x,3.06,z),(x-.045,3.06,z-.15),.012,'Rain silver',4)
 
 current='04 Postal works'
 # A raised sorting office on the left with pigeonholes and a descending mail chute.
@@ -298,13 +383,13 @@ text('Sorting sign','DEAD LETTER OFFICE',(-4.3,-.11,3.41),.12,'Light brass',0)
 pts=[]
 for i in range(65):
     t=i/64;angle=t*2*pi*1.5
-    pts.append((-2.4+.54*cos(angle),.12+.54*sin(angle),3.72-2.22*t))
+    pts.append((-2.4+.54*cos(angle),.12+.54*sin(angle),3.72-1.82*t))
 verts=[]
 for i,p in enumerate(pts):
     t=i/64;angle=t*2*pi*1.5
     for rr in [-.11,.11]:verts.append((p[0]+rr*cos(angle),p[1]+rr*sin(angle),p[2]))
 mesh('Spiral mail slide',verts,[(i*2,i*2+1,i*2+3,i*2+2) for i in range(64)],'Old brass')
-for side in [-1,1]:line('Spiral slide lip',[(p[0]+side*.12*cos(i/64*3*pi),p[1]+side*.12*sin(i/64*3*pi),p[2]+.04) for i,p in enumerate(pts)],.018,'Light brass')
+line('Spiral outer slide lip',[(p[0]+.12*cos(i/64*3*pi),p[1]+.12*sin(i/64*3*pi),p[2]+.04) for i,p in enumerate(pts)],.018,'Light brass')
 beam('Chute central mast',(-2.4,.12,.85),(-2.4,.12,3.8),.055,'Midnight enamel')
 cyl('Mail chute hopper',(-1.86,.12,3.92),.35,.36,'Old brass',16,r2=.52)
 # Sorting conveyor points toward the dispatch platform.
@@ -312,12 +397,31 @@ box('Conveyor frame',(-.5,-.85,1.49),(3.4,.68,.24),'Midnight enamel',.04)
 for i in range(15):cyl('Conveyor brass roller',(-2.05+i*.22,-.85,1.63),.07,.55,'Old brass',8,(pi/2,0,0))
 for x in [-1.65,.75]:
     for y in [-1.08,-.62]:beam('Conveyor legs',(x,y,.85),(x,y,1.5),.045,'Dark steel')
+# The helix now feeds the rollers through a descending curved transfer tray.
+transfer=[(-2.94,.12,1.9),(-3.06,-.35,1.81),(-2.7,-.8,1.71),(-2.12,-.85,1.67)]
+mesh('Chute to roller transfer',[(x,y+d,z) for x,y,z in transfer for d in [-.16,.16]],[(2*i,2*i+1,2*i+3,2*i+2) for i in range(3)],'Old brass')
+for d in [-.18,.18]:line('Transfer tray guard',[(x,y+d,z+.05) for x,y,z in transfer],.018,'Light brass')
+# A stamping press straddles the belt; its flywheel and linkage have distinct roles.
+for y in [-1.23,-.48]:box('Cancelling press upright',(.35,y,2.0),(.16,.14,1.05),'Oxidised teal')
+box('Cancelling press bridge',(.35,-.855,2.53),(.34,.98,.17),'Midnight enamel')
+beam('Postmark stamp piston',(.35,-.855,2.5),(.35,-.855,1.92),.048,'Old brass')
+cyl('Postmark stamp',(.35,-.855,1.9),.13,.07,'Burgundy mail',8)
+ring('Press flywheel',(.35,-1.4,2.33),.28,.035,'Old brass',16)
+for a in [0,pi/3,2*pi/3]:beam('Flywheel spoke',(.35-.25*cos(a),-1.4,2.33-.25*sin(a)),(.35+.25*cos(a),-1.4,2.33+.25*sin(a)),.022,'Old brass',4)
+beam('Flywheel connecting rod',(.52,-1.4,2.42),(.64,-1.4,1.8),.025,'Dark steel',4)
+# An inclined belt carries stamped letters onto the dispatch counter.
+mesh('Dispatch rising belt',[(1.15,-1.1,1.66),(2.98,-1.1,2.055),(2.98,-.6,2.055),(1.15,-.6,1.66)],[(0,1,2,3)],'Deep petrol')
+for y in [-1.14,-.56]:beam('Dispatch belt side rail',(1.12,y,1.67),(2.99,y,2.07),.035,'Old brass',4)
+for i in range(7):
+    x=1.25+i*.25;z=1.68+(x-1.15)*.216
+    beam('Incline belt cleat',(x,-1.08,z),(x,-.62,z),.02,'Walnut',4)
+beam('Dispatch belt trestle',(2.3,-.85,.84),(2.3,-.85,1.91),.06,'Midnight enamel',6)
 # Right hand dispatch desk, sacks, parcels and a hanging postal horn.
 box('Dispatch counter',(4.05,-.25,1.38),(2.62,1.38,1.07),'Burgundy mail',.06)
 box('Dispatch top',(4.05,-.25,1.98),(2.78,1.53,.13),'Walnut',.04)
 for x in [3.13,4.05,4.97]:box('Counter brass panel',(x,-.96,1.42),(.71,.035,.7),'Old brass',.025)
 for x in [3.13,4.05,4.97]:box('Counter enamel inset',(x,-.984,1.42),(.62,.025,.61),'Burgundy mail',.02)
-text('Dispatch motto','ALWAYS DELIVERED',(4.05,-1.01,1.43),.13,'Ivory',0)
+text('Dispatch motto','DISPATCH',(4.05,-1.01,1.43),.13,'Ivory',0)
 for i,(x,y,z,s) in enumerate([(3.1,-.3,2.18,.38),(4.8,.04,2.23,.47),(4.83,.04,2.62,.3),(5.75,-.55,1.02,.42),(5.76,-.55,1.45,.34),(3.52,-1.43,1.03,.33)]):
     box('Tied parcel '+str(i),(x,y,z),(s,s*.8,s*.65),'Parcel kraft',.018)
     box('Parcel ribbon long',(x,y,z+s*.33),(s*.12,s*.83,.012),'Letter cream')
@@ -325,7 +429,7 @@ for i,(x,y,z,s) in enumerate([(3.1,-.3,2.18,.38),(4.8,.04,2.23,.47),(4.83,.04,2.
 for x,y in [(5.78,.64),(6.3,.65),(6.23,.04)]:
     sphere('Canvas mail sack',(x,y,1.13),(.27,.24,.42),'Warm limestone',10,6)
     cyl('Mail sack tie',(x,y,1.47),.09,.07,'Burgundy mail',8)
-    text('Sack POST','POST',(x,y-.225,1.17),.1,'Ink',0)
+
 # Miniature desk lamp: a real shade, stem and warm pool.
 cyl('Desk lamp base',(3.7,.03,2.08),.19,.08,'Old brass',16)
 beam('Desk lamp stem',(3.7,.03,2.1),(3.7,.03,2.68),.035,'Old brass')
@@ -365,8 +469,8 @@ def sample(distance):
     return p,math.atan2(tangent.y,tangent.x)
 for offset in [-.34,.34]:
     line('Continuous delivery rail',[(p.x,p.y,.98) for p in rounded_track(offset)],.034,'Dark steel')
-for i in range(104):
-    p,angle=sample(length*i/104)
+for i in range(88):
+    p,angle=sample(length*i/88)
     box('Rail sleeper',(p.x,p.y,.9),(.105,.94,.075),'Walnut',rot=(0,0,angle))
 # Platform safety edge and little pools of light.
 for y in [-3.99,3.02]:
@@ -379,6 +483,12 @@ def stock(x, powered=False):
     y=-4.04;length=1.85 if powered else 1.95
     box('Locomotive chassis' if powered else 'Mail coach chassis',(x,y,1.19),(length,.68,.16),'Dark steel',.025)
     if powered:
+        cyl('Smokebox',(x-.67,y,1.69),.32,.21,'Dark steel',16,(0,pi/2,0))
+        cyl('Smokebox front door',(x-.79,y,1.69),.24,.04,'Midnight enamel',12,(0,pi/2,0))
+        for side in [-1,1]:
+            beam('Boiler handrail',(x-.59,y+side*.3,1.87),(x+.25,y+side*.3,1.87),.018,'Old brass',4)
+            beam('Visible driving rod',(x-.61,y+side*.46,1.19),(x+.61,y+side*.46,1.19),.027,'Old brass',4)
+            box('Locomotive running board',(x,y+side*.4,1.35),(1.71,.16,.055),'Dark steel')
         cyl('Locomotive brass boiler',(x-.12,y,1.69),.31,1.12,'Burgundy mail',16,(0,pi/2,0))
         for dx in [-.53,-.15,.25]:
             # Rings perpendicular to X, made as editable curves.
@@ -393,7 +503,10 @@ def stock(x, powered=False):
         cyl('Headlamp lens',(x-1.066,y,1.65),.105,.013,'Amber light',12,(0,pi/2,0))
     else:
         box('Royal mail coach body',(x,y,1.64),(1.86,.67,.78),'Burgundy mail',.045)
-        box('Coach roof',(x,y,2.08),(2.02,.84,.14),'Deep petrol',.075)
+        mesh('Coach curved roof',[(x+dx,y+.45*cos(pi*i/8),2.02+.2*sin(pi*i/8)) for dx in [-1.03,1.03] for i in range(9)],[(i,i+1,i+10,i+9) for i in range(8)]+[tuple(range(8,-1,-1)),tuple(range(9,18))],'Deep petrol')
+        for side in [-1,1]:
+            box('Coach side door',(x,y+side*.351,1.63),(.44,.022,.73),'Oxblood edge')
+            for dx in [-.82,.82]:box('Coach corner beading',(x+dx,y+side*.353,1.62),(.025,.027,.71),'Old brass')
         for side in [-1,1]:
             box('Coach waist brass',(x,y+side*.345,1.5),(1.83,.025,.04),'Old brass')
             for dx in [-.56,0,.56]:box('Coach warm window',(x+dx,y+side*.345,1.82),(.31,.019,.26),'Amber light')
@@ -407,7 +520,7 @@ def stock(x, powered=False):
     return list(set(bpy.data.objects)-before)
 # Each vehicle has its own pivot and follows the same ellipse at a fixed
 # arc-length separation. Static frame 1 also rests correctly on the rails.
-for index,(x,powered) in enumerate([(-2.9,True),(-.65,False),(1.65,False)]):
+for index,(x,powered) in enumerate([(-2.9,True),(-.65,False)]):
     objs=stock(x,powered);pivot=empty('ANIM Vehicle '+str(index),(x,-4.04,0));parent_keep(objs,pivot)
     previous_angle=None
     for f in range(1,362,4):
@@ -420,6 +533,15 @@ for index,(x,powered) in enumerate([(-2.9,True),(-.65,False),(1.65,False)]):
         previous_angle=a
         pivot.location=(p.x,p.y,0);pivot.rotation_euler[2]=a
         pivot.keyframe_insert('location',frame=f);pivot.keyframe_insert('rotation_euler',frame=f,index=2)
+# A low luggage trolley places the mail at train-door height.
+box('Mail trolley bed',(-3.45,-2.9,1.15),(1.45,.69,.12),'Walnut')
+for x in [-3.95,-2.95]:
+    for y in [-3.27,-2.53]:cyl('Trolley wheel',(x,y,1.02),.14,.055,'Dark steel',8,(pi/2,0,0))
+for y in [-3.2,-2.6]:beam('Trolley push handle',(-4.1,y,1.2),(-4.1,y,1.8),.028,'Old brass',4)
+beam('Trolley handle crossbar',(-4.1,-3.2,1.8),(-4.1,-2.6,1.8),.03,'Old brass',4)
+for x,y,z in [(-3.6,-2.9,1.42),(-3.08,-2.9,1.4),(-3.62,-2.9,1.79)]:
+    box('Trolley parcel',(x,y,z),(.45,.49,.33),'Parcel kraft')
+    box('Trolley parcel binding',(x,y,z+.168),(.055,.51,.012),'Letter cream')
 # Platform clocks, lit signals and hanging lanterns.
 for x,y in [(-5.9,-3.0),(5.95,-3.0)]:
     cyl('Platform signal foot',(x,y,1.0),.22,.16,'Old brass',12)
@@ -436,7 +558,7 @@ for x in [-4.8,4.8]:
     pointlight('Lantern glow',(x,-2.1,4.5),(1,.63,.29),45,.45)
 current='09 Typography'
 box('Exhibit front plaque',(0,-5.355,.38),(7.2,.06,.26),'Deep petrol',.02)
-text('Exhibit signature','THE NIGHT POST   /   nickfromlater',(0,-5.39,.4),.14,'Light brass',0)
+text('Exhibit signature','nickfromlater',(0,-5.39,.4),.14,'Light brass',0)
 # Every modeled object remains editable and semantically named.
 scene['title']='The Night Post'
 scene['creator']='nickfromlater'
