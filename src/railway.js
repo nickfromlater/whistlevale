@@ -559,6 +559,7 @@ function workshopBindControls(){
   if(e.target.closest('button')&&(e.key===' '||e.key==='Enter'))return;
   if(e.target.matches('input,textarea,select')||e.ctrlKey||e.metaKey||e.altKey)return;
   const k=e.key.toLowerCase();if(k===' '){e.preventDefault();togglePause();}else if(k==='h')whistle();else if(k==='r')switchRoute();else if(k==='s')toggleStop();else if(k==='n')toggleLight();else if(k==='f')hideUI();else if(k==='p')capturePhoto();else if(k==='m')toggleDiagram();else if('123456'.includes(k)&&k.length===1)setView(['room','overview','station','follow','cab','tour'][Number(k)-1]);
+  window.railwayAnalytics?.shortcut(k);
  });
  canvas.addEventListener('pointerdown',e=>{
   if(!$('help').hidden)return;

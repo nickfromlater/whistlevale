@@ -1,0 +1,3364 @@
+{
+  "builder": "nightPost",
+  "frame": 1,
+  "vertices": 59757,
+  "triangles": 19919,
+  "vertexBufferBytes": 2868336,
+  "sourceBytes": 2193563,
+  "uniqueCorners": 29432,
+  "bounds": [
+    [
+      -8.0500002,
+      8.0500002
+    ],
+    [
+      0.0,
+      9.6262589
+    ],
+    [
+      -5.3499999,
+      5.5999999
+    ]
+  ],
+  "parts": [
+    {
+      "name": "Autumn branch",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.001",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.002",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.003",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.004",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.005",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.006",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn branch.007",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn riverbank island",
+      "vertices": 48
+    },
+    {
+      "name": "Autumn trunk",
+      "vertices": 36
+    },
+    {
+      "name": "Autumn trunk.001",
+      "vertices": 36
+    },
+    {
+      "name": "Blue vault glazing",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.001",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.002",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.003",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.004",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.005",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.006",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.007",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.008",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.009",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.010",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.011",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.012",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.013",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.014",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.015",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.016",
+      "vertices": 6
+    },
+    {
+      "name": "Blue vault glazing.017",
+      "vertices": 6
+    },
+    {
+      "name": "Boiler brass band",
+      "vertices": 300
+    },
+    {
+      "name": "Boiler brass band.001",
+      "vertices": 300
+    },
+    {
+      "name": "Boiler brass band.002",
+      "vertices": 300
+    },
+    {
+      "name": "Boiler handrail",
+      "vertices": 36
+    },
+    {
+      "name": "Boiler handrail.001",
+      "vertices": 36
+    },
+    {
+      "name": "Brass foundation reveal",
+      "vertices": 36
+    },
+    {
+      "name": "Brass safety line",
+      "vertices": 36
+    },
+    {
+      "name": "Brass safety line.001",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge arch",
+      "vertices": 228
+    },
+    {
+      "name": "Bridge arch.001",
+      "vertices": 228
+    },
+    {
+      "name": "Bridge baluster",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.001",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.002",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.003",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.004",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.005",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.006",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge baluster.007",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge curved railing",
+      "vertices": 228
+    },
+    {
+      "name": "Bridge curved railing.001",
+      "vertices": 228
+    },
+    {
+      "name": "Bridge timber plank",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.001",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.002",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.003",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.004",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.005",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.006",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.007",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.008",
+      "vertices": 36
+    },
+    {
+      "name": "Bridge timber plank.009",
+      "vertices": 36
+    },
+    {
+      "name": "Cab glazed window",
+      "vertices": 36
+    },
+    {
+      "name": "Cab glazed window.001",
+      "vertices": 36
+    },
+    {
+      "name": "Cancelling press bridge",
+      "vertices": 36
+    },
+    {
+      "name": "Cancelling press upright",
+      "vertices": 36
+    },
+    {
+      "name": "Cancelling press upright.001",
+      "vertices": 36
+    },
+    {
+      "name": "Canvas mail sack",
+      "vertices": 240
+    },
+    {
+      "name": "Canvas mail sack.001",
+      "vertices": 240
+    },
+    {
+      "name": "Canvas mail sack.002",
+      "vertices": 240
+    },
+    {
+      "name": "Cast iron column",
+      "vertices": 84
+    },
+    {
+      "name": "Cast iron column.001",
+      "vertices": 84
+    },
+    {
+      "name": "Cast iron column.002",
+      "vertices": 84
+    },
+    {
+      "name": "Cast iron column.003",
+      "vertices": 84
+    },
+    {
+      "name": "Cast iron column.004",
+      "vertices": 84
+    },
+    {
+      "name": "Cast iron column.005",
+      "vertices": 84
+    },
+    {
+      "name": "Celestial horizontal orbit",
+      "vertices": 396
+    },
+    {
+      "name": "Celestial orbit",
+      "vertices": 444
+    },
+    {
+      "name": "Chimney brass rim",
+      "vertices": 84
+    },
+    {
+      "name": "Chimney cap",
+      "vertices": 36
+    },
+    {
+      "name": "Chute central mast",
+      "vertices": 36
+    },
+    {
+      "name": "Chute to roller transfer",
+      "vertices": 18
+    },
+    {
+      "name": "Clerestory blue glass",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory blue glass.001",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory copper ridge",
+      "vertices": 18
+    },
+    {
+      "name": "Clerestory mullion",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.001",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.002",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.003",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.004",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.005",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.006",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.007",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.008",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory mullion.009",
+      "vertices": 36
+    },
+    {
+      "name": "Clerestory sill",
+      "vertices": 36
+    },
+    {
+      "name": "Clock bronze housing",
+      "vertices": 372
+    },
+    {
+      "name": "Clock hour",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.001",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.002",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.003",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.004",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.005",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.006",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.007",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.008",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.009",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.010",
+      "vertices": 36
+    },
+    {
+      "name": "Clock hour.011",
+      "vertices": 36
+    },
+    {
+      "name": "Clock ink dial",
+      "vertices": 372
+    },
+    {
+      "name": "Clock numeral III",
+      "vertices": 18
+    },
+    {
+      "name": "Clock numeral IX",
+      "vertices": 36
+    },
+    {
+      "name": "Clock numeral VI",
+      "vertices": 21
+    },
+    {
+      "name": "Clock numeral XII",
+      "vertices": 42
+    },
+    {
+      "name": "Clock outer bezel",
+      "vertices": 588
+    },
+    {
+      "name": "Clock spindle",
+      "vertices": 60
+    },
+    {
+      "name": "Coach corner beading",
+      "vertices": 36
+    },
+    {
+      "name": "Coach corner beading.001",
+      "vertices": 36
+    },
+    {
+      "name": "Coach corner beading.002",
+      "vertices": 36
+    },
+    {
+      "name": "Coach corner beading.003",
+      "vertices": 36
+    },
+    {
+      "name": "Coach curved roof",
+      "vertices": 90
+    },
+    {
+      "name": "Coach postal lettering",
+      "vertices": 228
+    },
+    {
+      "name": "Coach side door",
+      "vertices": 36
+    },
+    {
+      "name": "Coach side door.001",
+      "vertices": 36
+    },
+    {
+      "name": "Coach waist brass",
+      "vertices": 36
+    },
+    {
+      "name": "Coach waist brass.001",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window.001",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window.002",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window.003",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window.004",
+      "vertices": 36
+    },
+    {
+      "name": "Coach warm window.005",
+      "vertices": 36
+    },
+    {
+      "name": "Column brass base",
+      "vertices": 84
+    },
+    {
+      "name": "Column brass base.001",
+      "vertices": 84
+    },
+    {
+      "name": "Column brass base.002",
+      "vertices": 84
+    },
+    {
+      "name": "Column brass base.003",
+      "vertices": 84
+    },
+    {
+      "name": "Column brass base.004",
+      "vertices": 84
+    },
+    {
+      "name": "Column brass base.005",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital.001",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital.002",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital.003",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital.004",
+      "vertices": 84
+    },
+    {
+      "name": "Column capital.005",
+      "vertices": 84
+    },
+    {
+      "name": "Concourse brass inlay",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse brass inlay.001",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse brass inlay.002",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.001",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.002",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.003",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.004",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.005",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.006",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.007",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.008",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.009",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.010",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.011",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.012",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.013",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.014",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.015",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.016",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.017",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.018",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.019",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.020",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.021",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.022",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.023",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.024",
+      "vertices": 36
+    },
+    {
+      "name": "Concourse ivory border tile.025",
+      "vertices": 36
+    },
+    {
+      "name": "Continuous delivery rail",
+      "vertices": 828
+    },
+    {
+      "name": "Continuous delivery rail.001",
+      "vertices": 828
+    },
+    {
+      "name": "Conveyor brass roller",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.001",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.002",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.003",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.004",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.005",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.006",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.007",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.008",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.009",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.010",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.011",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.012",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.013",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor brass roller.014",
+      "vertices": 84
+    },
+    {
+      "name": "Conveyor frame",
+      "vertices": 132
+    },
+    {
+      "name": "Conveyor legs",
+      "vertices": 36
+    },
+    {
+      "name": "Conveyor legs.001",
+      "vertices": 36
+    },
+    {
+      "name": "Conveyor legs.002",
+      "vertices": 36
+    },
+    {
+      "name": "Conveyor legs.003",
+      "vertices": 36
+    },
+    {
+      "name": "Copper autumn crown",
+      "vertices": 240
+    },
+    {
+      "name": "Copper autumn crown.001",
+      "vertices": 240
+    },
+    {
+      "name": "Copper autumn crown.002",
+      "vertices": 240
+    },
+    {
+      "name": "Copper autumn crown.003",
+      "vertices": 240
+    },
+    {
+      "name": "Copper autumn crown.004",
+      "vertices": 60
+    },
+    {
+      "name": "Copper autumn crown.005",
+      "vertices": 60
+    },
+    {
+      "name": "Copper autumn crown.006",
+      "vertices": 60
+    },
+    {
+      "name": "Copper autumn crown.007",
+      "vertices": 60
+    },
+    {
+      "name": "Corner clockwork tower",
+      "vertices": 132
+    },
+    {
+      "name": "Corner clockwork tower.001",
+      "vertices": 132
+    },
+    {
+      "name": "Cornice brass line",
+      "vertices": 36
+    },
+    {
+      "name": "Cottage door jamb",
+      "vertices": 36
+    },
+    {
+      "name": "Cottage roof",
+      "vertices": 18
+    },
+    {
+      "name": "Cottage side wall",
+      "vertices": 36
+    },
+    {
+      "name": "Cottage side wall.001",
+      "vertices": 36
+    },
+    {
+      "name": "Cottage window lintel",
+      "vertices": 36
+    },
+    {
+      "name": "Cottage window sill",
+      "vertices": 36
+    },
+    {
+      "name": "Counter brass panel",
+      "vertices": 36
+    },
+    {
+      "name": "Counter brass panel.001",
+      "vertices": 36
+    },
+    {
+      "name": "Counter brass panel.002",
+      "vertices": 36
+    },
+    {
+      "name": "Counter enamel inset",
+      "vertices": 36
+    },
+    {
+      "name": "Counter enamel inset.001",
+      "vertices": 36
+    },
+    {
+      "name": "Counter enamel inset.002",
+      "vertices": 36
+    },
+    {
+      "name": "Cross inlay",
+      "vertices": 36
+    },
+    {
+      "name": "Cross inlay.001",
+      "vertices": 36
+    },
+    {
+      "name": "Cross inlay.002",
+      "vertices": 36
+    },
+    {
+      "name": "Desk lamp base",
+      "vertices": 84
+    },
+    {
+      "name": "Desk lamp shade",
+      "vertices": 180
+    },
+    {
+      "name": "Desk lamp stem",
+      "vertices": 36
+    },
+    {
+      "name": "Desk lamp warm underside",
+      "vertices": 84
+    },
+    {
+      "name": "Destination entablature",
+      "vertices": 132
+    },
+    {
+      "name": "Dispatch belt side rail",
+      "vertices": 36
+    },
+    {
+      "name": "Dispatch belt side rail.001",
+      "vertices": 36
+    },
+    {
+      "name": "Dispatch belt trestle",
+      "vertices": 36
+    },
+    {
+      "name": "Dispatch counter",
+      "vertices": 132
+    },
+    {
+      "name": "Dispatch motto",
+      "vertices": 285
+    },
+    {
+      "name": "Dispatch rising belt",
+      "vertices": 6
+    },
+    {
+      "name": "Dispatch top",
+      "vertices": 132
+    },
+    {
+      "name": "Dispatch turret shaft",
+      "vertices": 36
+    },
+    {
+      "name": "Distant crater rim",
+      "vertices": 300
+    },
+    {
+      "name": "Distant crater rim.001",
+      "vertices": 300
+    },
+    {
+      "name": "Distant crater rim.002",
+      "vertices": 300
+    },
+    {
+      "name": "Distant crater shadow",
+      "vertices": 84
+    },
+    {
+      "name": "Distant crater shadow.001",
+      "vertices": 84
+    },
+    {
+      "name": "Distant crater shadow.002",
+      "vertices": 84
+    },
+    {
+      "name": "Distant lunar globe",
+      "vertices": 240
+    },
+    {
+      "name": "Door lintel",
+      "vertices": 36
+    },
+    {
+      "name": "Door recessed panel",
+      "vertices": 36
+    },
+    {
+      "name": "Door recessed panel.001",
+      "vertices": 36
+    },
+    {
+      "name": "Eave gutter",
+      "vertices": 36
+    },
+    {
+      "name": "Eave gutter.001",
+      "vertices": 36
+    },
+    {
+      "name": "Entry stair 0",
+      "vertices": 132
+    },
+    {
+      "name": "Entry stair 1",
+      "vertices": 132
+    },
+    {
+      "name": "Entry stair 2",
+      "vertices": 132
+    },
+    {
+      "name": "Envelope weather vane",
+      "vertices": 6
+    },
+    {
+      "name": "Escapement moon",
+      "vertices": 60
+    },
+    {
+      "name": "Exhibit front plaque",
+      "vertices": 36
+    },
+    {
+      "name": "Exhibit signature",
+      "vertices": 603
+    },
+    {
+      "name": "Fallen copper leaf",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.001",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.002",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.003",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.004",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.005",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.006",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.007",
+      "vertices": 36
+    },
+    {
+      "name": "Fallen copper leaf.008",
+      "vertices": 36
+    },
+    {
+      "name": "Faraway star",
+      "vertices": 60
+    },
+    {
+      "name": "Faraway star.001",
+      "vertices": 60
+    },
+    {
+      "name": "Faraway star.002",
+      "vertices": 60
+    },
+    {
+      "name": "Faraway star.003",
+      "vertices": 60
+    },
+    {
+      "name": "Floating workshop foundation",
+      "vertices": 132
+    },
+    {
+      "name": "Flywheel connecting rod",
+      "vertices": 36
+    },
+    {
+      "name": "Flywheel spoke",
+      "vertices": 36
+    },
+    {
+      "name": "Flywheel spoke.001",
+      "vertices": 36
+    },
+    {
+      "name": "Flywheel spoke.002",
+      "vertices": 36
+    },
+    {
+      "name": "Front door steps",
+      "vertices": 36
+    },
+    {
+      "name": "Front door steps.001",
+      "vertices": 36
+    },
+    {
+      "name": "Front door steps.002",
+      "vertices": 36
+    },
+    {
+      "name": "Garden fence rail",
+      "vertices": 36
+    },
+    {
+      "name": "Garden fence rail.001",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket.001",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket.002",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket.003",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket.004",
+      "vertices": 36
+    },
+    {
+      "name": "Garden picket.005",
+      "vertices": 36
+    },
+    {
+      "name": "Headlamp housing",
+      "vertices": 84
+    },
+    {
+      "name": "Headlamp lens",
+      "vertices": 84
+    },
+    {
+      "name": "Hero letter",
+      "vertices": 36
+    },
+    {
+      "name": "Hero letter folded flap",
+      "vertices": 60
+    },
+    {
+      "name": "Hero letter red wax seal",
+      "vertices": 84
+    },
+    {
+      "name": "Home Again address",
+      "vertices": 432
+    },
+    {
+      "name": "Home Again axial collar rib",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.001",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.002",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.003",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.004",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.005",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.006",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again axial collar rib.007",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again deep cylindrical reveal",
+      "vertices": 192
+    },
+    {
+      "name": "Home Again destination board",
+      "vertices": 132
+    },
+    {
+      "name": "Home Again foot rivet",
+      "vertices": 84
+    },
+    {
+      "name": "Home Again foot rivet.001",
+      "vertices": 84
+    },
+    {
+      "name": "Home Again gate foot",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again gate foot.001",
+      "vertices": 36
+    },
+    {
+      "name": "Home Again luminous threshold",
+      "vertices": 492
+    },
+    {
+      "name": "Home Again portal brass",
+      "vertices": 492
+    },
+    {
+      "name": "Home Again portal rim",
+      "vertices": 492
+    },
+    {
+      "name": "Home Again rim stud",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.001",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.002",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.003",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.004",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.005",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.006",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.007",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.008",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.009",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.010",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again rim stud.011",
+      "vertices": 60
+    },
+    {
+      "name": "Home Again world backdrop",
+      "vertices": 372
+    },
+    {
+      "name": "Home chimney",
+      "vertices": 36
+    },
+    {
+      "name": "Home door handle",
+      "vertices": 60
+    },
+    {
+      "name": "Home garden island",
+      "vertices": 48
+    },
+    {
+      "name": "Home red door",
+      "vertices": 36
+    },
+    {
+      "name": "Hour hand",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.001",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.002",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.003",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.004",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.005",
+      "vertices": 36
+    },
+    {
+      "name": "Incline belt cleat.006",
+      "vertices": 36
+    },
+    {
+      "name": "Inset concourse paving",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen back wall",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen floor",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen flowerbox",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen frame",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen frame.001",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen lamp cord",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen pendant shade",
+      "vertices": 84
+    },
+    {
+      "name": "Kitchen table",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen window mullion",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen window mullion.001",
+      "vertices": 36
+    },
+    {
+      "name": "Kitchen window mullion.002",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace.001",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace.002",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace.003",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace.004",
+      "vertices": 36
+    },
+    {
+      "name": "Knee brace.005",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern amber glass",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern amber glass.001",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern cap",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern cap.001",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern foot",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern foot.001",
+      "vertices": 84
+    },
+    {
+      "name": "Lantern metal stile",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.001",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.002",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.003",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.004",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.005",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.006",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern metal stile.007",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern suspension",
+      "vertices": 36
+    },
+    {
+      "name": "Lantern suspension.001",
+      "vertices": 36
+    },
+    {
+      "name": "Letter finally delivered",
+      "vertices": 36
+    },
+    {
+      "name": "Limestone station floor",
+      "vertices": 132
+    },
+    {
+      "name": "Locomotive brass boiler",
+      "vertices": 180
+    },
+    {
+      "name": "Locomotive cab",
+      "vertices": 36
+    },
+    {
+      "name": "Locomotive cab roof",
+      "vertices": 36
+    },
+    {
+      "name": "Locomotive chassis",
+      "vertices": 132
+    },
+    {
+      "name": "Locomotive chimney",
+      "vertices": 84
+    },
+    {
+      "name": "Locomotive running board",
+      "vertices": 36
+    },
+    {
+      "name": "Locomotive running board.001",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.001",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.002",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.003",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.004",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.005",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.006",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.007",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.008",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.009",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.010",
+      "vertices": 36
+    },
+    {
+      "name": "Longitudinal roof seam.011",
+      "vertices": 36
+    },
+    {
+      "name": "Lunar postal pennant",
+      "vertices": 6
+    },
+    {
+      "name": "Lunar rock island",
+      "vertices": 48
+    },
+    {
+      "name": "Lunar telescope",
+      "vertices": 36
+    },
+    {
+      "name": "Mail chute hopper",
+      "vertices": 180
+    },
+    {
+      "name": "Mail coach chassis",
+      "vertices": 132
+    },
+    {
+      "name": "Mail sack tie",
+      "vertices": 84
+    },
+    {
+      "name": "Mail sack tie.001",
+      "vertices": 84
+    },
+    {
+      "name": "Mail sack tie.002",
+      "vertices": 84
+    },
+    {
+      "name": "Mail trolley bed",
+      "vertices": 36
+    },
+    {
+      "name": "Memory bench leg",
+      "vertices": 36
+    },
+    {
+      "name": "Memory bench leg.001",
+      "vertices": 36
+    },
+    {
+      "name": "Memory bench slat",
+      "vertices": 36
+    },
+    {
+      "name": "Memory bench slat.001",
+      "vertices": 36
+    },
+    {
+      "name": "Memory bench slat.002",
+      "vertices": 36
+    },
+    {
+      "name": "Minute hand",
+      "vertices": 36
+    },
+    {
+      "name": "Moon flag mast",
+      "vertices": 36
+    },
+    {
+      "name": "Nameplate lower trim",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory copper dome",
+      "vertices": 240
+    },
+    {
+      "name": "Observatory drum",
+      "vertices": 180
+    },
+    {
+      "name": "Observatory entry steps",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory entry steps.001",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory entry steps.002",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory entry steps.003",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory open slit",
+      "vertices": 36
+    },
+    {
+      "name": "Observatory raised foundation",
+      "vertices": 132
+    },
+    {
+      "name": "Orrery stem",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross.001",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross.002",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross.003",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross.004",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon cross.005",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long.001",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long.002",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long.003",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long.004",
+      "vertices": 36
+    },
+    {
+      "name": "Parcel ribbon long.005",
+      "vertices": 36
+    },
+    {
+      "name": "Pier capital",
+      "vertices": 36
+    },
+    {
+      "name": "Pier capital.001",
+      "vertices": 36
+    },
+    {
+      "name": "Pier capital.002",
+      "vertices": 36
+    },
+    {
+      "name": "Pier capital.003",
+      "vertices": 36
+    },
+    {
+      "name": "Pier foot",
+      "vertices": 36
+    },
+    {
+      "name": "Pier foot.001",
+      "vertices": 36
+    },
+    {
+      "name": "Pier foot.002",
+      "vertices": 36
+    },
+    {
+      "name": "Pier foot.003",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.001",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.002",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.003",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.004",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.005",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.006",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.007",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.008",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.009",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.010",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.011",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.012",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.013",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.014",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.015",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.016",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.017",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.018",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.019",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.020",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.021",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.022",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.023",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.024",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.025",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.026",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.027",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.028",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.029",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.030",
+      "vertices": 36
+    },
+    {
+      "name": "Pier stone joint.031",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider.001",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider.002",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider.003",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider.004",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole divider.005",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole shelf",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole shelf.001",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole shelf.002",
+      "vertices": 36
+    },
+    {
+      "name": "Pigeonhole shelf.003",
+      "vertices": 36
+    },
+    {
+      "name": "Platform coping",
+      "vertices": 132
+    },
+    {
+      "name": "Platform coping.001",
+      "vertices": 132
+    },
+    {
+      "name": "Platform signal foot",
+      "vertices": 84
+    },
+    {
+      "name": "Platform signal foot.001",
+      "vertices": 84
+    },
+    {
+      "name": "Platform signal mast",
+      "vertices": 36
+    },
+    {
+      "name": "Platform signal mast.001",
+      "vertices": 36
+    },
+    {
+      "name": "Portal supporting pier",
+      "vertices": 132
+    },
+    {
+      "name": "Portal supporting pier.001",
+      "vertices": 132
+    },
+    {
+      "name": "Portal supporting pier.002",
+      "vertices": 132
+    },
+    {
+      "name": "Portal supporting pier.003",
+      "vertices": 132
+    },
+    {
+      "name": "Postal work floor",
+      "vertices": 36
+    },
+    {
+      "name": "Postal work floor.001",
+      "vertices": 36
+    },
+    {
+      "name": "Postmark stamp",
+      "vertices": 84
+    },
+    {
+      "name": "Postmark stamp piston",
+      "vertices": 36
+    },
+    {
+      "name": "Press flywheel",
+      "vertices": 396
+    },
+    {
+      "name": "Rail sleeper",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.001",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.002",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.003",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.004",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.005",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.006",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.007",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.008",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.009",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.010",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.011",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.012",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.013",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.014",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.015",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.016",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.017",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.018",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.019",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.020",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.021",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.022",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.023",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.024",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.025",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.026",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.027",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.028",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.029",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.030",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.031",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.032",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.033",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.034",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.035",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.036",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.037",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.038",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.039",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.040",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.041",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.042",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.043",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.044",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.045",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.046",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.047",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.048",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.049",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.050",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.051",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.052",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.053",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.054",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.055",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.056",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.057",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.058",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.059",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.060",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.061",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.062",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.063",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.064",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.065",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.066",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.067",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.068",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.069",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.070",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.071",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.072",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.073",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.074",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.075",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.076",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.077",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.078",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.079",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.080",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.081",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.082",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.083",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.084",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.085",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.086",
+      "vertices": 36
+    },
+    {
+      "name": "Rail sleeper.087",
+      "vertices": 36
+    },
+    {
+      "name": "Remembered river",
+      "vertices": 12
+    },
+    {
+      "name": "Ridge spine",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course.001",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course.002",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course.003",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course.004",
+      "vertices": 36
+    },
+    {
+      "name": "Roof tile course.005",
+      "vertices": 36
+    },
+    {
+      "name": "Royal mail coach body",
+      "vertices": 132
+    },
+    {
+      "name": "Side clock bracket",
+      "vertices": 36
+    },
+    {
+      "name": "Side clock stand",
+      "vertices": 36
+    },
+    {
+      "name": "Signal black housing",
+      "vertices": 36
+    },
+    {
+      "name": "Signal black housing.001",
+      "vertices": 36
+    },
+    {
+      "name": "Signal lens",
+      "vertices": 84
+    },
+    {
+      "name": "Signal lens.001",
+      "vertices": 84
+    },
+    {
+      "name": "Signal lens.002",
+      "vertices": 84
+    },
+    {
+      "name": "Signal lens.003",
+      "vertices": 84
+    },
+    {
+      "name": "Silver rain",
+      "vertices": 36
+    },
+    {
+      "name": "Silver rain.001",
+      "vertices": 36
+    },
+    {
+      "name": "Silver rain.002",
+      "vertices": 36
+    },
+    {
+      "name": "Silver rain.003",
+      "vertices": 36
+    },
+    {
+      "name": "Smokebox",
+      "vertices": 180
+    },
+    {
+      "name": "Smokebox front door",
+      "vertices": 84
+    },
+    {
+      "name": "Sorted letter bundle",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.001",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.002",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.003",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.004",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.005",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.006",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.007",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.008",
+      "vertices": 36
+    },
+    {
+      "name": "Sorted letter bundle.009",
+      "vertices": 36
+    },
+    {
+      "name": "Sorting cabinet back",
+      "vertices": 36
+    },
+    {
+      "name": "Sorting counter top",
+      "vertices": 132
+    },
+    {
+      "name": "Sorting office pedestal",
+      "vertices": 132
+    },
+    {
+      "name": "Sorting sign",
+      "vertices": 507
+    },
+    {
+      "name": "Spiral mail slide",
+      "vertices": 384
+    },
+    {
+      "name": "Spiral outer slide lip",
+      "vertices": 780
+    },
+    {
+      "name": "Station enamel nameplate",
+      "vertices": 132
+    },
+    {
+      "name": "Steam dome",
+      "vertices": 60
+    },
+    {
+      "name": "Stock coupling",
+      "vertices": 36
+    },
+    {
+      "name": "Stock coupling.001",
+      "vertices": 36
+    },
+    {
+      "name": "Stock coupling.002",
+      "vertices": 36
+    },
+    {
+      "name": "Stock coupling.003",
+      "vertices": 36
+    },
+    {
+      "name": "Telescope objective",
+      "vertices": 84
+    },
+    {
+      "name": "Terrain crater basin",
+      "vertices": 84
+    },
+    {
+      "name": "Terrain crater basin.001",
+      "vertices": 84
+    },
+    {
+      "name": "Terrain crater basin.002",
+      "vertices": 84
+    },
+    {
+      "name": "Terrain crater lip",
+      "vertices": 300
+    },
+    {
+      "name": "Terrain crater lip.001",
+      "vertices": 300
+    },
+    {
+      "name": "Terrain crater lip.002",
+      "vertices": 300
+    },
+    {
+      "name": "The Moon address",
+      "vertices": 342
+    },
+    {
+      "name": "The Moon axial collar rib",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.001",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.002",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.003",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.004",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.005",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.006",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon axial collar rib.007",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon deep cylindrical reveal",
+      "vertices": 192
+    },
+    {
+      "name": "The Moon destination board",
+      "vertices": 132
+    },
+    {
+      "name": "The Moon foot rivet",
+      "vertices": 84
+    },
+    {
+      "name": "The Moon foot rivet.001",
+      "vertices": 84
+    },
+    {
+      "name": "The Moon gate foot",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon gate foot.001",
+      "vertices": 36
+    },
+    {
+      "name": "The Moon luminous threshold",
+      "vertices": 492
+    },
+    {
+      "name": "The Moon portal brass",
+      "vertices": 492
+    },
+    {
+      "name": "The Moon portal rim",
+      "vertices": 492
+    },
+    {
+      "name": "The Moon rim stud",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.001",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.002",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.003",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.004",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.005",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.006",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.007",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.008",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.009",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.010",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon rim stud.011",
+      "vertices": 60
+    },
+    {
+      "name": "The Moon world backdrop",
+      "vertices": 372
+    },
+    {
+      "name": "The Night Post title",
+      "vertices": 390
+    },
+    {
+      "name": "Tied parcel 0",
+      "vertices": 36
+    },
+    {
+      "name": "Tied parcel 1",
+      "vertices": 36
+    },
+    {
+      "name": "Tied parcel 2",
+      "vertices": 36
+    },
+    {
+      "name": "Tied parcel 3",
+      "vertices": 36
+    },
+    {
+      "name": "Tied parcel 4",
+      "vertices": 36
+    },
+    {
+      "name": "Tied parcel 5",
+      "vertices": 36
+    },
+    {
+      "name": "Tower finial",
+      "vertices": 60
+    },
+    {
+      "name": "Tower finial.001",
+      "vertices": 60
+    },
+    {
+      "name": "Tower footing",
+      "vertices": 36
+    },
+    {
+      "name": "Tower footing.001",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown.001",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown.002",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown.003",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown.004",
+      "vertices": 36
+    },
+    {
+      "name": "Tower stepped crown.005",
+      "vertices": 36
+    },
+    {
+      "name": "Transfer tray guard",
+      "vertices": 84
+    },
+    {
+      "name": "Transfer tray guard.001",
+      "vertices": 84
+    },
+    {
+      "name": "Trolley handle crossbar",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel binding",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel binding.001",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel binding.002",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel.001",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley parcel.002",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley push handle",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley push handle.001",
+      "vertices": 36
+    },
+    {
+      "name": "Trolley wheel",
+      "vertices": 84
+    },
+    {
+      "name": "Trolley wheel.001",
+      "vertices": 84
+    },
+    {
+      "name": "Trolley wheel.002",
+      "vertices": 84
+    },
+    {
+      "name": "Trolley wheel.003",
+      "vertices": 84
+    },
+    {
+      "name": "Turret copper spire",
+      "vertices": 12
+    },
+    {
+      "name": "Turret limestone quoin",
+      "vertices": 36
+    },
+    {
+      "name": "Turret limestone quoin.001",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade.001",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade.002",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade.003",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade.004",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvre blade.005",
+      "vertices": 36
+    },
+    {
+      "name": "Turret louvred opening",
+      "vertices": 36
+    },
+    {
+      "name": "Turret projecting cornice",
+      "vertices": 36
+    },
+    {
+      "name": "Turret projecting cornice.001",
+      "vertices": 36
+    },
+    {
+      "name": "Turret weather vane pole",
+      "vertices": 36
+    },
+    {
+      "name": "Vault brass cap",
+      "vertices": 348
+    },
+    {
+      "name": "Vault brass cap.001",
+      "vertices": 348
+    },
+    {
+      "name": "Vault brass cap.002",
+      "vertices": 348
+    },
+    {
+      "name": "Vault diagonal web",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.001",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.002",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.003",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.004",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.005",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.006",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.007",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.008",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.009",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.010",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.011",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.012",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.013",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.014",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.015",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.016",
+      "vertices": 36
+    },
+    {
+      "name": "Vault diagonal web.017",
+      "vertices": 36
+    },
+    {
+      "name": "Vault lower chord",
+      "vertices": 252
+    },
+    {
+      "name": "Vault lower chord.001",
+      "vertices": 252
+    },
+    {
+      "name": "Vault structural rib",
+      "vertices": 348
+    },
+    {
+      "name": "Vault structural rib.001",
+      "vertices": 348
+    },
+    {
+      "name": "Vault structural rib.002",
+      "vertices": 348
+    },
+    {
+      "name": "Visible driving rod",
+      "vertices": 36
+    },
+    {
+      "name": "Visible driving rod.001",
+      "vertices": 36
+    },
+    {
+      "name": "Waiting envelope 0",
+      "vertices": 36
+    },
+    {
+      "name": "Waiting envelope 0 folded flap",
+      "vertices": 60
+    },
+    {
+      "name": "Waiting envelope 0 red wax seal",
+      "vertices": 84
+    },
+    {
+      "name": "Waiting envelope 1",
+      "vertices": 36
+    },
+    {
+      "name": "Waiting envelope 1 folded flap",
+      "vertices": 60
+    },
+    {
+      "name": "Waiting envelope 1 red wax seal",
+      "vertices": 84
+    },
+    {
+      "name": "Waiting envelope 2",
+      "vertices": 36
+    },
+    {
+      "name": "Waiting envelope 2 folded flap",
+      "vertices": 60
+    },
+    {
+      "name": "Waiting envelope 2 red wax seal",
+      "vertices": 84
+    },
+    {
+      "name": "Waiting envelope 3",
+      "vertices": 36
+    },
+    {
+      "name": "Waiting envelope 3 folded flap",
+      "vertices": 60
+    },
+    {
+      "name": "Waiting envelope 3 red wax seal",
+      "vertices": 84
+    },
+    {
+      "name": "Warm kitchen wall",
+      "vertices": 36
+    },
+    {
+      "name": "Weather vane envelope fold",
+      "vertices": 60
+    },
+    {
+      "name": "Wheel brass hub",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.001",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.002",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.003",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.004",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.005",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.006",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel brass hub.007",
+      "vertices": 84
+    },
+    {
+      "name": "Wheel spoke",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.001",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.002",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.003",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.004",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.005",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.006",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.007",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.008",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.009",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.010",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.011",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.012",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.013",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.014",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.015",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.016",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.017",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.018",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.019",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.020",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.021",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.022",
+      "vertices": 36
+    },
+    {
+      "name": "Wheel spoke.023",
+      "vertices": 36
+    },
+    {
+      "name": "Windowsill geranium",
+      "vertices": 60
+    },
+    {
+      "name": "Windowsill geranium.001",
+      "vertices": 60
+    },
+    {
+      "name": "Windowsill geranium.002",
+      "vertices": 60
+    },
+    {
+      "name": "Work floor board seam",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.001",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.002",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.003",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.004",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.005",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.006",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.007",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.008",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.009",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.010",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.011",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.012",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.013",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.014",
+      "vertices": 36
+    },
+    {
+      "name": "Work floor board seam.015",
+      "vertices": 36
+    },
+    {
+      "name": "Working wheel",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.001",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.002",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.003",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.004",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.005",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.006",
+      "vertices": 84
+    },
+    {
+      "name": "Working wheel.007",
+      "vertices": 84
+    },
+    {
+      "name": "Yesterday address",
+      "vertices": 387
+    },
+    {
+      "name": "Yesterday axial collar rib",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.001",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.002",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.003",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.004",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.005",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.006",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday axial collar rib.007",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday deep cylindrical reveal",
+      "vertices": 192
+    },
+    {
+      "name": "Yesterday destination board",
+      "vertices": 132
+    },
+    {
+      "name": "Yesterday foot rivet",
+      "vertices": 84
+    },
+    {
+      "name": "Yesterday foot rivet.001",
+      "vertices": 84
+    },
+    {
+      "name": "Yesterday gate foot",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday gate foot.001",
+      "vertices": 36
+    },
+    {
+      "name": "Yesterday luminous threshold",
+      "vertices": 492
+    },
+    {
+      "name": "Yesterday portal brass",
+      "vertices": 492
+    },
+    {
+      "name": "Yesterday portal rim",
+      "vertices": 492
+    },
+    {
+      "name": "Yesterday rim stud",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.001",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.002",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.003",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.004",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.005",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.006",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.007",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.008",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.009",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.010",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday rim stud.011",
+      "vertices": 60
+    },
+    {
+      "name": "Yesterday setting sun",
+      "vertices": 276
+    },
+    {
+      "name": "Yesterday world backdrop",
+      "vertices": 372
+    }
+  ],
+  "sha256": "8e606fabe668dfdf68653bc797d039901ff4e6f8058a675b3600be36af7ad597",
+  "blendSHA256": "b8583335eaf2dc48d11372fe43ab24d73abc17dbce0490d7446ecf052f279054",
+  "blenderVersion": "5.1.1"
+}

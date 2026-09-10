@@ -25,23 +25,26 @@ class PackingDocument{
    const script=match[1]!==undefined,attributes=script?match[1]:match[3];
    const node={tag:script?'script':'link',attributes,textContent:script?match[2]:'',start:match.index,end:match.index+match[0].length,replacement:null,
     getAttribute(name){return this.attributes.match(new RegExp('(?:^|\\s)'+name+'\\s*=\\s*(["\\\'])(.*?)\\1'))?.[2]??null;},
-    hasAttribute(name){return this.getAttribute(name)!==null;},
+    hasAttribute(name){return new RegExp('(?:^|\\s)'+name+'(?:\\s|=|$)').test(this.attributes);},
     removeAttribute(name){this.attributes=this.attributes.replace(new RegExp('(?:^|\\s)'+name+'\\s*=\\s*(["\\\'])(.*?)\\1'),'');},
     setAttribute(name,value){this.removeAttribute(name);this.attributes+=' '+name+'="'+value+'"';},
     get dataset(){return{source:this.getAttribute('data-source')};},
+    remove(){this.removed=true;},
     replaceWith(other){this.replacement=other;},
-    get outerHTML(){if(this.replacement)return this.replacement.outerHTML;return this.tag==='script'?'<script'+this.attributes+'>'+this.textContent+'</script>':'<link'+this.attributes+'>';}
+    get outerHTML(){if(this.removed)return '';if(this.replacement)return this.replacement.outerHTML;return this.tag==='script'?'<script'+this.attributes+'>'+this.textContent+'</script>':'<link'+this.attributes+'>';}
    };this.nodes.push(node);
   }
   this.documentElement=this;
  }
  querySelectorAll(selector){
-  if(selector==='script[src]')return this.nodes.filter(n=>n.tag==='script'&&n.getAttribute('src'));
-  if(selector==='script[src],script[data-src]')return this.nodes.filter(n=>n.tag==='script'&&(n.hasAttribute('src')||n.hasAttribute('data-src')));
-  if(selector==='script[type="application/x-whistlevale-exhibit"]')return this.nodes.filter(n=>n.tag==='script'&&n.getAttribute('type')==='application/x-whistlevale-exhibit');
-  if(selector==='link[rel=stylesheet]')return this.nodes.filter(n=>n.tag==='link'&&n.getAttribute('rel')==='stylesheet');
+  const nodes=this.nodes.filter(n=>!n.removed);
+  if(selector==='script')return nodes.filter(n=>n.tag==='script');
+  if(selector==='script[src]')return nodes.filter(n=>n.tag==='script'&&n.getAttribute('src'));
+  if(selector==='script[src],script[data-src]')return nodes.filter(n=>n.tag==='script'&&(n.hasAttribute('src')||n.hasAttribute('data-src')));
+  if(selector==='script[type="application/x-whistlevale-exhibit"]')return nodes.filter(n=>n.tag==='script'&&n.getAttribute('type')==='application/x-whistlevale-exhibit');
+  if(selector==='link[rel=stylesheet]')return nodes.filter(n=>n.tag==='link'&&n.getAttribute('rel')==='stylesheet');
   const icons=/^link\[rel~="([a-z-]+)"\](?:,link\[rel~="([a-z-]+)"\])?$/.exec(selector);
-  if(icons){const wanted=icons.slice(1).filter(Boolean);return this.nodes.filter(n=>n.tag==='link'&&(n.getAttribute('rel')||'').split(/\s+/).some(rel=>wanted.includes(rel)));}
+  if(icons){const wanted=icons.slice(1).filter(Boolean);return nodes.filter(n=>n.tag==='link'&&(n.getAttribute('rel')||'').split(/\s+/).some(rel=>wanted.includes(rel)));}
   throw new Error('Unexpected packing selector '+selector);
  }
  createElement(tag){return{tag,textContent:'',get outerHTML(){return'<'+tag+'>'+this.textContent+'</'+tag+'>';}};}
@@ -52,6 +55,26 @@ const catalogFrom=html=>{
  const script=new PackingDocument(html).nodes.find(node=>node.tag==='script'&&node.getAttribute('id')==='communityCatalog');
  assert.ok(script,'the page embeds reviewed contribution data');const window={};vm.runInNewContext(script.textContent,{window});return JSON.parse(JSON.stringify(window.HOUSE_COMMUNITY));
 };
+const analyticsAddress=value=>/(?:^|\/)analytics(?:\.[a-f0-9]+)?\.js(?:[?#]|$)|\/_vercel\/insights(?:\/|$)/i.test(value||'');
+const trackingScripts=[
+ '<script id="analyticsBootstrap">window.__portableTrackerSentinel=1;</script>',
+ ...['data-railway-analytics','data-house-analytics','data-whistlevale-analytics'].map(marker=>'<script '+marker+'>window.__portableTrackerSentinel=1;</script>'),
+ ...['src/analytics.js','/src/analytics.js?private=qa-secret#draft','immutable/src/analytics.0123456789abcdef.js',
+  'https://fixture.test/immutable/src/analytics.fedcba9876543210.js?private=qa-secret#draft',
+  '/_vercel/insights/script.js','//fixture.test/_vercel/insights/script.js?private=qa-secret#draft',
+  'https://vendor.test/_vercel/insights/script.js?private=qa-secret#draft'].map(src=>'<script src="'+src+'"></script>'),
+ '<script data-src="immutable/src/analytics.0123456789abcdef.js?private=qa-secret"></script>',
+ '<script data-source="src/analytics.js">window.__portableTrackerSentinel=1;</script>'
+].join('');
+const withTracking=html=>html.replace('</head>',trackingScripts+'</head>');
+function assertNoPortableAnalytics(html){
+ for(const node of new PackingDocument(html).querySelectorAll('script')){
+  assert.notEqual(node.getAttribute('id'),'analyticsBootstrap','portable output removes the bootstrap marker');
+  for(const marker of ['data-railway-analytics','data-house-analytics','data-whistlevale-analytics'])assert.equal(node.hasAttribute(marker),false,'portable output removes marked inline trackers');
+  for(const attribute of ['src','data-src','data-source'])assert.equal(analyticsAddress(node.getAttribute(attribute)),false,'portable output removes all tracker address forms');
+  assert.ok(!node.textContent.includes('window.__portableTrackerSentinel=1'),'marked inline analytics never survive packing');
+ }
+}
 async function checkDeferredSourceLoading(html,packed){
  const placeholders=deferredScripts(html),inserted=[],requested=[],errors=new Set();
  assert.ok(placeholders.length,'the Hall declares deferred native source');
@@ -81,20 +104,22 @@ async function checkDeferredSourceLoading(html,packed){
 }
 async function checkPortableHall(build){
  const hobby=await readFile(path.join(root,'src/hobby.js'),'utf8'),requests=[],blobs=[],navigations=[];
+ let injectTracking=false;
  const sandbox={Blob,URLSearchParams,console,btoa,window:{},HOUSE_ROOMS:{grandhall:{map:{destination:'grandhall.html'}},commons:{}},hobby:{room:'commons'},
-  location:{href:'https://fixture.test/index.html?room=commons',origin:'https://fixture.test',assign:url=>navigations.push(url)},
+  location:{href:'https://fixture.test/index.html?room=commons&private=qa-secret#draft',origin:'https://fixture.test',assign:url=>navigations.push(url)},
   URL:class extends URL{static createObjectURL(blob){blobs.push(blob);return'blob:https://fixture.test/portable-hall-'+blobs.length;}},
   DOMParser:class{parseFromString(html,type){assert.equal(type,'text/html');return new PackingDocument(html);}},
-  fetch:async value=>{const url=new URL(value);requests.push(url.href);assert.equal(url.origin,'https://fixture.test','packing uses this build');try{const data=await readFile(path.join(fixture,'dist',url.pathname));return{ok:true,text:async()=>data.toString('utf8'),arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)};}catch{return{ok:false};}}
+  fetch:async value=>{const url=new URL(value,sandbox.location.href);requests.push(url.href);assert.equal(analyticsAddress(url.href),false,'packing never fetches analytics, including blocked services');assert.equal(url.origin,'https://fixture.test','packing uses this build');try{const data=await readFile(path.join(fixture,'dist',url.pathname));return{ok:true,text:async()=>injectTracking&&url.pathname==='/grandhall.html'?withTracking(data.toString('utf8')):data.toString('utf8'),arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)};}catch{return{ok:false};}}
  };
  const context=vm.createContext(sandbox),run=code=>vm.runInContext(code,context);
- run(hobby.slice(hobby.indexOf('async function packHouseHall('),hobby.indexOf('\nexportPlayable=async function(')));
+ run(hobby.slice(hobby.indexOf('function removeHouseAnalytics('),hobby.indexOf('\nexportPlayable=async function(')));
  run(hobby.slice(hobby.indexOf('function visitHouseDestination('),hobby.indexOf('\nfunction visitHouseRoom(')));
  run(hobby.slice(hobby.indexOf('function houseInitialParams('),hobby.indexOf('\nfunction scheduleHouseStartup(')));
  const packed=await run('packHouseHall()');
  assert.ok(packed.startsWith('<!DOCTYPE html>'),'portable Hall is a standalone HTML document');
  assert.deepEqual(external(packed),[],'portable Hall needs no external scripts, styles or icon');
- assert.equal(requests.length,1+build.hallRefs.filter(url=>/\.(js|svg|png)$/.test(url)).length,'Hall page and each external renderer source and icon are packed once');
+ assertNoPortableAnalytics(packed);
+ assert.equal(requests.length,1+build.hallRefs.filter(url=>/\.(js|css|svg|png)$/.test(url)&&!analyticsAddress(url)).length,'Hall page and each public renderer source, stylesheet and icon are packed once, without analytics');
  const registry=(await readFile(path.join(root,'src/grandhall-exhibits.js'),'utf8')).replace(/<\/script/gi,'<\\/script');
  assert.ok(packed.includes(registry),'native exhibit definitions and original creator credits survive packing');
  assert.ok(packed.includes('function willowbankPottery('),'the actual native model is present');
@@ -108,6 +133,37 @@ async function checkPortableHall(build){
   assert.equal(node.textContent,expected,'all native source bytes are embedded with script-safe escaping');
  }
  await checkDeferredSourceLoading(build.hallHTML,false);await checkDeferredSourceLoading(packed,true);
+
+ // The real packer must remove source, fingerprinted, absolute, marked inline
+ // and runtime-injected trackers before attempting any asset requests.
+ injectTracking=true;const packedWithTrackers=await run('packHouseHall()');injectTracking=false;
+ assertNoPortableAnalytics(packedWithTrackers);assert.equal(packedWithTrackers,packed,'tracker removal preserves every public Hall byte and credit');
+ assert.ok(!requests.some(url=>url.includes('qa-secret')),'private query values never reach packing requests');
+
+ // Execute the exact house cleanup and script-packing blocks against a cloned
+ // page containing the same runtime trackers. One real app source must survive.
+ const houseDocument=new PackingDocument(withTracking('<html><head><script src="'+build.refs.find(url=>url.includes('/people.'))+'"></script><script>window.example="analytics";</script></head><body></body></html>'));
+ sandbox.source=houseDocument;
+ const cleanupStart=hobby.indexOf('  removeHouseAnalytics(source);',hobby.indexOf('exportPlayable=async function('));
+ const housePayloadStart=hobby.indexOf('  const hall=await packHouseHall();',cleanupStart);
+ const houseScriptsStart=hobby.indexOf("  for(const node of source.querySelectorAll('script[src]'))",housePayloadStart);
+ const houseScriptsEnd=hobby.indexOf("  for(const node of source.querySelectorAll('link[rel=stylesheet]'))",houseScriptsStart);
+ assert.ok(cleanupStart>0&&housePayloadStart>cleanupStart&&houseScriptsEnd>houseScriptsStart,'house analytics cleanup precedes all asset packing');
+ const beforeHouse=requests.length;
+ await run('(async()=>{'+hobby.slice(cleanupStart,housePayloadStart)+hobby.slice(houseScriptsStart,houseScriptsEnd)+'})()');
+ assert.equal(requests.length,beforeHouse+1,'the house packs its app source without fetching any tracker');assertNoPortableAnalytics(houseDocument.outerHTML);
+ assert.ok(houseDocument.outerHTML.includes('window.example="analytics"'),'ordinary inline scripts are preserved');
+ assert.deepEqual(external(houseDocument.outerHTML),[],'the retained house source is embedded');
+
+ // Previously embedded Hall HTML can contain an older marked bootstrap or an
+ // SDK left by an earlier export; sanitizing it must remain entirely offline.
+ const beforeCached=requests.length;
+ for(const address of ['file:///tmp/whistlevale.html?private=qa-secret','blob:https://fixture.test/offline-house']){
+  sandbox.location.href=address;sandbox.window.HOUSE_EMBEDDED_HALL=withTracking(packed);
+  const repacked=await run('packHouseHall()');assertNoPortableAnalytics(repacked);assert.equal(repacked,packed,'cached Hall cleanup preserves its embedded public content');
+ }
+ assert.equal(requests.length,beforeCached,'sanitizing a cached Hall never requests tracker or app assets');
+ sandbox.location.href='https://fixture.test/index.html?room=commons';
 
  // Execute the exporter's exact payload block. An already packed document
  // replaces its prior payload, preserves script safety and performs no fetch.
@@ -151,6 +207,7 @@ async function checkPortableHall(build){
  assert.throws(()=>run("visitHouseDestination('elsewhere')"),/must stay on this site/,'embedding does not relax other destinations');
  delete sandbox.window.HOUSE_EMBEDDED_HALL;sandbox.fetch=async()=>({ok:false});
  await assert.rejects(run('packHouseHall()'),/Could not pack the Grand Hall/,'a missing Hall aborts an incomplete export');
+ console.log('Portable analytics QA passed: house and Hall source/fingerprinted/absolute/runtime/inline trackers removed before fetch, private-query isolation, and offline cached-Hall cleanup with public scripts and credits preserved.');
 }
 async function build(){
  execFileSync(process.execPath,['scripts/build.mjs'],{cwd:fixture,stdio:'pipe',env:{...process.env,WHISTLEVALE_AUDIO_ORIGIN:''}});

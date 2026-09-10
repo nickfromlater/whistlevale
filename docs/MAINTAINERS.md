@@ -5,7 +5,8 @@ Vercel settings. Do not declare the launch complete based only on these files.
 
 1. Review and test the prepared branch. The default branch must contain the
    agent guides, recipes, templates and validation before outside contributors
-   can follow links to them. Keep the deployment decision separate from merging.
+   can follow links to them. Main is connected to Vercel production: merging a PR
+   triggers deployment, so finish review and required checks before merging.
 2. Review tracked files **and reachable history** for credentials, local paths,
    recordings and material that should remain private. A scanner result is
    evidence, not a guarantee that everything is appropriate for publication.
@@ -26,7 +27,8 @@ Vercel settings. Do not declare the launch complete based only on these files.
    repository Issues/Discussions settings and pin a short welcome issue with
    one scoped train task and one scoped building task when ready to invite people.
 7. Verify all contribution links as a visitor, including the site entry points.
-   Site publication remains a separate, tested deployment. Ship the credit-aware
+   After merging, verify the Git-triggered production deployment matches the main
+   commit and the public domain serves it. Ship the credit-aware
    importer before encouraging JSON exchanges through the production site. A feature branch push
    is not proof that visitors can see the new interface.
 
@@ -42,3 +44,8 @@ These choices follow the [AGENTS.md convention](https://agents.md/),
 [GitHub's repository instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions),
 and [Claude Code's documented AGENTS.md import](https://code.claude.com/docs/en/memory#agents-md).
 GitHub documents [code owner review enforcement separately](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
+
+## Usage analytics
+
+See [lightweight usage analytics](ANALYTICS.md) for event definitions, privacy
+preferences, export exclusions, testing and production verification.
