@@ -228,8 +228,19 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let saved={likes:[],bookmarks:[]};try{const s=JSON.parse(localStorage.getItem('alder-grand-hall-v1'));if(s&&Array.isArray(s.likes)&&Array.isArray(s.bookmarks))saved=s;}catch{}
 const GL=$('scene').getContext('webgl2',{antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:false});
 const staticMeshes=[],shadowMeshes=[],glassMeshes=[];let assets={},lastTime=0,frameNo=0,lightDirty=true;
-function gpu(cpu){const vao=GL.createVertexArray(),buffer=GL.createBuffer();GL.bindVertexArray(vao);GL.bindBuffer(GL.ARRAY_BUFFER,buffer);GL.bufferData(GL.ARRAY_BUFFER,cpu.data,GL.STATIC_DRAW);[3,3,3,1,2].forEach((n,i)=>{GL.enableVertexAttribArray(i);GL.vertexAttribPointer(i,n,GL.FLOAT,false,48,[0,12,24,36,40][i]);});return{vao,buffer,count:cpu.count,bytes:cpu.data.byteLength};}
-function finish(b,cast=true,transparent=false){const mesh=gpu(b.mesh());(transparent?glassMeshes:staticMeshes).push({mesh,model:I});if(cast)shadowMeshes.push({mesh,model:I});return mesh;}
+function gpu(cpu,transparent=false){
+ const vao=GL.createVertexArray(),buffer=GL.createBuffer(),mesh={vao,buffer,count:cpu.count,bytes:cpu.data.byteLength};
+ try{GL.bindVertexArray(vao);GL.bindBuffer(GL.ARRAY_BUFFER,buffer);GL.bufferData(GL.ARRAY_BUFFER,cpu.data,GL.STATIC_DRAW);[3,3,3,1,2].forEach((n,i)=>{GL.enableVertexAttribArray(i);GL.vertexAttribPointer(i,n,GL.FLOAT,false,48,[0,12,24,36,40][i]);});
+  if(transparent){
+   const data=cpu.data,n=cpu.count/3;mesh.centers=new Float64Array(n*3);mesh.center=new Float64Array(3);mesh.depths=new Float64Array(n);mesh.order=new Uint32Array(n);mesh.indices=new Uint32Array(cpu.count);
+   for(let i=0;i<n;i++){mesh.order[i]=i;for(let axis=0;axis<3;axis++){const center=(data[i*36+axis]+data[i*36+12+axis]+data[i*36+24+axis])/3;mesh.centers[i*3+axis]=center;mesh.center[axis]+=center/n;}}
+   mesh.compareDepth=(a,b)=>mesh.depths[b]-mesh.depths[a]||a-b;
+   mesh.ibo=GL.createBuffer();GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER,mesh.ibo);GL.bufferData(GL.ELEMENT_ARRAY_BUFFER,mesh.indices,GL.DYNAMIC_DRAW);
+  }
+  return mesh;
+ }catch(error){if(mesh.ibo)GL.deleteBuffer(mesh.ibo);GL.deleteBuffer(buffer);GL.deleteVertexArray(vao);throw error;}
+}
+function finish(b,cast=true,transparent=false){const mesh=gpu(b.mesh(),transparent);(transparent?glassMeshes:staticMeshes).push({mesh,model:I});if(cast)shadowMeshes.push({mesh,model:I});return mesh;}
 function arc(b,x,y,z,r,start,end,c='#857c58',th=.06,n=36){for(let i=0;i<n;i++){const a=mix(start,end,i/n),q=mix(start,end,(i+1)/n);b.beam([x+Math.cos(a)*r,y+Math.sin(a)*r,z],[x+Math.cos(q)*r,y+Math.sin(q)*r,z],th,c,41,7);}}
 function art(key,w,h,paint){const q=label(key,'',w,h,'#ede1c3','#ede1c3',12);actx.save();actx.translate(q.u0*4096,(1-q.v1)*2048);paint(actx,w,h);actx.restore();return q;}
 function makeArt(){initLabels();label('grand','THE GRAND HALL',860,130,'#2f4538','#e7d09a',58,true);label('society','ALDER VALLEY  •  MAKERS’ EXHIBITION',900,80,'#2f4538','#c9b885',29,true);label('station','ALDER VALLEY',360,70,'#ece0bf','#344c3d',31,true);label('village','FERNWICK',280,65,'#e9d9b5','#5b5037',32,true);label('obs','ASTRA • 1896',250,65,'#354c45','#d9bd84',25,true);
@@ -363,6 +374,10 @@ function setupGL(){main=compileProgram(VS,FS);shadow=compileProgram(VS,SHADOW_FS
  depthTexture=GL.createTexture();GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.texImage2D(GL.TEXTURE_2D,0,GL.DEPTH_COMPONENT24,shadowSize,shadowSize,0,GL.DEPTH_COMPONENT,GL.UNSIGNED_INT,null);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_COMPARE_MODE,GL.COMPARE_REF_TO_TEXTURE);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_COMPARE_FUNC,GL.LEQUAL);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MIN_FILTER,GL.LINEAR);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MAG_FILTER,GL.LINEAR);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_WRAP_S,GL.CLAMP_TO_EDGE);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_WRAP_T,GL.CLAMP_TO_EDGE);shadowBuffer=GL.createFramebuffer();GL.bindFramebuffer(GL.FRAMEBUFFER,shadowBuffer);GL.framebufferTexture2D(GL.FRAMEBUFFER,GL.DEPTH_ATTACHMENT,GL.TEXTURE_2D,depthTexture,0);GL.drawBuffers([GL.NONE]);GL.readBuffer(GL.NONE);if(GL.checkFramebufferStatus(GL.FRAMEBUFFER)!==GL.FRAMEBUFFER_COMPLETE)throw Error('The hall lighting could not start.');GL.bindFramebuffer(GL.FRAMEBUFFER,null);
  particleVAO=GL.createVertexArray();particleBuffer=GL.createBuffer();GL.bindVertexArray(particleVAO);GL.bindBuffer(GL.ARRAY_BUFFER,particleBuffer);GL.enableVertexAttribArray(0);GL.vertexAttribPointer(0,3,GL.FLOAT,false,24,0);GL.enableVertexAttribArray(1);GL.vertexAttribPointer(1,3,GL.FLOAT,false,24,12);GL.bindVertexArray(null);GL.enable(GL.DEPTH_TEST);GL.disable(GL.CULL_FACE);}
 function paint(p,vp,records){GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,vp);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);for(const r of records){GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}}
+function paintHallGlass(projection){
+ GL.enable(GL.BLEND);GL.blendFunc(GL.SRC_ALPHA,GL.ONE_MINUS_SRC_ALPHA);GL.depthMask(false);
+ try{paint(main,projection,glassMeshes);}finally{GL.depthMask(true);GL.disable(GL.BLEND);}
+}
 const dust=Array.from({length:70},()=>({p:[rand()-.5,rand(),rand()-.5],r:rnd(0,TAU),s:rnd(.015,.036)}));
 const dustBuffer=new Float32Array(dust.length*6);
 function drawParticles(vp,dt,time){
@@ -383,7 +398,7 @@ function frame(now){if(document.hidden){lastTime=0;requestAnimationFrame(frame);
  GL.enable(GL.DEPTH_TEST);GL.disable(GL.BLEND);GL.depthMask(true);
  // Static exhibits need new shadows only when the visible gallery changes.
  if(lightDirty){GL.bindFramebuffer(GL.FRAMEBUFFER,shadowBuffer);GL.viewport(0,0,shadowSize,shadowSize);GL.clear(GL.DEPTH_BUFFER_BIT);GL.enable(GL.POLYGON_OFFSET_FILL);GL.polygonOffset(1.1,2);paint(shadow,shadowVP,shadowMeshes);GL.disable(GL.POLYGON_OFFSET_FILL);lightDirty=false;}
- GL.bindFramebuffer(GL.FRAMEBUFFER,null);GL.viewport(0,0,$('scene').width,$('scene').height);GL.clearColor(.19,.24,.20,1);GL.clear(GL.COLOR_BUFFER_BIT|GL.DEPTH_BUFFER_BIT);GL.useProgram(main);GL.uniform3fv(uniform(main,'uEye'),eye);GL.uniform1f(uniform(main,'uNight'),state.night);GL.uniform1f(uniform(main,'uTime'),reduced?0:t);GL.uniform1f(uniform(main,'uShadowSize'),shadowSize);GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,atlasTexture);GL.uniform1i(uniform(main,'uAtlas'),0);GL.activeTexture(GL.TEXTURE1);GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.uniform1i(uniform(main,'uShadow'),1);paint(main,vp,staticMeshes);GL.enable(GL.BLEND);GL.blendFunc(GL.SRC_ALPHA,GL.ONE_MINUS_SRC_ALPHA);GL.depthMask(false);paint(main,vp,glassMeshes);GL.depthMask(true);GL.disable(GL.BLEND);drawParticles(vp,dt,reduced?0:t);if(frameNo%2===0)markersUpdate();GL.bindVertexArray(null);frameNo++;if(frameNo===2){$('loading').classList.add('done');window.hallReady=true;}}
+ GL.bindFramebuffer(GL.FRAMEBUFFER,null);GL.viewport(0,0,$('scene').width,$('scene').height);GL.clearColor(.19,.24,.20,1);GL.clear(GL.COLOR_BUFFER_BIT|GL.DEPTH_BUFFER_BIT);GL.useProgram(main);GL.uniform3fv(uniform(main,'uEye'),eye);GL.uniform1f(uniform(main,'uNight'),state.night);GL.uniform1f(uniform(main,'uTime'),reduced?0:t);GL.uniform1f(uniform(main,'uShadowSize'),shadowSize);GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,atlasTexture);GL.uniform1i(uniform(main,'uAtlas'),0);GL.activeTexture(GL.TEXTURE1);GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.uniform1i(uniform(main,'uShadow'),1);paint(main,vp,staticMeshes);paintHallGlass(vp);drawParticles(vp,dt,reduced?0:t);if(frameNo%2===0)markersUpdate();GL.bindVertexArray(null);frameNo++;if(frameNo===2){$('loading').classList.add('done');window.hallReady=true;}}
 function persist(){try{localStorage.setItem('alder-grand-hall-v1',JSON.stringify(saved));}catch{toast('This browser could not save your collection.');}}
 let toastTimer;function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2500);}
 function paintActions(){if(state.selected<0)return;const e=exhibits[state.selected],liked=saved.likes.includes(e.id),bookmarked=saved.bookmarks.includes(e.id);$('likeBtn').innerHTML=icon('heart')+(e.likes+(liked?1:0)).toLocaleString();$('likeBtn').setAttribute('aria-pressed',String(liked));$('likeBtn').setAttribute('aria-label',(liked?'Unlike ':'Like ')+e.name);$('saveBtn').innerHTML=icon(bookmarked?'check':'bookmark')+(bookmarked?'In your collection':'Save this creation');$('saveBtn').setAttribute('aria-pressed',String(bookmarked));}
@@ -457,12 +472,34 @@ function updateVisibleRooms(){
  if(!hallTravelPending)requestHallRooms([...visibleRooms]);
 }
 // All legacy scenery belongs to the original hall, not to every wing.
-finish=function(b,cast=true,transparent=false){const mesh=gpu(b.mesh()),record={mesh,model:I,room:0};(transparent?glassMeshes:staticMeshes).push(record);if(cast)shadowMeshes.push(record);return mesh;};
+finish=function(b,cast=true,transparent=false){const mesh=gpu(b.mesh(),transparent),record={mesh,model:I,room:0};(transparent?glassMeshes:staticMeshes).push(record);if(cast)shadowMeshes.push(record);return mesh;};
 function recordVisible(r){if(hallResidency&&r.room!=null&&!hallResidency.has(r.room))return false;if(r.emptyBay&&hallEntry(r.emptyBay))return false;if(r.room!=null&&!roomVisible(r.room))return false;if(r.rooms&&!r.rooms.some(roomVisible))return false;if(r.room==null&&!r.rooms&&Math.hypot(eye[0],eye[2])>88)return false;return true;}
+// Match the house renderer's far-to-near alpha pass. Geometry stays static;
+// centroid/depth/index storage belongs to each resident transparent mesh.
+const hallGlassVisible=[],hallGlassDraws=[];
+function sortHallGlass(records){
+ const fx=target[0]-eye[0],fy=target[1]-eye[1],fz=target[2]-eye[2];let changed=false,count=0;
+ for(const r of records){if(!recordVisible(r))continue;
+  const m=r.model,c=r.mesh.center,x=m[0]*fx+m[1]*fy+m[2]*fz,y=m[4]*fx+m[5]*fy+m[6]*fz,z=m[8]*fx+m[9]*fy+m[10]*fz;
+  const depth=c[0]*x+c[1]*y+c[2]*z+(m[12]-eye[0])*fx+(m[13]-eye[1])*fy+(m[14]-eye[2])*fz;
+  if(hallGlassVisible[count]!==r||r.glassDepth!==depth)changed=true;
+  hallGlassVisible[count++]=r;r.glassDepth=depth;r.glassX=x;r.glassY=y;r.glassZ=z;
+ }
+ if(hallGlassVisible.length!==count)changed=true;hallGlassVisible.length=count;
+ if(changed){hallGlassDraws.length=count;for(let i=0;i<count;i++)hallGlassDraws[i]=hallGlassVisible[i];hallGlassDraws.sort((a,b)=>b.glassDepth-a.glassDepth);}
+ return hallGlassDraws;
+}
+function sortHallGlassTriangles(mesh,x,y,z){
+ if(mesh.sortX===x&&mesh.sortY===y&&mesh.sortZ===z)return;
+ const centers=mesh.centers;for(let i=0;i<mesh.order.length;i++)mesh.depths[i]=centers[i*3]*x+centers[i*3+1]*y+centers[i*3+2]*z;
+ mesh.order.sort(mesh.compareDepth);
+ for(let i=0;i<mesh.order.length;i++){const start=mesh.order[i]*3;mesh.indices[i*3]=start;mesh.indices[i*3+1]=start+1;mesh.indices[i*3+2]=start+2;}
+ GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER,mesh.ibo);GL.bufferSubData(GL.ELEMENT_ARRAY_BUFFER,0,mesh.indices);mesh.sortX=x;mesh.sortY=y;mesh.sortZ=z;
+}
 const originalPaint=paint;
-paint=function(p,projection,records){GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,projection);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);let tex=null;for(const r of records){if(!recordVisible(r))continue;if(p===main){const room=ROOMS[r.room??state.room];GL.uniform3f(uniform(p,'uRoomOrigin'),room.x,room.height*.63,room.z);GL.uniform2f(uniform(p,'uRoomSize'),room.width,room.depth);}if(p===shadow){const center=ROOMS[state.room];if(r.room!=null&&r.room!==state.room&&Math.hypot(ROOMS[r.room].x-center.x,ROOMS[r.room].z-center.z)>39)continue;}
+paint=function(p,projection,records){const transparent=p===main&&records===glassMeshes;if(transparent)records=sortHallGlass(records);GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,projection);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);let tex=null;for(const r of records){if(!recordVisible(r))continue;if(p===main){const room=ROOMS[r.room??state.room];GL.uniform3f(uniform(p,'uRoomOrigin'),room.x,room.height*.63,room.z);GL.uniform2f(uniform(p,'uRoomSize'),room.width,room.depth);}if(p===shadow){const center=ROOMS[state.room];if(r.room!=null&&r.room!==state.room&&Math.hypot(ROOMS[r.room].x-center.x,ROOMS[r.room].z-center.z)>39)continue;}
   if(p===main){const desired=r.texture||atlasTexture;if(tex!==desired){GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,desired);tex=desired;}}
-  GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}
+  GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);if(transparent){sortHallGlassTriangles(r.mesh,r.glassX,r.glassY,r.glassZ);GL.drawElements(GL.TRIANGLES,r.mesh.count,GL.UNSIGNED_INT,0);}else GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}
 };
 function recenterLight(){const r=ROOMS[state.room];shadowVP=mm(ortho(-35,35,-35,35,.1,115),lookAt([r.x-23,35,r.z+17],[r.x,0,r.z-5]));lightDirty=true;}
 
@@ -653,7 +690,7 @@ function buildPublishedPottery(roomIndex=null,onlyId=null){
  // Published architectural panes use the museum's clear, non-shadow glass pass.
  const clear=new Builder(),opaque=new Builder();for(let i=0;i<b.data.length;i+=36){const target=(b.data[i+9]===76||(b.data[i+9]>=78&&b.data[i+9]<=80)||b.data[i+9]===82)?clear.data:opaque.data;for(let j=0;j<36;j++)target.push(b.data[i+j]);}
  if(opaque.data.length)addRecord(gpu(opaque.mesh()),I,bay.room,true,{exhibitId:exhibit.id});
- if(clear.data.length)addRecord(gpu(clear.mesh()),I,bay.room,false,{displayGlass:true,exhibitGlass:true,exhibitId:exhibit.id});}
+ if(clear.data.length)addRecord(gpu(clear.mesh(),true),I,bay.room,false,{displayGlass:true,exhibitGlass:true,exhibitId:exhibit.id});}
 }
 
 // Source text is loaded once. GPU groups are owned by a small gallery cache.
@@ -676,7 +713,8 @@ const hallSources=createGrandHallSourceLoader({sources:GRAND_HALL_EXHIBITS.map(e
 function disposeHallRecords(records){
  const owned=new Set(records),meshes=new Set(records.map(record=>record.mesh));
  for(const list of [staticMeshes,shadowMeshes,glassMeshes])for(let i=list.length-1;i>=0;i--)if(owned.has(list[i]))list.splice(i,1);
- for(const mesh of meshes){GL.deleteBuffer(mesh.buffer);GL.deleteVertexArray(mesh.vao);}lightDirty=true;
+ hallGlassVisible.length=0;hallGlassDraws.length=0;
+ for(const mesh of meshes){if(mesh.ibo){GL.deleteBuffer(mesh.ibo);mesh.ibo=null;mesh.centers=null;mesh.center=null;mesh.depths=null;mesh.order=null;mesh.indices=null;mesh.compareDepth=null;}GL.deleteBuffer(mesh.buffer);GL.deleteVertexArray(mesh.vao);}lightDirty=true;
 }
 async function buildHallGallery(ri){
  const entries=GRAND_HALL_EXHIBITS.filter(exhibit=>BAY_BY_ID.get(exhibit.bay)?.room===ri);
@@ -711,10 +749,11 @@ if(GL&&new URLSearchParams(location.search).has('profile')){
  panel.innerHTML='<summary>Hall performance diagnostics</summary><button type="button" style="min-height:44px;background:none;border:0">Reset measurements</button><pre style="white-space:pre-wrap">Opening the galleries…</pre>';document.body.append(panel);
  const started=performance.now(),samples=[],round=n=>Math.round(n*100)/100,percentile=(values,p)=>{const sorted=values.slice().sort((a,b)=>a-b);return sorted[Math.floor((sorted.length-1)*p)]||0;};
  let last=0,published=0,readyMs=null,bytes=0,draws=0,vertices=0,shadowPasses=0;
- const originalGPU=gpu,originalDraw=GL.drawArrays.bind(GL),originalFrame=frame,originalPaint=paint;
- gpu=function(cpu){const mesh=originalGPU(cpu);bytes+=cpu.data.byteLength;return mesh;};
+ const originalGPU=gpu,originalDraw=GL.drawArrays.bind(GL),originalElements=GL.drawElements.bind(GL),originalFrame=frame,originalPaint=paint;
+ gpu=function(cpu,transparent=false){const mesh=originalGPU(cpu,transparent);bytes+=cpu.data.byteLength;return mesh;};
  paint=function(...args){if(args[0]===shadow)shadowPasses++;return originalPaint(...args);};
  GL.drawArrays=function(mode,first,count){draws++;vertices+=count;return originalDraw(mode,first,count);};
+ GL.drawElements=function(mode,count,type,offset){draws++;vertices+=count;return originalElements(mode,count,type,offset);};
  const reset=()=>{samples.length=0;last=0;shadowPasses=0;};panel.querySelector('button').onclick=reset;
  for(const type of['pointerdown','pointerup','click','keydown','wheel'])panel.addEventListener(type,event=>event.stopPropagation());
  document.addEventListener('visibilitychange',()=>{last=0;});
