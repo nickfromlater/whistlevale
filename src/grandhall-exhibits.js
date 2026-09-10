@@ -29,6 +29,12 @@ const GRAND_HALL_EXHIBITS=[{
  story:'A station for taking the slower train. Beyond the copper clock tower, a complete iron-and-glass vault shelters palms, citrus trees and a little fountain. Follow the tiled garden paths past hanging plants and the ticket window, to luggage waiting beneath the platform canopy. This same miniature has a home beside the railway in The Commons.',
  view:{target:[-1,4.4,.8],distance:24,yaw:.48,pitch:.35},
  builder:'wintergarden',scale:.205,source:'src/scenery/wintergarden.js',mapPreview:true
+},{
+ bay:'LW-01',id:'the-night-post',title:'The Night Post',
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Blender miniature, created with Codex assistance.'}],
+ story:'Letters to places without addresses. Beneath a blue-glass vault, a brass clock watches over the dead-letter office, a spiral mail chute and a burgundy postal train. Three destination portals hold an autumn afternoon, a lunar observatory and a kitchen window glowing in the rain: Yesterday, The Moon, and Home Again.',
+ view:{target:[0,3.8,0],distance:28,yaw:.38,pitch:.38},
+ builder:'nightPost',scale:.245,source:'src/scenery/night-post.js'
 }];
 // View targets are offsets from the bay center/display surface in native units:
 // Y is height above the model's lowest plane, not its original modeling origin.
@@ -74,7 +80,7 @@ function grandHallRailwayLocations(exhibit){
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }
