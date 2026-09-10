@@ -1,0 +1,87 @@
+name: Meridian ambience visual review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+jobs:
+  candidate:
+    if: github.repository == 'nickfromlater/whistlevale' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'contrib/meridian-celestial-theatre'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WORKDIR: ${{ runner.temp }}/meridian-ambience-candidate
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Materialize only the hash-pinned candidate
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, hashlib, json, gzip, base64, subprocess
+          raw=base64.b64decode(''.join(pathlib.Path(f'.review/meridian-ambience/{i}.txt').read_text() for i in range(4)),validate=True)
+          assert hashlib.sha256(raw).hexdigest()=='a2cca771dd892b9abf2473c9099718a614b92dc60373e6b4144ec3fa5575a6ea'
+          candidate=json.loads(gzip.decompress(raw))
+          assert candidate['base']=='689ada312058f979077806a160e1c258e6e2c3fd'
+          work=pathlib.Path(os.environ['WORKDIR'])
+          subprocess.run(['git','worktree','add','--detach',str(work),candidate['base']],check=True)
+          subprocess.run(['git','apply','--check','-'],input=candidate['patch'],text=True,cwd=work,check=True)
+          subprocess.run(['git','apply','-'],input=candidate['patch'],text=True,cwd=work,check=True)
+          for path,digest in candidate['expected'].items():
+            assert not path.startswith(('.github/','.review/')) and '..' not in pathlib.PurePosixPath(path).parts
+            assert hashlib.sha256((work/path).read_bytes()).hexdigest()==digest,path
+          out=work/'evidence/ambience';out.mkdir(parents=True,exist_ok=True)
+          (out/'expected.json').write_text(json.dumps(candidate['expected'],indent=2))
+          (out/'build-preview.py').write_text(candidate['generator'])
+          (out/'browser.cjs').write_text(candidate['browser'])
+          subprocess.run(['python3',str(out/'build-preview.py')],cwd=work,check=True)
+          PY
+      - name: Full Node 24 checks and unchanged geometry budgets
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee evidence/ambience/npm-test.log
+          npm run test:geometry:full 2>&1 | tee evidence/ambience/geometry-full.log
+          node scripts/community-check.mjs --json > evidence/ambience/contributions.json
+          git diff --check
+      - name: Install isolated browser test tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/meridian-browser-tools" --no-audit --no-fund playwright@1.55.0
+          node "$RUNNER_TEMP/meridian-browser-tools/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Actual Hall and Commons WebGL views plus ambience study
+        working-directory: ${{ env.WORKDIR }}
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/meridian-browser-tools/node_modules/playwright
+        run: |
+          python3 scripts/serve.py --port 4188 > evidence/ambience/server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4188/ > /dev/null && break; sleep 1; done
+          node evidence/ambience/browser.cjs
+      - name: Store exact verified feature blobs without publishing a ref
+        working-directory: ${{ env.WORKDIR }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, hashlib, json, base64, urllib.request
+          expected=json.loads(pathlib.Path('evidence/ambience/expected.json').read_text());blobs={}
+          for path,digest in expected.items():
+            raw=pathlib.Path(path).read_bytes();assert hashlib.sha256(raw).hexdigest()==digest,path
+            request=urllib.request.Request('https://api.github.com/repos/nickfromlater/whistlevale/git/blobs',data=json.dumps({'content':base64.b64encode(raw).decode(),'encoding':'base64'}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},method='POST')
+            with urllib.request.urlopen(request,timeout=30) as response:sha=json.load(response)['sha']
+            assert sha==hashlib.sha1(f'blob {len(raw)}\0'.encode()+raw).hexdigest(),path
+            blobs[path]={'sha':sha,'sha256':digest,'bytes':len(raw)}
+          pathlib.Path('evidence/ambience/verified-blobs.json').write_text(json.dumps(blobs,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: meridian-ambience-visual-review
+          path: ${{ env.WORKDIR }}/evidence/ambience/
+          retention-days: 3
