@@ -115,6 +115,7 @@
 <script type="application/x-whistlevale-exhibit" data-source="src/scenery/wintergarden.js" data-src="src/scenery/wintergarden.js"></script>
 <script type="application/x-whistlevale-exhibit" data-source="src/scenery/night-post.js" data-src="src/scenery/night-post.js"></script>
 <script src="src/grandhall-residency.js"></script>
+<script id="analyticsBootstrap" src="src/analytics.js"></script>
 <script>
 
 'use strict';
@@ -409,7 +410,7 @@ function recenterLight(){const r=ROOMS[state.room];shadowVP=mm(ortho(-35,35,-35,
 /* Museum circulation: orbit a room, inspect a bay, or physically walk between wings. */
 const originalSetPose=setPose;
 setPose=function(pos,aim,instant=false){desiredTarget=[...aim];const delta=sub(pos,aim),inspection=state.selected>=0||state.bay;desiredDistance=len(delta)*(mobile()&&inspection?1.30:1);desiredYaw=Math.atan2(delta[0],delta[2]);desiredPitch=Math.asin(delta[1]/len(delta));while(desiredYaw-yaw>PI)desiredYaw-=TAU;while(desiredYaw-yaw<-PI)desiredYaw+=TAU;if(instant||reduced){target=[...desiredTarget];distance=desiredDistance;yaw=desiredYaw;pitch=desiredPitch;}};
-function updateRoomUI(){syncHallAddress();const r=currentRoom();document.querySelector('.intro .eyebrow').textContent='GALLERY '+r.roman+' · '+r.category;document.querySelector('.intro h1').textContent=r.name;document.querySelector('.intro p').textContent=r.description;$('roomInvitation').textContent=freeBays(state.room).length+' open spaces in this gallery';$('viewTitle').textContent=r.short;$('viewSubtitle').textContent='Gallery '+r.roman+' of '+ROOMS.length+' · '+freeBays(state.room).length+' spaces';$('browseLabel').textContent=r.short+' · choose a display';const n=(state.room+1)%ROOMS.length;$('nextGalleryName').textContent=ROOMS[n].short;recenterLight();mapDirty=true;}
+function updateRoomUI(){syncHallAddress();globalThis.syncHallAnalytics?.();const r=currentRoom();document.querySelector('.intro .eyebrow').textContent='GALLERY '+r.roman+' · '+r.category;document.querySelector('.intro h1').textContent=r.name;document.querySelector('.intro p').textContent=r.description;$('roomInvitation').textContent=freeBays(state.room).length+' open spaces in this gallery';$('viewTitle').textContent=r.short;$('viewSubtitle').textContent='Gallery '+r.roman+' of '+ROOMS.length+' · '+freeBays(state.room).length+' spaces';$('browseLabel').textContent=r.short+' · choose a display';const n=(state.room+1)%ROOMS.length;$('nextGalleryName').textContent=ROOMS[n].short;recenterLight();mapDirty=true;}
 function clearInspection(){state.selected=-1;state.bay=null;$('detail').classList.remove('open');$('bayDetail').classList.remove('open');document.body.classList.remove('inspect-mode');}
 function galleryHome(instant=false){travelToken++;clearTimeout(travelTimer);hallTravelPending=false;hallWalkPending=null;$('travelShade').classList.remove('active');setBayBrowsing(false);stopTour();setWalk(false,false);clearInspection();const r=currentRoom();frameHallRoom(r,instant);updateRoomUI();}
 home=function(instant=false){galleryHome(instant);};
@@ -417,8 +418,8 @@ function visitRoom(ri,{instant=false,bay=null,tour=false}={}){hallFailedDestinat
  if(instant||reduced||ri===state.room){arrive();return;}$('travelName').textContent=ROOMS[ri].name;$('travelShade').classList.add('active');travelTimer=setTimeout(arrive,280);
 }
 const originalSelectExhibit=selectExhibit;
-selectExhibit=function(i,fromTour=false){setWalk(false,false);state.bay=null;$('bayDetail').classList.remove('open');if(state.room!==0){state.room=0;updateRoomUI();}originalSelectExhibit(i,fromTour);$('detailCount').textContent='ORIGINAL EXHIBIT '+exhibits[state.selected].no+' · FICTIONAL MAKER';};
-function selectBay(id,travel=true){const b=BAY_BY_ID.get(id);if(!b)return;stopTour();if(travel&&state.room!==b.room){visitRoom(b.room,{bay:id});return;}setWalk(false,false);clearInspection();state.room=b.room;state.bay=id;syncHallAddress();document.body.classList.add('inspect-mode');$('bayDetail').classList.add('open');$('bayDetail').scrollTop=0;renderBayDetail();const view=grandHallExhibitView(hallEntry(id),b);setPose(view.camera,view.target);$('viewTitle').textContent=hallEntries.get(id)?.title||bayFormat(b);$('viewSubtitle').textContent='BAY '+id+' · '+ROOMS[b.room].short;recenterLight();$('closeBay').focus({preventScroll:true});}
+selectExhibit=function(i,fromTour=false){setWalk(false,false);state.bay=null;$('bayDetail').classList.remove('open');if(state.room!==0){state.room=0;updateRoomUI();}originalSelectExhibit(i,fromTour);if(!fromTour)globalThis.hallAnalyticsControl?.('exhibit_view');$('detailCount').textContent='ORIGINAL EXHIBIT '+exhibits[state.selected].no+' · FICTIONAL MAKER';};
+function selectBay(id,travel=true){const b=BAY_BY_ID.get(id);if(!b)return;stopTour();if(travel&&state.room!==b.room){visitRoom(b.room,{bay:id});return;}setWalk(false,false);clearInspection();state.room=b.room;state.bay=id;syncHallAddress();document.body.classList.add('inspect-mode');$('bayDetail').classList.add('open');$('bayDetail').scrollTop=0;renderBayDetail();const view=grandHallExhibitView(hallEntry(id),b);setPose(view.camera,view.target);$('viewTitle').textContent=hallEntries.get(id)?.title||bayFormat(b);$('viewSubtitle').textContent='BAY '+id+' · '+ROOMS[b.room].short;recenterLight();$('closeBay').focus({preventScroll:true});globalThis.syncHallAnalytics?.();globalThis.hallAnalyticsControl?.('hall_bay');if(hallEntry(id))globalThis.hallAnalyticsControl?.('exhibit_view');}
 function renderBayDetail(){
  if(!state.bay)return;const bay=BAY_BY_ID.get(state.bay),room=ROOMS[bay.room],entry=hallEntry(bay.id);
  $('bayDetail').classList.toggle('empty-space',!entry);$('bayCategory').textContent=room.short+' · BAY '+bay.id;
@@ -428,6 +429,7 @@ function renderBayDetail(){
   const locations=grandHallRailwayLocations(entry).map(place=>'<a class="entry-location" href="'+esc(place.href)+'">See it in '+esc(place.name)+' <span aria-hidden="true">↗</span></a>').join('');
   const otherCredits=entry.credits.slice(1).map(c=>'<p class="entry-credit">'+creditLink(c)+(c.note?' — '+esc(c.note):'')+'</p>').join('');
   $('bayContent').innerHTML='<p class="entry-maker">Made by '+creditLink(entry.credits[0])+'</p><details class="entry-about"><summary>About this work</summary><p class="entry-story">'+esc(entry.story)+'</p>'+otherCredits+'</details>'+locations;
+  for(const link of $('bayContent').querySelectorAll('.entry-location'))link.addEventListener('click',()=>globalThis.hallAnalyticsControl?.('exhibit_room'),{passive:true});
  }else{
   $('bayTitle').textContent='A place in '+room.short;
   $('bayContent').innerHTML='<p class="entry-story">'+esc(room.invitation)+'</p><p class="bay-dimensions">'+esc(bayFormat(bay))+' · '+bay.usableWidth.toFixed(2)+' × '+bay.usableDepth.toFixed(2)+' m'+(bay.displayFormat!=='open-table'?' · '+bay.maxHeight+' m inside':'')+'</p><button class="primary" id="placeHere">Make something here →</button><button class="next-space" id="nextEmpty">Next open bay →</button>';
@@ -473,9 +475,9 @@ markersUpdate=function(){if(lastMarkerRoom!==state.room){for(const node of $('ma
 
 /* Floor plan and contribution intake. */
 function syncModalAccessibility(){const active=currentModal();for(const node of document.body.children){if(['SCRIPT','STYLE'].includes(node.tagName)||node===active||node.id==='toast'||node.id==='loading')continue;node.inert=Boolean(active);}}
-function closeAnyModal(){$('hallOptions')?.removeAttribute('open');for(const id of['mapBackdrop','contributeBackdrop','guideBackdrop'])$(id).classList.remove('open');document.body.classList.remove('modal-open');syncModalAccessibility();}
-function openMap(tab='estate'){stopTour();modalOpener=document.activeElement;closeAnyModal();currentTab=tab;$('mapBackdrop').classList.add('open');syncModalAccessibility();renderDirectory();switchMapTab(tab);$('closeMap').focus();}
-function closeMap(){if(!$('mapBackdrop').classList.contains('open'))return;$('mapBackdrop').classList.remove('open');syncModalAccessibility();modalOpener?.focus({preventScroll:true});}
+function closeAnyModal(){$('hallOptions')?.removeAttribute('open');for(const id of['mapBackdrop','contributeBackdrop','guideBackdrop'])$(id).classList.remove('open');document.body.classList.remove('modal-open');syncModalAccessibility();globalThis.syncHallAnalytics?.();}
+function openMap(tab='estate'){stopTour();modalOpener=document.activeElement;closeAnyModal();currentTab=tab;$('mapBackdrop').classList.add('open');syncModalAccessibility();renderDirectory();switchMapTab(tab);$('closeMap').focus();globalThis.syncHallAnalytics?.();globalThis.hallAnalyticsControl?.('hall_map');}
+function closeMap(){if(!$('mapBackdrop').classList.contains('open'))return;$('mapBackdrop').classList.remove('open');syncModalAccessibility();modalOpener?.focus({preventScroll:true});globalThis.syncHallAnalytics?.();}
 function switchMapTab(tab){currentTab=tab;for(const [name,id]of[['estate','Estate'],['spaces','Spaces'],['mine','Mine']]){$('tab'+id).setAttribute('aria-selected',String(tab===name));$('tab'+id).tabIndex=tab===name?0:-1;$(name==='estate'?'estatePanel':name==='spaces'?'spacesPanel':'minePanel').hidden=tab!==name;}if(tab==='spaces')renderBayDirectory();if(tab==='mine')renderMyDirectory();}
 function renderDirectory(){let markup='<defs><pattern id="papergrid" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="#b5a373" stroke-width=".3" opacity=".27"/></pattern></defs><rect width="530" height="480" fill="url(#papergrid)"/>';
  for(const [ia,ib]of CONNECTIONS){const a=ROOMS[ia].map,b=ROOMS[ib].map,ax=a[0]+a[2]/2,ay=a[1]+a[3]/2,bx=b[0]+b[2]/2,by=b[1]+b[3]/2;markup+='<path class="path" d="M'+ax+' '+ay+'L'+bx+' '+by+'"/><path class="path-inner" d="M'+ax+' '+ay+'L'+bx+' '+by+'"/>';}
@@ -511,7 +513,7 @@ function openContribution(id){
   return '<li><b>'+esc(e.title)+'</b> — '+(url?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+' ↗</a>':esc(label))+'</li>';
  }).join('');
  $('agentPrompt').value=grandHallAgentPrompt(id);$('copyAgentPrompt').textContent='Copy contribution prompt';$('promptStatus').textContent='';
- $('contributeBackdrop').classList.add('open');syncModalAccessibility();$('copyAgentPrompt').focus();
+ $('contributeBackdrop').classList.add('open');syncModalAccessibility();$('copyAgentPrompt').focus();globalThis.hallAnalyticsControl?.('contribute_open');
 }
 function closeContribution(){
  if(!$('contributeBackdrop').classList.contains('open'))return;
@@ -519,7 +521,7 @@ function closeContribution(){
  if(modalOpener?.getClientRects().length)modalOpener.focus({preventScroll:true});else $('scene').focus({preventScroll:true});
 }
 async function copyAgentPrompt(){
- try{await navigator.clipboard.writeText($('agentPrompt').value);$('copyAgentPrompt').textContent='On your clipboard';$('promptStatus').textContent='Paste it into Codex, Claude Code or Copilot to begin.';}
+ try{await navigator.clipboard.writeText($('agentPrompt').value);$('copyAgentPrompt').textContent='On your clipboard';$('promptStatus').textContent='Paste it into Codex, Claude Code or Copilot to begin.';globalThis.hallAnalyticsControl?.('contribute_prompt');}
  catch{document.querySelector('.invite-prompt').open=true;$('agentPrompt').focus();$('agentPrompt').select();$('promptStatus').textContent='Prompt selected. Use your device’s Copy command.';}
 }
 // Pick the authored surface or glass case under the pointer, including rotated
@@ -548,7 +550,7 @@ function cycleNav(direction){if(state.bay){const i=BAYS.findIndex(b=>b.id===stat
 stopTour=function(){state.tour=false;state.tourTime=0;document.body.classList.remove('tour-active');$('tourBtn').innerHTML=icon('play')+'<span class="tour-text">Grand tour</span>';$('tourBtn').setAttribute('aria-pressed','false');$('tourBtn').setAttribute('aria-label','Take a tour of all seven galleries');};
 function stepEstateTour(dt){if(!state.tour)return;state.tourTime+=dt;desiredYaw+=dt*.008;if(state.tourTime>10){state.tourTime=0;state.tourIndex=(state.tourIndex+1)%ROOMS.length;visitRoom(state.tourIndex,{tour:true});}}
 function buildUI(){
- const houseLink=document.createElement('a');houseLink.className='house-return';houseLink.innerHTML=icon('prev')+'<span>House map</span>';houseLink.setAttribute('aria-label','Return to the Whistlevale house map');const back=hallReturnAddress();houseLink.href=back.href;document.querySelector('.tools').prepend(houseLink);
+ const houseLink=document.createElement('a');houseLink.className='house-return';houseLink.innerHTML=icon('prev')+'<span>House map</span>';houseLink.setAttribute('aria-label','Return to the Whistlevale house map');const back=hallReturnAddress();houseLink.href=back.href;houseLink.addEventListener('click',()=>globalThis.hallAnalyticsControl?.('house_map'),{passive:true});document.querySelector('.tools').prepend(houseLink);
  for(const [id,n]of[['lightBtn','sun'],['audioBtn','mute'],['cleanBtn','eye'],['guideBtn','map'],['homeBtn','home'],['prevBtn','prev'],['nextBtn','next'],['closeDetail','close'],['closeGuide','close'],['restoreUI','eye'],['closeBay','close'],['closeMap','close'],['closeContribute','close']])$(id).innerHTML=icon(n);
  $('guideBtn').setAttribute('aria-label','Open the estate floor plan');$('guideBtn').title='The estate floor plan';$('homeBtn').setAttribute('aria-label','Return to gallery view');$('currentBtn').setAttribute('aria-label','Open the estate floor plan');$('prevBtn').setAttribute('aria-label','Previous gallery or exhibit');$('nextBtn').setAttribute('aria-label','Next gallery or exhibit');
  $('walkBtn').innerHTML=icon('walk')+'Walk the halls';$('nextGallery').insertAdjacentHTML('beforeend',icon('next'));$('findSpace').innerHTML=icon('plus')+'<span>Choose a bay</span>';$('mapFindBay').insertAdjacentHTML('beforeend',icon('next'));stopTour();
@@ -581,7 +583,7 @@ function buildUI(){
   pointers.delete(e.pointerId);if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId);
  });for(const name of['pointercancel','lostpointercapture'])c.addEventListener(name,e=>pointers.delete(e.pointerId));
  c.addEventListener('wheel',e=>{e.preventDefault();stopTour();const d=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);if(state.walk){const amount=clamp(d,-150,150)*.018,p=[walkingEye[0]+Math.sin(state.walkYaw)*amount,walkingEye[1],walkingEye[2]+Math.cos(state.walkYaw)*amount];if(canWalk(p))walkingEye=p;}else desiredDistance=clamp(desiredDistance*Math.exp(clamp(d,-150,150)*.0014),3,52);},{passive:false});
- c.addEventListener('dblclick',()=>{if(state.bay){const b=BAY_BY_ID.get(state.bay),view=grandHallExhibitView(hallEntry(state.bay),b);setPose(view.camera,view.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else if(!state.walk)galleryHome();});window.addEventListener('resize',resize);c.addEventListener('webglcontextlost',e=>{e.preventDefault();toast('The 3D view paused. Reload to return to the gallery.');});c.addEventListener('webglcontextrestored',()=>location.reload());
+ c.addEventListener('dblclick',()=>{if(state.bay){const b=BAY_BY_ID.get(state.bay),view=grandHallExhibitView(hallEntry(state.bay),b);setPose(view.camera,view.target);}else if(state.selected>=0)setPose(exhibits[state.selected].camera,exhibits[state.selected].target);else if(!state.walk)galleryHome();});window.addEventListener('resize',resize);c.addEventListener('webglcontextlost',e=>{e.preventDefault();hallGraphicsLost=true;globalThis.syncHallAnalytics?.();toast('The 3D view paused. Reload to return to the gallery.');});c.addEventListener('webglcontextrestored',()=>location.reload());
  refreshAvailability();renderDirectory();
 };
 function windowPane(b,x,y,z,w,h){b.box(x,y,z,w+.10,h+.10,.06,'#e3d7b2',0);b.box(x,y,z+.037,w,h,.025,'#667f75',6);b.box(x,y,z+.06,.035,h,.025,'#e0d2ac',0);b.box(x,y-.02,z+.061,w,.034,.03,'#e0d2ac',0);b.box(x,y-h/2-.065,z+.035,w+.18,.08,.16,'#aaa688',4);}
@@ -599,6 +601,18 @@ function buildPublishedPottery(roomIndex=null,onlyId=null){
 // Source text is loaded once. GPU groups are owned by a small gallery cache.
 const hallResidentLimit=matchMedia('(max-width:760px)').matches?2:3;
 let hallResidency=null,hallRequestedKey='',hallLoadFailed=false,hallTravelPending=false,hallRequestPromise=null,hallWalkPending=null,hallFailedDestination=null,hallFailedRequest=null,hallFrameStarted=false;
+let hallGraphicsLost=false,hallAnalyticsGallery=null;
+// Aggregate state only, at lifecycle and UI boundaries. A blocked analytics
+// script or transport must never interrupt gallery navigation or copying.
+function syncHallAnalytics(){try{
+ const ready=Boolean(GL&&hallFrameStarted&&!hallGraphicsLost&&hallResidency?.has(state.room));
+ globalThis.railwayAnalytics?.sync({ready,room:'grandhall',cinema:false,map:$('mapBackdrop').classList.contains('open')});
+ if(ready){if(hallAnalyticsGallery!==null&&hallAnalyticsGallery!==state.room&&!state.tour)globalThis.railwayAnalytics?.control('hall_gallery');hallAnalyticsGallery=state.room;}
+}catch{}}
+function hallAnalyticsControl(name){try{
+ if(GL&&hallFrameStarted&&!hallGraphicsLost&&hallResidency?.has(state.room))globalThis.railwayAnalytics?.control(name);
+}catch{}}
+
 function loadHallSource(path){
  const placeholder=[...document.querySelectorAll('script[type="application/x-whistlevale-exhibit"]')].find(node=>node.dataset.source===path);
  if(!placeholder)throw new Error('Missing reviewed exhibit source: '+path);
@@ -626,7 +640,7 @@ async function buildHallGallery(ri){
  catch(error){disposeHallRecords(owned());throw error;}
 }
 function showHallLoadError(error,ids){
- hallFailedRequest=ids.slice();hallLoadFailed=true;$('hallLoadNotice').hidden=false;$('hallLoadMessage').textContent='This gallery could not finish loading.';console.error(error);
+ hallFailedRequest=ids.slice();hallLoadFailed=true;$('hallLoadNotice').hidden=false;$('hallLoadMessage').textContent='This gallery could not finish loading.';console.error(error);globalThis.syncHallAnalytics?.();
 }
 function requestHallRooms(ids){
  if(!hallResidency)return Promise.resolve({current:true});const key=ids.join(',');
@@ -634,7 +648,7 @@ function requestHallRooms(ids){
  hallRequestedKey=key;
  return hallRequestPromise=hallResidency.setVisible(ids).catch(error=>{if(hallRequestedKey===key)showHallLoadError(error,ids);return{current:false};});
 }
-function beginHallFrames(){if(GL&&hallResidency&&!hallFrameStarted){hallFrameStarted=true;requestAnimationFrame(frame);}}
+function beginHallFrames(){if(GL&&hallResidency&&!hallFrameStarted){hallFrameStarted=true;requestAnimationFrame(frame);}globalThis.syncHallAnalytics?.();}
 async function start(){try{
  buildUI();if(!GL)throw Error('WebGL 2 is required for the 3D hall. You can still explore the floor plan and copy a prompt for your coding agent.');
  $('loadingCopy').textContent='Opening your gallery.';makeArt();setupGL();
@@ -643,7 +657,7 @@ async function start(){try{
  const initialBay=BAY_BY_ID.get(hallInitialURL.searchParams.get('bay')),initialRoom=initialBay?.room??ROOMS.findIndex(room=>room.id===hallInitialURL.searchParams.get('gallery'));if(initialRoom>=0)state.room=initialRoom;
  resize();galleryHome(true);await hallResidency.setVisible([state.room]);hallRequestedKey=String(state.room);
  restoreHallAddress();beginHallFrames();
- }catch(error){console.error(error);$('loading').innerHTML='<div class="error-note"><h2 style="font:28px Georgia">The 3D hall couldn’t open.</h2><p>'+esc(error.message)+'</p><button class="round" id="errorGuide" style="width:auto;border-radius:5px;padding:10px 20px">Explore the floor plan</button></div>';$('errorGuide').onclick=()=>{$('loading').classList.add('done');openMap();};window.hallError=error.message;}
+ }catch(error){console.error(error);$('loading').innerHTML='<div class="error-note"><h2 style="font:28px Georgia">The 3D hall couldn’t open.</h2><p>'+esc(error.message)+'</p><button class="round" id="errorGuide" style="width:auto;border-radius:5px;padding:10px 20px">Explore the floor plan</button></div>';$('errorGuide').onclick=()=>{$('loading').classList.add('done');openMap();};window.hallError=error.message;globalThis.syncHallAnalytics?.();}
 };
 
 if(GL&&new URLSearchParams(location.search).has('profile')){
