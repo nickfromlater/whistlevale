@@ -35,6 +35,12 @@ const GRAND_HALL_EXHIBITS=[{
  story:'Letters to places without addresses. Under a blue-glass vault, letters descend from the dead-letter office through a spiral chute, cancelling press and dispatch belt to a waiting postal train. Beyond the brass gates: an autumn footbridge, a lunar observatory, and a cottage kitchen where one letter has finally arrived. Yesterday. The Moon. Home Again.',
  view:{target:[0,3.8,0],distance:32,yaw:.38,pitch:.38},
  builder:'nightPost',scale:.245,source:'src/scenery/night-post.js'
+},{
+ bay:'CC-03',id:'codex-usage-reset',title:'Codex usage reset!',
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original reset engine, created with Codex assistance.'}],
+ story:'A mint porcelain button, a brass dial, and a wildly overqualified machine for starting again. Press it to gather a little energy, release a crown of light, and make room for another idea. A playful reset ceremony; the miniature does not change account limits.',
+ view:{target:[0,2.6,0],distance:17,yaw:.12,pitch:.43},
+ builder:'codexReset',scale:.2,source:'src/scenery/codex-reset.js'
 }];
 // View targets are offsets from the bay center/display surface in native units:
 // Y is height above the model's lowest plane, not its original modeling origin.
@@ -80,7 +86,7 @@ function grandHallRailwayLocations(exhibit){
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args),codexReset:(...args)=>codexResetEngine(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }
