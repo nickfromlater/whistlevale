@@ -38,8 +38,8 @@ const GRAND_HALL_EXHIBITS=[{
 },{
  bay:'CC-03',id:'codex-usage-reset',title:'Codex usage reset!',
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original reset engine, created with Codex assistance.'}],
- story:'A mint porcelain button, a brass dial, and a wildly overqualified machine for starting again. Press it to gather a little energy, release a crown of light, and make room for another idea. A playful reset ceremony; the miniature does not change account limits.',
- view:{target:[0,2.6,0],distance:17,yaw:.12,pitch:.43},
+ story:'One big red button. Press RESET: the cap sinks, the charge climbs, and a scarlet energy column erupts into a white-gold shockwave. Codex usage reset! A playful reset ceremony; the miniature does not change account limits.',
+ view:{target:[0,2.9,.1],distance:15,yaw:.10,pitch:.56},
  builder:'codexReset',scale:.2,source:'src/scenery/codex-reset.js'
 }];
 // View targets are offsets from the bay center/display surface in native units:
