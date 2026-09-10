@@ -93,6 +93,16 @@ const viewing={visible:true,active:true,paused:false,reduced:false};
  for(let i=0;i<10;i++)f.controller.update(viewing);assert.equal(f.videos.length,1,'autoplay rejection is not retried on every frame');f.controller.toggle();assert.equal(f.videos.length,2,'an explicit click can retry autoplay');await Promise.resolve();f.controller.dispose();
 }
 {
+ const f=fixture(),c=f.controller;c.update(viewing);const video=f.videos[0];
+ video.readyState=2;video.currentTime=1;video.onplaying();c.update({...viewing,now:100});const count=f.uploads.length;
+ // The API exists, but this hidden video never receives its scheduled callback.
+ video.currentTime=1.1;c.update({...viewing,now:110});assert.equal(f.uploads.length,count,'silent callback fallback keeps the upload cap');
+ c.update({...viewing,now:150});assert.equal(f.uploads.length,count+1,'advancing video updates the projection even when frame callbacks stall');
+ c.update({...viewing,now:200});assert.equal(f.uploads.length,count+1,'a stationary frame is not uploaded again');
+ video.currentTime=.02;c.update({...viewing,now:250});assert.equal(f.uploads.length,count+2,'the fallback also refreshes after the film loops');
+ c.toggle();const stopped=f.uploads.length;c.update({...viewing,now:300});assert.equal(f.uploads.length,stopped,'fallback does not override the visitor pause');c.dispose();
+}
+{
  const f=fixture({frames:false});f.controller.update(viewing);const video=f.videos[0];video.readyState=2;video.currentTime=1;f.controller.update({...viewing,now:100});const count=f.uploads.length;
  video.currentTime=2;f.controller.update({...viewing,now:110});assert.equal(f.uploads.length,count,'older browsers throttle texture uploads to 24fps');
  f.controller.update({...viewing,now:150});assert.equal(f.uploads.length,count+1);f.controller.update({...viewing,now:200});assert.equal(f.uploads.length,count+1,'fallback also skips identical playback times');

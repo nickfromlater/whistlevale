@@ -107,7 +107,9 @@ function createMoonlightProjection(gl){
   if(disposed||lost)return;
   state.visible=Boolean(next.visible);state.active=Boolean(next.active);state.nameplateVisible=Boolean(next.nameplateVisible??next.visible);state.paused=Boolean(next.paused);state.reduced=Boolean(next.reduced);reconcile();
   const now=next.now??performance.now();
-  if(video&&video.readyState>=2&&now-lastUpload>=1000/24-1&&(dirty||(!video.requestVideoFrameCallback&&video.currentTime!==lastMediaTime))){
+  // Some browsers stop reporting video frames for the hidden texture source.
+  // Advancing media time must still refresh the screen, within the same 24fps cap.
+  if(video&&video.readyState>=2&&now-lastUpload>=1000/24-1&&(dirty||video.currentTime!==lastMediaTime)){
    try{if(upload(video)){lastMediaTime=video.currentTime;lastUpload=now;dirty=false;}}
    catch{failed=true;releaseVideo();syncControl();}
   }
