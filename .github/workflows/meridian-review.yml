@@ -1,0 +1,23 @@
+name: Meridian review snapshot
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/meridian-review.yml'
+      - 'src/scenery/meridian-observatory.js'
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.head_ref == 'contrib/meridian-celestial-theatre'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Package tracked public source for isolated visual review
+        run: git archive --format=zip --output=meridian-review-source.zip HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: meridian-review-source
+          path: meridian-review-source.zip
+          retention-days: 3
