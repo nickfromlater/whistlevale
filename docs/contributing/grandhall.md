@@ -208,14 +208,23 @@ Always preserve the complete entered model, chosen credit and portable export.
 The main Builders list retains the credit whether the map shows a marker or a
 full preview.
 
-The gallery-count limit is not a byte or frame-time guarantee. Keep the existing
-geometry budgets and measure the complete emitted model, including its props.
-The renderer stores 12 float32 values per vertex, or **48 bytes per vertex** in
-its vertex buffer; shared textures, shadows and temporary CPU arrays add memory
-beyond that figure. Review the total contribution allowance across the Hall,
-rather than treating it as a fresh allowance for every bay or visible gallery.
-Do not increase budgets to fit a detailed model. Reduce unnecessary geometry
-and verify that useful detail remains visible from its actual viewing distance.
+The Hall has a **600,000-vertex aggregate exhibit allowance**, defined by
+`GRAND_HALL_LIMITS.exhibitVertices` in `src/grandhall-data.js` and checked by
+`npm run test:hall` and `npm run test:rooms`. Count every complete emitted model,
+including its props. This is shared across the entire collection, not a fresh
+allowance for each bay or visible gallery. Explicitly reviewed house-map previews
+share a separate **300,000-vertex** allowance, plus under 60,000 for map
+architecture. Railway-room contributions, including Commons placements, retain
+their separate 300,000-vertex per-room limit.
+
+The gallery-count limit is not a byte or frame-time guarantee. At **48 bytes per
+vertex**, the full Hall exhibit allowance represents **27.47 MiB** of vertex
+buffers alone; CPU arrays, transparency indices, shared textures and shadows add
+memory beyond that figure. This allowance provides room for new exhibits; it is
+not a target for individual models or a measured phone-performance guarantee.
+Reduce unnecessary geometry and check useful detail at its actual viewing
+distance. Propose further allowance changes for maintainer review separately
+from an exhibit rather than increasing limits just to make its checks pass.
 
 With `grandhall.html?profile`, compare first entry, a neighboring-gallery visit,
 and return after eviction on the same device, viewport, camera and lighting.
@@ -249,7 +258,7 @@ Inspect the live house map, Hall entry and return, direct bay links, pointer and
 keyboard bay selection, your complete miniature, credit and creator link. Check
 desktop and **390px/320px** phone widths, with no overflowing controls or blocked
 walking paths. Compare frame timing and geometry against the same camera before
-the change. Keep existing budgets; simplify unnecessary geometry if needed.
+the change. Stay within the allowances above; simplify unnecessary geometry if needed.
 Use the [review checklist](review.md) for export and attribution checks affected
 by shared source changes. Mark physical touch or other unavailable checks as
 unverified rather than treating desktop resizing as a device test.

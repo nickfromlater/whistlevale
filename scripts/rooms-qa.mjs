@@ -200,9 +200,10 @@ vm.runInContext(`function checkHallGeometryBudgets(model){
  const architectureVertices=architecture.data.length/12;
  let exhibitVertices=0,previewVertices=0;for(const exhibit of records){const b=new Builder(),bay=GRAND_HALL_BAYS.find(q=>q.id===exhibit.bay),vertices=grandHallPlaceExhibit(exhibit,b,bay);exhibitVertices+=vertices;if(exhibit.mapPreview===true)previewVertices+=vertices;}
  assert.ok(architectureVertices<60000,'Hall preview architecture stays lightweight');
- assert.ok(exhibitVertices<=COMMUNITY_LIMITS.vertices,'Hall reviewed exhibits stay within the existing per-room community allowance');
+ assert.ok(exhibitVertices<=GRAND_HALL_LIMITS.exhibitVertices,'Hall reviewed exhibits share one catalogue allowance');
+ assert.ok(previewVertices<=GRAND_HALL_LIMITS.mapPreviewVertices,'Hall opted-in map previews share the smaller eager geometry allowance');
  assert.equal(model.mesh.count,architectureVertices+previewVertices,'Hall overview accounts for architecture, occupancy plaques and opted-in native previews');
- assert.ok(model.mesh.count<60000+COMMUNITY_LIMITS.vertices,'Hall preview stays within its combined architecture and exhibit budgets');
+ assert.ok(model.mesh.count<60000+GRAND_HALL_LIMITS.mapPreviewVertices,'Hall preview stays within its combined architecture and exhibit budgets');
  return{architectureVertices,exhibitVertices,previewVertices,totalVertices:model.mesh.count};
 }`,context);
 vm.runInContext(`(()=>{

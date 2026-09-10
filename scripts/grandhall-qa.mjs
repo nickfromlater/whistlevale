@@ -9,7 +9,7 @@ import {communityContext,loadContributionDefinitions,loadReviewedHallSources,pre
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
 const [html,index,data,exhibits,prompts,core]=await Promise.all(['grandhall.html','index.html','src/grandhall-data.js','src/grandhall-exhibits.js','src/grandhall-contribute.js','src/community-core.js'].map(read));
 for(const [,script]of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(script);
-const catalog=vm.runInNewContext([core,data,exhibits,prompts].join('\n')+';({rooms:GRAND_HALL_GALLERIES,bays:GRAND_HALL_BAYS,featured:GRAND_HALL_FEATURED_BAY,exhibits:GRAND_HALL_EXHIBITS,prompt:grandHallAgentPrompt,roomPrompt:grandHallRoomPrompt,credits:grandHallExhibitCredits,creditURL:communityCreditURL,view:grandHallExhibitView})');
+const catalog=vm.runInNewContext([core,data,exhibits,prompts].join('\n')+';({limits:GRAND_HALL_LIMITS,rooms:GRAND_HALL_GALLERIES,bays:GRAND_HALL_BAYS,featured:GRAND_HALL_FEATURED_BAY,exhibits:GRAND_HALL_EXHIBITS,prompt:grandHallAgentPrompt,roomPrompt:grandHallRoomPrompt,credits:grandHallExhibitCredits,creditURL:communityCreditURL,view:grandHallExhibitView})');
 const roomIds=new Set(),bayIds=new Set(),workIds=new Set(),occupied=new Set();
 const displayFormats=new Set(['open-table','low-vitrine','tall-vitrine','wall-case','round-vitrine']);
 const finiteVector=(vector,length,label)=>assert.ok(Array.isArray(vector)&&vector.length===length&&vector.every(Number.isFinite),label);
@@ -127,6 +127,9 @@ const measurements=geometry.run(`(()=>{
  return result;
 })()`);
 
+const exhibitVertices=measurements.reduce((sum,model)=>sum+model.vertices,0);
+assert.ok(exhibitVertices<=catalog.limits.exhibitVertices,'complete Hall catalogue stays within its aggregate exhibit allowance: '+exhibitVertices+' / '+catalog.limits.exhibitVertices);
+
 // Follow the Hall-only recipe in a fresh VM: one native source and a deferred
 // Hall declaration, with no index script or Commons placement. Nothing here
 // changes the public collection or creates a file that a build could publish.
@@ -193,6 +196,7 @@ for(const bay of catalog.bays){
  assert.ok(prompt.includes('exhibition bay '+bay.id)&&prompt.includes('x '+dimension(bay.x)+', z '+dimension(bay.z)),'prompt uses the selected bay');
  assert.ok(prompt.includes(dimension(bay.usableWidth)+' metres wide')||prompt.includes(dimension((bay.usableRadius||0)*2)+' metres across'),'prompt describes its usable display area');
  assert.ok(prompt.includes('maximum model height of '+dimension(bay.maxHeight)+' metres above'),'prompt states usable height above the surface');
+ assert.ok(prompt.includes(catalog.limits.exhibitVertices.toLocaleString('en-US')+'-vertex allowance; this is not a per-bay budget'),'prompt uses the checked catalogue allowance');
  assert.ok(!/\d+\.\d{3}/.test(prompt),'visible measurements omit floating-point noise');
  assert.ok(prompt.includes('src/grandhall-exhibits.js')&&prompt.includes('Do not merge, deploy'),'prompt reaches a reviewable source contribution');
 }
@@ -212,4 +216,5 @@ for(const plot of [{id:'east-3',name:'East garden room',side:'right'},{id:'west-
 for(const invalid of [undefined,{}, {id:'../outside',name:'Room',side:'left'}])assert.throws(()=>catalog.roomPrompt(invalid),error=>error.name==='TypeError');
 assert.throws(()=>alignExport({schema:'whistlevale.community.v1',entries:[]}),/cannot be converted/);
 console.table(measurements);
+console.log('Hall exhibit allowance: '+exhibitVertices+' / '+catalog.limits.exhibitVertices+' vertices ('+(catalog.limits.exhibitVertices-exhibitVertices)+' available).');
 console.log('Hall QA passed: '+catalog.rooms.length+' galleries, '+catalog.bays.length+' unique bays, '+catalog.exhibits.length+' credited native exhibits, display bounds, shared agent prompts and rejected incompatible conversion.');

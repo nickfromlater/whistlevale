@@ -55,9 +55,11 @@ placeholder, not a checked-in asset. A neighboring `.report.json` records bounds
 per-object counts, buffer size and the generated script hash. Export order is
 deterministic for a fixed evaluated scene and Blender version.
 
-The 60,000-vertex default is a provisional per-export ceiling, not a new Hall
-allowance. Measure the combined exhibit catalogue against the existing shared
-300,000-vertex budget. Never raise an existing budget to accommodate a model.
+The 60,000-vertex default remains a provisional per-export ceiling. The combined
+Hall exhibit catalogue has a separate **600,000-vertex** allowance, shared across
+all bays. See the [Hall geometry allowances](grandhall.md#performance-as-the-collection-grows)
+for map-preview limits and measurement requirements. Propose changes to these
+limits separately for maintainer review; do not raise them just to make a model pass.
 
 ## Night Post outcome and remaining motion work
 

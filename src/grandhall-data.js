@@ -5,6 +5,10 @@
 const GRAND_HALL_UNIT_SCALE=6;
 const GRAND_HALL_FEATURED_BAY='GH-08';
 
+// One allowance for the complete reviewed exhibit catalogue. The eager house
+// map keeps its smaller allowance; neither limit is renewed per bay or gallery.
+const GRAND_HALL_LIMITS=Object.freeze({exhibitVertices:600000,mapPreviewVertices:300000});
+
 // A sequence of differently proportioned rooms, rather than seven copies of a
 // hall. IDs and bay numbers are stable; positions, architecture and furniture
 // are shared by the exhibition, its house-map model and contributor tools.
