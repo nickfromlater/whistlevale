@@ -3,10 +3,11 @@
 // The server/build embeds the reviewed JSON before this file. Portable HTML
 // retains that same catalogue. No runtime requests or frame-loop hooks.
 const communityCatalogue=validateCommunity(window.HOUSE_COMMUNITY||{format:'whistlevale-community',version:1,works:[]});
-function communityWorkshop(add){
- for(const work of communityCatalogue.works)for(const p of work.workshop||[]){
+function communityWorkshop(add,afterPlanting=false){
+ for(const work of communityCatalogue.works)for(const [placement,p]of (work.workshop||[]).entries()){
+  if(!!assetById[p.type]?.afterPlanting!==afterPlanting)continue;
   const object=add(p.type,...p.at,p.angle??0,p.scale??1,p.params??null);
-  object.credits=validateCredits(work.credits);
+  object.credits=validateCredits(work.credits);object.contribution=work.id;object.placement=placement;
  }
 }
 function communityMiniatures(key,place){
@@ -38,11 +39,23 @@ function communityRoomPlaces(scene){
 function communityWorkView(scene,id,placement=0){
  if(!scene||typeof id!=='string'||!/^[a-z][a-z0-9-]*$/.test(id)||!Number.isSafeInteger(placement)||placement<0)return null;
  const works=communityCatalogue.works.filter(work=>work.id===id);if(works.length!==1)return null;
- const work=works[0],piece=work.miniatures?.[placement];if(work.room!==scene.key||!piece)return null;
+ const work=works[0];if(work.room!==scene.key)return null;
+ if(scene.key==='valley'){
+  const piece=work.workshop?.[placement];if(!piece)return null;
+  const matches=objects.filter(o=>o.contribution===id&&o.placement===placement&&o.type===piece.type);if(matches.length!==1)return null;
+  const placed=matches[0],asset=assetById[placed.type];if(!asset)return null;
+  const scale=placed.scale??1,y=objectY(placed),radius=Math.hypot(asset.w,asset.d)*scale*.5,view=placement===0?work.view||{}:{},ratio=scale/(piece.scale??1);
+  if(![placed.x,y,placed.z,radius].every(Number.isFinite)||radius<=0)return null;
+  return{name:work.title,contribution:id,placement,detail:'Made by '+communityCreditLine(work.credits)+'.',target:[placed.x,y+(view.targetHeight??asset.h*.4)*scale,placed.z],distance:(view.distance??Math.max(12,radius*3.2/ratio))*ratio,phoneDistance:(view.phoneDistance??(view.distance??Math.max(12,radius*3.2/ratio))*1.7)*ratio,pitch:view.pitch??.55,yaw:(view.yaw??.45)+placed.angle-(piece.angle??0)};
+ }
+ const piece=work.miniatures?.[placement];if(!piece)return null;
  const matches=(scene.lifeDetails?.details||[]).filter(detail=>detail.contribution===id&&detail.placement===placement);if(matches.length!==1)return null;
  const placed=matches[0],radius=COMMUNITY_BUILDERS[piece.builder]*(piece.scale??1);
  if(![placed.x,placed.y,placed.z,radius].every(Number.isFinite)||radius<=0)return null;
  return{name:work.title,contribution:id,placement,target:[placed.x,placed.y+(placement===0&&work.view?.targetHeight!==undefined?work.view.targetHeight*(piece.scale??1):Math.min(2,radius*.35)),placed.z],distance:Math.max(12,radius*4),pitch:.55,yaw:.45,...(placement===0?work.view:{})};
+}
+function communityWorkshopPlaces(){
+ return communityCatalogue.works.filter(w=>w.room==='valley'&&w.view).map(work=>communityWorkView({key:'valley'},work.id,0)).filter(Boolean);
 }
 function communityCreditLine(credits){return validateCredits(credits).map(c=>c.name).join(', ');}
 function paintBuilders(){
@@ -52,7 +65,11 @@ function paintBuilders(){
  for(const q of TRAIN_COLLECTION)if(q.credits?.length)entries.push({key:JSON.stringify(['train',q.id]),title:q.name,room:'house',credits:q.credits});
  for(const [key,room]of Object.entries(HOUSE_ROOMS))if(room.credits?.length)entries.push({key:JSON.stringify(['room',key]),title:room.name,room:key,credits:room.credits});
  if(layoutCredits.length)entries.push({key:'layout',title:layoutTitle,room:'valley',credits:layoutCredits});
- const creditedObjects=new Map();for(const o of objects)if(o.credits?.length){const title=assetById[o.type]?.name||'Scenery',key=JSON.stringify(['object',o.type,o.credits]);if(!creditedObjects.has(key))creditedObjects.set(key,{key,title,room:'valley',credits:o.credits});}
+ const creditedObjects=new Map();for(const o of objects)if(o.credits?.length){
+  const work=communityCatalogue.works.find(w=>w.id===o.contribution&&w.room==='valley'&&w.workshop?.[o.placement]?.type===o.type);
+  const title=work?.title||assetById[o.type]?.name||'Scenery',key=JSON.stringify(work?['work',work.id,work.source]:['object',o.type,o.credits]);
+  if(work)entries.push({key,title,room:'valley',credits:o.credits});else if(!creditedObjects.has(key))creditedObjects.set(key,{key,title,room:'valley',credits:o.credits});
+ }
  entries.push(...creditedObjects.values());
  const authors=new Map();
  for(const entry of entries)for(const credit of validateCredits(entry.credits)){

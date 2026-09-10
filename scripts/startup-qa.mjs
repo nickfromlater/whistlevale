@@ -30,7 +30,7 @@ function fixture({storage=new Map(),embedded=null,denyCache=false,denyStorage=fa
   // Keep the actual buildWorld, initTracks and seedDivisionScenery. Replace only
   // expensive geometry/GL output, consistently for both startup paths.
   createGround=function(){for(let i=0;i<31;i++)rand();return{mesh(){return{count:3};}};};
-  makeRoad=function(){roads.length=0;};createRail=function(){};bridgeRange=function(){return[];};buildTunnelRange=function(){};
+  makeRoad=function(){roads.length=0;};buildMoonlightValleyApproach=function(){};createRail=function(){};bridgeRange=function(){return[];};buildTunnelRange=function(){};
   initLabels=function(){};createWater=function(){};uploadAtlas=function(){};disposeMesh=function(){};
   buildValleyDetails=function(){records.builds.push({capture:captureScenery,flat:flatTerrain,tracks:JSON.stringify(trackDesign),objects:JSON.stringify(objects),samples:Array.from({length:12},()=>rand())});};
   signals=function(){};createRoom=function(){records.roomSeeds.push(Array.from({length:7},()=>rand()));};
@@ -45,7 +45,8 @@ assert.equal(fresh.records.builds.length,1,'fresh visits capture the factory onc
 assert.equal(fresh.records.builds[0].capture,true);assert.ok(fresh.factory().objects.length>600,'fixture uses the actual authored factory scenery');
 assert.equal(fresh.factory().coaches,6);assert.equal(fresh.run('captureScenery'),false);
 const pristine=fresh.factory(),cache=JSON.parse(fresh.storage.get(CACHE_KEY));
-assert.equal(cache.version,'grand-v2-factory-2-community');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
+assert.equal(cache.version,'grand-v2-factory-3-moonlight-lane');assert.deepEqual(cache.snapshot,pristine,'only the pristine factory is cached');
+assert.equal(pristine.objects.filter(o=>o.contribution==='moonlight-drive-in').length,1,'fresh visits and factory reset include the reviewed drive-in');
 const saved={...structuredClone(pristine),name:'My blue railway',flat:true,livery:'blue',coaches:2,services:{freight:false,mountain:true}};
 saved.objects=saved.objects.slice(0,5);saved.objects[0].x+=.25;
 const stored=()=>new Map([[STORAGE_KEY,JSON.stringify(saved)],[CACHE_KEY,JSON.stringify(cache)]]);
@@ -54,6 +55,7 @@ const cold=fixture({storage:new Map([[STORAGE_KEY,JSON.stringify(saved)]])});col
 assert.equal(cold.records.builds.length,2,'saved layouts without a factory cache keep the original safe path');
 assert.deepEqual(cold.records.builds.map(b=>b.capture),[true,false]);assert.equal(cold.snapshot().name,saved.name);
 assert.deepEqual(cold.factory(),pristine,'an uncached saved visit still retains a pristine reset');
+assert.ok(!cold.snapshot().objects.some(o=>o.contribution==='moonlight-drive-in'),'new factory scenery is not injected into the user’s saved layout');
 assert.deepEqual(JSON.parse(cold.storage.get(CACHE_KEY)).snapshot,pristine,'saved edits never contaminate the factory cache');
 
 const warm=fixture({storage:stored()});warm.start();
@@ -85,7 +87,7 @@ const badFactory=structuredClone(pristine);badFactory.objects[0].x=9000;
 const alteredTracks=structuredClone(pristine);alteredTracks.tracks.common[0][1][0]+=.01;
 for(const [label,value]of[
  ['invalid JSON','{'],['missing snapshot',JSON.stringify({version:cache.version})],
- ['old version',JSON.stringify({...cache,version:'old'})],['bad checksum',JSON.stringify({...cache,checksum:'broken'})],
+ ['old version',JSON.stringify({...cache,version:'grand-v2-factory-2-community'})],['bad checksum',JSON.stringify({...cache,checksum:'broken'})],
  ['invalid factory data',JSON.stringify(withChecksum(badFactory))],['edited factory tracks',JSON.stringify(withChecksum(alteredTracks))],
  ['saved world posing as factory',JSON.stringify(withChecksum(saved))]
 ]){
@@ -153,7 +155,7 @@ const houseStartup=analyticsAdapter+hobbySource.slice(hobbySource.indexOf('funct
 for(const readyState of ['loading','interactive','complete']){
  const page=invitationPage({bootControls:false}),events=new Map(),jobs=[],calls=[],inserted=[];let now=0;
  Object.assign(page.context,{URLSearchParams,location:{protocol:'https:',search:'',hash:''},hobby:{room:'valley'},shadowDirty:false,
-  createHobbyUI:()=>calls.push('house'),baseHobbyStart:()=>{page.context.window.READY=true;},initHouseArt:noop,buildValleyLife:()=>({}),initWalkingFigures:noop,updateUI:noop,syncRoomControls:noop,enterCinema:noop,leaveCinema:noop,
+  createHobbyUI:()=>calls.push('house'),baseHobbyStart:()=>{page.context.window.READY=true;},initHouseArt:noop,buildValleyLife:()=>({}),initWalkingFigures:noop,updateUI:noop,syncRoomControls:noop,renderRoomPlaces:noop,enterCinema:noop,leaveCinema:noop,
   setTimeout(callback,delay){jobs.push({callback,at:now+delay});},console:{error(error){throw error;}}
  });
  Object.assign(page.context.document,{readyState,body:{dataset:{}},addEventListener(type,callback,options){events.set(type,{callback,once:options?.once});}});

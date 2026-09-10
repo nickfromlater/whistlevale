@@ -42,6 +42,12 @@ const GRAND_HALL_EXHIBITS=[{
  story:'One big red button. Press RESET: the cap sinks, the charge climbs, and a scarlet energy column erupts into a white-gold shockwave. Codex usage reset! A playful reset ceremony; the miniature does not change account limits.',
  view:{target:[0,2.9,.1],distance:15,yaw:.10,pitch:.56},
  builder:'codexReset',scale:.2,source:'src/scenery/codex-reset.js'
+},{
+ bay:'LW-04',id:'moonlight-drive-in',title:'Moonlight Drive-In',
+ credits:[{name:'nickfromlater',platform:'x',handle:'nickfromlater',note:'Original drive-in miniature and its Whistlevale adaptation.'}],
+ story:'The last car has found its place. A timber screen lights up above enamel convertibles, tiny spectators and a warm little diner. The projection booth rolls A Trip to the Moon, Georges Méliès’ silent film from 1902. This same drive-in has a home in the lakeside meadow beside Alder Valley’s old town.',
+ view:{target:[0,4.38,0],distance:60,yaw:.42,pitch:.50},
+ builder:'moonlight',scale:.096,source:'src/scenery/moonlight-drive-in.js'
 }];
 // View targets are offsets from the bay center/display surface in native units:
 // Y is height above the model's lowest plane, not its original modeling origin.
@@ -74,20 +80,22 @@ function grandHallRailwayLocations(exhibit){
  const catalogue=typeof window==='undefined'?null:window.HOUSE_COMMUNITY;
  if(!exhibit||typeof exhibit.id!=='string'||!/^[a-z][a-z0-9-]*$/.test(exhibit.id)||typeof exhibit.source!=='string'||!Array.isArray(catalogue?.works))return[];
  const matches=catalogue.works.filter(work=>work.id===exhibit.id);if(matches.length!==1||matches[0].source!==exhibit.source)return[];
- const work=matches[0];if(typeof work.room!=='string'||!/^[a-z][a-z0-9-]*$/.test(work.room)||work.room==='house'||!Array.isArray(work.miniatures))return[];
+ const work=matches[0];if(typeof work.room!=='string'||!/^[a-z][a-z0-9-]*$/.test(work.room)||work.room==='house')return[];
+ const placements=work.room==='valley'?work.workshop:work.miniatures;if(!Array.isArray(placements))return[];
  const result=[];
- for(const [placement,piece]of work.miniatures.entries()){
-  if(!piece||!Array.isArray(piece.at)||piece.at.length!==2||!piece.at.every(Number.isFinite)||!Object.hasOwn(COMMUNITY_BUILDERS,piece.builder))continue;
+ for(const [placement,piece]of placements.entries()){
+  if(!piece||!Array.isArray(piece.at)||piece.at.length!==2||!piece.at.every(Number.isFinite))continue;
+  if(work.room==='valley'?typeof piece.type!=='string':!Object.hasOwn(COMMUNITY_BUILDERS,piece.builder))continue;
   const address=new URL(window.HOUSE_RETURN_URL||'index.html',location.href),params=address.protocol==='blob:'?new URLSearchParams():address.searchParams;
   params.delete('map');params.set('room',work.room);params.set('work',work.id);params.set('placement',String(placement));
   if(address.protocol==='blob:')address.hash=params.toString();
-  const name=(typeof HOUSE_ROOMS==='undefined'?null:HOUSE_ROOMS[work.room]?.name)||window.HOUSE_ROOM_NAMES?.[work.room]||work.room.replace(/(^|-)([a-z])/g,(_,prefix,letter)=>(prefix?' ':'')+letter.toUpperCase());
+  const name=(typeof HOUSE_ROOMS==='undefined'?null:HOUSE_ROOMS[work.room]?.name)||window.HOUSE_ROOM_NAMES?.[work.room]||(work.room==='valley'?'Alder Valley':null)||work.room.replace(/(^|-)([a-z])/g,(_,prefix,letter)=>(prefix?' ':'')+letter.toUpperCase());
   result.push({room:work.room,name,work:work.id,placement,href:address.href});
  }
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args),codexReset:(...args)=>codexResetEngine(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args),codexReset:(...args)=>codexResetEngine(...args),moonlight:(...args)=>moonlightDriveIn(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }

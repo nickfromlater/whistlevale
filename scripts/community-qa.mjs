@@ -36,8 +36,10 @@ for(const view of[{distance:Infinity},{distance:9},{yaw:7},{pitch:.1},{target:[0
  context.bad=structuredClone(context.withView);context.bad.works.find(w=>w.miniatures).view=view;
  assert.throws(()=>run('validateCommunity(bad)'),'reject invalid viewpoint metadata');
 }
-context.bad=structuredClone(catalogue);context.bad.works[0].view={distance:19};
-assert.throws(()=>run('validateCommunity(bad)'),'a workshop-only work cannot create an annex viewpoint');
+context.withWorkshopView=structuredClone(catalogue);context.withWorkshopView.works[0].view={distance:19};
+assert.equal(run('validateCommunity(withWorkshopView).works[0].view.distance'),19,'reviewed editable work can have a Valley viewpoint');
+context.bad=structuredClone(context.withWorkshopView);delete context.bad.works[0].workshop;
+assert.throws(()=>run('validateCommunity(bad)'),'a viewpoint needs a real placement');
 const hobby=await read('src/hobby.js');assert.match(hobby,/embeddedLayout.*JSON.stringify\(snapshot\(\)\).*replace/,'portable export embeds the credited snapshot with script-safe escaping');
 assert.match(hobby,/buildersList.*replaceChildren/,'portable export clears runtime credit markup before rebuilding');
 

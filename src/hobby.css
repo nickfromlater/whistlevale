@@ -261,3 +261,13 @@
 .landscape-room [data-camera][hidden]{display:none!important}
 
 .builders-author-link{gap:10px}.builders-author-link small{font:11px Arial,sans-serif;letter-spacing:.03em;color:#c4c7ad}
+
+/* Contextual film controls only appear beside a visible nearby screen. */
+.room-places button[hidden]{display:none!important}
+
+.moonlight-access{position:fixed;z-index:5;left:24px;bottom:106px;max-width:calc(100% - 48px);padding:13px 17px;text-align:left;border:1px solid #c8b58355;border-radius:12px;background:#20372fed;box-shadow:0 8px 25px #10221d22;color:#efe4c7}
+.moonlight-access>span{display:block;font:19px/1.2 Georgia,serif}.moonlight-access small{display:flex;align-items:center;gap:18px;margin-top:5px;font:11px/1.4 Arial;color:#c1c9b4}.moonlight-access small span{margin-left:auto;font-size:22px;line-height:1}
+.moonlight-access[hidden],.cinematic .moonlight-access,.building .moonlight-access,.hidden-ui .moonlight-access{display:none!important}
+@media(max-width:700px){.moonlight-access{left:16px;bottom:96px;padding:10px 13px}.moonlight-access>span{font-size:16px}.moonlight-access small{font-size:10px}}
+
+.moonlight-focused #hallInvitation{display:none}

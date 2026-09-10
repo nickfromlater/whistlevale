@@ -45,7 +45,7 @@ function validateCommunity(value){
   communityAssert(clean.credits.length>0,'A community work needs a chosen public credit.');
   if(w.view!==undefined){
    communityFields(w.view,['distance','phoneDistance','targetHeight','yaw','pitch'],w.id+' view');
-   communityAssert(w.miniatures?.length>0,w.id+': a view needs a miniature placement.');clean.view={...w.view};
+   communityAssert(w.miniatures?.length>0||w.room==='valley'&&w.workshop?.length>0,w.id+': a view needs a railway placement.');clean.view={...w.view};
    if(w.view.distance!==undefined)communityNumber(w.view.distance,10,120,w.id+' view distance');
    if(w.view.phoneDistance!==undefined)communityNumber(w.view.phoneDistance,10,120,w.id+' phone view distance');
    if(w.view.targetHeight!==undefined)communityNumber(w.view.targetHeight,0,24,w.id+' view target height');

@@ -214,7 +214,7 @@ function buildRoomLifeDetails(key,scene){
 function valleyFigureClear(x,z,radius=.18,deck=false){
  if(nearestTrack(x,z).dist<1.30+radius||!deck&&terrainH(x,z)<.34)return false;
  if(typeof objects==='undefined'||typeof assetById==='undefined')return true;
- const solid=['cottage','bakery','inn','church','station','signalbox','watertower','goods','townhouse','warehouse','chalet','barn','windmill','sawmill','crane','silo','lighthouse','boulder'];
+ const solid=['cottage','bakery','inn','church','station','signalbox','watertower','goods','townhouse','warehouse','chalet','barn','windmill','sawmill','crane','silo','lighthouse','boulder','moonlight'];
  return !objects.some(o=>{
   if(!solid.includes(o.type))return false;const asset=assetById[o.type];if(!asset)return false;
   const c=Math.cos(o.angle),s=Math.sin(o.angle),dx=x-o.x,dz=z-o.z,scale=o.scale||1;let xx=c*dx-s*dz,zz=s*dx+c*dz,w=(o.params?.w||asset.w)*scale,d=(o.params?.d||asset.d)*scale;
@@ -229,7 +229,7 @@ function buildValleyLife(){
  const addPerson=(x,z,pose='stand',a=0,s=1,y=null)=>{if(!valleyFigureClear(x,z,.18,y!==null))return;const v=population++;littlePerson(b,x,y??terrainH(x,z)+.012,z,{pose,angle:a,scale:s,variant:v,color:PEOPLE_COLORS[v%8]});};
  // Forecourt: the morning market, a café, and small groups between the shops.
  for(let i=0;i<4;i++){marketStall(b,-31+i*2.55,.79,16.4,i);population+=2;}
- for(let i=0;i<3;i++){cafeScene(b,-12+i*2.55,.79,17.4,.12);population+=3;}
+ for(let i=0;i<3;i++){const x=-12+i*2.55;if(valleyFigureClear(x,17.4,.8,true)){cafeScene(b,x,.79,17.4,.12);population+=3;}}
  for(let i=0;i<24;i++)addPerson(-34+i*1.1,18.6+(i%3)*.27,['talk','bag','stand','readStand'][i%4],i%2?PI:0,i%7===0?.66:1);
  for(const [x,z,a]of[[27.8,7.1,.7],[28.4,7.8,-.4],[32,9.2,.3],[32.6,9.5,2.3],[39.1,7.1,1.2],[39.6,7.4,2.2],[41.2,10.1,-.8],[41.8,10.4,2.2],[43.8,9.2,-.3],[45.4,10.6,.8]])addPerson(x,z,population%3?'work':'carry',a);
  for(let i=0;i<18;i++){const x=-37+(i%6)*5,z=-1+Math.floor(i/6)*5;addPerson(x,z,['bag','talk','stand','readStand'][i%4],i*.7);}
@@ -246,7 +246,7 @@ function buildValleyLife(){
  littleBird(b,4.84,.965,1.4,.7);littleRope(b,-.42,.76,2.2,.18,3);
  // Two separate strolls pass on either side of the booking hall. No walker
  // traverses its walls; their ground height stays constant over the paving.
- for(let i=0;i<12;i++){const west=i<6,z=west?18.18+(i%2)*.24:18.29+(i%2)*.24;actors.push({a:[west?-34:-14.7,.79,z],b:[west?-23.1:-6.2,.79,z],speed:.12+i%3*.023,offset:i*.079,variant:i,scale:i%5===0?.7:1});}
+ for(let i=0;i<12;i++){const west=i<6,z=west?18.18+(i%2)*.24:18.29+(i%2)*.24,eastEnd=valleyFigureClear(-6.2,z,.35,true)?-6.2:-8.0;actors.push({a:[west?-34:-14.7,.79,z],b:[west?-23.1:eastEnd,.79,z],speed:.12+i%3*.023,offset:i*.079,variant:i,scale:i%5===0?.7:1});}
  for(let i=0;i<4;i++)actors.push({a:[14.5,.715,7.45+i*.12],b:[17.6,.715,7.45+i*.12],speed:.026,offset:i*.25,variant:i+2,scale:1});
  return {mesh:b.mesh(),actors,population:population+actors.length,visitorCount:0};
 }

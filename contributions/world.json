@@ -73,6 +73,39 @@
       ],
       "miniatures": [{"builder": "meridian", "at": [-15, 14], "angle": -0.16}],
       "view": {"distance": 29, "phoneDistance": 34, "targetHeight": 7.0, "yaw": -0.30, "pitch": 0.23}
+    },
+    {
+      "id": "moonlight-drive-in",
+      "title": "Moonlight Drive-In",
+      "kind": "building",
+      "room": "valley",
+      "source": "src/scenery/moonlight-drive-in.js",
+      "credits": [
+        {
+          "name": "nickfromlater",
+          "platform": "x",
+          "handle": "nickfromlater",
+          "note": "Original drive-in miniature and its Whistlevale adaptation."
+        }
+      ],
+      "workshop": [
+        {
+          "type": "moonlight",
+          "at": [
+            -2.5,
+            17
+          ],
+          "angle": 3.141592653589793,
+          "scale": 0.95
+        }
+      ],
+      "view": {
+        "distance": 20,
+        "phoneDistance": 26,
+        "targetHeight": 1.45,
+        "yaw": -2.721592653589793,
+        "pitch": 0.5
+      }
     }
   ]
 }
