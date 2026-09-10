@@ -20,7 +20,7 @@ console.log('Reset Engine geometry: '+JSON.stringify(geometry.run(`(()=>{
  }
  assert.ok(radius<bay.usableRadius-.1,'the complete miniature leaves real circular clearance');
  assert.ok(Math.abs(low)<1e-6);assert.ok(high<bay.maxHeight);
- const vertices=first.data.length/12;assert.ok(vertices<35000);
+ const vertices=first.data.length/12;assert.ok(vertices<30000);
  return{bay:entry.bay,vertices,vertexBufferMiB:vertices*48/2**20,radius,height:high};
 })()`)));
 
