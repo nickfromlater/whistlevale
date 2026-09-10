@@ -119,7 +119,7 @@ async function checkPortableHall(build){
  assert.ok(packed.startsWith('<!DOCTYPE html>'),'portable Hall is a standalone HTML document');
  assert.deepEqual(external(packed),[],'portable Hall needs no external scripts, styles or icon');
  assertNoPortableAnalytics(packed);
- assert.equal(requests.length,1+build.hallRefs.filter(url=>/\.(js|svg|png)$/.test(url)&&!analyticsAddress(url)).length,'Hall page and each public renderer source and icon are packed once, without analytics');
+ assert.equal(requests.length,1+build.hallRefs.filter(url=>/\.(js|css|svg|png)$/.test(url)&&!analyticsAddress(url)).length,'Hall page and each public renderer source, stylesheet and icon are packed once, without analytics');
  const registry=(await readFile(path.join(root,'src/grandhall-exhibits.js'),'utf8')).replace(/<\/script/gi,'<\\/script');
  assert.ok(packed.includes(registry),'native exhibit definitions and original creator credits survive packing');
  assert.ok(packed.includes('function willowbankPottery('),'the actual native model is present');

@@ -108,7 +108,7 @@ for(const tracking of [true,false])for(const [search,expected]of [['','valley'],
 function hallFixture(options={}){
  const f=fixture(options),{run}=f;
  run(hall.match(/^let hallResidency=null,.*;$/m)[0]);run(hall.match(/^let hallGraphicsLost=.*;$/m)[0]);
- run(`const state={room:0,tour:false},GL={},resident=new Set([0,1,2]);hallResidency={has:id=>resident.has(id)};
+ run(`const state={room:0,tour:false},GL={},resetExhibit={clear(){}},resident=new Set([0,1,2]);hallResidency={has:id=>resident.has(id)};
   let modalOpener=null,currentTab='estate';const frame=()=>{},stopTour=()=>{state.tour=false;},syncModalAccessibility=()=>{},renderDirectory=()=>{},switchMapTab=()=>{};`);
  for(const name of ['syncHallAnalytics','hallAnalyticsControl','beginHallFrames','closeAnyModal','openMap','closeMap','copyAgentPrompt'])run(declaration(hall,name));
  return f;
