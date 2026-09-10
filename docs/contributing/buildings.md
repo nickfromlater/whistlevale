@@ -68,7 +68,10 @@ Register the source, page script, footprint and function mapping together:
    `{"distance":19,"yaw":0.45,"pitch":0.48}`. This adds its title under
    **Views → Places**, aimed at its first placed miniature. Angles are radians;
    distance accepts 10–120, yaw ±2π and pitch 0.2–1.35. Omitted fields get
-   reasonable defaults. Only successfully placed work gets a viewpoint.
+   reasonable defaults. Tall displays may also use `targetHeight` (0–24 native
+   units above the terrain, scaled with the first placement) and `phoneDistance`
+   (10–120) to keep the entire miniature in a portrait close-up. Both are optional;
+   existing views retain their framing. Only successfully placed work gets a viewpoint.
 
 Keep small details in the static mesh. Existing materials and an unlettered
 maker’s plaque avoid extra texture slots; original sign artwork needs deliberate

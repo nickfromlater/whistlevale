@@ -17,7 +17,8 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original observatory design.'},
   {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
  ],
- story:'A copper dome opens over a brass refractor. A winding stair climbs from the limestone terrace; below, charts, an armillary sphere and a lamplit workroom await the next clear night.',
+ story:'A little night of its own. Amber windows glow beneath a suspended miniature universe: deep blue nebulae, drifting starlight, distant worlds and an occasional meteor. The night sky is an imagined miniature, not a live star chart.',
+ view:{target:[0,6.4,0],distance:23,yaw:-.18,pitch:.23},
  builder:'meridian',scale:.15,source:'src/scenery/meridian-observatory.js',mapPreview:true
 },{
 

@@ -44,9 +44,11 @@ function validateCommunity(value){
   communityAssert(typeof w.source==='string'&&/^(src|contributions|assets)\/[a-zA-Z0-9_./-]+$/.test(w.source)&&!w.source.split('/').includes('..'),'Source must be a repository path under src, contributions or assets.');
   communityAssert(clean.credits.length>0,'A community work needs a chosen public credit.');
   if(w.view!==undefined){
-   communityFields(w.view,['distance','yaw','pitch'],w.id+' view');
+   communityFields(w.view,['distance','phoneDistance','targetHeight','yaw','pitch'],w.id+' view');
    communityAssert(w.miniatures?.length>0,w.id+': a view needs a miniature placement.');clean.view={...w.view};
    if(w.view.distance!==undefined)communityNumber(w.view.distance,10,120,w.id+' view distance');
+   if(w.view.phoneDistance!==undefined)communityNumber(w.view.phoneDistance,10,120,w.id+' phone view distance');
+   if(w.view.targetHeight!==undefined)communityNumber(w.view.targetHeight,0,24,w.id+' view target height');
    if(w.view.yaw!==undefined)communityNumber(w.view.yaw,-Math.PI*2,Math.PI*2,w.id+' view yaw');
    if(w.view.pitch!==undefined)communityNumber(w.view.pitch,.2,1.35,w.id+' view pitch');
   }

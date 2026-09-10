@@ -95,7 +95,7 @@ installation or API key is needed.
 
    Keep code initialization limited to definitions. Both renderers support
    `Builder` primitives, `ringX`/`ringZ`, `hash`/`shade` and `windowPane`. For the
-   Hall adapter use material IDs `0, 4, 5, 6, 8, 10, 22, 23, 41, 76`; do not assume railway
+   Hall adapter use material IDs `0, 4, 5, 6, 8, 10, 22, 23, 41, 76–82`; do not assume railway
    atlas labels or every room helper is available. Test the actual model.
    Compare the intended finishes in the Hall renderer and, for a railway
    placement or reviewed map preview, the house renderer. A supported material

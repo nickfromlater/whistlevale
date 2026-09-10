@@ -9,7 +9,7 @@ function grandHallRecord(builder,room,cast=true,options={}){
   const solid=new Builder(),glazing=new Builder();for(let i=0;i<builder.data.length;i+=36){const target=[71,72].includes(builder.data[i+9])?glazing:solid;for(let j=0;j<36;j++)target.data.push(builder.data[i+j]);}
   if(solid.data.length)addRecord(gpu(solid.mesh()),trans(r.x,0,r.z),room,true,options);
   if(glazing.data.length)addRecord(gpu(glazing.mesh()),trans(r.x,0,r.z),room,false,options);
- }else addRecord(gpu(builder.mesh()),trans(r.x,0,r.z),room,cast,options);
+ }else addRecord(gpu(builder.mesh(),options.displayGlass),trans(r.x,0,r.z),room,cast,options);
 }
 function grandHallBorder(b,x,z,w,d,color,y=.024){
  for(const s of[-1,1]){b.box(x+s*w/2,y,z,.035,.016,d,color,41);b.box(x,y,z+s*d/2,w,.016,.035,color,41);}
