@@ -39,7 +39,7 @@ jobs:
           (out/'expected.json').write_text(json.dumps(candidate['expected'],indent=2))
           (out/'build-preview.py').write_text(candidate['generator'])
           (out/'browser.cjs').write_text(candidate['browser'])
-          for name,digest in [('refine.py','47dcec6cb749c3451b8da45ee3135b937bce8f1d85bb81d1f1b7d609b6bfec55'),('refine2.py','fb6481d50f02e411a68caf18d2a7f252d3309b913ecc3c2f99c9d2f5004db698')]:
+          for name,digest in [('refine.py','47dcec6cb749c3451b8da45ee3135b937bce8f1d85bb81d1f1b7d609b6bfec55'),('refine2.py','fb6481d50f02e411a68caf18d2a7f252d3309b913ecc3c2f99c9d2f5004db698'),('refine3.py','5f9b6d2ec73c54c6eaa53634ec36d4a777e9da112d7b88112137c0ef4612c37d')]:
             refinement=pathlib.Path('.review/meridian-ambience')/name
             assert hashlib.sha256(refinement.read_bytes()).hexdigest()==digest
             subprocess.run(['python3',str(refinement.resolve())],check=True)
