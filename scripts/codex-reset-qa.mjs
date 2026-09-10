@@ -56,3 +56,16 @@ for(let i=0;i<110;i++)ui.frame(frame);assert.equal(reducedButton.children[0].tex
 ui.frame({...frame,project:()=>({x:500,y:450,w:-1})});assert.equal(pin.hidden,true,'no click target behind the camera');
 ui.mount({id:'another-exhibit'},bay,panel);ui.frame(frame);assert.equal(pin.hidden,true);
 console.log('Reset Engine interaction passed: full sequence, repeat-input guard, replay, polite announcement, reduced motion, modal pause, navigation cleanup, bounded drawing, and behind-camera hiding.');
+
+// Context loss stops the Hall frame loop before it can hide projected controls.
+// Exercise the real event binding so cleanup cannot depend on another frame.
+const hall=await read('grandhall.html'),lostStart=hall.indexOf("c.addEventListener('webglcontextlost',"),lostEnd=hall.indexOf("c.addEventListener('webglcontextrestored',",lostStart);
+assert.ok(lostStart>=0&&lostEnd>lostStart);
+let lostHandler;Object.assign(context,{c:{addEventListener(name,fn){assert.equal(name,'webglcontextlost');lostHandler=fn;}},resetExhibit:ui,hallGraphicsLost:false,toast(){}});
+vm.runInContext(hall.slice(lostStart,lostEnd),context);
+motion.matches=false;ui.mount(entry,bay,panel);ui.frame(frame);pin.onclick();ui.frame(frame);assert.ok(ui.depression>0);
+lostHandler({preventDefault(){}});
+assert.equal(context.hallGraphicsLost,true);assert.equal(ui.depression,0);
+for(const node of [canvas,pin,cue])assert.equal(node.hidden,true,'context loss immediately hides every overlay node');
+const stoppedCue=cue.innerHTML;pin.onclick();ui.frame(frame);assert.equal(cue.innerHTML,stoppedCue,'a retained button cannot reactivate a lost scene');
+console.log('Reset context-loss integration passed: immediate cleanup without another frame and inert retained controls.');

@@ -45,7 +45,7 @@ function createHallResetExhibit(){
   trigger=document.createElement('button');trigger.type='button';trigger.className='reset-trigger';trigger.setAttribute('aria-describedby','resetCaption');
   label=document.createElement('span');label.textContent='Reset Codex usage';trigger.append(label);
   const arrow=document.createElement('span');arrow.textContent='↻';arrow.setAttribute('aria-hidden','true');trigger.append(arrow);trigger.onclick=press;
-  const caption=document.createElement('small');caption.id='resetCaption';caption.className='reset-caption';caption.textContent='Press the red button. Watch it reset.';
+  const caption=document.createElement('small');caption.id='resetCaption';caption.className='reset-caption';caption.textContent='A make-believe reset, just for fun.';
   live=document.createElement('span');live.className='reset-sr';live.setAttribute('role','status');live.setAttribute('aria-live','polite');live.setAttribute('aria-atomic','true');
   panel.append(trigger,caption,live);container.prepend(panel);phase='';setPhase('idle');
  }
