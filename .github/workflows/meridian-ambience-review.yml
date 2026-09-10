@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      WORKDIR: ${{ runner.temp }}/meridian-ambience-candidate
+      WORKDIR: /tmp/meridian-ambience-candidate
     steps:
       - uses: actions/checkout@v7
         with:
