@@ -52,8 +52,10 @@ Model vertices and room totals can differ for that reason.
 Hall-only exhibits are currently absent from that JSON report. Include the
 geometry measurements printed by `npm run test:hall` as well. Meridian's focused
 check, `node scripts/meridian-observatory-qa.mjs`, reports its vertex count,
-vertex-buffer size and placed dimensions. Keep the existing aggregate Hall
-budgets; a measurement for one exhibit is not a new allowance for every bay.
+vertex-buffer size and placed dimensions. The [Hall's 600,000-vertex exhibit
+allowance](grandhall.md#performance-as-the-collection-grows) is shared across the
+entire collection; a measurement for one exhibit is not a new allowance for every
+bay. Eager house-map previews retain their separate 300,000-vertex allowance.
 
 Use `?profile` (or `&profile` after `?room=commons`) for local runtime diagnostics.
 Match device, viewport, room, camera, lighting and sound; reset measurements

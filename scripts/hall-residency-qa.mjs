@@ -5,8 +5,8 @@ import vm from 'node:vm';
 
 const source=await readFile(new URL('../src/grandhall-residency.js',import.meta.url),'utf8');
 const {createGrandHallResidency,createGrandHallSourceLoader}=vm.runInNewContext(source+';({createGrandHallResidency,createGrandHallSourceLoader})');
-const [core,data]=await Promise.all(['src/community-core.js','src/grandhall-data.js'].map(path=>readFile(new URL('../'+path,import.meta.url),'utf8')));
-const actual=vm.runInNewContext(core+'\n'+data+';({vertices:COMMUNITY_LIMITS.vertices,galleries:GRAND_HALL_GALLERIES.length,bays:GRAND_HALL_BAYS.map(b=>({id:b.id,room:b.room}))})');
+const data=await readFile(new URL('../src/grandhall-data.js',import.meta.url),'utf8');
+const actual=vm.runInNewContext(data+';({vertices:GRAND_HALL_LIMITS.exhibitVertices,galleries:GRAND_HALL_GALLERIES.length,bays:GRAND_HALL_BAYS.map(b=>({id:b.id,room:b.room}))})');
 const plain=value=>JSON.parse(JSON.stringify(value));
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};};
 
