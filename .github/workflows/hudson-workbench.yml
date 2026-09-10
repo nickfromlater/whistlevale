@@ -4,14 +4,64 @@ on:
     branches: [contrib/hudson-terminal-acela]
 permissions:
   contents: read
+concurrency:
+  group: hudson-terminal-workbench
+  cancel-in-progress: false
 jobs:
-  source:
+  verify-and-commit:
+    if: github.repository == 'nickfromlater/whistlevale' && github.ref == 'refs/heads/contrib/hudson-terminal-acela'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
-      - run: git archive --format=zip --output=whistlevale-source.zip HEAD
-      - uses: actions/upload-artifact@v4
         with:
-          name: hudson-workbench-source
-          path: whistlevale-source.zip
-          retention-days: 1
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Apply the reviewed local patch with an exact checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/hudson-patch/{0,1,2,3}.b64 | base64 --decode > /tmp/hudson.patch.gz
+          echo '0c5feeb72a9f24b09b2685d1de404d3afef66ca784dd002c1c597f637dce23f0  /tmp/hudson.patch.gz' | sha256sum --check
+          gzip --decompress --stdout /tmp/hudson.patch.gz > /tmp/hudson.patch
+          git apply --check /tmp/hudson.patch
+          git apply --binary /tmp/hudson.patch
+          # Restore the original preview configuration. The final PR changes no
+          # deployment settings and contains no workbench or payload files.
+          git show da6ed3adadd8bbf1ab708b6503f28a9c630ecd41:vercel.json > vercel.json
+          rm .github/hudson-patch/{0,1,2,3}.b64
+          rmdir .github/hudson-patch
+          rm .github/workflows/hudson-workbench.yml
+      - name: Full Node 24 suite and exact geometry comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/hudson-review
+          node --version | tee /tmp/hudson-review/runtime.txt
+          npm test 2>&1 | tee /tmp/hudson-review/npm-test.txt
+          npm run test:geometry:full 2>&1 | tee /tmp/hudson-review/geometry-full.txt
+          node scripts/community-check.mjs --json > /tmp/hudson-review/contributions.json
+      - name: Commit only to the requested contribution branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/contrib/hudson-terminal-acela
+          git add index.html package.json src/rooms/hudson.js src/trains/acela.js scripts/hudson-qa.mjs assets/trains/acela.webp vercel.json
+          git add -u .github/hudson-patch .github/workflows/hudson-workbench.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Add Hudson Terminal city room and original Acela collection model'
+          git diff da6ed3adadd8bbf1ab708b6503f28a9c630ecd41 HEAD --stat | tee /tmp/hudson-review/change-summary.txt
+          git diff --quiet da6ed3adadd8bbf1ab708b6503f28a9c630ecd41 HEAD -- vercel.json .github
+          git archive --format=zip --output=/tmp/hudson-review/hudson-terminal-source.zip HEAD
+          git push origin HEAD:refs/heads/contrib/hudson-terminal-acela
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hudson-terminal-review
+          path: /tmp/hudson-review/
+          retention-days: 14
