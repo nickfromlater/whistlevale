@@ -159,7 +159,9 @@ function hudsonViaduct(b,outer,inner){
  // The station vault and river bridge have their own overhead suspension.
  for(let d=2;d<outer.length;d+=9.4){
   const a=outer.at(d);if(a.p[2]>23&&a.p[0]>16&&a.p[0]<40)continue;b.matrix(basis(a.p,a.f));
-  for(const x of[-1.35,3.65]){b.box(x,1.28,0,.065,4.74,.078,HUDSON_INK,41);b.box(x,-1.08,0,.29,.18,.28,'#9ba597',24);}
+  // These masts stand beside the elevated deck. Their shoes meet the city
+  // pavement; the original upper crossbeam and contact-wire heights stay put.
+  for(const x of[-1.35,3.65]){b.box(x,.745,0,.065,5.81,.078,HUDSON_INK,41);b.box(x,HUDSON.ground-HUDSON.rail+.07,0,.29,.22,.28,'#9ba597',24);}
   b.box(1.15,3.59,0,5.23,.070,.10,'#51656c',41);
   for(const x of[0,2.4]){hudsonWire(b,[x,3.57,0],[x,2.54,0],.014,'#a6987f');b.cylinder(x,3.09,0,.065,.065,.19,'#b3a48f',24,6);}b.pop();
  }
@@ -214,6 +216,13 @@ function hudsonTerminal(scene,b){
  const y=HUDSON.rail+.40;
  // A narrow island and a generous landward platform. No platform intersects rails.
  b.box(-16,y-.19,25.80,40,.38,.90,'#c0b69b',24);
+ // A longitudinal girder carries the island on slender masonry piers between
+ // the two lines. It leaves the elevated railway open beneath the platform.
+ b.box(-16,y-.48,25.80,39.8,.20,.72,'#607779',41);
+ for(let x=-34.4;x<3.5;x+=4.6){const top=y-.58;
+  b.box(x,(HUDSON.ground+top)/2,25.80,.48,top-HUDSON.ground,.48,'#969a88',4);
+  b.box(x,top-.075,25.80,.68,.15,.68,'#b8bdac',24);
+ }
  b.box(-18,y-.19,21.00,40,.38,3.8,'#b6b6a3',24);
  for(const z of[25.40,26.20,22.84])b.box(-17,y+.012,z,37,.025,.10,'#dcb251',24);
  for(let x=-33;x<2;x+=.55){b.box(x,y+.031,25.46,.23,.013,.042,'#9e8245',24);b.box(x,y+.031,26.14,.23,.013,.042,'#9e8245',24);}
@@ -221,6 +230,10 @@ function hudsonTerminal(scene,b){
  hudsonStationVault(b,y);
  for(const x of[-29,-20,-11,-2]){bench(b,x,y,21.13);scenePerson(scene,b,x,y,21.13,'sit',0,.90);scenePerson(scene,b,x+1.1,y,21.25,'bag',.9,.84);}
  b.push(-40,y,14);
+ // The raised headhouse has its own stone podium, tied into platform level.
+ b.box(0,(HUDSON.ground-y)/2,0,8.4,y-HUDSON.ground,12.2,'#969482',4);
+ b.box(0,-.12,0,8.8,.24,12.6,'#c4b89c',24);
+ b.box(0,HUDSON.ground-y+.10,0,8.8,.20,12.6,'#b0ac96',24);
  b.box(0,2.23,0,8.4,4.46,12.2,'#c0aa86',4);b.box(0,4.58,0,9,.30,12.8,'#d8c5a0',24);
  for(const x of[-3.9,-1.3,1.3,3.9])b.box(x,2.42,6.13,.25,4.4,.33,HUDSON_STONE,24);
  for(const x of[-2.6,0,2.6]){hudsonWindow(b,x,2.36,6.18,2.02,2.55,true,false);hudsonArch(b,x,3.05,6.23,1.04,.61,.12,'#dac6a0',24,12);}
@@ -423,6 +436,13 @@ function hudsonDeliveryVan(b,x,z,angle){
 function hudsonStationVault(b,y){
  const ink='#345b61',copper='#588e80',x0=-35.2,x1=1.6,center=25.22,r=3.44,spring=y+3.33,rise=3.45;
  const p=(x,a)=>[x,spring+Math.sin(a)*rise,center+Math.cos(a)*r];
+ // A narrow edge beam and its piers carry the river-facing rib feet, beyond
+ // the viaduct's running deck. The opposite row bears on the main platform.
+ b.box((x0+x1)/2,y-.19,center+r,x1-x0+.80,.38,.80,'#a9b3a0',24);
+ for(let i=0;i<=10;i++){const x=mix(x0,x1,i/10),top=y-.38;
+  b.box(x,(HUDSON.ground+top)/2,center+r,.54,top-HUDSON.ground,.54,'#8c9789',4);
+  b.box(x,top-.09,center+r,.72,.18,.72,'#b7bba7',24);
+ }
  for(let i=0;i<=10;i++){
   const x=mix(x0,x1,i/10);
   for(const z of[center-r,center+r]){
@@ -439,7 +459,11 @@ function hudsonStationVault(b,y){
  }
  // Tall glazed terminal screens, radial fanlights and a raised ridge lantern.
  for(const x of[x0,x1]){
-  b.quad([x,y+.9,center-r],[x,y+.9,center+r],[x,spring,center+r],[x,spring,center-r],'#9bb9a7',76);
+  // The end transom sits above the raised collector; trains pass through an
+  // open portal below the glazed screen instead of intersecting a glass wall.
+  const transom=y+2.55;
+  b.beam([x,transom,center-r],[x,transom,center+r],.038,ink,41,4);
+  b.quad([x,transom+.04,center-r],[x,transom+.04,center+r],[x,spring,center+r],[x,spring,center-r],'#9bb9a7',76);
   for(let j=1;j<12;j++){const a=j*PI/12;b.beam([x,spring,center],p(x,a),.026,'#91afa1',41,4);}
  }
  b.box(-16.8,spring+rise+.12,center,35.8,.20,.78,copper,41);
@@ -465,6 +489,8 @@ function hudsonHeadHouseDetail(b){
 function hudsonFerryLanding(b){
  b.push(46.4,HUDSON.ground,33.3);
  b.box(0,-.06,0,9,.22,5.6,'#acac95',24);
+ // Timber piles continue through the water into the model's river bed.
+ for(const x of[-3.7,0,3.7])for(const z of[-1.8,1.8])b.cylinder(x,-.52,z,.15,.19,.70,'#687567',22,8);
  for(const x of[-3.7,0,3.7])for(const z of[-1.8,1.8])b.box(x,1.0,z,.12,2,.12,'#375d60',41);
  for(const x of[-3.7,0,3.7])for(let j=0;j<12;j++){
   const a=j*PI/12,q=(j+1)*PI/12;b.beam([x,2+Math.sin(a)*.95,Math.cos(a)*1.8],[x,2+Math.sin(q)*.95,Math.cos(q)*1.8],.04,'#497970',41,4);
@@ -618,7 +644,10 @@ function hudsonCity(scene,b){
 function hudsonShell(b){
  const walls=[],paint='#aaa994',brick='#696b60',iron='#304f56';
  b.box(0,FLOOR-.26,0,158,.52,130,'#686f68',24);
- for(let x=-76;x<78;x+=8)for(let z=-62;z<64;z+=8)b.box(x,FLOOR+.015,z,7.93,.025,7.93,(Math.round((x+76)/8)+Math.round((z+62)/8))%2?'#858e81':'#9b9e8d',24);
+ for(let x=-76;x<78;x+=8)for(let z=-62;z<64;z+=8){
+  const x0=Math.max(-79,x-3.965),x1=Math.min(79,x+3.965),z0=Math.max(-65,z-3.965),z1=Math.min(65,z+3.965);
+  b.box((x0+x1)/2,FLOOR+.015,(z0+z1)/2,x1-x0,.025,z1-z0,(Math.round((x+76)/8)+Math.round((z+62)/8))%2?'#858e81':'#9b9e8d',24);
+ }
  for(const which of['back','left','right','front']){
   const w=new Builder(),back=which==='back',front=which==='front',width=back||front?156:128,pos=back?[0,0,-64]:front?[0,0,64]:which==='left'?[-78,0,0]:[78,0,0],angle=back?0:front?PI:which==='left'?PI/2:-PI/2;
   w.push(...pos,0,angle);w.box(0,10,0,width,68,.7,brick,4);w.box(0,-18.2,.40,width,11,.40,iron,40);
