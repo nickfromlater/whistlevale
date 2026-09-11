@@ -61,6 +61,7 @@ let nextTimer=0,builds=0,frames=0,disposals=0,aborts=0;const timers=new Map(),re
 const context=vm.createContext({document,URL,AbortController,console,location:{protocol:'http:'},setTimeout:fn=>{timers.set(++nextTimer,fn);return nextTimer;},clearTimeout:id=>timers.delete(id),validateCredits:x=>x,communityCreditURL:c=>'https://x.com/'+c.handle,
  hobby:{room:'valley',scene:{}},reduceMotion:false,paused:false,innerWidth:1400,innerHeight:900,performance:{now:()=>1},cameraPos:[0,0,0],cameraTarget:[0,0,0],cameraProjection:[],cameraNear:.1,night:0,rainAmount:0,
  project:()=>({x:500,y:300,visible:true}),isShopMapActive:()=>context.mapOpen,create:({signal})=>{builds++;signal.addEventListener('abort',()=>aborts++);return new Promise(resolve=>resolvers.push(()=>resolve({frame:()=>frames++,dispose:()=>disposals++})));}});
+vm.runInContext(await read('src/embedded-build.js'),context);
 vm.runInContext(await read('src/embedded.js'),context);
 const run=code=>vm.runInContext(code,context),flush=()=>new Promise(resolve=>setImmediate(resolve));
 run(`registerEmbeddedProject('yamaai',{base:'vendor/test/',title:'Test',roomName:'Yamaai',source:'https://example.com',licence:'MIT',permission:'Permission recorded',credits:[{name:'Techartist',handle:'techartist_'}],create,focus:[0,0,0]});`);
@@ -83,4 +84,4 @@ const housePhoto={width:800,height:500},guestPhoto={},photoDraws=[],photoText=[]
 f.context.document.querySelector=()=>guestPhoto;f.context.document.createElement=()=>({getContext:()=>photoContext});f.context.housePhoto=housePhoto;
 f.run('embeddedActive={project:YAMAAI_PROJECT,session:{}}');const photograph=f.run('embeddedPhotograph(housePhoto)');assert.equal(photograph.height,580);assert.equal(photoDraws[0][0],housePhoto);assert.equal(photoDraws[1][0],guestPhoto);assert.ok(photoText[0].includes('Techartist'));assert.ok(photoText[1].includes(record.source));assert.equal(photoText[2],record.permission);
 assert.equal(record.commit,(await read('vendor/mountain-railway-diorama/UPSTREAM-COMMIT.txt')).trim(),'source and licence links refer to the actual vendored revision');
-console.log('Guest photograph QA passed: both canvases composited with artist, source, licence and permission retained.');
+console.log('Guest photograph QA passed: both canvases composited with artist, source and licence retained.');

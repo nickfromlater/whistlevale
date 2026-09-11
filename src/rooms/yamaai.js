@@ -8,7 +8,6 @@ const YAMAAI_PROJECT=registerEmbeddedProject('yamaai',{
  roomName:'Yamaai',title:'Mountain Railway Diorama',subtitle:'Yamaai 山あい',
  commit:'6e8b0fbb806e486d7819b6d297b92f4ecf3d258b',
  source:'https://github.com/iamtechartist/mountain-railway-diorama',licence:'MIT',
- permission:'Shown with the author’s permission, given publicly on 11 September 2026.',
  credits:[
   {name:'Techartist',platform:'x',handle:'techartist_',note:'Created the Mountain Railway Diorama; gave permission for it to be shown here.'},
   {name:'iamtechartist',platform:'github',handle:'iamtechartist',note:'Original source, MIT licensed.'}

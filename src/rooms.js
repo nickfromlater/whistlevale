@@ -46,7 +46,7 @@ function initEmbeddedArt(){
    if(project.subtitle){c.fillStyle='#c3b483';c.font='italic 22px Georgia';c.fillText(project.subtitle,cw/2,92);}
    c.fillStyle='#efe2bd';c.font='27px Georgia';c.fillText('Made by '+(by?.name||'a guest'),cw/2,project.subtitle?136:122);
    c.fillStyle='#a9b79c';c.font='17px Arial';
-   c.fillText((by&&by.platform==='x'?'@'+by.handle+'  ·  ':'')+(project.licence?project.licence+', shown with permission':'shown with permission'),cw/2,project.subtitle?170:158);
+   c.fillText((by&&by.platform==='x'?'@'+by.handle:by?.handle||'')+(project.licence?'  ·  '+project.licence+' licence':''),cw/2,project.subtitle?170:158);
   });
  }
 }

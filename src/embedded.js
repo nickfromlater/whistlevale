@@ -25,7 +25,6 @@ function embeddedAttribution(project){
  project.credits.forEach((credit,i)=>{if(i)by.append(' · ');by.append(link(credit.name,communityCreditURL(credit)));});wrap.append(by);
  const meta=document.createElement('p');meta.className='embed-credit-meta';
  meta.append(link('Original project ↗',project.source),' · ',link(project.licence+' licence',project.source+'/blob/'+project.commit+'/LICENSE'));wrap.append(meta);
- const note=document.createElement('p');note.className='embed-credit-note';note.textContent=project.permission;wrap.append(note);
  return wrap;
 }
 
@@ -33,10 +32,11 @@ function embeddedStage(){
  let stage=document.getElementById('embedStage');if(stage)return stage;
  stage=document.createElement('section');stage.id='embedStage';stage.hidden=true;stage.setAttribute('aria-label','Guest miniature');
  const loading=document.createElement('div');loading.className='embed-loading';loading.setAttribute('aria-label','Loading Mountain Railway Diorama');
- loading.innerHTML='<div class="embed-loading-art" aria-hidden="true"><span class="embed-mountain back"></span><span class="embed-mountain front"></span><span class="embed-bridge"></span><span class="embed-train"><i></i><i></i><i></i></span></div><div class="embed-loading-copy"><strong>Mountain Railway Diorama</strong><small>Preparing the gorge, bridge and local train</small></div>';
+ loading.innerHTML='<p class="embed-loading-kicker">Guest miniature</p><strong class="embed-loading-title">Mountain Railway Diorama</strong><span class="embed-loading-by">Being built on the table by Techartist</span><ol class="embed-steps" aria-hidden="true"></ol>';
  const status=document.createElement('p');status.id='embedStatus';status.className='embed-status';status.setAttribute('role','status');
  const dock=document.createElement('div');dock.id='embedCredit';dock.className='embed-credit-dock';
- loading.append(status);stage.append(loading,dock);(document.getElementById('app')||document.body).append(stage);return stage;
+ const sketch=document.createElement('canvas');sketch.id='embedBuild';sketch.className='embed-build';sketch.setAttribute('aria-hidden','true');
+ loading.append(status);stage.append(sketch,loading,dock);(document.getElementById('app')||document.body).append(stage);return stage;
 }
 function embeddedOnStage(room){
  return hobby.room===room&&!(typeof isShopMapActive==='function'&&isShopMapActive());
@@ -47,6 +47,10 @@ function embeddedEnter(room){
  const stage=embeddedStage(),controller=new AbortController();
  const active={room,project,controller,session:null,timer:0,paused:!!reduceMotion};embeddedActive=active;
  stage.hidden=false;stage.dataset.state='loading';document.body.classList.add('has-embed');
+ if(typeof embeddedBuildShapes==='function'&&project.table){
+  active.build={stages:embeddedBuildShapes(project.table),revealed:0,edge:0,at:performance.now(),warm:0};
+  embeddedBuildSteps(stage);
+ }
  const dock=stage.querySelector('#embedCredit');dock.replaceChildren(embeddedAttribution(project));
  const actions=document.createElement('div');actions.className='embed-actions';
  const closer=document.createElement('button');closer.id='embedCloser';closer.textContent='Explore the miniature';
@@ -68,9 +72,9 @@ async function embeddedMount(active){
  try{
   const session=await active.project.create({project:active.project,signal:active.controller.signal,host:hobby.scene,
    mount:canvas=>{if(embeddedActive===active)stage.prepend(canvas);},
-   progress:text=>{if(embeddedActive===active)status.textContent=text;}});
+   progress:text=>{if(embeddedActive!==active)return;status.textContent=text;embeddedBuildAdvance(active,text);}});
   if(embeddedActive!==active||!embeddedOnStage(active.room)){session.dispose();return;}
-  active.session=session;stage.dataset.state='ready';status.hidden=true;stage.querySelector('.embed-loading').hidden=true;stage.querySelector('#embedPause').disabled=false;
+  active.session=session;if(typeof embeddedBuildFinish==='function')embeddedBuildFinish();stage.dataset.state='ready';status.hidden=true;stage.querySelector('.embed-loading').hidden=true;stage.querySelector('#embedPause').disabled=false;
  }catch(error){
   if(embeddedActive!==active||active.controller.signal.aborted)return;
   console.error('Guest miniature could not open:',error);stage.dataset.state='error';
@@ -92,7 +96,7 @@ function embeddedFrameUpdate(){
  const active=embeddedActive;if(!active)return;
  const status=document.getElementById('embedStatus');
  if(!status.hidden&&!active.session){status.style.visibility='visible';}
- if(!active.session)return;
+ if(!active.session){if(typeof embeddedBuildFrame==='function')embeddedBuildFrame(active);return;}
  try{active.session.frame({eye:cameraPos,target:cameraTarget,projection:cameraProjection,near:cameraNear,width:innerWidth,height:innerHeight,night,rain:rainAmount,paused:paused||active.paused,now:performance.now()});}
  catch(error){active.controller.abort();active.session=null;embeddedStage().dataset.state='error';status.hidden=false;status.textContent='The miniature stopped. Re-enter the room to try again.';console.error('Guest renderer stopped:',error);}
 }
@@ -107,7 +111,7 @@ function embeddedPhotograph(houseCanvas){
  c.fillStyle='#192b24';c.fillRect(0,houseCanvas.height,photo.width,80);c.fillStyle='#f1ead2';c.font='17px Georgia';
  c.fillText(embeddedCreditLine(active.project),16,houseCanvas.height+27,photo.width-32);
  c.font='12px Arial';c.fillStyle='#c6cfba';c.fillText(active.project.licence+' · '+active.project.source,16,houseCanvas.height+49,photo.width-32);
- c.fillText(active.project.permission,16,houseCanvas.height+68,photo.width-32);return photo;
+ return photo;
 }
 
 // Presets are anchors from the original scene, expressed in house coordinates.
