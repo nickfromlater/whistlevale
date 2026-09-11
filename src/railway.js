@@ -84,6 +84,7 @@ class Builder{
 }
 const canvas=$('world');let gl,mainProgram,shadowProgram,postProgram,particleProgram,staticMesh,groundMesh,waterMesh,atlasTexture,whiteTexture,sceneFbo,sceneTex,sceneDepth,shadowFbo,shadowTex,shadowSize=3072,shadowCacheFbo,shadowCacheTex,shadowDirty=true,screenW=0,screenH=0;
 const I=ident();let VP=ident(),lightVP=ident(),cameraPos=[38,44,62],cameraTarget=[0,1,0],sunDir=norm([-48,74,-25]);let clock=0,night=.62,targetNight=.62,viewMode='room',reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let houseMoonlight=null,moonlightObjectList=null,moonlightObjectCount=-1,moonlightObjects=[];
 const VS=`#version 300 es
 precision highp float;
 layout(location=0)in vec3 aPosition;layout(location=1)in vec3 aNormal;layout(location=2)in vec3 aColor;layout(location=3)in float aMat;layout(location=4)in vec2 aUV;
@@ -92,7 +93,8 @@ void main(){vec4 p=uModel*vec4(aPosition,1.);if(abs(aMat-8.)<.1){p.x+=sin(uTime*
 const FS=`#version 300 es
 precision highp float;
 in vec3 vPos,vNormal,vColor;in float vMat;in vec2 vUV;in vec4 vShadow;
-uniform sampler2D uShadow,uAtlas,uRoomAtlas;
+uniform sampler2D uShadow,uAtlas,uRoomAtlas,uMoonlightFilm,uMoonlightNameplate;
+uniform float uMoonlightReady;
 uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6];
 uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
 float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
@@ -155,7 +157,31 @@ vec3 meridianPlanet(vec2 uv,vec3 tint,vec3 n,vec3 view,float time){
  return min(vec3(.95),lit+vec3(.027,.070,.13)*rim*light);
 }
 // MERIDIAN_ATMOSPHERE_END
+// MOONLIGHT_PICTURE_BEGIN: shared linear-light silent-film treatment.
+vec3 moonlightPicture(vec2 uv,float time){
+ if(uMoonlightReady<.5)return vec3(.045,.052,.044);
+ vec2 q=clamp(uv,vec2(.001),vec2(.999));vec3 picture=texture(uMoonlightFilm,q).rgb;
+ float grey=dot(picture,vec3(.299,.587,.114));
+ float paper=1.+(fract(sin(dot(floor(q*900.),vec2(12.9898,78.233)))*43758.5453)-.5)*.018;
+ float vignette=1.-.14*dot((q-.5)*1.3,(q-.5)*1.3),pulse=.997+.003*sin(time*19.);
+ return pow(vec3(1.,.982,.926)*grey,vec3(2.2))*paper*vignette*pulse*1.22;
+}
+// MOONLIGHT_PICTURE_END
+// MOONLIGHT_BEAM_BEGIN: feathered film-lit haze behind the drifting motes.
+vec4 moonlightBeam(vec2 uv,float night){
+ float edge=pow(max(0.,sin(clamp(uv.x,0.,1.)*3.141593)),2.4);
+ float ends=smoothstep(0.,.035,uv.y)*(1.-smoothstep(.88,1.,uv.y));
+ float folds=.73+.17*sin(uv.y*19.+sin(uv.x*11.-uTime*.13)*1.4-uTime*.21)+.10*sin(uv.y*37.+uv.x*13.+uTime*.16);
+ vec2 q=vec2(clamp(uv.x,.05,.95),.5);
+ vec3 picture=(texture(uMoonlightFilm,q).rgb+texture(uMoonlightFilm,q+vec2(.04,.12)).rgb+texture(uMoonlightFilm,q-vec2(.04,.12)).rgb)/3.;
+ float light=.32+.68*pow(dot(picture,vec3(.299,.587,.114)),.8);
+ float density=mix(1.,.42,uv.y)*mix(.010,.080,smoothstep(.1,.85,night));
+ return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
+}
+// MOONLIGHT_BEAM_END
 void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
+ if(m==83.){frag=vec4(moonlightPicture(vUV,uTime),1.);return;}
+ if(m==84.){frag=moonlightBeam(vUV,uNight);return;}
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
  if(m==1.||m==11.){rough=.3;metal=.72;}
  if(m==2.){float w=noise(vec3(p.x*.75,p.y*12.,p.z*8.));base*=.87+.21*w;rough=.55;}
@@ -168,6 +194,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==9.){base*=.77+.37*noise(p*26.);rough=.96;}
  if(m==10.){em=mix(.38,3.0,dusk);rough=.3;}
  if(m==15.){base=texture(uAtlas,vUV).rgb;rough=.79;}
+ if(m==85.){base=texture(uMoonlightNameplate,vUV).rgb;rough=.65;em=.06+.15*uNight;}
  if(m==20.){base*=.955+.06*noise(p*1.4);rough=.95;}
  if(m==21.){
   vec2 q=p.xz;float row=floor(q.x/2.6);float joint=fract((q.y+mod(row,3.)*4.1)/13.);float side=fract(q.x/2.6);float seam=min(min(joint,1.-joint)*13.,min(side,1.-side)*2.6);
@@ -246,13 +273,13 @@ void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
 function program(vs,fs){function compile(s,t){let sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,compile(vs,gl.VERTEX_SHADER));gl.attachShader(p,compile(fs,gl.FRAGMENT_SHADER));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));p.u={};return p}
 function uniform(p,n){return p.u[n]??(p.u[n]=gl.getUniformLocation(p,n))}const uf=(p,n,x)=>gl.uniform1f(uniform(p,n),x), uv3=(p,n,v)=>gl.uniform3fv(uniform(p,n),v), um=(p,n,m)=>gl.uniformMatrix4fv(uniform(p,n),false,m);
 function uploadTriangles(data){let vao=gl.createVertexArray();gl.bindVertexArray(vao);let buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);let stride=48;[3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,stride,[0,12,24,36,40][i])});gl.bindVertexArray(null);return{vao,buf,count:data.length/12}}
-// Material 76 is glazing; 78–80 and 82 are local celestial alpha effects.
+// Material 76 is glazing; 78–80/82 are celestial effects; 84 is projector haze.
 // Existing meshes keep their exact
 // upload path; only opted-in triangles own an additional GPU buffer/index set.
 function upload(data){
- let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82){first=i-9;break;}
+ let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84){first=i-9;break;}
  if(first<0)return uploadTriangles(data);
- const opaque=[],clear=[];for(let i=0;i<data.length;i+=36){const target=(data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82)?clear:opaque;for(let j=0;j<36;j++)target.push(data[i+j]);}
+ const opaque=[],clear=[];for(let i=0;i<data.length;i+=36){const target=(data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84)?clear:opaque;for(let j=0;j<36;j++)target.push(data[i+j]);}
  let mesh,glass;
  try{
   mesh=uploadTriangles(opaque);glass=uploadTriangles(clear);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;
@@ -290,7 +317,7 @@ function resize(){let maxRatio=innerWidth<700?1.6:1.5,ratio=Math.min(devicePixel
  const hdr=!!gl.getExtension('EXT_color_buffer_float');let fmt=hdr?gl.RGBA16F:gl.RGBA8;let allowed=gl.getInternalformatParameter(gl.RENDERBUFFER,fmt,gl.SAMPLES);msaaSamples=Math.min(msaaSamples,allowed?.[0]||0);
  if(msaaSamples>=2){msaaColor=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,msaaColor);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,msaaSamples,fmt,w,h);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,msaaColor);msaaDepth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,msaaDepth);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,msaaSamples,gl.DEPTH_COMPONENT24,w,h);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,msaaDepth);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){gl.deleteFramebuffer(msaaFbo);msaaFbo=null;}}else{gl.deleteFramebuffer(msaaFbo);msaaFbo=null;}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
-function initGL(){gl=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:true});if(!gl)throw new Error('WebGL 2 is needed to run this railway. Open the HTML in Safari, Chrome, Firefox, or Edge with hardware acceleration enabled.');gl.getExtension('EXT_color_buffer_float');mainProgram=program(VS,FS);shadowProgram=program(SHVS,SHFS);postProgram=program(FULLVS,POSTFS);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);shadowFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);shadowTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);shadowCacheFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);shadowCacheTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowCacheTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);lightVP=mm(ortho(-120,120,-107,107,1,440),lookAt(add(mul(sunDir,235),[0,-8,0]),[0,-8,0]));resize()}
+function initGL(){gl=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:true});if(!gl)throw new Error('WebGL 2 is needed to run this railway. Open the HTML in Safari, Chrome, Firefox, or Edge with hardware acceleration enabled.');gl.getExtension('EXT_color_buffer_float');houseMoonlight?.dispose();houseMoonlight=createMoonlightProjection(gl);mainProgram=program(VS,FS);shadowProgram=program(SHVS,SHFS);postProgram=program(FULLVS,POSTFS);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);shadowFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);shadowTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);shadowCacheFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);shadowCacheTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowCacheTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);lightVP=mm(ortho(-120,120,-107,107,1,440),lookAt(add(mul(sunDir,235),[0,-8,0]),[0,-8,0]));resize()}
 // A small, generated sign atlas keeps all lettering crisp in the 3D world.
 const atlas=document.createElement('canvas');atlas.width=2048;atlas.height=1024;const actx=atlas.getContext('2d');let atlasX=2,atlasY=2,atlasRow=0;const labels={};
 function label(key,text,w=300,h=70,bg='#234239',fg='#eddfb3',size=30,serif=false){if(atlasX+w+2>2048){atlasX=2;atlasY+=atlasRow+3;atlasRow=0}const x=atlasX,y=atlasY;actx.fillStyle=bg;actx.fillRect(x,y,w,h);actx.strokeStyle=fg+'77';actx.lineWidth=2;actx.strokeRect(x+5,y+5,w-10,h-10);actx.fillStyle=fg;actx.textAlign='center';actx.textBaseline='middle';actx.font=`${serif?'':'600 '}${size}px ${serif?'Georgia':'Arial'}`;let lines=text.split('\n');lines.forEach((t,i)=>actx.fillText(t,x+w/2,y+h/2+(i-(lines.length-1)/2)*size*1.25));labels[key]={u0:x/2048,v0:1-(y+h)/1024,u1:(x+w)/2048,v1:1-y/1024};atlasX+=w+3;atlasRow=Math.max(atlasRow,h);return labels[key]}
@@ -443,11 +470,35 @@ function workshopUpdateSimulation(dt){night=mix(night,targetNight,1-Math.exp(-dt
 const mapctx=$('map').getContext('2d');
 function drawMap(){const c=mapctx,w=c.canvas.width,h=c.canvas.height;c.clearRect(0,0,w,h);let tx=x=>w*.48+x*w*.0137,tz=z=>h*.50+z*h*.023;let selected=chosenRoute==='highline'?highline:lowline;c.strokeStyle='#8fada326';c.lineWidth=5;c.beginPath();for(let z=-20;z<=20;z+=.5){let x=riverX(z);z===-20?c.moveTo(tx(x),tz(z)):c.lineTo(tx(x),tz(z))}c.stroke();function path(edge,color,width){c.strokeStyle=color;c.lineWidth=width;c.lineJoin='round';c.lineCap='round';c.beginPath();for(let d=0;d<edge.length;d+=.35){let p=edge.at(d).p;d===0?c.moveTo(tx(p[0]),tz(p[2])):c.lineTo(tx(p[0]),tz(p[2]))}let p=edge.at(edge.length).p;c.lineTo(tx(p[0]),tz(p[2]));c.stroke()}path(highline,'#647c6d66',2.0);path(lowline,'#647c6d66',2.0);path(yard,'#647c6d55',1.3);path(selected,'#dfc18a',2.3);path(common,'#b8c5a4',2.1);c.fillStyle='#283d30';c.strokeStyle='#ebd9ab';c.lineWidth=1.5;c.fillRect(tx(-15),tz(14)+5,26,5);c.strokeRect(tx(-15),tz(14)+5,26,5);c.fillStyle='#aebfa7';c.font='11px Arial';c.textAlign='center';c.fillText('ALDER VALE',tx(-11),tz(14)+27);c.beginPath();c.arc(tx(0),tz(14),4.3,0,TAU);c.fillStyle='#e6c581';c.fill();for(let o of[11.55,8.37,5.19,2.7]){let p=where(travel-o).p;c.beginPath();c.arc(tx(p[0]),tz(p[2]),2.25,0,TAU);c.fillStyle='#d9d3ac';c.fill()}let p=leadInfo.p;c.shadowColor='#f0ce88';c.shadowBlur=9;c.fillStyle='#fbe2ac';c.beginPath();c.arc(tx(p[0]),tz(p[2]),3.9,0,TAU);c.fill();c.shadowBlur=0;}
 function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.round((paused?0:speed)*8.073);$('runState').textContent=paused?'Railway paused':atStation?'At Alder Vale':stopRequested?'Calling at Alder Vale':'Miniature, not motionless';$('engineStatus').innerHTML='<span class="status-dot">●</span> '+(atStation?'At the platform · Ready to depart':stopRequested?'Alder Vale · Stop requested':paused?'Taking a little breather':'4-6-0 · Passenger service');let place,title,detail,overline='A WORLD WORTH SLOWING DOWN FOR';if(atStation){place='station-stop';title='Welcome to Alder Vale.';detail='A moment to linger. Choose Depart when you’re ready.';overline='PLATFORM 1 · A PERFECT ARRIVAL'}else if(leadInfo.edge===highline&&leadInfo.d>9&&leadInfo.d<38){place='viaduct';title='A little above it all.';detail='Seven stone arches. One unhurried crossing.';overline='ALDER VIADUCT · THE HIGH LINE'}else if(leadInfo.edge===common&&leadInfo.d>tunnelStart&&leadInfo.d<tunnelEnd){place='tunnel';title='Through the old mountain.';detail='Built in 1898. Still the best way through.';overline='FERNHOLLOW TUNNEL · KEEP LISTENING'}else if(leadInfo.edge===lowline){place='riverside';title='The road less hurried.';detail='Along the water, beneath the willows.';overline='RIVERSIDE BRANCH · THE LOW LINE'}else if(leadInfo.edge===common&&leadInfo.d>common.length-20){place='station';title='All aboard, Nightingale.';detail='Past the village. Over the valley. Home again.'}else{place='countryside';title='Nowhere else to be.';detail='A winding line through a world in miniature.';overline='THE ALDER VALLEY RAILWAY · SINCE 1898'}if(place!==currentPlace){$('locationTitle').textContent=title;$('locationDetail').textContent=detail;$('locationOverline').textContent=overline;currentPlace=place}drawMap()}
-function render(){architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
+function render(){updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
- gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawHobbyParticles();
+ gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
  if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
+// Movie decoding is limited to a nearby, front-facing screen. Map views keep
+// the static picture, and object transforms follow edits instead of a fixed site.
+function drawMoonlightHouseAir(){
+ if(!houseMoonlight||hobby.room!=='valley'||(typeof isShopMapActive==='function'&&isShopMapActive()))return;
+ for(const o of moonlightObjects){
+  const model=mm(objectMatrix(o),scaling(.32)),center=transform([0,8.1,-9.805],model),p=project(center);
+  if(!p.visible||len(sub(cameraPos,center))>32*(o.scale??1))continue;
+  houseMoonlight.drawAir({vp:VP,model,eye:cameraPos,height:screenH,night,restoreProgram:mainProgram,restoreUnit:2});
+ }
+}
+function updateMoonlightHouse(){
+ if(!houseMoonlight)return;
+ if(moonlightObjectList!==objects||moonlightObjectCount!==objects.length){moonlightObjectList=objects;moonlightObjectCount=objects.length;moonlightObjects=objects.filter(o=>o.type==='moonlight');}
+ const inMap=typeof isShopMapActive==='function'&&isShopMapActive(),inValley=hobby.room==='valley'&&!inMap;let visible=inMap&&moonlightObjects.length>0,active=false;
+ if(inValley)for(const o of moonlightObjects){
+  const center=transform([0,8.1*.32,-9.805*.32],objectMatrix(o)),p=project(center),delta=sub(cameraPos,center);
+  const front=delta[0]*Math.sin(o.angle)+delta[2]*Math.cos(o.angle)>0;
+  if(front&&p.visible&&p.x>-.15*innerWidth&&p.x<innerWidth*1.15&&p.y>-.15*innerHeight&&p.y<innerHeight*1.15){visible=true;if(len(delta)<32*(o.scale??1))active=true;}
+ }
+ houseMoonlight.update({visible,active,nameplateVisible:inValley&&moonlightObjects.length>0||inMap&&moonlightObjects.length>0,paused,reduced:reduceMotion,now:performance.now()});
+ const access=$('moonlightOpen'),focused=inValley&&!building&&!hobby.cinema&&viewMode==='overview'&&moonlightObjects.some(o=>Math.hypot(orbit.target[0]-o.x,orbit.target[2]-o.z)<6*(o.scale??1)&&len(sub(cameraPos,[o.x,objectY(o),o.z]))<32*(o.scale??1));
+ if(access&&access.hidden===focused){access.hidden=!focused;document.body.classList.toggle('moonlight-focused',focused);}
+ if(!focused&&typeof quietControls!=='undefined'&&quietControls.panel?.id==='moonlightPanel')closeQuietControls();
+}
 function animate(now){if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
 function showHelp(){returnHelpFocus=document.activeElement;$('help').hidden=false;$('helpClose').focus()}function closeHelp(){$('help').hidden=true;if(returnHelpFocus&&returnHelpFocus.focus)returnHelpFocus.focus()}
 function hideUI(){hidden=!hidden;document.body.classList.toggle('hidden-ui',hidden)}
@@ -561,29 +612,35 @@ function workshopBindControls(){
   const k=e.key.toLowerCase();if(k===' '){e.preventDefault();togglePause();}else if(k==='h')whistle();else if(k==='r')switchRoute();else if(k==='s')toggleStop();else if(k==='n')toggleLight();else if(k==='f')hideUI();else if(k==='p')capturePhoto();else if(k==='m')toggleDiagram();else if('123456'.includes(k)&&k.length===1)setView(['room','overview','station','follow','cab','tour'][Number(k)-1]);
   window.railwayAnalytics?.shortcut(k);
  });
+ let contributionTap=null;
  canvas.addEventListener('pointerdown',e=>{
   if(!$('help').hidden)return;
   $('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;
   canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);dragMoved=false;
-  if(pointers.size===1){drag={x:e.clientX,y:e.clientY,yaw:orbit.yaw,pitch:orbit.pitch,target:orbit.target.slice(),pan:e.button===2||e.shiftKey,auto:viewMode!=='room'&&viewMode!=='overview'};}
+  if(pointers.size===1){drag={x:e.clientX,y:e.clientY,button:e.button,modified:e.shiftKey||e.ctrlKey||e.metaKey||e.altKey,yaw:orbit.yaw,pitch:orbit.pitch,target:orbit.target.slice(),pan:e.button===2||e.shiftKey,auto:viewMode!=='room'&&viewMode!=='overview'};}
   if(pointers.size===2){beginManualOrbit();const p=[...pointers.values()];pinchStart={distance:Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]),zoom:orbit.distance,cx:(p[0][0]+p[1][0])/2,cy:(p[0][1]+p[1][1])/2,target:orbit.target.slice()};}
  });
  canvas.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,[e.clientX,e.clientY]);
-  if(pointers.size===2&&pinchStart){beginManualOrbit();const p=[...pointers.values()],d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);orbit.distance=clamp(pinchStart.zoom*pinchStart.distance/Math.max(d,10),6,430);const cx=(p[0][0]+p[1][0])/2,cy=(p[0][1]+p[1][1])/2,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)],scale=orbit.distance*.001;orbit.target=add(pinchStart.target,add(mul(r,-(cx-pinchStart.cx)*scale),mul(f,-(cy-pinchStart.cy)*scale)));dragMoved=true;return;}
+  if(pointers.size===2&&pinchStart){contributionTap=null;beginManualOrbit();const p=[...pointers.values()],d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);orbit.distance=clamp(pinchStart.zoom*pinchStart.distance/Math.max(d,10),6,430);const cx=(p[0][0]+p[1][0])/2,cy=(p[0][1]+p[1][1])/2,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)],scale=orbit.distance*.001;orbit.target=add(pinchStart.target,add(mul(r,-(cx-pinchStart.cx)*scale),mul(f,-(cy-pinchStart.cy)*scale)));dragMoved=true;return;}
   if(!drag||pointers.size!==1)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)dragMoved=true;if(!dragMoved)return;if(drag.auto){beginManualOrbit();drag.yaw=orbit.yaw;drag.pitch=orbit.pitch;drag.target=orbit.target.slice();drag.auto=false;}
+  contributionTap=null;
   if(drag.pan){const scale=orbit.distance*.00085,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)];orbit.target=add(drag.target,add(mul(r,-dx*scale),mul(f,-dy*scale)));orbit.target[0]=clamp(orbit.target[0],-92,92);orbit.target[2]=clamp(orbit.target[2],-76,76);}else{orbit.yaw=drag.yaw-dx*.0048;orbit.pitch=clamp(drag.pitch+dy*.0036,.065,1.43);}
  });
  const release=e=>{
-  pointers.delete(e.pointerId);
-  if(!dragMoved&&drag&&(viewMode==='overview'||viewMode==='room')){let p=project([0,1.2,14]);if(p.visible&&Math.hypot(p.x-e.clientX,p.y-e.clientY)<20)switchRoute();let r=project([13,-4,24]);if(r.visible&&Math.hypot(r.x-e.clientX,r.y-e.clientY)<17)switchRoute();}
-  drag=null;pinchStart=null;
+  if(!pointers.has(e.pointerId))return;
+  const tap=e.type==='pointerup'&&pointers.size===1&&!pinchStart&&!dragMoved&&drag&&!drag.pan&&!drag.modified&&drag.button===0&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)<=4;
+  pointers.delete(e.pointerId);drag=null;pinchStart=null;
+  if(tap&&(viewMode==='overview'||viewMode==='room')){
+   if(typeof focusHouseWorkAt==='function'&&focusHouseWorkAt(e.clientX,e.clientY)){contributionTap={x:e.clientX,y:e.clientY,time:e.timeStamp};return;}
+   let p=project([0,1.2,14]);if(p.visible&&Math.hypot(p.x-e.clientX,p.y-e.clientY)<20)switchRoute();let r=project([13,-4,24]);if(r.visible&&Math.hypot(r.x-e.clientX,r.y-e.clientY)<17)switchRoute();
+  }
  };
- canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);canvas.addEventListener('contextmenu',e=>e.preventDefault());
  canvas.addEventListener('wheel',e=>{e.preventDefault();beginManualOrbit();orbit.distance=clamp(orbit.distance*Math.exp(clamp(e.deltaY,-160,160)*.0012),6,430);},{passive:false});
- canvas.addEventListener('dblclick',()=>{beginManualOrbit();orbit.target=add(leadInfo.p,[0,1,0]);orbit.distance=15;toast('A closer look. Drag to explore.');});
+ canvas.addEventListener('dblclick',e=>{if(contributionTap&&e.timeStamp-contributionTap.time<650&&Math.hypot(e.clientX-contributionTap.x,e.clientY-contributionTap.y)<8){contributionTap=null;return;}beginManualOrbit();orbit.target=add(leadInfo.p,[0,1,0]);orbit.distance=15;toast('A closer look. Drag to explore.');});
  document.addEventListener('visibilitychange',()=>{lastTime=0;if(audio){if(document.hidden)audio.ctx.suspend();else if(audio.active)audio.ctx.resume().catch(()=>{});}});
- canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();architecturalGlassDraws.length=0;paused=true;$('error').style.display='block';$('error').innerHTML='The graphics context was interrupted.<br><button onclick="location.reload()" style="margin-top:12px;color:#e7cc91;text-decoration:underline">Reload the railway room</button>';});
+ canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();architecturalGlassDraws.length=0;houseMoonlight?.dispose();paused=true;$('error').style.display='block';$('error').innerHTML='The graphics context was interrupted.<br><button onclick="location.reload()" style="margin-top:12px;color:#e7cc91;text-decoration:underline">Reload the railway room</button>';});
  let wasPortrait=innerHeight>innerWidth;window.addEventListener('resize',()=>{resize();let portraitNow=innerHeight>innerWidth;if(portraitNow!==wasPortrait&&(viewMode==='room'||viewMode==='overview'))setView(viewMode,false);wasPortrait=portraitNow;});
 }
 
@@ -1128,8 +1185,12 @@ function validateProject(value){
    const p=o.params;if(!isNum(p.w,.5,7)||!isNum(p.d,.5,7)||!isNum(p.h,.5,7)||typeof p.paint!=='string'||typeof p.roof!=='string'||!/^#[0-9a-f]{6}$/i.test(p.paint)||!/^#[0-9a-f]{6}$/i.test(p.roof))throw new Error('A building has invalid dimensions or colors.');
    params={w:p.w,d:p.d,h:p.h,paint:p.paint,roof:p.roof,name:['post','bakery','inn'].includes(p.name)?p.name:null};
   }
-  const credits=validateCredits(o.credits);
-  clean.objects.push({...(credits.length?{credits}:{}),id:'o'+(i+1),type:o.type,x:o.x,z:o.z,angle:o.angle,scale:o.scale,seed:isNum(o.seed,0,1e9)?Math.floor(o.seed):i*101,params,yoff:isNum(o.yoff,-24,24)?o.yoff:0});
+  const credits=validateCredits(o.credits),attribution={};
+  if(o.contribution!==undefined||o.placement!==undefined){
+   if(typeof o.contribution!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(o.contribution)||!Number.isInteger(o.placement)||o.placement<0||o.placement>=64)throw new Error('A scenery piece has invalid contribution identity.');
+   attribution.contribution=o.contribution;attribution.placement=o.placement;
+  }
+  clean.objects.push({...(credits.length?{credits}:{}),...attribution,id:'o'+(i+1),type:o.type,x:o.x,z:o.z,angle:o.angle,scale:o.scale,seed:isNum(o.seed,0,1e9)?Math.floor(o.seed):i*101,params,yoff:isNum(o.yoff,-24,24)?o.yoff:0});
  }
  for(let key of Object.keys(value.tracks||{})){
   if(!/^(common|highline|lowline|yard|freight|mountain|siding[0-9]+|depot)$/.test(key))continue;const curves=value.tracks?.[key];if(!Array.isArray(curves)||curves.length<1||curves.length>50)throw new Error('The layout track data is missing or too large.');
@@ -1453,7 +1514,7 @@ function bindWorkshop(){
 // Bump this version when factory placements, tracks, stock/services or seeded
 // generation changes. Only a validated pristine snapshot can skip factory capture;
 // the cache contains editable layout data, never GPU meshes or generated artwork.
-const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-2-community',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
+const WORKSHOP_FACTORY_CACHE_VERSION='grand-v2-factory-3-moonlight-facing',WORKSHOP_FACTORY_CACHE_KEY='whistlevale-factory-snapshot';
 let workshopStartup=null;
 function workshopFactoryChecksum(text){let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);return(hash>>>0).toString(16);}
 function readWorkshopStartupLayout(){
@@ -1747,6 +1808,7 @@ function makeRoad(b){
 }
 // New collection pieces reuse the same instanced editing, picking and saving path.
 const newDivisionAssets=[
+ {id:'moonlight',name:'Moonlight Drive-In',cat:'Village',w:10,d:9.5,h:4.5,afterPlanting:true,desc:'A moonlit picture house, enamel cars, timber screen and a little projection booth.'},
  {id:'townhouse',name:'High-street shop',cat:'Village',w:3.7,d:3.4,h:5.5,desc:'Two storeys, storefront glazing, cornice, striped awning and chimney.'},
  {id:'warehouse',name:'Harbor warehouse',cat:'Village',w:5.8,d:4.4,h:4.9,desc:'Brick riverside warehouse with loading doors and a raised goods platform.'},
  {id:'chalet',name:'Summit chalet',cat:'Village',w:3.3,d:3.2,h:3.8,desc:'Alpine timber balconies, deep eaves and a stone base.'},
@@ -1761,7 +1823,11 @@ const newDivisionAssets=[
 ];
 for(const a of newDivisionAssets){ASSETS.push(a);assetById[a.id]=a;}
 function divisionAsset(b,type,variant=0){
- if(type==='townhouse'){
+ if(type==='moonlight'){
+  // Match the cars and spectators to the railway scale; the Hall displays the
+  // same authored source on its exhibition plinth at its own bay scale.
+  b.push(0,0,0,0,0,0,.32);moonlightDriveIn(b,0,0,0,0,{landscape:true});b.pop();
+ }else if(type==='townhouse'){
   const colors=['#b7a37f','#a17a5b','#8a9a8c'],paint=colors[variant%3];b.box(0,.18,0,3.6,.36,3.3,'#b8b49a',4);b.box(0,2.15,0,3.28,3.95,2.88,paint,4);b.box(0,.89,1.48,2.95,1.46,.10,'#30594b',22);
   for(const x of[-.93,.91]){windowPane(b,x,.95,1.57,.89,1.07);windowPane(b,x,2.89,1.47,.76,1.03);flowerBox(b,x,2.31,1.55,.83);}b.box(0,.83,1.55,.50,1.5,.09,'#517262',22);b.box(0,1.84,1.58,3.27,.30,.12,'#405741',22);sign(b,['bakery','post','inn'][variant%3],0,1.84,1.652,2.40,.19);
   for(let i=0;i<12;i++){b.push(-1.51+i*.274,0,0);b.quad([0,1.69,1.50],[.27,1.69,1.50],[.27,1.36,2.12],[0,1.36,2.12],i%2?'#dbcaa5':'#59725a',23);b.pop();}
@@ -1805,6 +1871,37 @@ function getTemplate(o){
  const result={data,min,max,mesh:b.mesh()};templates.set(key,result);return result;
 }
 
+// A short public lane joins the old town's final street to the reviewed
+// drive-in entrance. It belongs to the factory roads, just like the harbour
+// approach; moving a private copy does not drag the street across the map.
+function moonlightValleyApproach(){
+ if(typeof communityCatalogue==='undefined')return null;
+ const piece=communityCatalogue.works.find(w=>w.id==='moonlight-drive-in'&&w.room==='valley')?.workshop?.find(p=>p.type==='moonlight');if(!piece)return null;
+ // Enter from the town behind the raised screen, into the existing asphalt.
+ // Its open span leaves the driveway clear while the picture faces the room.
+ const [x,z]=piece.at,s=(piece.scale??1)*.32,a=piece.angle??0,end=[x+(-Math.cos(a)-11*Math.sin(a))*s,terrainH(x,z)+.41*s+.005,z+(Math.sin(a)-11*Math.cos(a))*s];
+ const edge=new Edge('moonlight-lane',[[[-5,.812,9],[-5,.81,10.45],[end[0],end[1],11.25],end]]);
+ return{edge,width:t=>1.34+.20*(1-smooth(0,.25,t))+.38*smooth(.68,1,t)};
+}
+function buildMoonlightValleyApproach(b){
+ const lane=moonlightValleyApproach();if(!lane)return;
+ const {edge,width}=lane,n=28;
+ const point=(t,offset,dy=0)=>{const q=edge.at(t*edge.length),r=norm([q.f[2],0,-q.f[0]]);return add(q.p,[r[0]*offset,dy,r[2]*offset]);};
+ for(let i=0;i<n;i++){
+  const u=i/n,v=(i+1)/n,wu=width(u)/2,wv=width(v)/2;
+  b.quad(point(u,-wu),point(v,-wv),point(v,wv),point(u,wu),'#928e77',23,[0,1,0]);
+  for(const side of[-1,1]){
+   const a=point(u,side*wu),q=point(v,side*wv),outA=point(u,side*(wu+.20)),outQ=point(v,side*(wv+.20));
+   outA[1]=terrainH(outA[0],outA[2])+.008;outQ[1]=terrainH(outQ[0],outQ[2])+.008;
+   if(side<0)b.quad(outA,outQ,q,a,'#969478',23);else b.quad(a,q,outQ,outA,'#969478',23);
+   const c=point(u,side*(wu-.065),.012),r=point(v,side*(wv-.065),.012),topA=add(a,[0,.012,0]),topQ=add(q,[0,.012,0]);
+   if(side<0)b.quad(topA,topQ,r,c,'#b6ad90',23,[0,1,0]);else b.quad(c,r,topQ,topA,'#b6ad90',23,[0,1,0]);
+   // Two quiet worn wheel paths suggest gravel, rather than a new city street.
+   b.quad(point(u,side*.31-.07,.002),point(v,side*.31-.07,.002),point(v,side*.31+.07,.002),point(u,side*.31+.07,.002),'#a6a08a',23,[0,1,0]);
+  }
+ }
+ roads.push(edge);
+}
 function seedDivisionScenery(){
  if(!captureScenery)return;
  const addO=(type,x,z,angle=0,scale=1,params=null)=>{const o=registerObject(type,x,z,angle,scale,params);const a=assetById[type];if(!['pine','fir','oak','autumn','rock','boulder','flowers','fence','sheep'].includes(type))houseZones.push({x,z,r:Math.hypot(a.w,a.d)*scale*.53});return o;};
@@ -1852,6 +1949,17 @@ function seedDivisionScenery(){
  // Thoughtful avenue planting between blocks instead of randomly filling town.
  for(const [x,z]of[[-39,13],[-35,19],[-31,18],[-27,18],[-8,16],[-5.6,6],[-3.5,12],[-13,1.1],[-27.5,3],[-33,2.5],[-19,3.4],[22,6.8],[25.4,4.0]])if(nearestTrack(x,z).dist>1.8)addO('autumn',x,z,0,.75);
  for(const [x,z]of[[-37.8,10],[-33,10],[-28,10],[-23,10],[-18,10],[-12,10],[-35,15.6],[-24,15.6],[-11,15.5],[-5.3,3.2],[-3.5,5.6],[18,5.9],[29,8]])addO('lamp',x,z,0,1);
+ // Late additions preserve the original seeded town and woodland. Only the
+ // uncredited tree trunks inside the new garden are cleared. Perimeter
+ // crowns may mingle with its authored trees, keeping the old wooded bank.
+ const savedSeed=seed;communityWorkshop(addO,true);seed=savedSeed;
+ const gardens=objects.filter(o=>assetById[o.type]?.afterPlanting),lane=moonlightValleyApproach();
+ if(gardens.length)objects=objects.filter(o=>{
+  if(o.credits?.length||!['oak','autumn','pine','fir','willow','orchard'].includes(o.type))return true;
+  if(gardens.some(g=>{const a=assetById[g.type],c=Math.cos(g.angle),s=Math.sin(g.angle),dx=o.x-g.x,dz=o.z-g.z;return Math.abs(c*dx-s*dz)<a.w*g.scale*.5+.12&&Math.abs(s*dx+c*dz)<a.d*g.scale*.5+.12;}))return false;
+  if(lane)for(let d=0;d<=lane.edge.length;d+=.20){const p=lane.edge.at(d).p;if(Math.hypot(o.x-p[0],o.z-p[2])<lane.width(d/lane.edge.length)/2+.35)return false;}
+  return true;
+ });
 }
 function buildStationDistrict(b){
  // A long island platform for the express, with separate freight tracks behind it.
@@ -1965,7 +2073,7 @@ function buildWorld(){
  if(divisionEdges.mountain)for(const [a,z]of bridgeRange(divisionEdges.mountain,p=>p.p[0]>-24&&p.p[0]<-4&&p.p[2]<-27))timberTrestle(b,divisionEdges.mountain,a,z);
  for(const edge of [common,highline,lowline,divisionEdges.freight].filter(Boolean))for(const [a,z]of bridgeRange(edge,p=>p.p[2]>-19&&Math.abs(p.p[0]-riverX(p.p[2]))<riverWidth(p.p[2])+.8))trussBridge(b,edge,a,z);
  for(const r of tunnelRanges)buildTunnelRange(b,r);
- seedDivisionScenery();buildValleyDetails(b);signals(b);
+ seedDivisionScenery();buildValleyDetails(b);buildMoonlightValleyApproach(b);signals(b);
  for(const p of[[-29,3.0,25],[-16,3.0,25],[-4,3,25],[-28,3.4,10],[-17,3.4,10],[-2,3.4,4],[37,4.3,-5],[45,4,8]])lampPositions.push(p);
  disposeMesh(staticMesh);staticMesh=b.mesh();createWater();uploadAtlas();worldBuilding=false;seed=old;divisionSceneReady=true;
 }

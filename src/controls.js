@@ -34,13 +34,15 @@ function openQuietPanel(id,opener,back){
  if(id==='layoutPanel'){$('diagramToggle').setAttribute('aria-pressed','true');drawMap();}
  if(id==='playlistPanel')playlistPaint();
  if(id==='buildersPanel')paintBuilders();
+ if(id==='viewsPanel')renderRoomPlaces();
+ if(id==='moonlightPanel')renderMoonlightProgramme();
  if(id==='soundPanel')wakeCinema();
  (panel.querySelector('.control-panel-head h2')||panel.querySelector('h2,h3'))?.focus({preventScroll:true});
 }
 
 function initQuietControls(){
  if(quietControls.ready)return;quietControls.ready=true;
- const titles={viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide',buildersPanel:'The builders',contributePanel:'Want to contribute?'};
+ const titles={moonlightPanel:'Moonlight Drive-In',viewsPanel:'Views',trainPanel:'Your train',morePanel:'Make yourself at home',ambiencePanel:'Atmosphere',layoutPanel:'Railway network',soundPanel:'Sound & music',playlistPanel:'The record shelf',help:'Controls & guide',buildersPanel:'The builders',contributePanel:'Want to contribute?'};
  for(const [id,title]of Object.entries(titles)){
   const panel=$(id);if(!panel)continue;
   panel.classList.add('quiet-panel');panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label',title);panel.removeAttribute('aria-modal');
@@ -55,7 +57,7 @@ function initQuietControls(){
   };
   quietControls.panels.push(panel);
  }
- const bindings={viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help',buildersButton:'buildersPanel',contributeButton:'contributePanel',buildersContribute:'contributePanel'};
+ const bindings={moonlightOpen:'moonlightPanel',viewsBtn:'viewsPanel',trainBtn:'trainPanel',moreBtn:'morePanel',ambienceBtn:'ambiencePanel',playlistBtn:'playlistPanel',quietSoundMixer:'soundPanel',soundMixerButton:'soundPanel',atmosphereSoundMixer:'soundPanel',cinemaMix:'soundPanel',mapBtn:'layoutPanel',diagramToggle:'layoutPanel',divisionNetwork:'layoutPanel',quietHelp:'help',helpBtn:'help',buildersButton:'buildersPanel',contributeButton:'contributePanel',buildersContribute:'contributePanel'};
  for(const [id,panel]of Object.entries(bindings)){
   const button=$(id);if(!button)continue;
   button.dataset.quietOpener='';button.setAttribute('aria-controls',panel);button.setAttribute('aria-expanded','false');
@@ -88,7 +90,7 @@ function initQuietControls(){
  $('railControls').insertBefore($('cinemaStart'),$('moreBtn'));
  $('cinemaStart').querySelector('span').textContent='Cinema';
  document.addEventListener('click',event=>{
-  if(event.target.closest('[data-camera],[data-district],#roomPlaces button,.engine-medallion,#leaveTrainInspector,#map,#turntableBtn'))closeQuietControls(true);
+  if(event.target.closest('[data-camera],[data-district],#roomPlaces button:not([data-moonlight-opener]),.engine-medallion,#leaveTrainInspector,#map,#turntableBtn'))closeQuietControls(true);
  });
  window.addEventListener('pointerdown',event=>{
   if(quietControls.panel&&!quietControls.panel.contains(event.target)&&!event.target.closest('#railControls,[data-quiet-opener]'))closeQuietControls();

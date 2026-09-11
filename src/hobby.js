@@ -85,7 +85,8 @@ function visitHouseDestination(key){
  if(path==='grandhall.html'&&typeof window.HOUSE_EMBEDDED_HALL==='string'&&window.HOUSE_EMBEDDED_HALL){
   const safe=value=>JSON.stringify(value).replace(/</g,'\\u003c');
   const catalogue=typeof communityCatalogue==='undefined'?null:communityCatalogue,roomNames=Object.fromEntries(Object.entries(HOUSE_ROOMS).map(([id,room])=>[id,room.name]));
-  const context='<script>window.HOUSE_RETURN_URL='+safe(location.href)+';window.HOUSE_HALL_FROM='+safe(hobby.room)+';window.HOUSE_ROOM_NAMES='+safe(roomNames)+';window.HOUSE_COMMUNITY='+safe(catalogue)+';</script>';
+  const film=typeof moonlightExportPreferences==='function'?moonlightExportPreferences():{};
+  const context='<script>window.HOUSE_RETURN_URL='+safe(location.href)+';window.HOUSE_HALL_FROM='+safe(hobby.room)+';window.HOUSE_ROOM_NAMES='+safe(roomNames)+';window.HOUSE_COMMUNITY='+safe(catalogue)+';window.HOUSE_EMBEDDED_MEDIA='+safe(window.HOUSE_EMBEDDED_MEDIA||{})+';window.HOUSE_EMBEDDED_MOONLIGHT='+safe(film)+';</script>';
   const html=window.HOUSE_EMBEDDED_HALL.replace(/<head\b[^>]*>/i,head=>head+context);
   const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));location.assign(url);return true;
  }
@@ -109,13 +110,31 @@ function visitHouseRoom(key,after){
 }
 
 function renderRoomPlaces(){
- const container=$('roomPlaces');container.replaceChildren();if(hobby.room==='valley')return;
- for(const [i,spot]of hobby.scene.spots.entries()){
+ const container=$('roomPlaces');container.replaceChildren();
+ const places=hobby.room==='valley'?communityWorkshopPlaces():hobby.scene.spots;
+ for(const [i,spot]of places.entries()){
   const button=document.createElement('button');button.textContent=spot.name;button.onclick=()=>{
+   if(hobby.room==='valley'){if(hobby.cinema)leaveCinema(false);focusHouseWork(spot.contribution,spot.placement);return;}
    if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
    for(const b of container.querySelectorAll('button'))b.classList.toggle('chosen',b===button);updateUI();
   };container.append(button);
+  if(hobby.room==='valley'&&spot.contribution==='moonlight-drive-in'){
+   const programme=document.createElement('button');programme.type='button';programme.textContent='Programme & booth';programme.dataset.moonlightOpener='';programme.dataset.quietOpener='';programme.setAttribute('aria-controls','moonlightPanel');programme.setAttribute('aria-expanded','false');
+   programme.onclick=()=>{focusHouseWork(spot.contribution,spot.placement);openQuietPanel('moonlightPanel',programme);};container.append(programme);
+  }
  }
+}
+
+function renderMoonlightProgramme(){
+ const host=$('moonlightProgramme');if(!host||!houseMoonlight)return;
+ if(!host.querySelector('[data-moonlight-programme]'))host.append(houseMoonlight.createProgramme({onBoothView:focusMoonlightBooth}));
+}
+
+function focusMoonlightBooth(){
+ const work=objects.find(o=>o.type==='moonlight'&&o.contribution==='moonlight-drive-in');if(!work)return;
+ focusHouseWork(work.contribution,work.placement??0);
+ orbit.target=transform([-.6*.32,2.15*.32,12.20*.32],objectMatrix(work));orbit.distance=innerWidth<700?5.5:4;orbit.yaw=work.angle+.14;orbit.pitch=.20;
+ closeQuietControls(true);
 }
 
 function syncRoomControls(){
@@ -394,12 +413,20 @@ async function packHouseHall(){
   for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
   node.setAttribute('href','data:image/png;base64,'+btoa(binary));
  }
+ // Shared film bytes live once in the outer export. visitHouseDestination adds
+ // that embedded payload when opening this Hall as its own portable Blob page.
  return '<!DOCTYPE html>\n'+source.outerHTML;
 }
 exportPlayable=async function(){
  try{
   toast('Packing your little world, including its soundtrack…');const source=document.documentElement.cloneNode(true);
   removeHouseAnalytics(source);
+  for(const node of source.querySelectorAll('video[data-moonlight-film]'))node.remove();
+  for(const node of source.querySelectorAll('[data-moonlight-programme]'))node.remove();
+  if(typeof packMoonlightMedia==='function'){
+   const media=await packMoonlightMedia();source.querySelector('#embeddedHouseMedia')?.remove();
+   const payload=document.createElement('script');payload.id='embeddedHouseMedia';payload.textContent='window.HOUSE_EMBEDDED_MEDIA='+JSON.stringify(media).replace(/</g,'\\u003c')+';window.HOUSE_EMBEDDED_MOONLIGHT='+JSON.stringify(moonlightExportPreferences())+';';source.querySelector('head').append(payload);
+  }
   const hall=await packHouseHall();source.querySelector('#embeddedHouseHall')?.remove();
   if(hall){const payload=document.createElement('script');payload.id='embeddedHouseHall';payload.textContent='window.HOUSE_EMBEDDED_HALL='+JSON.stringify(hall).replace(/</g,'\\u003c')+';';source.querySelector('head').append(payload);}
   for(const node of source.querySelectorAll('script[src]')){const r=await fetch(node.getAttribute('src'));if(!r.ok)throw new Error('Could not pack a script');node.textContent=(await r.text()).replace(/<\/script/gi,'<\\/script');node.removeAttribute('src');}
@@ -444,17 +471,26 @@ function startHouse(){
   if(typeof initQuietControls==='function')initQuietControls();
   if(typeof restoreCollectionSelections==='function')restoreCollectionSelections();
   if(typeof initTrainCabinet==='function')initTrainCabinet();
-  syncRoomControls();
+  syncRoomControls();renderRoomPlaces();
   window.HOBBY_HOUSE={visit:visitHouseRoom,cinema:enterCinema,leaveCinema,openMap:()=>openHouseMap(),get state(){return{room:hobby.room,ready:hobby.ready,cinema:hobby.cinema,shot:hobby.shot,paused,throttle,population:hobby.room==='valley'?hobby.life.population:hobby.scene.population,walking:hobby.room==='valley'?hobby.life.actors.length:hobby.scene.actors.length,roomsLoaded:[...roomScenes.keys()],audio:soundscape?{loaded:soundscape.loaded,on:soundscape.on,buffers:[...soundscape.buffers.keys()],failed:soundscape.failed.slice(),context:soundscape.ctx.state,music:soundscape.music,ambience:soundscape.ambience,train:soundscape.train}:null,cam:cameraPos.slice(),target:cameraTarget.slice(),train:hobbyHasTrain()?hobbyTrainInfo().p.slice():null,sceneTriangles:hobby.scene?hobby.scene.mesh.count/3:staticMesh.count/3,frame}}};
   document.body.dataset.room='valley';restoreHouseLocation();syncHouseAnalytics();
  }catch(error){console.error(error);$('error').style.display='block';$('error').textContent='The hobby house could not finish opening: '+error.message;}
 }
+// One hit test on a completed tap; the existing Places buttons provide the
+// keyboard route and both paths resolve the current editable contribution.
+function focusHouseWorkAt(x,y){
+ if(!hobby.ready||hobby.room!=='valley'||hobby.cinema||hobby.transition||building||(typeof shopMap!=='undefined'&&shopMap.open)||!['room','overview'].includes(viewMode))return false;
+ const id=pickObject(x,y),object=objects.find(o=>o.id===id);
+ if(!object?.contribution||!communityWorkshopPlaces().some(place=>place.contribution===object.contribution&&place.placement===(object.placement??0)))return false;
+ return focusHouseWork(object.contribution,object.placement??0);
+}
 function focusHouseWork(id,placement=0){
- const view=communityWorkView(hobby.scene,id,placement);if(!view)return false;
+ const scene=hobby.room==='valley'?{key:'valley'}:hobby.scene,view=communityWorkView(scene,id,placement);if(!view)return false;
  setView('overview',false);orbit.target=view.target.slice();orbit.distance=innerWidth<700?(view.phoneDistance??view.distance*1.7):view.distance;orbit.pitch=view.pitch;orbit.yaw=view.yaw;
- hobby.spot=hobby.scene.spots.findIndex(spot=>spot.contribution===id&&spot.placement===placement);
+ const places=hobby.room==='valley'?communityWorkshopPlaces():hobby.scene.spots;
+ hobby.spot=places.findIndex(spot=>spot.contribution===id&&spot.placement===placement);
  cameraTarget=orbit.target.slice();cameraPos=add(cameraTarget,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);
- for(const [index,button]of [...$('roomPlaces').querySelectorAll('button')].entries())button.classList.toggle('chosen',index===hobby.spot);
+ for(const [index,button]of [...$('roomPlaces').querySelectorAll('button:not([data-moonlight-opener])')].entries())button.classList.toggle('chosen',index===hobby.spot);
  shadowDirty=true;updateUI();return true;
 }
 function restoreHouseLocation(params=houseInitialParams()){

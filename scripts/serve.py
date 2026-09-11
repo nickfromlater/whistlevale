@@ -37,10 +37,62 @@ class Handler(SimpleHTTPRequestHandler):
             if self.command != 'HEAD':
                 self.wfile.write(payload)
             return
+        if resolved.suffix.lower() == '.mp4':
+            self.send_video(resolved)
+            return
         if self.command == 'HEAD':
             super().do_HEAD()
         else:
             super().do_GET()
+
+    def send_video(self, resolved):
+        # A single byte range is enough for native media loading and seeking.
+        # Keep the public-path allowlist above in force for every media request.
+        size = resolved.stat().st_size
+        start, end = 0, size - 1
+        requested = self.headers.get('Range') if not self.headers.get('If-Range') else None
+        if requested:
+            match = re.fullmatch(r'bytes=(\d*)-(\d*)', requested.strip())
+            valid = bool(match and any(match.groups()) and size)
+            if valid:
+                first, last = match.groups()
+                if first:
+                    start = int(first)
+                    end = min(int(last), size - 1) if last else size - 1
+                else:
+                    length = int(last)
+                    valid = length > 0
+                    start = max(0, size - length)
+                valid = valid and 0 <= start <= end < size
+            if not valid:
+                self.send_response(416)
+                self.send_header('Content-Range', f'bytes */{size}')
+                self.send_header('Content-Length', '0')
+                self.send_header('Accept-Ranges', 'bytes')
+                self.end_headers()
+                return
+        self.send_response(206 if requested else 200)
+        self.send_header('Content-Type', 'video/mp4')
+        self.send_header('Content-Length', str(max(0, end - start + 1)))
+        self.send_header('Accept-Ranges', 'bytes')
+        self.send_header('Last-Modified', self.date_time_string(resolved.stat().st_mtime))
+        if requested:
+            self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+        self.end_headers()
+        if self.command == 'HEAD':
+            return
+        with resolved.open('rb') as media:
+            media.seek(start)
+            remaining = end - start + 1
+            try:
+                while remaining > 0:
+                    chunk = media.read(min(65536, remaining))
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    remaining -= len(chunk)
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # Browsers cancel ranges when seeking or leaving a room.
 
     def do_HEAD(self):
         self.do_GET()
