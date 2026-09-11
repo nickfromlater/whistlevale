@@ -45,120 +45,183 @@ function embeddedBuildShapes(table){
  const {halfWidth:W,halfDepth:D,top}=table;
  const rnd=embeddedBuildRandom(0x59a1);
  const line=(...points)=>points;
+ const clampX=x=>Math.max(-W+1.4,Math.min(W-1.4,x));
+ const clampZ=z=>Math.max(-D+1.4,Math.min(D-1.4,z));
  const stages=[];
 
- // 1 — the gorge and the line through it.
- const ridge=[],rail=[],gorge=[];
- for(let i=0;i<=26;i++){
-  const t=i/26;
-  ridge.push([-W+t*2*W,top+16+Math.sin(t*5.1)*7.4+Math.cos(t*2.3)*4.2,-D*.82]);
- }
- for(let i=0;i<=40;i++)rail.push(embeddedBuildRail(table,i/40));
- for(let i=0;i<=18;i++){
-  const t=i/18;
-  gorge.push([-W*.12+Math.sin(t*3.3)*W*.1,top+9-t*9,-D*.55+t*D*1.5]);
- }
- stages.push({lines:[ridge,rail,gorge,
-  // The bridge deck carrying the line over the cut.
-  line([-W*.30,top+7.1,-D*.06],[W*.14,top+7.1,D*.05]),
-  line([-W*.30,top+5.6,-D*.06],[W*.14,top+5.6,D*.05]),
-  line([-W*.30,top+7.1,-D*.06],[-W*.30,top+.4,-D*.06]),
-  line([W*.14,top+7.1,D*.05],[W*.14,top+.4,D*.05])
- ]});
+ // A closed contour at one height. Nested rings are what make a wireframe read
+ // as a landform instead of a scribble, so the mountain is drawn the way a
+ // survey would draw it.
+ const ring=(cx,cz,rx,rz,y,wobble,seed)=>{
+  const r=embeddedBuildRandom(seed),out=[];
+  for(let i=0;i<=22;i++){
+   const a=i/22*Math.PI*2,k=1+(r()-.5)*wobble;
+   out.push([clampX(cx+Math.cos(a)*rx*k),y,clampZ(cz+Math.sin(a)*rz*k)]);
+  }
+  return out;
+ };
 
- // 2 — rock faces either side of the cut.
- const rock=[];
- for(let i=0;i<9;i++){
-  const t=i/8,side=i%2?1:-1;
-  const x=-W*.12+side*(W*.13+rnd()*W*.1),z=-D*.5+t*D*1.4;
-  rock.push(line([x,top,z],[x+side*2.4,top+6+rnd()*5,z-1.6],[x+side*1.1,top+10+rnd()*6,z+2.2]));
+ // 1 — the ground, the massif and the line across it.
+ const ground=[[-W,top,-D],[W,top,-D],[W,top,D],[-W,top,D],[-W,top,-D]];
+ const massif=[];
+ const hill=(cx,cz,rx,rz,height,steps,seed)=>{
+  const rings=[];
+  for(let i=0;i<steps;i++){
+   const t=i/(steps-1);
+   rings.push(ring(cx,cz,rx*(1-t*.82),rz*(1-t*.82),top+1+t*height,.16,seed+i));
+  }
+  massif.push(...rings);
+  // Eight fall lines from the summit to the foot, each following the contours
+  // it crosses, so the slope has surface rather than floating outlines.
+  for(let k=0;k<8;k++){
+   const step=Math.round(k/8*22);
+   massif.push(rings.map(r=>r[step%22]).reverse());
+  }
+  const summit=rings[rings.length-1];
+  massif.push(summit.filter((_,i)=>i%3===0).map(([x,y,z])=>[x,y+.9,z]).concat([summit[0]]));
+ };
+ hill(-W*.34,-D*.34,W*.52,D*.62,15.5,5,0x11);
+ hill(W*.46,-D*.42,W*.30,D*.34,9.5,4,0x31);
+ const rail=[],sleepers=[];
+ for(let i=0;i<=44;i++)rail.push(embeddedBuildRail(table,i/44));
+ for(let i=0;i<=44;i+=2){
+  const [x,y,z]=embeddedBuildRail(table,i/44),[nx,,nz]=embeddedBuildRail(table,Math.min(1,i/44+.02));
+  const a=Math.atan2(nz-z,nx-x),ox=Math.sin(a)*1.5,oz=-Math.cos(a)*1.5;
+  sleepers.push(line([x-ox,y,z-oz],[x+ox,y,z+oz]));
  }
- for(let i=0;i<6;i++){
-  const t=i/5;
-  rock.push(line([-W+t*W*.7,top+2,-D*.7+rnd()*D*.4],[-W*.9+t*W*.7,top+11+rnd()*7,-D*.75]));
+ stages.push({lines:[ground,...massif,rail,...sleepers]});
+
+ // 2 — the cut, and the truss that carries the line over it.
+ const cutX=W*.06,rock=[];
+ for(const side of[-1,1]){
+  const wall=[];
+  for(let i=0;i<=16;i++){
+   const t=i/16;
+   wall.push([clampX(cutX+side*(4.6+Math.sin(t*4.1)*1.5)),top+7.4-t*.6,clampZ(-D*.62+t*D*1.28)]);
+  }
+  rock.push(wall);
+  const foot=wall.map(([x,,z])=>[x-side*1.9,top+.4,z]);
+  rock.push(foot);
+  for(let i=0;i<=16;i+=2)rock.push(line(wall[i],foot[i]));
+ }
+ const deckZ0=-D*.10,deckZ1=D*.10,deckY=top+7.2;
+ for(const z of[deckZ0,deckZ1]){
+  rock.push(line([cutX-7.4,deckY,z],[cutX+7.4,deckY,z]));
+  rock.push(line([cutX-7.4,deckY-1.5,z],[cutX+7.4,deckY-1.5,z]));
+ }
+ for(let i=0;i<=4;i++){
+  const x=cutX-7.4+i*(14.8/4);
+  rock.push(line([x,deckY,deckZ0],[x,deckY,deckZ1]));
+  rock.push(line([x,deckY,deckZ0],[x,deckY-1.5,deckZ0]),line([x,deckY,deckZ1],[x,deckY-1.5,deckZ1]));
+  if(i<4){
+   const x2=cutX-7.4+(i+1)*(14.8/4);
+   rock.push(line([x,deckY-1.5,deckZ0],[x2,deckY,deckZ0]));
+  }
  }
  stages.push({lines:rock});
 
- // 3 — the station platform and the shrine, with its torii.
- const box=(cx,cy,cz,w,h,d)=>{
-  const X=w/2,Y=h/2,Z=d/2,c=[[-1,-1],[1,-1],[1,1],[-1,1]];
-  const out=[];
-  for(const y of[-Y,Y])out.push(c.map(([a,b])=>[cx+a*X,cy+y,cz+b*Z]).concat([[cx-X,cy+y,cz-Z]]));
-  for(const [a,b] of c)out.push(line([cx+a*X,cy-Y,cz+b*Z],[cx+a*X,cy+Y,cz+b*Z]));
+ // 3 — the station under its long roof, and the shrine behind its torii.
+ const hall=(cx,cy,cz,w,h,d,ridge)=>{
+  const X=w/2,Z=d/2,out=[];
+  out.push([[cx-X,cy,cz-Z],[cx+X,cy,cz-Z],[cx+X,cy,cz+Z],[cx-X,cy,cz+Z],[cx-X,cy,cz-Z]]);
+  out.push([[cx-X,cy+h,cz-Z],[cx+X,cy+h,cz-Z],[cx+X,cy+h,cz+Z],[cx-X,cy+h,cz+Z],[cx-X,cy+h,cz-Z]]);
+  for(const [a,b] of[[-1,-1],[1,-1],[1,1],[-1,1]])out.push(line([cx+a*X,cy,cz+b*Z],[cx+a*X,cy+h,cz+b*Z]));
+  out.push(line([cx-X,cy+h,cz],[cx,cy+h+ridge,cz-Z*.1],[cx+X,cy+h,cz]));
+  out.push(line([cx,cy+h+ridge,cz-Z],[cx,cy+h+ridge,cz+Z]));
   return out;
  };
- const station=[...box(-W*.52,top+3.1,D*.30,13.5,4.6,6.2),
-  ...box(-W*.52,top+6.2,D*.30,15.6,.5,8.2)];
- const shrineX=W*.52,shrineZ=-D*.34;
- const shrine=[...box(shrineX,top+3.4,shrineZ,6.4,5.2,6.4),
-  ...box(shrineX,top+6.6,shrineZ,8.6,.5,8.6),
-  line([shrineX-3.1,top,shrineZ+7.4],[shrineX-3.1,top+6.1,shrineZ+7.4]),
-  line([shrineX+3.1,top,shrineZ+7.4],[shrineX+3.1,top+6.1,shrineZ+7.4]),
-  line([shrineX-4.3,top+6.1,shrineZ+7.4],[shrineX+4.3,top+6.1,shrineZ+7.4]),
-  line([shrineX-3.8,top+4.9,shrineZ+7.4],[shrineX+3.8,top+4.9,shrineZ+7.4])];
- stages.push({lines:[...station,...shrine]});
+ const stationX=clampX(-W*.60),stationZ=clampZ(D*.30);
+ const shrineX=clampX(W*.58),shrineZ=clampZ(-D*.10);
+ const build=[...hall(stationX,top,stationZ,14.5,3.4,5.6,1.8),
+  ...hall(shrineX,top,shrineZ,5.6,3.6,5.6,2.2)];
+ build.push([[stationX-9,top+.5,stationZ-4.2],[stationX+9,top+.5,stationZ-4.2],[stationX+9,top+.5,stationZ-3],[stationX-9,top+.5,stationZ-3],[stationX-9,top+.5,stationZ-4.2]]);
+ for(const dz of[4.6,6.4]){
+  build.push(line([shrineX-2.7,top,shrineZ+dz],[shrineX-2.7,top+4.4,shrineZ+dz]));
+  build.push(line([shrineX+2.7,top,shrineZ+dz],[shrineX+2.7,top+4.4,shrineZ+dz]));
+  build.push(line([shrineX-3.8,top+4.4,shrineZ+dz],[shrineX+3.8,top+4.4,shrineZ+dz]));
+  build.push(line([shrineX-3.2,top+3.5,shrineZ+dz],[shrineX+3.2,top+3.5,shrineZ+dz]));
+ }
+ stages.push({lines:build});
 
  // 4 — lanterns along the approach.
  const lanterns=[];
- for(let i=0;i<11;i++){
-  const t=i/10,[x,y,z]=embeddedBuildRail(table,t*.9+.05);
-  const ox=x+(i%2?3.4:-3.4),oz=z+(i%2?2.6:-2.6);
-  lanterns.push(line([ox,top,oz],[ox,top+3.4,oz]),
-   ...box(ox,top+3.9,oz,1.1,1.1,1.1));
+ for(let i=0;i<12;i++){
+  const t=.06+i/11*.88,[x,y,z]=embeddedBuildRail(table,t);
+  const side=i%2?1:-1,ox=clampX(x+side*3.6),oz=clampZ(z+side*2.4);
+  lanterns.push(line([ox,top,oz],[ox,top+3.2,oz]));
+  lanterns.push([[ox-.7,top+3.2,oz],[ox+.7,top+3.2,oz],[ox+.7,top+4.3,oz],[ox-.7,top+4.3,oz],[ox-.7,top+3.2,oz]]);
  }
  stages.push({lines:lanterns});
 
- // 5 — the forest, as open cones.
+ // 5 — the forest. Cones need a base ring or they read as spiders.
  const forest=[];
- for(let i=0;i<46;i++){
-  const x=-W*.95+rnd()*W*1.9,z=-D*.92+rnd()*D*1.84;
-  if(Math.abs(x+W*.12)<W*.10&&Math.abs(z)<D*.7)continue; // keep the cut clear
-  const h=4.4+rnd()*5.6,r=1.1+rnd()*1.1,base=top+(rnd()*1.2);
+ for(let i=0;i<74;i++){
+  const x=clampX(-W*.94+rnd()*W*1.88),z=clampZ(-D*.92+rnd()*D*1.84);
+  if(Math.abs(x-cutX)<6.4&&Math.abs(z)<D*.7)continue;
+  if(Math.abs(x-stationX)<9&&Math.abs(z-stationZ)<5)continue;
+  const h=2.8+rnd()*3.4,r=.85+rnd()*.6,base=top+.2;
   const apex=[x,base+h,z];
-  for(let k=0;k<4;k++){
-   const a=k/4*Math.PI*2+rnd()*.4;
-   forest.push(line(apex,[x+Math.cos(a)*r,base,z+Math.sin(a)*r]));
-  }
+  const ringPts=[];
+  for(let k=0;k<=6;k++){const a=k/6*Math.PI*2;ringPts.push([x+Math.cos(a)*r,base,z+Math.sin(a)*r]);}
+  forest.push(ringPts);
+  for(let k=0;k<6;k+=2)forest.push(line(apex,ringPts[k]));
  }
  stages.push({lines:forest});
 
  // 6 — the local train on the line.
  const train=[];
  for(let c=0;c<3;c++){
-  const t=.46+c*.055,[x,y,z]=embeddedBuildRail(table,t);
+  const t=.40+c*.058,[x,y,z]=embeddedBuildRail(table,t);
   const [nx,,nz]=embeddedBuildRail(table,t+.02);
-  const a=Math.atan2(nz-z,nx-x);
-  const car=box(x,y+1.5,z,4.6,2.3,2.1);
-  for(const poly of car)train.push(poly.map(([px,py,pz])=>{
-   const dx=px-x,dz=pz-z;
-   return[x+dx*Math.cos(a)-dz*Math.sin(a),py,z+dx*Math.sin(a)+dz*Math.cos(a)];
-  }));
+  const a=Math.atan2(nz-z,nx-x),ca=Math.cos(a),sa=Math.sin(a);
+  const at=(dx,dy,dz)=>[x+dx*ca-dz*sa,y+dy,z+dx*sa+dz*ca];
+  const X=2.3,Z=1.0;
+  train.push([at(-X,.2,-Z),at(X,.2,-Z),at(X,.2,Z),at(-X,.2,Z),at(-X,.2,-Z)]);
+  train.push([at(-X,2.3,-Z),at(X,2.3,-Z),at(X,2.3,Z),at(-X,2.3,Z),at(-X,2.3,-Z)]);
+  for(const [dx,dz] of[[-X,-Z],[X,-Z],[X,Z],[-X,Z]])train.push(line(at(dx,.2,dz),at(dx,2.3,dz)));
+  train.push(line(at(-X,2.3,0),at(0,2.9,0),at(X,2.3,0)));
  }
  stages.push({lines:train});
 
- // 7 — the river down the cut, and the fall.
- const river=[],fallX=-W*.12;
- for(let i=0;i<=22;i++){
-  const t=i/22;
-  river.push([fallX+Math.sin(t*3.3)*W*.1,top+.4-t*.3,-D*.5+t*D*1.42]);
+ // 7 — the river down the cut, the fall, and the pool it lands in.
+ const water=[],river=[];
+ for(let i=0;i<=24;i++){
+  const t=i/24;
+  river.push([clampX(cutX+Math.sin(t*3.1)*2.4),top+.5-t*.25,clampZ(-D*.58+t*D*1.36)]);
  }
- const water=[river];
- for(let i=0;i<7;i++){
-  const x=fallX-2.2+i*.72;
-  water.push(line([x,top+6.6,-D*.1],[x-.3,top+1.1,D*.02]));
+ water.push(river);
+ for(let i=0;i<6;i++){
+  const x=cutX-2.4+i*.96;
+  water.push(line([x,top+7,-D*.02],[x-.2,top+1.2,D*.10]));
  }
- water.push(line([fallX-3,top+1.1,D*.02],[fallX+3,top+1.1,D*.06]));
+ for(let i=0;i<4;i++){
+  const y=top+1.6+i*1.3;
+  water.push(line([cutX-2.6,y,-D*.01+i*.2],[cutX+2.6,y,-D*.01+i*.2]));
+ }
+ water.push(ring(cutX,D*.16,4.2,2.6,top+.8,.12,0x77));
  stages.push({lines:water});
 
- // 8 — lighting adds no new shapes; the whole sketch warms, then gives way.
+ // 8 — lighting adds no new shapes; the sketch warms, then gives way.
  stages.push({lines:[]});
  return stages;
 }
 
 // Draw whatever has been built so far. `revealed` is how many stages are done;
 // `edge` is 0..1 through the newest one, so it strokes on rather than popping.
+function embeddedBuildVellum(ctx,table,warm){
+ const {halfWidth:W,halfDepth:D,top}=table;
+ const corners=[[-W,top+.05,-D],[W,top+.05,-D],[W,top+.05,D],[-W,top+.05,D]].map(p=>project(p));
+ if(!corners.every(c=>c&&c.visible))return false;
+ ctx.save();ctx.beginPath();
+ corners.forEach((c,i)=>i?ctx.lineTo(c.x,c.y):ctx.moveTo(c.x,c.y));
+ ctx.closePath();
+ ctx.globalAlpha=.82*warm;ctx.fillStyle='#16231d';ctx.fill();
+ ctx.globalAlpha=.5*warm;ctx.strokeStyle='#c2a672';ctx.lineWidth=1;ctx.stroke();
+ ctx.restore();return true;
+}
+
 function embeddedBuildDraw(ctx,stages,revealed,edge,warm){
- const cream='#efe0b4',brass='#c9ab73';
+ const cream='#f6ecc9',brass='#bda067';
  ctx.save();
  ctx.lineJoin='round';ctx.lineCap='round';
  for(let s=0;s<Math.min(revealed+1,stages.length);s++){
@@ -220,6 +283,7 @@ function embeddedBuildFrame(active){
  const now=performance.now();
  build.edge=reduceMotion?1:Math.min(1,(now-build.at)/620);
  build.warm=Math.min(1,build.warm+(reduceMotion?1:.06));
+ embeddedBuildVellum(ctx,active.project.table,build.warm);
  embeddedBuildDraw(ctx,build.stages,build.revealed,build.edge,build.warm);
 }
 
