@@ -271,3 +271,44 @@
 @media(max-width:700px){.moonlight-access{left:16px;bottom:96px;padding:10px 13px}.moonlight-access>span{font-size:16px}.moonlight-access small{font-size:10px}}
 
 .moonlight-focused #hallInvitation{display:none}
+
+/* Embedded projects — somebody else's renderer, on the table.
+   The stage never takes pointer events while the work is docked: the room's
+   camera stays in charge until a visitor deliberately steps closer. */
+#embedStage{position:fixed;inset:0;z-index:5;pointer-events:none}
+#embedStage[hidden]{display:none!important}
+.embed-surface{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;backface-visibility:hidden}
+.embed-frame{display:block;border:0;background:#0e1512;pointer-events:none;opacity:0;transition:opacity .5s}
+.embed-frame.ready{opacity:1}
+.embed-waiting{position:absolute;left:0;top:0;font-style:italic;color:#b9c4ae}
+.embed-plate{display:grid;place-items:center;width:640px;height:400px;padding:32px;background:#22302a;color:#cfd8c4;
+ font:17px/1.6 Georgia,serif;text-align:center;border:1px solid #6d7f6a}
+/* Stepping closer hands the project the whole view and its own controls back. */
+body.embed-close .embed-surface{inset:0;width:100%;height:100%;transform:none!important}
+body.embed-close .embed-frame{width:100%!important;height:100%!important;pointer-events:auto}
+body.embed-close .embed-plate{width:100%;height:100%}
+
+.embed-credit-dock{position:absolute;left:22px;bottom:22px;max-width:min(430px,calc(100vw - 44px));pointer-events:auto;
+ background:#1d2a24f2;border:1px solid #7d8a6f80;border-left:3px solid #c2a672;border-radius:5px;padding:15px 18px;
+ backdrop-filter:blur(9px);box-shadow:0 14px 42px #08120e66;color:#e3e7d5}
+.embed-credit-lead{margin:0 0 5px;font:19px/1.25 Georgia,serif;color:#f1ead2}
+.embed-credit-lead em{display:block;font:italic 13px Georgia,serif;color:#bcc4aa;margin-top:3px}
+.embed-credit-by{margin:0 0 6px;font:14px/1.5 Georgia,serif;color:#dfe4cf}
+.embed-credit-by a{color:#ecd8a3;text-underline-offset:3px}
+.embed-credit-meta{margin:0;font:11px/1.6 Arial,sans-serif;color:#a8b39a}
+.embed-credit-meta a{color:#d9c88f;text-underline-offset:3px}
+.embed-credit-note{margin:7px 0 0;font:11px/1.55 Arial,sans-serif;color:#95a08c;border-top:1px solid #7d8a6f45;padding-top:7px}
+
+.embed-closer{position:absolute;right:22px;bottom:22px;pointer-events:auto;min-height:44px;padding:12px 18px;
+ border:1px solid #b3a06b;border-radius:5px;background:#2a3d33ee;color:#f0e3bf;font:14px Georgia,serif;cursor:pointer;
+ backdrop-filter:blur(8px)}
+.embed-closer:hover{background:#354b3e}
+.embed-closer:focus-visible{outline:2px solid #ecd8a3;outline-offset:3px}
+
+@media(max-width:760px){
+ .embed-credit-dock{left:12px;right:12px;bottom:96px;max-width:none;padding:12px 14px}
+ .embed-credit-lead{font-size:17px}
+ .embed-credit-by{font-size:13px}
+ .embed-closer{right:12px;bottom:44px}
+}
+@media(prefers-reduced-motion:reduce){.embed-surface{will-change:auto}}

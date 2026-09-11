@@ -1,0 +1,13 @@
+{
+  "name": "yamaai-mountain-railway",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "description": "An authored Japanese mountain railway in Three.js r185.",
+  "scripts": {
+    "dev": "python3 serve.py",
+    "test": "node scripts/verify.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": { "node": ">=20.6" }
+}

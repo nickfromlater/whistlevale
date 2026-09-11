@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#d4d5c3">
+<title>Yamaai — A mountain railway</title>
+<link rel="stylesheet" href="./style.css?v=compact-20260911">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script>
+</head>
+<body>
+<canvas id="scene" aria-label="Interactive miniature Japanese mountain railway. Drag to orbit and scroll to inspect." role="img"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<header>
+ <div class="identity" title="Yamaai — A mountain railway"><span class="seal" lang="ja">山<br>あい</span><div class="wordmark">YAMAAI</div></div>
+ <div class="environment" role="group" aria-label="Environment">
+  <button data-mode="day" aria-pressed="false" aria-label="Clear day" title="Clear day"><span aria-hidden="true">☀</span></button>
+  <button data-mode="evening" class="active" aria-pressed="true" aria-label="Golden evening" title="Golden evening"><span aria-hidden="true">◒</span></button>
+  <button data-mode="rain" aria-pressed="false" aria-label="Rainy dusk" title="Rainy dusk"><span aria-hidden="true">☂</span></button>
+  <button data-mode="night" aria-pressed="false" aria-label="Night" title="Night"><span aria-hidden="true">☾</span></button>
+ </div>
+</header>
+<div id="loading" role="status"><div class="loader-mark">山あい</div><span>Preparing the mountain line</span><i></i></div>
+<div id="error" role="alert" hidden></div>
+<div class="bottom-left"><div class="service"><span class="live-dot"></span><span>LOCAL 07</span><span class="divider">/</span><span id="journey">Along the valley</span></div><div class="hint" id="hint">Drag to explore <span>·</span> Scroll to move closer</div></div>
+<div class="bottom-right">
+ <div id="settings" role="group" aria-label="Scene adjustments" hidden>
+  <label><span>Rain</span><input id="rain" aria-label="Rain intensity" type="range" min="0" max="100" value="0"><output id="rainValue" for="rain">0%</output></label>
+  <label><span>Wind</span><input id="wind" aria-label="Wind strength" type="range" min="0" max="100" value="45"><output id="windValue" for="wind">45%</output></label>
+  <label><span>Train</span><input id="speed" aria-label="Train speed" type="range" min="25" max="180" value="100"><output id="speedValue" for="speed">1×</output></label>
+  <label class="view-picker"><span>View</span><select id="view" aria-label="Camera view"><option value="hero">Hero view</option><option value="night">Moonlit gorge</option><option value="cascade">Cascade</option><option value="station">Station</option><option value="bridge">Bridge</option><option value="train">Train</option><option value="tunnel">Tunnel</option><option value="emergence">Emergence</option><option value="river">River</option><option value="shrine">Shrine</option><option value="lanterns">Lantern detail</option><option value="wide">Diorama</option></select></label>
+ </div>
+ <div class="actions"><button id="home" aria-label="Return to hero view" title="Hero view (H)">↖</button><button id="cinematic" aria-pressed="false" aria-label="Cinematic camera" title="Cinematic camera"><span class="camera-icon" aria-hidden="true"></span></button><button id="pause" aria-pressed="false" aria-label="Pause scene" title="Pause / resume (Space)">Ⅱ</button><button id="tune" aria-label="Adjust scene" aria-controls="settings" aria-expanded="false" title="Adjust scene"><span class="tune-icon" aria-hidden="true">☷</span></button></div>
+</div>
+<script type="module" src="./main.js?v=cinematic-20260911"></script>
+</body></html>

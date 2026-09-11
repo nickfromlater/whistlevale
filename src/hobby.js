@@ -71,6 +71,7 @@ function activateHouseRoom(key){
  if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
  hobby.room=key;hobby.scene=scene;hobby.spot=-1;
+ if(typeof embeddedEnter==='function')embeddedEnter(key);
  syncRoomControls();
  document.body.classList.toggle('annex',key!=='valley');document.body.dataset.room=key;shadowDirty=true;
  setView('room',false);houseOrbit(key);cameraTarget=orbit.target.slice();cameraPos=add(orbit.target,[Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance,Math.sin(orbit.pitch)*orbit.distance,Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*orbit.distance]);
@@ -467,7 +468,7 @@ function startHouse(){
  const atmosphereClick=$('ambienceBtn').onclick;
  $('ambienceBtn').onclick=e=>{atmosphereClick(e);$('soundPanel').hidden=true;if($('playlistPanel'))$('playlistPanel').hidden=true;$('playlistBtn')?.setAttribute('aria-expanded','false');$('playlistBtn')?.classList.remove('on');};
  try{
-  initHouseArt();hobby.life=buildValleyLife();initWalkingFigures();if(typeof initHouseMap==='function')initHouseMap();hobby.ready=true;shadowDirty=true;updateUI();
+  initHouseArt();if(typeof initEmbeddedArt==='function')initEmbeddedArt();hobby.life=buildValleyLife();initWalkingFigures();if(typeof initHouseMap==='function')initHouseMap();hobby.ready=true;shadowDirty=true;updateUI();
   if(typeof initQuietControls==='function')initQuietControls();
   if(typeof restoreCollectionSelections==='function')restoreCollectionSelections();
   if(typeof initTrainCabinet==='function')initTrainCabinet();
