@@ -109,6 +109,7 @@
 <div id="loading"><div class="load-inner"><svg viewBox="0 0 100 70" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M6 60h88M12 57V30Q12 3 50 3T88 30v27M19 57V31Q19 11 50 11T81 31v26M32 49V27h36v22M37 27v-8h26v8M37 37h26M30 54h40"/><circle cx="39" cy="48" r="5"/><circle cx="61" cy="48" r="5"/><path d="M45 48h10"/></svg><div class="eyebrow">Whistlevale presents</div><h2>The Grand Exhibition</h2><p id="loadingCopy">Lighting the lamps. Opening the wings.</p><div class="load-track"><span></span></div></div></div>
 <script id="communityCatalog">window.HOUSE_COMMUNITY={format:"whistlevale-community",version:1,works:[]};</script>
 <script src="src/community-core.js"></script>
+<script src="src/mesh-memory.js"></script>
 <script src="src/grandhall-data.js"></script>
 <script src="src/grandhall-design.js"></script>
 <script src="src/grandhall-exhibits.js"></script>
@@ -238,13 +239,15 @@ let saved={likes:[],bookmarks:[]};try{const s=JSON.parse(localStorage.getItem('a
 const GL=$('scene').getContext('webgl2',{antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:false});
 const staticMeshes=[],shadowMeshes=[],glassMeshes=[];let assets={},lastTime=0,frameNo=0,lightDirty=true;
 function gpu(cpu,transparent=false){
- const vao=GL.createVertexArray(),buffer=GL.createBuffer(),mesh={vao,buffer,count:cpu.count,bytes:cpu.data.byteLength};
- try{GL.bindVertexArray(vao);GL.bindBuffer(GL.ARRAY_BUFFER,buffer);GL.bufferData(GL.ARRAY_BUFFER,cpu.data,GL.STATIC_DRAW);[3,3,3,1,2].forEach((n,i)=>{GL.enableVertexAttribArray(i);GL.vertexAttribPointer(i,n,GL.FLOAT,false,48,[0,12,24,36,40][i]);});
+ const packed=transparent||cpu.count<50000?{data:cpu.data,indices:null}:compactMeshVertices(cpu.data);
+ const vao=GL.createVertexArray(),buffer=GL.createBuffer(),mesh={vao,buffer,count:cpu.count,bytes:packed.data.byteLength};
+ try{GL.bindVertexArray(vao);GL.bindBuffer(GL.ARRAY_BUFFER,buffer);GL.bufferData(GL.ARRAY_BUFFER,packed.data,GL.STATIC_DRAW);[3,3,3,1,2].forEach((n,i)=>{GL.enableVertexAttribArray(i);GL.vertexAttribPointer(i,n,GL.FLOAT,false,48,[0,12,24,36,40][i]);});
+  if(packed.indices){mesh.ibo=GL.createBuffer();mesh.indexed=true;mesh.bytes+=packed.indices.byteLength;GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER,mesh.ibo);GL.bufferData(GL.ELEMENT_ARRAY_BUFFER,packed.indices,GL.STATIC_DRAW);}
   if(transparent){
    const data=cpu.data,n=cpu.count/3;mesh.centers=new Float64Array(n*3);mesh.center=new Float64Array(3);mesh.depths=new Float64Array(n);mesh.order=new Uint32Array(n);mesh.indices=new Uint32Array(cpu.count);
    for(let i=0;i<n;i++){mesh.order[i]=i;for(let axis=0;axis<3;axis++){const center=(data[i*36+axis]+data[i*36+12+axis]+data[i*36+24+axis])/3;mesh.centers[i*3+axis]=center;mesh.center[axis]+=center/n;}}
    mesh.compareDepth=(a,b)=>mesh.depths[b]-mesh.depths[a]||a-b;
-   mesh.ibo=GL.createBuffer();GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER,mesh.ibo);GL.bufferData(GL.ELEMENT_ARRAY_BUFFER,mesh.indices,GL.DYNAMIC_DRAW);
+   mesh.ibo=GL.createBuffer();mesh.bytes+=mesh.indices.byteLength;GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER,mesh.ibo);GL.bufferData(GL.ELEMENT_ARRAY_BUFFER,mesh.indices,GL.DYNAMIC_DRAW);
   }
   return mesh;
  }catch(error){if(mesh.ibo)GL.deleteBuffer(mesh.ibo);GL.deleteBuffer(buffer);GL.deleteVertexArray(vao);throw error;}
@@ -410,7 +413,7 @@ function setupGL(){main=compileProgram(VS,FS);shadow=compileProgram(VS,SHADOW_FS
  atlasTexture=GL.createTexture();GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,atlasTexture);GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL,true);GL.texImage2D(GL.TEXTURE_2D,0,GL.RGBA,GL.RGBA,GL.UNSIGNED_BYTE,atlas);GL.generateMipmap(GL.TEXTURE_2D);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MIN_FILTER,GL.LINEAR_MIPMAP_LINEAR);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MAG_FILTER,GL.LINEAR);GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL,false);
  depthTexture=GL.createTexture();GL.bindTexture(GL.TEXTURE_2D,depthTexture);GL.texImage2D(GL.TEXTURE_2D,0,GL.DEPTH_COMPONENT24,shadowSize,shadowSize,0,GL.DEPTH_COMPONENT,GL.UNSIGNED_INT,null);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_COMPARE_MODE,GL.COMPARE_REF_TO_TEXTURE);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_COMPARE_FUNC,GL.LEQUAL);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MIN_FILTER,GL.LINEAR);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_MAG_FILTER,GL.LINEAR);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_WRAP_S,GL.CLAMP_TO_EDGE);GL.texParameteri(GL.TEXTURE_2D,GL.TEXTURE_WRAP_T,GL.CLAMP_TO_EDGE);shadowBuffer=GL.createFramebuffer();GL.bindFramebuffer(GL.FRAMEBUFFER,shadowBuffer);GL.framebufferTexture2D(GL.FRAMEBUFFER,GL.DEPTH_ATTACHMENT,GL.TEXTURE_2D,depthTexture,0);GL.drawBuffers([GL.NONE]);GL.readBuffer(GL.NONE);if(GL.checkFramebufferStatus(GL.FRAMEBUFFER)!==GL.FRAMEBUFFER_COMPLETE)throw Error('The hall lighting could not start.');GL.bindFramebuffer(GL.FRAMEBUFFER,null);
  particleVAO=GL.createVertexArray();particleBuffer=GL.createBuffer();GL.bindVertexArray(particleVAO);GL.bindBuffer(GL.ARRAY_BUFFER,particleBuffer);GL.enableVertexAttribArray(0);GL.vertexAttribPointer(0,3,GL.FLOAT,false,24,0);GL.enableVertexAttribArray(1);GL.vertexAttribPointer(1,3,GL.FLOAT,false,24,12);GL.bindVertexArray(null);GL.enable(GL.DEPTH_TEST);GL.disable(GL.CULL_FACE);}
-function paint(p,vp,records){GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,vp);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);for(const r of records){GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}}
+function paint(p,vp,records){GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,vp);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);for(const r of records){GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);if(r.mesh.indexed)GL.drawElements(GL.TRIANGLES,r.mesh.count,GL.UNSIGNED_INT,0);else GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}}
 function paintHallGlass(projection){
  GL.enable(GL.BLEND);GL.blendFunc(GL.SRC_ALPHA,GL.ONE_MINUS_SRC_ALPHA);GL.depthMask(false);
  try{paint(main,projection,glassMeshes);}finally{GL.depthMask(true);GL.disable(GL.BLEND);}
@@ -554,7 +557,7 @@ function sortHallGlassTriangles(mesh,x,y,z){
 const originalPaint=paint;
 paint=function(p,projection,records){const transparent=p===main&&records===glassMeshes;if(transparent)records=sortHallGlass(records);GL.useProgram(p);GL.uniformMatrix4fv(uniform(p,'uVP'),false,projection);GL.uniformMatrix4fv(uniform(p,'uLightVP'),false,shadowVP);let tex=null;for(const r of records){if(!recordVisible(r))continue;if(p===main){const room=ROOMS[r.room??state.room];GL.uniform3f(uniform(p,'uRoomOrigin'),room.x,room.height*.63,room.z);GL.uniform2f(uniform(p,'uRoomSize'),room.width,room.depth);}if(p===shadow){const center=ROOMS[state.room];if(r.room!=null&&r.room!==state.room&&Math.hypot(ROOMS[r.room].x-center.x,ROOMS[r.room].z-center.z)>39)continue;}
   if(p===main){const desired=r.texture||atlasTexture;if(tex!==desired){GL.activeTexture(GL.TEXTURE0);GL.bindTexture(GL.TEXTURE_2D,desired);tex=desired;}}
-  GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);if(transparent){sortHallGlassTriangles(r.mesh,r.glassX,r.glassY,r.glassZ);GL.drawElements(GL.TRIANGLES,r.mesh.count,GL.UNSIGNED_INT,0);}else GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}
+  GL.uniformMatrix4fv(uniform(p,'uModel'),false,r.model);GL.bindVertexArray(r.mesh.vao);if(transparent){sortHallGlassTriangles(r.mesh,r.glassX,r.glassY,r.glassZ);GL.drawElements(GL.TRIANGLES,r.mesh.count,GL.UNSIGNED_INT,0);}else if(r.mesh.indexed)GL.drawElements(GL.TRIANGLES,r.mesh.count,GL.UNSIGNED_INT,0);else GL.drawArrays(GL.TRIANGLES,0,r.mesh.count);}
 };
 function recenterLight(){const r=ROOMS[state.room];shadowVP=mm(ortho(-35,35,-35,35,.1,115),lookAt([r.x-23,35,r.z+17],[r.x,0,r.z-5]));lightDirty=true;}
 
@@ -758,8 +761,11 @@ function buildPublishedPottery(roomIndex=null,onlyId=null){
  // Translate the shared model's surface codes into this renderer's palette.
  for(let i=9;i<b.data.length;i+=12){const m=b.data[i];b.data[i]=m===4?52:m===5?22:m===6?43:m;}
  // Published architectural panes use the museum's clear, non-shadow glass pass.
- const clear=new Builder(),opaque=new Builder();for(let i=0;i<b.data.length;i+=36){const target=(b.data[i+9]===76||(b.data[i+9]>=78&&b.data[i+9]<=80)||b.data[i+9]===82||b.data[i+9]===84)?clear.data:opaque.data;for(let j=0;j<36;j++)target.push(b.data[i+j]);}
- if(opaque.data.length)addRecord(gpu(opaque.mesh()),I,bay.room,true,{exhibitId:exhibit.id});
+ const clear=new Builder();let clearLength=0;
+ for(let i=9;i<b.data.length;i+=36)if(b.data[i]===76||(b.data[i]>=78&&b.data[i]<=80)||b.data[i]===82||b.data[i]===84)clearLength+=36;
+ const opaque=new Float32Array(b.data.length-clearLength);let offset=0;
+ for(let i=0;i<b.data.length;i+=36){const transparent=b.data[i+9]===76||(b.data[i+9]>=78&&b.data[i+9]<=80)||b.data[i+9]===82||b.data[i+9]===84;for(let j=0;j<36;j++)if(transparent)clear.data.push(b.data[i+j]);else opaque[offset++]=b.data[i+j];}
+ if(opaque.length)addRecord(gpu({data:opaque,count:opaque.length/12}),I,bay.room,true,{exhibitId:exhibit.id});
  if(clear.data.length)addRecord(gpu(clear.mesh(),true),I,bay.room,false,{displayGlass:true,exhibitGlass:true,exhibitId:exhibit.id});}
 }
 

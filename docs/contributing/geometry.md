@@ -80,6 +80,13 @@ Do not call `b.mesh()` inside a contribution: the room owns upload and disposal.
 Keep procedural detail deterministic with coordinate hashes; avoid consuming
 the shared random sequence.
 
+Large opaque meshes share byte-identical vertex records during GPU upload.
+Positions, normals, colors, materials, UV seams and triangle order stay intact;
+transparent triangles retain their sortable buffers. Geometry budgets still
+count the original emitted vertices. Do not increase a model's allowance based
+on compression. Keep builder data in double precision until upload and let the
+room release its vertex and index buffers together through `disposeMesh`.
+
 Celestial materials 78–80 and 82 use the existing transparent pass, with depth
 testing, no depth writes, no opaque shadows and the same buffer disposal as glazing.
 All effect geometry must fit its declared footprint. Both renderers share the

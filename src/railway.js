@@ -272,27 +272,39 @@ void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
 }`;
 function program(vs,fs){function compile(s,t){let sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,compile(vs,gl.VERTEX_SHADER));gl.attachShader(p,compile(fs,gl.FRAGMENT_SHADER));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));p.u={};return p}
 function uniform(p,n){return p.u[n]??(p.u[n]=gl.getUniformLocation(p,n))}const uf=(p,n,x)=>gl.uniform1f(uniform(p,n),x), uv3=(p,n,v)=>gl.uniform3fv(uniform(p,n),v), um=(p,n,m)=>gl.uniformMatrix4fv(uniform(p,n),false,m);
-function uploadTriangles(data){let vao=gl.createVertexArray();gl.bindVertexArray(vao);let buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);let stride=48;[3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,stride,[0,12,24,36,40][i])});gl.bindVertexArray(null);return{vao,buf,count:data.length/12}}
+function uploadTriangles(data,compact=true,owned=false){
+ const floats=owned?data:new Float32Array(data),packed=compact?compactMeshVertices(floats):{data:floats,indices:null};
+ const vao=gl.createVertexArray(),buf=gl.createBuffer(),mesh={vao,buf,count:data.length/12,bytes:packed.data.byteLength};
+ try{
+  gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,packed.data,gl.STATIC_DRAW);
+  [3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,48,[0,12,24,36,40][i]);});
+  if(packed.indices){mesh.ibo=gl.createBuffer();mesh.indexed=true;mesh.bytes+=packed.indices.byteLength;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,packed.indices,gl.STATIC_DRAW);}
+  return mesh;
+ }catch(error){disposeMesh(mesh);throw error;}finally{gl.bindVertexArray(null);}
+}
 // Material 76 is glazing; 78–80/82 are celestial effects; 84 is projector haze.
-// Existing meshes keep their exact
-// upload path; only opted-in triangles own an additional GPU buffer/index set.
-function upload(data){
+// Transparent triangles keep a separate, sortable stream; opaque triangles
+// share identical vertices without changing their emitted order or attributes.
+function upload(data,compact=true){
  let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84){first=i-9;break;}
- if(first<0)return uploadTriangles(data);
- const opaque=[],clear=[];for(let i=0;i<data.length;i+=36){const target=(data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84)?clear:opaque;for(let j=0;j<36;j++)target.push(data[i+j]);}
+ if(first<0)return uploadTriangles(data,compact);
+ // A few transparent panes must not duplicate the entire scenery in JS arrays.
+ let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84)clearLength+=36;
+ const opaque=new Float32Array(data.length-clearLength),clear=[];let offset=0;
+ for(let i=0;i<data.length;i+=36){const transparent=data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
  let mesh,glass;
  try{
-  mesh=uploadTriangles(opaque);glass=uploadTriangles(clear);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;
+  mesh=uploadTriangles(opaque,compact,true);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
   glass.centers=[];for(let i=0;i<clear.length;i+=36)glass.centers.push([(clear[i]+clear[i+12]+clear[i+24])/3,(clear[i+1]+clear[i+13]+clear[i+25])/3,(clear[i+2]+clear[i+14]+clear[i+26])/3]);
   glass.center=[0,0,0];for(const point of glass.centers)for(let axis=0;axis<3;axis++)glass.center[axis]+=point[axis]/glass.centers.length;
   glass.indices=new Uint32Array(glass.count);glass.order=glass.centers.map((_,i)=>i);glass.depths=new Float64Array(glass.order.length);
-  glass.ibo=gl.createBuffer();gl.bindVertexArray(glass.vao);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,glass.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,glass.indices,gl.DYNAMIC_DRAW);gl.bindVertexArray(null);return mesh;
+  glass.ibo=gl.createBuffer();mesh.bytes+=glass.indices.byteLength;glass.bytes+=glass.indices.byteLength;gl.bindVertexArray(glass.vao);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,glass.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,glass.indices,gl.DYNAMIC_DRAW);gl.bindVertexArray(null);return mesh;
  }catch(error){if(mesh)disposeMesh(mesh);else if(glass)disposeMesh(glass);throw error;}
 }
 const architecturalGlassDraws=[];
 function draw(mesh,model=I,p=mainProgram){
  if(!mesh)return;const count=mesh.opaqueCount??mesh.count;
- if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);gl.drawArrays(gl.TRIANGLES,0,count);}
+ if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);if(mesh.indexed)gl.drawElements(gl.TRIANGLES,count,gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,count);}
  if(mesh.glass&&p===mainProgram)architecturalGlassDraws.push({mesh:mesh.glass,model:Array.from(model)});
 }
 function drawArchitecturalGlass(){
@@ -470,7 +482,7 @@ function workshopUpdateSimulation(dt){night=mix(night,targetNight,1-Math.exp(-dt
 const mapctx=$('map').getContext('2d');
 function drawMap(){const c=mapctx,w=c.canvas.width,h=c.canvas.height;c.clearRect(0,0,w,h);let tx=x=>w*.48+x*w*.0137,tz=z=>h*.50+z*h*.023;let selected=chosenRoute==='highline'?highline:lowline;c.strokeStyle='#8fada326';c.lineWidth=5;c.beginPath();for(let z=-20;z<=20;z+=.5){let x=riverX(z);z===-20?c.moveTo(tx(x),tz(z)):c.lineTo(tx(x),tz(z))}c.stroke();function path(edge,color,width){c.strokeStyle=color;c.lineWidth=width;c.lineJoin='round';c.lineCap='round';c.beginPath();for(let d=0;d<edge.length;d+=.35){let p=edge.at(d).p;d===0?c.moveTo(tx(p[0]),tz(p[2])):c.lineTo(tx(p[0]),tz(p[2]))}let p=edge.at(edge.length).p;c.lineTo(tx(p[0]),tz(p[2]));c.stroke()}path(highline,'#647c6d66',2.0);path(lowline,'#647c6d66',2.0);path(yard,'#647c6d55',1.3);path(selected,'#dfc18a',2.3);path(common,'#b8c5a4',2.1);c.fillStyle='#283d30';c.strokeStyle='#ebd9ab';c.lineWidth=1.5;c.fillRect(tx(-15),tz(14)+5,26,5);c.strokeRect(tx(-15),tz(14)+5,26,5);c.fillStyle='#aebfa7';c.font='11px Arial';c.textAlign='center';c.fillText('ALDER VALE',tx(-11),tz(14)+27);c.beginPath();c.arc(tx(0),tz(14),4.3,0,TAU);c.fillStyle='#e6c581';c.fill();for(let o of[11.55,8.37,5.19,2.7]){let p=where(travel-o).p;c.beginPath();c.arc(tx(p[0]),tz(p[2]),2.25,0,TAU);c.fillStyle='#d9d3ac';c.fill()}let p=leadInfo.p;c.shadowColor='#f0ce88';c.shadowBlur=9;c.fillStyle='#fbe2ac';c.beginPath();c.arc(tx(p[0]),tz(p[2]),3.9,0,TAU);c.fill();c.shadowBlur=0;}
 function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.round((paused?0:speed)*8.073);$('runState').textContent=paused?'Railway paused':atStation?'At Alder Vale':stopRequested?'Calling at Alder Vale':'Miniature, not motionless';$('engineStatus').innerHTML='<span class="status-dot">●</span> '+(atStation?'At the platform · Ready to depart':stopRequested?'Alder Vale · Stop requested':paused?'Taking a little breather':'4-6-0 · Passenger service');let place,title,detail,overline='A WORLD WORTH SLOWING DOWN FOR';if(atStation){place='station-stop';title='Welcome to Alder Vale.';detail='A moment to linger. Choose Depart when you’re ready.';overline='PLATFORM 1 · A PERFECT ARRIVAL'}else if(leadInfo.edge===highline&&leadInfo.d>9&&leadInfo.d<38){place='viaduct';title='A little above it all.';detail='Seven stone arches. One unhurried crossing.';overline='ALDER VIADUCT · THE HIGH LINE'}else if(leadInfo.edge===common&&leadInfo.d>tunnelStart&&leadInfo.d<tunnelEnd){place='tunnel';title='Through the old mountain.';detail='Built in 1898. Still the best way through.';overline='FERNHOLLOW TUNNEL · KEEP LISTENING'}else if(leadInfo.edge===lowline){place='riverside';title='The road less hurried.';detail='Along the water, beneath the willows.';overline='RIVERSIDE BRANCH · THE LOW LINE'}else if(leadInfo.edge===common&&leadInfo.d>common.length-20){place='station';title='All aboard, Nightingale.';detail='Past the village. Over the valley. Home again.'}else{place='countryside';title='Nowhere else to be.';detail='A winding line through a world in miniature.';overline='THE ALDER VALLEY RAILWAY · SINCE 1898'}if(place!==currentPlace){$('locationTitle').textContent=title;$('locationDetail').textContent=detail;$('locationOverline').textContent=overline;currentPlace=place}drawMap()}
-function render(){updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
+function render(){if(!building||!(ghost||gesture?.kind==='move'))releaseTemplatePreview();updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
  gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
@@ -990,7 +1002,7 @@ function smallAxle(b,z,r=.17,width=.66){
  for(let s of[-1,1]){b.cylinder(s*width/2,r+.016,z,r,r,.057,'#283c2e',42,24,0,PI/2);ringX(b,s*(width/2+.034),r+.016,z,r*.78,r,.016,'#9ca791',41,24);b.cylinder(s*(width/2+.048),r+.016,z,r*.30,r*.30,.023,'#758469',41,16,0,PI/2);}
 }
 function workshopBuildTrains(){
- for(let m of[locoMesh,locoCabMesh,wheelMesh,tenderMesh,coachMesh,bogieMesh,observationMesh,coachRoofMesh,pistonMesh,jointMesh,couplingMesh,dieselMesh,flatcarMesh,carMesh,rodMesh])if(m){gl.deleteBuffer(m.buf);gl.deleteVertexArray(m.vao);}
+ for(let m of[locoMesh,locoCabMesh,wheelMesh,tenderMesh,coachMesh,bogieMesh,observationMesh,coachRoofMesh,pistonMesh,jointMesh,couplingMesh,dieselMesh,flatcarMesh,carMesh,rodMesh])disposeMesh(m);
  const oldSeed=seed;seed=80183;
  locoMesh=makeLoco();locoCabMesh=makeLoco(false);wheelMesh=makeWheels();tenderMesh=makeTender();coachMesh=makeCoach();observationMesh=makeCoach(true);coachRoofMesh=makeCoachRoof();bogieMesh=makeBogie();dieselMesh=makeDiesel();flatcarMesh=makeFlatcar();carMesh=makeCar();
  let b=new Builder();b.box(0,0,.5,.034,.041,1,'#b7c0ab',41);rodMesh=b.mesh();b=new Builder();b.box(0,0,0,.067,.091,.131,'#899784',41);pistonMesh=b.mesh();b=new Builder();b.sphere(0,0,0,.024,.031,.031,'#dbcca7',41,10,6);jointMesh=b.mesh();b=new Builder();b.cylinder(0,0,.5,.018,.018,1,'#969d87',41,10,PI/2);couplingMesh=b.mesh();seed=oldSeed;shadowDirty=true;
@@ -1072,7 +1084,7 @@ function buildWorld(){
  baseBuildWorld();worldBuilding=false;seed=oldSeed;
  if(!trackDesign)trackDesign=JSON.parse(JSON.stringify(baseDesign));
 }
-function templateKey(o){return o.type+(o.params?JSON.stringify(o.params):'')+'_'+(o.seed%3);}
+function templateKey(o){if(o.type==='moonlight')return 'moonlight';return o.type+(o.params?JSON.stringify(o.params):'')+'_'+(o.seed%3);}
 function workshopGetTemplate(o){
  const key=templateKey(o);if(templates.has(key))return templates.get(key);
  const b=new Builder(),oldSeed=seed,oldZones=houseZones.length,oldLamps=lampPositions.length;seed=104729+(o.seed%3)*9103;
@@ -1122,7 +1134,15 @@ function workshopGetTemplate(o){
  }
  houseZones.length=oldZones;lampPositions.length=oldLamps;seed=oldSeed;
  const data=b.data;let min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(let i=0;i<data.length;i+=12)for(let j=0;j<3;j++){min[j]=Math.min(min[j],data[i+j]);max[j]=Math.max(max[j],data[i+j]);}
- const result={data,min,max,mesh:b.mesh()};templates.set(key,result);return result;
+ const result={data:new Float64Array(data),min,max,mesh:null};templates.set(key,result);return result;
+}
+// CPU templates serve placement, picking and thumbnails. Only the current
+// drag/ghost needs its own GPU mesh; the displayed layout already owns a copy.
+let previewTemplate=null;
+function releaseTemplatePreview(){if(previewTemplate){disposeMesh(previewTemplate.mesh);previewTemplate.mesh=null;previewTemplate=null;}}
+function templateMesh(template){
+ if(previewTemplate!==template){releaseTemplatePreview();previewTemplate=template;}
+ if(!template.mesh)template.mesh=upload(template.data);return template.mesh;
 }
 function objectY(o){return terrainH(o.x,o.z)+(o.yoff||0);}
 function objectMatrix(o){return mm(trans(o.x,objectY(o),o.z),mm(ry(o.angle),scaling(o.scale)));}
@@ -1134,25 +1154,26 @@ function appendInstance(dst,src,m){
 }
 function disposeMesh(m){if(m){if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
 function rebuildScenery(exclude=null){
- if(exclude){shadowDirty=true;return;}
+ if(exclude&&!sceneryMesh?.glass){shadowDirty=true;return;}
  const b=new Builder();sceneryRanges.clear();stationMarkerCache=null;
- for(const o of objects)if(o.type!=='hill'){const start=b.data.length/12;appendInstance(b,getTemplate(o).data,objectMatrix(o));sceneryRanges.set(o.id,{start,count:b.data.length/12-start});}
+ for(const o of objects)if(o.type!=='hill'&&o.id!==exclude){const start=b.data.length/12;appendInstance(b,getTemplate(o).data,objectMatrix(o));sceneryRanges.set(o.id,{start,count:b.data.length/12-start});}
  disposeMesh(sceneryMesh);sceneryMesh=b.mesh();shadowDirty=true;engineCamChoice=null;
 }
 function updateSceneryObject(o){
  stationMarkerCache=null;
  if(!o||o.type==='hill')return;
+ if(sceneryMesh?.glass||sceneryMesh?.indexed){rebuildScenery();return;}
  const range=sceneryRanges.get(o.id),template=getTemplate(o);if(!range||range.count!==template.data.length/12){rebuildScenery();return;}
  const b=new Builder();appendInstance(b,template.data,objectMatrix(o));gl.bindBuffer(gl.ARRAY_BUFFER,sceneryMesh.buf);gl.bufferSubData(gl.ARRAY_BUFFER,range.start*48,new Float32Array(b.data));shadowDirty=true;engineCamChoice=null;
 }
 function drawScenery(p){
- const range=gesture?.kind==='move'?sceneryRanges.get(gesture.id):null;
+ const range=!sceneryMesh?.glass&&gesture?.kind==='move'?sceneryRanges.get(gesture.id):null;
  if(!range){draw(sceneryMesh,I,p);return;}
  um(p,'uModel',I);gl.bindVertexArray(sceneryMesh.vao);
- if(range.start)gl.drawArrays(gl.TRIANGLES,0,range.start);
- const end=range.start+range.count;if(end<sceneryMesh.count)gl.drawArrays(gl.TRIANGLES,end,sceneryMesh.count-end);
+ if(range.start){if(sceneryMesh.indexed)gl.drawElements(gl.TRIANGLES,range.start,gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,range.start);}
+ const end=range.start+range.count;if(end<sceneryMesh.count){if(sceneryMesh.indexed)gl.drawElements(gl.TRIANGLES,sceneryMesh.count-end,gl.UNSIGNED_INT,end*4);else gl.drawArrays(gl.TRIANGLES,end,sceneryMesh.count-end);}
 }
-function renderObject(o,p=mainProgram){if(o&&o.type!=='hill')draw(getTemplate(o).mesh,objectMatrix(o),p);}
+function renderObject(o,p=mainProgram){if(o&&o.type!=='hill')draw(templateMesh(getTemplate(o)),objectMatrix(o),p);}
 // Runtime detail pass: railway infrastructure that follows the real alignment.
 let setDetailMesh=null;
 function buildSetDetails(){
@@ -1238,13 +1259,15 @@ function queueWorldRebuild(){
 function thumb(type){
  if(thumbs.has(type))return thumbs.get(type);
  const t=getTemplate({type,seed:0}),b=t.data,c=document.createElement('canvas');c.width=220;c.height=164;const ctx=c.getContext('2d');
- const v=norm([6,4.5,7]),right=norm([v[2],0,-v[0]]),up=cross(v,right),center=mul(add(t.min,t.max),.5),pts=[],faces=[];let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
- for(let i=0;i<b.length;i+=12){const p=sub(b.slice(i,i+3),center),x=dot(right,p),y=-dot(up,p),z=dot(v,p);pts.push([x,y,z]);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+ const v=norm([6,4.5,7]),right=norm([v[2],0,-v[0]]),up=cross(v,right),center=mul(add(t.min,t.max),.5),pts=new Float64Array(b.length/4);let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+ // Typed scratch buffers replace hundreds of thousands of point/face objects.
+ for(let i=0,j=0;i<b.length;i+=12,j+=3){const px=b[i]-center[0],py=b[i+1]-center[1],pz=b[i+2]-center[2],x=right[0]*px+right[1]*py+right[2]*pz,y=-(up[0]*px+up[1]*py+up[2]*pz),z=v[0]*px+v[1]*py+v[2]*pz;pts[j]=x;pts[j+1]=y;pts[j+2]=z;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
  const scale=Math.min(178/(maxX-minX||1),126/(maxY-minY||1)),cx=110-(minX+maxX)*scale*.5,cy=81-(minY+maxY)*scale*.5;
  const shadow=ctx.createRadialGradient(110,137,0,110,137,72);shadow.addColorStop(0,'#737b5940');shadow.addColorStop(1,'#737b5900');ctx.fillStyle=shadow;ctx.save();ctx.translate(0,85);ctx.scale(1,.38);ctx.beginPath();ctx.arc(110,137,72,0,TAU);ctx.fill();ctx.restore();
- const light=norm([-1,2,3]);
- for(let i=0;i<pts.length;i+=3){let idx=i*12,n=norm(add(add(b.slice(idx+3,idx+6),b.slice(idx+15,idx+18)),b.slice(idx+27,idx+30)));if(dot(n,v)<-.25)continue;let shade=.58+.44*Math.max(0,dot(n,light));let rgb=b.slice(idx+6,idx+9).map(x=>Math.round(clamp(x*shade)*255));if(Math.round(b[idx+9])===15)rgb=[151,137,99];faces.push({p:[pts[i],pts[i+1],pts[i+2]],z:(pts[i][2]+pts[i+1][2]+pts[i+2][2])/3,c:'rgb('+rgb.join(',')+')'});}
- faces.sort((a,b)=>a.z-b.z);for(let f of faces){ctx.beginPath();f.p.forEach((p,i)=>i?ctx.lineTo(cx+p[0]*scale,cy+p[1]*scale):ctx.moveTo(cx+p[0]*scale,cy+p[1]*scale));ctx.closePath();ctx.fillStyle=f.c;ctx.fill();}
+ const light=norm([-1,2,3]),count=b.length/36,depths=new Float64Array(count),colours=new Uint32Array(count),order=new Uint32Array(count);let visible=0;
+ for(let face=0;face<count;face++){const idx=face*36,p=face*9,n=norm([b[idx+3]+b[idx+15]+b[idx+27],b[idx+4]+b[idx+16]+b[idx+28],b[idx+5]+b[idx+17]+b[idx+29]]);if(dot(n,v)<-.25)continue;const shade=.58+.44*Math.max(0,dot(n,light));let rgb=[0,1,2].map(axis=>Math.round(clamp(b[idx+6+axis]*shade)*255));if(Math.round(b[idx+9])===15)rgb=[151,137,99];order[visible++]=face;depths[face]=(pts[p+2]+pts[p+5]+pts[p+8])/3;colours[face]=(rgb[0]<<16)|(rgb[1]<<8)|rgb[2];}
+ const faces=order.subarray(0,visible);faces.sort((a,b)=>depths[a]-depths[b]||a-b);
+ for(const face of faces){const p=face*9,rgb=colours[face];ctx.beginPath();ctx.moveTo(cx+pts[p]*scale,cy+pts[p+1]*scale);ctx.lineTo(cx+pts[p+3]*scale,cy+pts[p+4]*scale);ctx.lineTo(cx+pts[p+6]*scale,cy+pts[p+7]*scale);ctx.closePath();ctx.fillStyle='rgb('+[(rgb>>16)&255,(rgb>>8)&255,rgb&255].join(',')+')';ctx.fill();}
  const data=c.toDataURL('image/png');thumbs.set(type,data);return data;
 }
 function workshopRenderCatalog(){
@@ -1354,7 +1377,7 @@ function drawWorkshop(p=mainProgram,shadow=false){
  if(!shadow&&gesture?.kind==='move')renderObject(getSelected(),p);
  if(!building||shadow)return;
  if(gridVisible)draw(gridMesh,I,p);
- if(ghost){uf(p,'uPreview',1);uf(p,'uInvalid',ghostCheck.ok?0:1);if(ghost.type==='hill')draw(getTemplate(ghost).mesh,objectMatrix(ghost),p);else renderObject(ghost,p);uf(p,'uPreview',0);}
+ if(ghost){uf(p,'uPreview',1);uf(p,'uInvalid',ghostCheck.ok?0:1);if(ghost.type==='hill')draw(templateMesh(getTemplate(ghost)),objectMatrix(ghost),p);else renderObject(ghost,p);uf(p,'uPreview',0);}
 }
 function overlayClear(){ectx.clearRect(0,0,overlay.width,overlay.height);}
 let editorOverlayWasActive=false;
@@ -1868,7 +1891,7 @@ function getTemplate(o){
  const key=templateKey(o);if(templates.has(key))return templates.get(key);
  const old=seed;seed=97777+(o.seed%3)*1357;const b=new Builder();if(o.type==='fir')b.push(0,-terrainH(0,0),0);divisionAsset(b,o.type,o.seed%3);if(o.type==='fir')b.pop();seed=old;
  const data=b.data,min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(let i=0;i<data.length;i+=12)for(let k=0;k<3;k++){min[k]=Math.min(min[k],data[i+k]);max[k]=Math.max(max[k],data[i+k]);}
- const result={data,min,max,mesh:b.mesh()};templates.set(key,result);return result;
+ const result={data:new Float64Array(data),min,max,mesh:null};templates.set(key,result);return result;
 }
 
 // A short public lane joins the old town's final street to the reviewed

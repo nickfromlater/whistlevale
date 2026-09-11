@@ -23,6 +23,7 @@ const gl={TRIANGLES:4,ARRAY_BUFFER:1,ELEMENT_ARRAY_BUFFER:2,STATIC_DRAW:3,DYNAMI
 };
 const context=vm.createContext({assert,gl,calls,console});
 const run=code=>vm.runInContext(code,context);
+run(await readFile(new URL('../src/mesh-memory.js',import.meta.url),'utf8'));
 run(source.slice(0,source.indexOf("const canvas=$('world')")));
 run("const I=ident(),mainProgram='main';let cameraPos=[0,0,10],cameraTarget=[0,0,0];function um(p,name,model){calls.push({op:'model',model:Array.from(model)});}");
 run(source.slice(source.indexOf('function uploadTriangles('),source.indexOf('function createTexture(')));
