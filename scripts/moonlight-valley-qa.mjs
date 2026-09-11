@@ -44,7 +44,7 @@ const report=geometry.run(`(()=>{
  assert.ok(template.min[0]>=-asset.w/2&&template.max[0]<=asset.w/2&&template.min[2]>=-asset.d/2&&template.max[2]<=asset.d/2,'editor bounds cover the complete garden and trees');
  assert.ok(template.max[1]<=asset.h,'picking and clearance cover the full screen');
  const oldSeed=seed,direct=new Builder();direct.push(0,0,0,0,0,0,.32);moonlightDriveIn(direct,0,0,0,0,{landscape:true});direct.pop();
- assert.deepEqual(data,direct.data,'the editor uses the same authored miniature with its landscape base');assert.equal(seed,oldSeed,'building the theater does not consume procedural scenery randomness');
+ assert.deepEqual(Array.from(data),direct.data,'the editor uses the same authored miniature with its landscape base');assert.equal(seed,oldSeed,'building the theater does not consume procedural scenery randomness');
  assert.equal(direct.stack.length,0);assert.equal(direct.normalStack.length,0);
  const matrix=objectMatrix(object),ca=Math.cos(object.angle),sa=Math.sin(object.angle),w=asset.w*object.scale/2,d=asset.d*object.scale/2;
  // Execute the actual startup room-camera presets for desktop and both phone

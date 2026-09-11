@@ -78,7 +78,7 @@ let bound=null,buffer=null;const calls=[],deleted=new Set(),noop=()=>{};
 const gl={TRIANGLES:4,ARRAY_BUFFER:1,ELEMENT_ARRAY_BUFFER:2,STATIC_DRAW:3,DYNAMIC_DRAW:4,FLOAT:5,UNSIGNED_INT:6,BLEND:7,SRC_ALPHA:8,ONE_MINUS_SRC_ALPHA:9,
  createVertexArray:()=>({}),createBuffer:()=>({}),bindVertexArray:value=>{bound=value;},bindBuffer:(kind,value)=>{buffer=value;if(bound)bound[kind===1?'vertices':'indices']=value;},
  bufferData:(kind,data)=>{buffer.data=data;},bufferSubData:noop,enableVertexAttribArray:noop,vertexAttribPointer:noop,useProgram:noop,uniformMatrix4fv:noop,getUniformLocation:(program,name)=>name,
- drawArrays:(mode,start,count)=>calls.push({op:'opaque',count}),drawElements:(mode,count)=>calls.push({op:'alpha',count}),enable:noop,disable:noop,blendFunc:noop,depthMask:value=>calls.push({op:'depth',value}),
+ drawArrays:(mode,start,count)=>calls.push({op:'opaque',count}),drawElements:(mode,count)=>calls.push({op:bound.vertices.data[9]===84?'alpha':'opaque',count}),enable:noop,disable:noop,blendFunc:noop,depthMask:value=>calls.push({op:'depth',value}),
  deleteBuffer:value=>deleted.add(value),deleteVertexArray:value=>deleted.add(value)};
 Object.assign(house.context,{beamGL:gl,beamCalls:calls});
 house.run(`gl=beamGL;mainProgram={u:{}};shadowProgram={u:{}};
@@ -89,7 +89,7 @@ house.run(`gl=beamGL;mainProgram={u:{}};shadowProgram={u:{}};
   draw(mesh);assert.equal(architecturalGlassDraws.length,1);drawArchitecturalGlass();assert.equal(architecturalGlassDraws.length,0);disposeMesh(mesh);
  })();`);
 assert.deepEqual(calls.filter(q=>q.op==='opaque').map(q=>q.count),[reports[0].vertices-18,reports[0].vertices-18]);
-assert.deepEqual(calls.filter(q=>q.op==='alpha').map(q=>q.count),[18]);assert.deepEqual(calls.filter(q=>q.op==='depth').map(q=>q.value),[false,true]);assert.equal(deleted.size,5,'both vertex buffers, arrays and alpha index buffer are released');
+assert.deepEqual(calls.filter(q=>q.op==='alpha').map(q=>q.count),[18]);assert.deepEqual(calls.filter(q=>q.op==='depth').map(q=>q.value),[false,true]);assert.equal(deleted.size,6,'both vertex buffers, arrays and opaque/alpha index buffers are released');
 Object.assign(hall.context,{GL:gl,beamCalls:calls});calls.length=0;
 hall.run(`const I=ident(),BAY_BY_ID=new Map(GRAND_HALL_BAYS.map(b=>[b.id,b])),staticMeshes=[],glassMeshes=[],shadowMeshes=[],main={};
  function gpu(cpu,transparent=false){return{...cpu,transparent};}

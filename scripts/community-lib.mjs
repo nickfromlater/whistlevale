@@ -11,7 +11,7 @@ export async function communityContext(){
  const context=vm.createContext({console,document:{getElementById:element,createElement:element,addEventListener:noop,querySelectorAll:()=>[]},matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:900,devicePixelRatio:1,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop});
  context.window=context;context.addEventListener=noop;
  const run=code=>vm.runInContext(code,context,{timeout:10000});
- run(await read('src/community-core.js'));run(await read('src/railway.js'));
+ run(await read('src/community-core.js'));run(await read('src/mesh-memory.js'));run(await read('src/railway.js'));
  return {context,run};
 }
 export async function loadCommunity(){
@@ -41,7 +41,7 @@ export async function loadReviewedHallSources({run},{loaded=new Set(),readSource
 }
 export async function loadContributionDefinitions({context,run},catalogue,{readSource=read}={}){
  context.HOUSE_COMMUNITY=catalogue;
- const loaded=new Set(['src/community-core.js','src/railway.js']);
+ const loaded=new Set(['src/community-core.js','src/mesh-memory.js','src/railway.js']);
  const files=[...(await readSource('index.html')).matchAll(/<script src="(src\/[^"?]+\.js)"/g)].map(m=>m[1]);
  for(const file of files){
   if(file==='src/hobby.js')break;

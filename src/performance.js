@@ -22,7 +22,7 @@ if(new URLSearchParams(location.search).has('profile')){
  buildValleyLife=measure('buildValleyLife',buildValleyLife);initWalkingFigures=measure('initWalkingFigures',initWalkingFigures);getHouseScene=measure('getHouseScene',getHouseScene);buildShopHouse=measure('buildShopHouse',buildShopHouse);
  updateSimulation=measure('simulation',updateSimulation);updateCamera=measure('camera',updateCamera);updateHobbyAudio=measure('soundscape',updateHobbyAudio);updateUI=measure('ui',updateUI);updateEditorOverlay=measure('editorOverlay',updateEditorOverlay);
  const originalUpload=upload,originalDispose=disposeMesh,originalDraw=draw,originalRender=render,originalInitGL=initGL;
- upload=function(data){const mesh=originalUpload(data),bytes=data.length*4;meshSizes.set(mesh,bytes);gpuBytes+=bytes;meshes++;return mesh;};
+ upload=function(data,...args){const mesh=originalUpload(data,...args),bytes=mesh.bytes??data.length*4;meshSizes.set(mesh,bytes);gpuBytes+=bytes;meshes++;return mesh;};
  disposeMesh=function(mesh){const bytes=mesh&&meshSizes.get(mesh);if(bytes){gpuBytes-=bytes;meshes--;meshSizes.delete(mesh);}return originalDispose(mesh);};
  draw=function(mesh,...args){if(mesh){const opaque=mesh.opaqueCount??mesh.count;if(opaque){drawCalls++;vertices+=opaque;}if(mesh.glass&&(args[1]??mainProgram)===mainProgram){drawCalls++;vertices+=mesh.glass.count;}}return originalDraw(mesh,...args);};
  initGL=function(){const t=performance.now();originalInitGL();stages.push({stage:'initGL',ms:round(performance.now()-t)});timerExt=gl.getExtension('EXT_disjoint_timer_query_webgl2');const debug=gl.getExtension('WEBGL_debug_renderer_info');gpuInfo=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);};

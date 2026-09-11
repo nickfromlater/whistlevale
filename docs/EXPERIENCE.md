@@ -121,6 +121,12 @@ memory estimates; GPU timing appears when supported. It sends no telemetry and
 does no diagnostic work on ordinary visits. Measurements describe the device
 and view being inspected, rather than a traffic-capacity guarantee.
 
+The geometry estimate includes resident vertex and index buffers. It excludes
+textures, framebuffers and browser overhead, so it is not total process memory.
+Large opaque meshes share identical vertex records without removing detail.
+The layout editor keeps only its current placement or drag preview on the GPU
+and releases that extra copy when normal viewing resumes.
+
 The Grand Hall also accepts `grandhall.html?profile`. Its local panel shows frame
 timing, CPU submission time, draw calls, vertex-buffer memory and shadow updates.
 Use the same gallery, camera, viewport and device for comparisons; reset after
