@@ -1,25 +1,21 @@
 'use strict';
 
-// Yamaai — the guest room.
-//
-// The house builds its own rooms. This one holds somebody else's work: the
-// Mountain Railway Diorama by Techartist, vendored whole under its MIT licence
-// and run unmodified inside a sandboxed frame that only exists while a visitor
-// is standing here. See src/embedded.js for the mechanism and
-// docs/contributing/embedded-projects.md for how to add another.
-//
-// Everything this room is built to do is point at the table and say whose work
-// is on it: the plaque behind it, the rail around it, the credit dock in the
-// interface, and the room's own name on the map.
-
+// Original guest geometry, adapted to the house camera; vendor files stay intact.
 const YAMAAI_TABLE={top:FLOOR+11.4,halfWidth:37,halfDepth:23.1};
-
-// The four corners the frame is mapped onto, far edge first so the miniature
-// stands up the right way under the room's default view.
-function yamaaiSurface(){
- const {top,halfWidth,halfDepth}=YAMAAI_TABLE;
- return [[-halfWidth,top,-halfDepth],[halfWidth,top,-halfDepth],[halfWidth,top,halfDepth],[-halfWidth,top,halfDepth]];
-}
+const YAMAAI_PROJECT=registerEmbeddedProject('yamaai',{
+ base:'vendor/mountain-railway-diorama/',create:createYamaaiMiniature,
+ cinemaLabels:['Mountain drift','Station side','Whole miniature','Across the bridge'],
+ roomName:'Yamaai',title:'Mountain Railway Diorama',subtitle:'Yamaai 山あい',
+ commit:'6e8b0fbb806e486d7819b6d297b92f4ecf3d258b',
+ source:'https://github.com/iamtechartist/mountain-railway-diorama',licence:'MIT',
+ permission:'Shown with the author’s permission, given publicly on 11 September 2026.',
+ credits:[
+  {name:'Techartist',platform:'x',handle:'techartist_',note:'Created the Mountain Railway Diorama; gave permission for it to be shown here.'},
+  {name:'iamtechartist',platform:'github',handle:'iamtechartist',note:'Original source, MIT licensed.'}
+ ],
+ hostCredits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Built the guest room that hosts it; built with agent assistance.'}],
+ table:YAMAAI_TABLE,focus:[0,FLOOR+26,0],distance:90,phoneDistance:160
+});
 
 function yamaaiTable(b){
  const {top,halfWidth,halfDepth}=YAMAAI_TABLE;
@@ -47,21 +43,22 @@ function yamaaiTable(b){
 // The plaque. Geometry always; the lettering only when the atlas has room for
 // it, exactly as the house's own room plaques behave.
 function yamaaiPlaque(b){
- const y=FLOOR+19.5,z=-61.2;
- b.box(0,y,z+.9,66,25,1.1,'#33403a',22);
- b.box(0,y,z+.3,62.4,21.6,.5,'#b19a62',41);
- b.box(0,y,z+.1,61,20.2,.4,'#2c3832',23);
- if(roomLabels['embed-credit-0'])roomSign(b,'embed-credit-0',0,y,z-.2,58.6,18.4);
+ // This belongs to the back wall, so its cutaway follows the wall too.
+ b.push(49,19,1.8,0,0,0,.62);const y=0,z=0;
+ b.box(0,y,z,66,25,1.1,'#33403a',22);
+ b.box(0,y,z+.65,62.4,21.6,.5,'#b19a62',41);
+ b.box(0,y,z+1,61,20.2,.4,'#2c3832',23);
+ if(roomLabels[YAMAAI_PROJECT.plaque])roomSign(b,YAMAAI_PROJECT.plaque,0,y,z+1.24,58.6,18.4);
  // Two picture lights over it, so the credit is lit even at night.
  for(const x of[-19,19]){
   b.cylinder(x,y+14.6,z+2.4,.5,.5,4.2,'#8d7a4e',41,10,Math.PI/2);
   b.box(x,y+13.1,z+4.1,5.6,1.5,2.6,'#c9b177',41);
  }
+ b.pop();
 }
 
 function yamaaiRoom(scene,b){
  yamaaiTable(b);
- yamaaiPlaque(b);
  // Two benches facing the table. A guest room still belongs to the house.
  for(const z of[42,-42]){
   b.box(0,FLOOR+4.2,z,44,1.6,4.4,'#7a6244',22);
@@ -69,35 +66,16 @@ function yamaaiRoom(scene,b){
  }
  scene.routes=[];scene.trains=[];
  scene.spots=[
-  {name:'The table',target:[0,YAMAAI_TABLE.top-2,0],distance:104,phoneDistance:176,pitch:.5,yaw:.3},
-  {name:'The plaque',target:[0,FLOOR+19.5,-46],distance:76,phoneDistance:128,pitch:.2,yaw:0}
+  {name:'The miniature',target:YAMAAI_PROJECT.focus,distance:90,phoneDistance:160,pitch:.43,yaw:.3},
+  {name:'The plaque',target:[49,19,-61],distance:45,phoneDistance:86,pitch:.02,yaw:0}
  ];
  return scene;
 }
 
 registerHouseRoom('yamaai',{
- name:'Yamaai',layout:'The Guest Room',tag:'A ROOM FOR SOMEONE ELSE’S WORK',
- description:'Yamaai — a miniature Japanese mountain railway by Techartist, running on its own renderer on the table. A local train winds through a gorge, over a bridge and into the tunnel, past a station, a shrine, a river and a waterfall.',
- color:'#8fa38c',ambient:'forest',railway:false,target:[0,FLOOR+9,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
- credits:[
-  {name:'Techartist',platform:'x',handle:'techartist_',note:'Created the Mountain Railway Diorama; gave permission for it to be shown here.'},
-  {name:'iamtechartist',platform:'github',handle:'iamtechartist',note:'Original source, MIT licensed.'},
-  {name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Built the guest room that hosts it; built with agent assistance.'}
- ],
- build:yamaaiRoom
-});
-
-registerEmbeddedProject('yamaai',{
- entry:'vendor/mountain-railway-diorama/index.html',
- title:'Mountain Railway Diorama',
- subtitle:'Yamaai 山あい',
- source:'https://github.com/iamtechartist/mountain-railway-diorama',
- licence:'MIT',
- permission:'Shown here with the author’s permission, given publicly on 11 September 2026. The project runs unmodified from its own source.',
- credits:[
-  {name:'Techartist',platform:'x',handle:'techartist_'},
-  {name:'iamtechartist',platform:'github',handle:'iamtechartist'}
- ],
- frame:[1024,640],
- surface:yamaaiSurface
+ name:YAMAAI_PROJECT.roomName,layout:YAMAAI_PROJECT.title,
+ tag:'MOUNTAIN RAILWAY · BY '+YAMAAI_PROJECT.credits[0].name.toUpperCase(),
+ description:embeddedCreditLine(YAMAAI_PROJECT)+'. A local train winds through a Japanese mountain gorge, over a bridge and into the tunnel, past a station, a shrine, a river and a waterfall.',
+ color:'#8fa38c',ambient:'forest',railway:false,target:[0,FLOOR+23,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
+ credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:b=>roomShell('yamaai',b,yamaaiPlaque)
 });

@@ -86,14 +86,18 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 ## Architecture and invariants
 
 - The app is dependency-free browser JavaScript with a custom WebGL 2 renderer.
-- **A guest room may host somebody else's project on its own renderer.** Work
-  that already exists elsewhere is vendored whole under `vendor/`, never
-  rewritten into house geometry, and run in a sandboxed frame created on room
-  entry and destroyed on exit, so nothing loads for a visitor who never opens
-  that room. This is the only place a third-party runtime is permitted, it
-  never runs on the way to another room, and it needs the author's recorded
-  permission as well as a compatible licence. See
-  [embedded projects](docs/contributing/embedded-projects.md).
+- **A guest room may host another artist’s geometry on its own renderer.**
+  Vendor the original builders and licences under `vendor/`, preserve their
+  authorship and pinned upstream commit, and record permission. A reviewed host
+  adapter may dynamically import guest ES modules on actual room entry; this is
+  the only exception to the house’s classic-script/third-party-runtime rule.
+  The house owns the camera and scheduling. Use real geometry with native room
+  depth occlusion, never a flat iframe/homography. Cancel partial loads and
+  dispose the guest context on leaving or opening the map. Imported modules run
+  with page privileges, so review them; there is no iframe sandbox. Keep one
+  credit record for the dock, lettered plaque, map and builders panel. Document
+  presentation changes honestly even when vendor files remain unchanged. See
+  [guest miniatures](docs/contributing/embedded-projects.md).
 - `src/community-core.js` validates credits and contribution data; `src/community.js`
   connects reviewed data and the optional builders panel. Keep these off the frame loop.
 - `src/scenery/` holds original contributed buildings. For railway placements,

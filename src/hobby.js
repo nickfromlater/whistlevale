@@ -144,7 +144,7 @@ function syncRoomControls(){
  $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
  for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
  for(const button of document.querySelectorAll('[data-camera]'))button.hidden=!railway&&!['room','overview','tour'].includes(button.dataset.camera);
- const names=railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view'];
+ const names=(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
  for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
 }
 
@@ -258,9 +258,11 @@ function cinemaCamera(dt){
  for(const key of['side','back','height'])hobby.shotBlend[key]=mix(hobby.shotBlend[key],q[key],blend);
  hobby.tunnelBlend=mix(hobby.tunnelBlend,hobbyTrainInTunnel()?1:0,1-Math.exp(-dt*.4));
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
- const manual=cinemaOrbit.manual,target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
+ const manual=cinemaOrbit.manual;let target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
- if(!hobbyHasTrain()){
+ const guestShot=!manual&&typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed);
+ if(guestShot){target=guestShot.target;desired=guestShot.position;}
+ else if(!hobbyHasTrain()){
   const angle=.35+(reduceMotion?0:Math.sin(elapsed*.025)*.13),distance=(hobby.shot==='wide'?94:hobby.shot==='side'?61:hobby.shot==='tail'?120:73)*portrait;
   desired=add(p,[Math.sin(angle)*distance,.62*distance,Math.cos(angle)*distance]);
  }
@@ -422,6 +424,7 @@ exportPlayable=async function(){
  try{
   toast('Packing your little world, including its soundtrack…');const source=document.documentElement.cloneNode(true);
   removeHouseAnalytics(source);
+  for(const node of source.querySelectorAll('[data-guest-import],#embedStage'))node.remove();
   for(const node of source.querySelectorAll('video[data-moonlight-film]'))node.remove();
   for(const node of source.querySelectorAll('[data-moonlight-programme]'))node.remove();
   if(typeof packMoonlightMedia==='function'){
@@ -468,7 +471,7 @@ function startHouse(){
  const atmosphereClick=$('ambienceBtn').onclick;
  $('ambienceBtn').onclick=e=>{atmosphereClick(e);$('soundPanel').hidden=true;if($('playlistPanel'))$('playlistPanel').hidden=true;$('playlistBtn')?.setAttribute('aria-expanded','false');$('playlistBtn')?.classList.remove('on');};
  try{
-  initHouseArt();if(typeof initEmbeddedArt==='function')initEmbeddedArt();hobby.life=buildValleyLife();initWalkingFigures();if(typeof initHouseMap==='function')initHouseMap();hobby.ready=true;shadowDirty=true;updateUI();
+  initHouseArt();hobby.life=buildValleyLife();initWalkingFigures();if(typeof initHouseMap==='function')initHouseMap();hobby.ready=true;shadowDirty=true;updateUI();
   if(typeof initQuietControls==='function')initQuietControls();
   if(typeof restoreCollectionSelections==='function')restoreCollectionSelections();
   if(typeof initTrainCabinet==='function')initTrainCabinet();

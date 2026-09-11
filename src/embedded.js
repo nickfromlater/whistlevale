@@ -1,225 +1,141 @@
 'use strict';
 
-// Embedded projects — rooms that host somebody else's renderer.
-//
-// Whistlevale's own rooms are dependency-free WebGL 2. A project that already
-// exists somewhere else is not rewritten to match: it is vendored whole, under
-// its own licence, and run unmodified inside a sandboxed frame. Rewriting a
-// finished piece of work loses the thing that made it worth showing, and the
-// author's own commits stop being the record of who built it.
-//
-// Two rules make that safe to do inside a dependency-free house:
-//
-//   Nothing loads until someone walks in. The frame is created on room entry
-//   and destroyed on exit, so a visitor who never opens this room never fetches
-//   the project, never parses its renderer, and never pays for a second WebGL
-//   context. That is why the entry is a URL held in data and not a <script> or
-//   an <iframe src> in index.html.
-//
-//   It sits on the table. The frame is mapped onto a display surface in the
-//   room with a projective transform, so the work reads as a miniature under
-//   the house lights rather than a web page covering the house. Step closer and
-//   it fills the view and takes its own controls back.
-//
-// Adding another one is data, not code: see docs/contributing/embedded-projects.md.
-
+// Guest geometry keeps its original builders and its own GPU context. The house
+// owns navigation, camera and scheduling. No guest modules load during startup
+// or a map preview. See docs/contributing/embedded-projects.md.
 const EMBEDDED_PROJECTS={};
-let embeddedActive=null,embeddedFrameNode=null,embeddedClose=false,embeddedFailed=false,embeddedPending=0;
+let embeddedActive=null;
 
 function registerEmbeddedProject(room,definition){
- if(!/^[a-z][a-z0-9-]*$/.test(room))throw new Error('Embedded project keys must be lowercase URL-safe names.');
- const {entry,title,surface}=definition;
- if(typeof entry!=='string'||!entry)throw new Error('An embedded project needs an entry URL.');
- if(/^[a-z]+:|^\/\//i.test(entry))throw new Error('Embedded project entries must be vendored in this repository, not fetched from another origin.');
- if(typeof title!=='string'||!title)throw new Error('An embedded project needs a title.');
- if(typeof surface!=='function')throw new Error('An embedded project needs a surface() returning four world-space corners.');
- EMBEDDED_PROJECTS[room]={frame:[640,400],closeFrame:[1280,800],...definition};
- return EMBEDDED_PROJECTS[room];
+ if(!/^[a-z][a-z0-9-]*$/.test(room))throw new Error('Guest project keys must be lowercase URL-safe names.');
+ if(!/^vendor\/[a-z0-9-]+\/$/.test(definition.base))throw new Error('Guest modules must be vendored in this repository.');
+ if(!definition.title||typeof definition.create!=='function')throw new Error('A guest project needs a title and a reviewed scene adapter.');
+ const record={...definition,room,plaque:'embed-credit-'+room,credits:validateCredits(definition.credits),hostCredits:validateCredits(definition.hostCredits||[])};
+ EMBEDDED_PROJECTS[room]=record;return record;
 }
-
 const embeddedProject=room=>EMBEDDED_PROJECTS[room]||null;
-
-// The credit line every surface reads from, so the room, the plaque, the map
-// card and the panel can never disagree about who made this.
-function embeddedCreditLine(project){
- const by=project.credits?.[0];
- return project.title+(by?' · by '+by.name:'');
-}
+const embeddedCreditLine=project=>project.title+' · by '+project.credits[0].name;
 
 function embeddedAttribution(project){
  const wrap=document.createElement('div');wrap.className='embed-credit';
- const link=(credit)=>{
-  const url=typeof communityCreditURL==='function'?communityCreditURL(credit):null;
-  if(!url)return document.createTextNode(credit.name);
-  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';
-  a.textContent=credit.platform==='x'?'@'+credit.handle:credit.name;return a;
- };
+ const link=(text,url)=>{const a=document.createElement('a');a.textContent=text;a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
  const lead=document.createElement('p');lead.className='embed-credit-lead';
- const strong=document.createElement('strong');strong.textContent=project.title;lead.append(strong);
- if(project.subtitle){const em=document.createElement('em');em.textContent=project.subtitle;lead.append(em);}
- wrap.append(lead);
- const line=document.createElement('p');line.className='embed-credit-by';
- line.append(document.createTextNode('Made by '));
- for(const [i,credit] of (project.credits||[]).entries()){
-  if(i)line.append(document.createTextNode(' · '));
-  line.append(link(credit));
- }
- wrap.append(line);
+ const strong=document.createElement('strong');strong.textContent=project.title;lead.append(strong);wrap.append(lead);
+ const by=document.createElement('p');by.className='embed-credit-by';by.append('Made by ');
+ project.credits.forEach((credit,i)=>{if(i)by.append(' · ');by.append(link(credit.name,communityCreditURL(credit)));});wrap.append(by);
  const meta=document.createElement('p');meta.className='embed-credit-meta';
- if(project.source){
-  const a=document.createElement('a');a.href=project.source;a.target='_blank';a.rel='noopener noreferrer';
-  a.textContent='Original project ↗';meta.append(a);
- }
- if(project.licence){
-  if(meta.childNodes.length)meta.append(document.createTextNode(' · '));
-  meta.append(document.createTextNode(project.licence+'-licensed, used with permission'));
- }
- wrap.append(meta);
- if(project.permission){
-  const note=document.createElement('p');note.className='embed-credit-note';note.textContent=project.permission;wrap.append(note);
- }
+ meta.append(link('Original project ↗',project.source),' · ',link(project.licence+' licence',project.source+'/blob/'+project.commit+'/LICENSE'));wrap.append(meta);
+ const note=document.createElement('p');note.className='embed-credit-note';note.textContent=project.permission;wrap.append(note);
  return wrap;
 }
 
 function embeddedStage(){
- let stage=document.getElementById('embedStage');
- if(stage)return stage;
- stage=document.createElement('div');stage.id='embedStage';stage.hidden=true;
- stage.innerHTML='<div class="embed-surface"><div class="embed-plate"></div></div>';
- const credit=document.createElement('div');credit.className='embed-credit-dock';credit.id='embedCredit';
- const closer=document.createElement('button');closer.id='embedCloser';closer.type='button';closer.className='embed-closer';
- closer.onclick=()=>embeddedStepCloser(!embeddedClose);
- stage.append(credit,closer);
- (document.getElementById('app')||document.body).append(stage);
- return stage;
+ let stage=document.getElementById('embedStage');if(stage)return stage;
+ stage=document.createElement('section');stage.id='embedStage';stage.hidden=true;stage.setAttribute('aria-label','Guest miniature');
+ const loading=document.createElement('div');loading.className='embed-loading';loading.setAttribute('aria-label','Loading Mountain Railway Diorama');
+ loading.innerHTML='<div class="embed-loading-art" aria-hidden="true"><span class="embed-mountain back"></span><span class="embed-mountain front"></span><span class="embed-bridge"></span><span class="embed-train"><i></i><i></i><i></i></span></div><div class="embed-loading-copy"><strong>Mountain Railway Diorama</strong><small>Preparing the gorge, bridge and local train</small></div>';
+ const status=document.createElement('p');status.id='embedStatus';status.className='embed-status';status.setAttribute('role','status');
+ const dock=document.createElement('div');dock.id='embedCredit';dock.className='embed-credit-dock';
+ loading.append(status);stage.append(loading,dock);(document.getElementById('app')||document.body).append(stage);return stage;
 }
-
-// Room entry. Nothing above this line has fetched the project.
+function embeddedOnStage(room){
+ return hobby.room===room&&!(typeof isShopMapActive==='function'&&isShopMapActive());
+}
 function embeddedEnter(room){
- const project=embeddedProject(room);
- if(embeddedActive&&embeddedActive.room!==room)embeddedLeave();
- if(!project){document.body.classList.remove('has-embed');return null;}
- if(embeddedActive&&embeddedActive.room===room)return embeddedActive;
- // Let the room finish building before a second renderer starts. Both racing
- // in the same tick locks the tab on the way in, which reads as a broken room.
- if(embeddedPending)clearTimeout(embeddedPending);
- embeddedPending=setTimeout(()=>{embeddedPending=0;if(typeof hobby==='object'&&hobby.room===room)embeddedMount(room,project);},
-  typeof reduceMotion!=='undefined'&&reduceMotion?60:520);
- document.body.classList.add('has-embed');
- return {room,project,pending:true};
+ if(embeddedActive?.room===room)return embeddedActive;
+ embeddedLeave();const project=embeddedProject(room);if(!project||!embeddedOnStage(room))return null;
+ const stage=embeddedStage(),controller=new AbortController();
+ const active={room,project,controller,session:null,timer:0,paused:!!reduceMotion};embeddedActive=active;
+ stage.hidden=false;stage.dataset.state='loading';document.body.classList.add('has-embed');
+ const dock=stage.querySelector('#embedCredit');dock.replaceChildren(embeddedAttribution(project));
+ const actions=document.createElement('div');actions.className='embed-actions';
+ const closer=document.createElement('button');closer.id='embedCloser';closer.textContent='Explore the miniature';
+ closer.onclick=()=>{setView('overview',false);Object.assign(orbit,{target:project.focus.slice(),distance:innerWidth<700?project.phoneDistance:project.distance,pitch:.43,yaw:.3});};
+ const pause=document.createElement('button');pause.id='embedPause';pause.disabled=true;
+ const syncPause=()=>{pause.textContent=active.paused?'Run train':'Pause train';pause.setAttribute('aria-pressed',String(active.paused));};
+ syncPause();pause.onclick=()=>{active.paused=!active.paused;syncPause();};actions.append(closer,pause);dock.append(actions);
+ const status=stage.querySelector('#embedStatus');status.hidden=false;status.textContent='Setting up '+project.roomName+' on the table…';stage.querySelector('.embed-loading').hidden=false;
+ // A portable HTML keeps the room and credits; the vendored module graph is
+ // intentionally not embedded into that file. Do not try to fetch file:// URLs.
+ if(!/^https?:$/.test(location.protocol)){
+  stage.dataset.state='unavailable';status.textContent='Visit the online house to explore this guest miniature. The original project is linked below.';return active;
+ }
+ active.timer=setTimeout(()=>{active.timer=0;embeddedMount(active);},520);
+ return active;
 }
-
-function embeddedMount(room,project){
- const stage=embeddedStage(),surface=stage.querySelector('.embed-surface');
- embeddedFailed=false;embeddedClose=false;
- const node=document.createElement('iframe');
- node.className='embed-frame';node.title=embeddedCreditLine(project);
- node.setAttribute('loading','lazy');
- // Scripts only: the project may render, but may not reach this document, this
- // origin's storage, the top window, or anywhere a click could navigate us.
- node.setAttribute('sandbox','allow-scripts');
- node.setAttribute('referrerpolicy','no-referrer');
- node.width=String(project.frame[0]);node.height=String(project.frame[1]);
- node.style.width=project.frame[0]+'px';node.style.height=project.frame[1]+'px';
- node.onerror=()=>embeddedReportFailure(project);
- const waiting=document.createElement('div');waiting.className='embed-plate embed-waiting';
- waiting.style.width=project.frame[0]+'px';waiting.style.height=project.frame[1]+'px';
- waiting.textContent=project.title+' is being set up on the table…';
- node.onload=()=>{waiting.remove();node.classList.add('ready');};
- node.src=project.entry;
- surface.replaceChildren(waiting,node);
- embeddedFrameNode=node;embeddedActive={room,project};
- const credit=document.getElementById('embedCredit');
- credit.replaceChildren(embeddedAttribution(project));
- stage.hidden=false;document.body.classList.add('has-embed');
- embeddedSyncCloser();
- return embeddedActive;
+async function embeddedMount(active){
+ const stage=embeddedStage(),status=stage.querySelector('#embedStatus');
+ try{
+  const session=await active.project.create({project:active.project,signal:active.controller.signal,host:hobby.scene,
+   mount:canvas=>{if(embeddedActive===active)stage.prepend(canvas);},
+   progress:text=>{if(embeddedActive===active)status.textContent=text;}});
+  if(embeddedActive!==active||!embeddedOnStage(active.room)){session.dispose();return;}
+  active.session=session;stage.dataset.state='ready';status.hidden=true;stage.querySelector('.embed-loading').hidden=true;stage.querySelector('#embedPause').disabled=false;
+ }catch(error){
+  if(embeddedActive!==active||active.controller.signal.aborted)return;
+  console.error('Guest miniature could not open:',error);stage.dataset.state='error';
+  status.hidden=false;stage.querySelector('.embed-loading').hidden=false;status.textContent='The miniature could not open here. You can still visit the original project below.';
+ }
 }
-
 function embeddedLeave(){
- if(embeddedPending){clearTimeout(embeddedPending);embeddedPending=0;}
- if(!embeddedActive)return;
- // Destroy the frame rather than hide it: that releases its WebGL context,
- // its animation loop and its audio, none of which a hidden iframe gives back.
- embeddedFrameNode?.remove();
- embeddedFrameNode=null;embeddedActive=null;embeddedClose=false;
+ const active=embeddedActive;embeddedActive=null;if(!active)return;
+ clearTimeout(active.timer);active.controller.abort();active.session?.dispose();active.session=null;
  const stage=document.getElementById('embedStage');
- if(stage){stage.hidden=true;stage.querySelector('.embed-surface').replaceChildren();}
- document.body.classList.remove('has-embed','embed-close');
+ if(stage){stage.hidden=true;stage.dataset.state='idle';stage.querySelector('.embed-loading').hidden=false;stage.querySelectorAll('canvas').forEach(node=>node.remove());}
+ document.body.classList.remove('has-embed');
 }
-
-function embeddedReportFailure(project){
- embeddedFailed=true;
- const surface=document.getElementById('embedStage')?.querySelector('.embed-surface');
- if(!surface)return;
- const plate=document.createElement('div');plate.className='embed-plate';
- plate.style.width=project.frame[0]+'px';plate.style.height=project.frame[1]+'px';
- plate.textContent=project.title+' could not open here. The original is linked below.';
- surface.replaceChildren(plate);
-}
-
-function embeddedStepCloser(on){
- if(!embeddedActive)return;
- embeddedClose=!!on;
- document.body.classList.toggle('embed-close',embeddedClose);
- // Docked on the table the room owns the camera, so the frame must not swallow
- // drags. Stepping closer hands the project its own controls back.
- if(embeddedFrameNode){
-  embeddedFrameNode.style.pointerEvents=embeddedClose?'auto':'none';
-  const [w,h]=embeddedClose?(embeddedActive.project.closeFrame||embeddedActive.project.frame):embeddedActive.project.frame;
-  embeddedFrameNode.width=String(w);embeddedFrameNode.height=String(h);
-  embeddedFrameNode.style.width=w+'px';embeddedFrameNode.style.height=h+'px';
- }
- embeddedSyncCloser();
-}
-
-function embeddedSyncCloser(){
- const button=document.getElementById('embedCloser');
- if(!button||!embeddedActive)return;
- button.textContent=embeddedClose?'Back to the room':'Step closer';
- button.setAttribute('aria-pressed',String(embeddedClose));
- button.setAttribute('aria-label',embeddedClose
-  ? 'Return to the room and put '+embeddedActive.project.title+' back on its table'
-  : 'Fill the view with '+embeddedCreditLine(embeddedActive.project)+' and use its own controls');
-}
-
-// Map a rectangle onto the four projected corners of the display surface.
-// Unit square to quad (Heckbert); CSS then walks the element through it, so the
-// miniature keeps the room's perspective as the camera orbits.
-function embeddedQuadTransform(corners,w,h){
- const [p0,p1,p2,p3]=corners;
- const dx1=p1.x-p2.x,dx2=p3.x-p2.x,dx3=p0.x-p1.x+p2.x-p3.x;
- const dy1=p1.y-p2.y,dy2=p3.y-p2.y,dy3=p0.y-p1.y+p2.y-p3.y;
- let a,b,c,d,e,f,g,hh;
- if(Math.abs(dx3)<1e-9&&Math.abs(dy3)<1e-9){
-  a=p1.x-p0.x;b=p2.x-p1.x;c=p0.x;d=p1.y-p0.y;e=p2.y-p1.y;f=p0.y;g=0;hh=0;
- }else{
-  const den=dx1*dy2-dx2*dy1;
-  if(!den)return null;
-  g=(dx3*dy2-dx2*dy3)/den;hh=(dx1*dy3-dx3*dy1)/den;
-  a=p1.x-p0.x+g*p1.x;b=p3.x-p0.x+hh*p3.x;c=p0.x;
-  d=p1.y-p0.y+g*p1.y;e=p3.y-p0.y+hh*p3.y;f=p0.y;
- }
- if(![a,b,c,d,e,f,g,hh].every(Number.isFinite))return null;
- return 'matrix3d('+[a,d,0,g,b,e,0,hh,0,0,1,0,c,f,0,1].join(',')+') scale('+(1/w)+','+(1/h)+')';
-}
-
-// Called once per rendered frame, after the view-projection is current.
+// One call after the final house camera update, including cinema and all room
+// views. Map entry destroys the guest; returning creates a new GPU session.
 function embeddedFrameUpdate(){
- if(!embeddedActive||embeddedFailed)return;
- const stage=document.getElementById('embedStage');
- if(!stage||stage.hidden)return;
- const surface=stage.querySelector('.embed-surface');
- if(embeddedClose){surface.style.transform='';surface.style.visibility='';return;}
- if(typeof project!=='function'){surface.style.visibility='hidden';return;}
- const corners=embeddedActive.project.surface().map(point=>project(point));
- if(!corners.every(corner=>corner&&corner.visible&&Number.isFinite(corner.x)&&Number.isFinite(corner.y))){
-  // A corner behind the camera makes the transform meaningless, not merely ugly.
-  surface.style.visibility='hidden';return;
+ if(embeddedActive&&!embeddedOnStage(embeddedActive.room))embeddedLeave();
+ if(!embeddedActive&&embeddedProject(hobby.room)&&embeddedOnStage(hobby.room))embeddedEnter(hobby.room);
+ const active=embeddedActive;if(!active)return;
+ const status=document.getElementById('embedStatus');
+ if(!status.hidden&&!active.session){status.style.visibility='visible';}
+ if(!active.session)return;
+ try{active.session.frame({eye:cameraPos,target:cameraTarget,projection:cameraProjection,near:cameraNear,width:innerWidth,height:innerHeight,night,rain:rainAmount,paused:paused||active.paused,now:performance.now()});}
+ catch(error){active.controller.abort();active.session=null;embeddedStage().dataset.state='error';status.hidden=false;status.textContent='The miniature stopped. Re-enter the room to try again.';console.error('Guest renderer stopped:',error);}
+}
+
+// Called synchronously after render(), before the guest drawing buffer can be
+// cleared by the browser. No preserved extra framebuffer is needed for photos.
+function embeddedPhotograph(houseCanvas){
+ const active=embeddedActive;if(!active?.session)return houseCanvas;
+ const guest=document.querySelector('.embed-canvas');if(!guest)return houseCanvas;
+ const photo=document.createElement('canvas');photo.width=houseCanvas.width;photo.height=houseCanvas.height+80;
+ const c=photo.getContext('2d');c.drawImage(houseCanvas,0,0);c.drawImage(guest,0,0,houseCanvas.width,houseCanvas.height);
+ c.fillStyle='#192b24';c.fillRect(0,houseCanvas.height,photo.width,80);c.fillStyle='#f1ead2';c.font='17px Georgia';
+ c.fillText(embeddedCreditLine(active.project),16,houseCanvas.height+27,photo.width-32);
+ c.font='12px Arial';c.fillStyle='#c6cfba';c.fillText(active.project.licence+' · '+active.project.source,16,houseCanvas.height+49,photo.width-32);
+ c.fillText(active.project.permission,16,houseCanvas.height+68,photo.width-32);return photo;
+}
+
+// Presets are anchors from the original scene, expressed in house coordinates.
+// The house still owns interpolation and manual cinema orbit/pan/zoom.
+function embeddedCinemaView(key,elapsed){
+ const shot=embeddedActive?.session?.views?.[key];if(!shot)return null;
+ const portrait=innerWidth<700?Math.max(1.9,innerHeight/innerWidth*1.15):1;
+ const yaw=shot.yaw+(reduceMotion?0:Math.sin(elapsed*.035)*.12),distance=shot.distance*portrait,cp=Math.cos(shot.pitch),target=shot.target;
+ return {target,position:[target[0]+Math.sin(yaw)*cp*distance,target[1]+Math.sin(shot.pitch)*distance,target[2]+Math.cos(yaw)*cp*distance]};
+}
+
+// Copy only position/index data, once per entry. COPY_READ_BUFFER leaves the
+// house's VAO, attribute and element bindings untouched. No GPU readback runs
+// in the frame loop. Transparent glass is not an opaque depth blocker.
+function embeddedRoomDepth(THREE,host,toLocal){
+ const scene=new THREE.Scene(),material=new THREE.MeshBasicMaterial({colorWrite:false,side:THREE.DoubleSide}),walls=[];
+ const previous=gl.getParameter(gl.COPY_READ_BUFFER_BINDING);
+ function copy(source,which){
+  if(!source||!(source.opaqueCount??source.count))return;
+  gl.bindBuffer(gl.COPY_READ_BUFFER,source.buf);
+  const packed=new Float32Array(gl.getBufferParameter(gl.COPY_READ_BUFFER,gl.BUFFER_SIZE)/4);gl.getBufferSubData(gl.COPY_READ_BUFFER,0,packed);
+  const positions=new Float32Array(packed.length/4);for(let i=0,j=0;i<packed.length;i+=12,j+=3){positions[j]=packed[i];positions[j+1]=packed[i+1];positions[j+2]=packed[i+2];}
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.applyMatrix4(toLocal);
+  if(source.indexed){gl.bindBuffer(gl.COPY_READ_BUFFER,source.ibo);const indices=new Uint32Array(source.opaqueCount??source.count);gl.getBufferSubData(gl.COPY_READ_BUFFER,0,indices);geometry.setIndex(new THREE.BufferAttribute(indices,1));}
+  const mesh=new THREE.Mesh(geometry,material);mesh.name=which||'House furniture depth';scene.add(mesh);if(which)walls.push({which,mesh});
  }
- const node=embeddedFrameNode;if(!node)return;
- const w=Number(node.width)||embeddedActive.project.frame[0],h=Number(node.height)||embeddedActive.project.frame[1];
- const matrix=embeddedQuadTransform(corners,w,h);
- if(!matrix){surface.style.visibility='hidden';return;}
- surface.style.visibility='';surface.style.transform=matrix;
+ try{copy(host.mesh);copy(host.lifeDetails?.mesh);for(const wall of host.walls)copy(wall.mesh,wall.which);}
+ catch(error){scene.traverse(node=>node.geometry?.dispose());material.dispose();throw error;}
+ finally{gl.bindBuffer(gl.COPY_READ_BUFFER,previous);}
+ return {scene,update:eye=>{for(const wall of walls)wall.mesh.visible=houseRoomWallVisible(wall.which,eye);}};
 }

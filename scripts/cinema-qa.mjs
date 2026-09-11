@@ -66,3 +66,12 @@ fire('keydown',{key:'0'});run("hobby.shot='tail';cinemaCamera(10);beginCinemaOrb
 const wideLandscape=run('cinemaOrbit.manual.distance');assert.ok(wideLandscape>180,'phone room view starts beyond the train camera limit');fire('wheel',{deltaY:30});assert.ok(run('cinemaOrbit.manual.distance')>wideLandscape,'zooming out from a wide landscape never jumps inward');assert.ok(run('cinemaOrbit.manual.distance')<=360);
 run('cinemaCamera(1);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
 console.log('Cinema QA passed: drag, tap threshold, pinch/release, wheel, keyboard, moving train anchor, pause/audio preservation, auto return and focus, capture cleanup, lifecycle restoration and finite phone cameras.');
+// Guest presets supply original-model anchors; manual house camera input still
+// wins, and a guest never changes another railway's throttle or pause state.
+run(`let guestPresetCalls=0;function embeddedCinemaView(){guestPresetCalls++;return {target:[8,5,12],position:[20,24,62]};}innerWidth=1440;screenW=1440;screenH=900;enterCinema();cinemaCamera(20);`);
+assert.ok(run('len(sub(cameraTarget,[8,5,12]))')<1e-6,'cinema frames the guest model anchor');
+assert.ok(run('len(sub(cameraPos,[20,24,62]))')<.001,'cinema uses the guest preset eye');
+const presetCalls=run('guestPresetCalls');fire('pointerdown');fire('pointermove',{clientX:780,clientY:430});fire('pointerup');run('cinemaCamera(2)');
+assert.equal(run('guestPresetCalls'),presetCalls,'automatic guest presets cannot take back a manual camera');assert.ok(run('cinemaOrbit.manual'));
+run('resumeCinemaCamera();cinemaCamera(20);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
+console.log('Guest cinema QA passed: model anchors, house interpolation, manual override, automatic return and original railway controls preserved.');
