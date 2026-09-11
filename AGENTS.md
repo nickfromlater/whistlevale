@@ -45,6 +45,9 @@ submit the change as a PR.
 
 ## Contributing to an exhibition bay
 
+A project that already exists somewhere else goes in a guest room rather than
+an exhibition bay: see [embedded projects](docs/contributing/embedded-projects.md).
+
 `grandhall.html` is the central exhibition, reached through the house map.
 Read [the Hall recipe](docs/contributing/grandhall.md). For a named bay, run
 `npm run bay -- AR-03` for the same copyable agent prompt offered by the page,
@@ -83,6 +86,14 @@ reformatting. Shared contribution data is strict JSON in `contributions/world.js
 ## Architecture and invariants
 
 - The app is dependency-free browser JavaScript with a custom WebGL 2 renderer.
+- **A guest room may host somebody else's project on its own renderer.** Work
+  that already exists elsewhere is vendored whole under `vendor/`, never
+  rewritten into house geometry, and run in a sandboxed frame created on room
+  entry and destroyed on exit, so nothing loads for a visitor who never opens
+  that room. This is the only place a third-party runtime is permitted, it
+  never runs on the way to another room, and it needs the author's recorded
+  permission as well as a compatible licence. See
+  [embedded projects](docs/contributing/embedded-projects.md).
 - `src/community-core.js` validates credits and contribution data; `src/community.js`
   connects reviewed data and the optional builders panel. Keep these off the frame loop.
 - `src/scenery/` holds original contributed buildings. For railway placements,

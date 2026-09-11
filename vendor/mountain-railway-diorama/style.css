@@ -1,0 +1,64 @@
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#304238;background:#c6cdbe;font-size:12px;-webkit-font-smoothing:antialiased}
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.vignette{position:fixed;inset:0;box-shadow:inset 0 0 160px #152e2116;pointer-events:none}
+header{position:fixed;top:max(16px,env(safe-area-inset-top));left:max(18px,env(safe-area-inset-left));right:max(18px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.identity{display:flex;align-items:center;gap:9px;user-select:none}
+.seal{font-family:"Hiragino Mincho ProN","YuMincho",serif;color:#9b4935;font-size:11px;line-height:1.1;border:1px solid #9b49357a;padding:3px;border-radius:2px;text-align:center}
+.wordmark{font-family:Georgia,"Times New Roman",serif;font-size:16px;letter-spacing:.22em;color:#304238;font-weight:400}
+.environment,.actions{pointer-events:auto;display:flex;gap:3px;padding:4px;border:1px solid #ffffff36;border-radius:22px;background:#f4f3e76e;backdrop-filter:blur(14px);box-shadow:0 2px 14px #2335230a,inset 0 1px 0 #ffffff30}
+button,select{font:inherit;color:inherit;cursor:pointer}
+button{border:0;background:transparent;transition:background .2s,color .2s;white-space:nowrap}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #a46840;outline-offset:2px}
+button:hover{background:#ffffff52}
+.environment button,.actions button{height:32px;width:32px;display:grid;place-items:center;padding:0;border-radius:50%;font-size:16px}
+.environment button{opacity:.6;transition:opacity .25s,background .25s,box-shadow .25s}
+.environment button.active,.actions button[aria-pressed=true],.actions button[aria-expanded=true]{background:#faf8ede2;opacity:1;box-shadow:inset 0 0 0 1px #8a986038}
+.environment button span{font-size:18px;line-height:1}
+.bottom-left{position:fixed;bottom:max(26px,env(safe-area-inset-bottom));left:max(18px,env(safe-area-inset-left));pointer-events:none}
+.service{display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:.025em}
+.service>span:nth-child(2){font-size:8px;letter-spacing:.1em}
+.live-dot{height:4px;width:4px;background:#668254;border-radius:50%;box-shadow:0 0 8px #74956066}
+.divider{opacity:.25}
+.hint{position:absolute;bottom:22px;white-space:nowrap;font-size:9px;opacity:.46;animation:hint-away 1s 8s forwards}
+.hint span{margin:0 4px}
+@keyframes hint-away{to{opacity:0;visibility:hidden}}
+.bottom-right{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));right:max(18px,env(safe-area-inset-right));display:flex;align-items:flex-end;flex-direction:column;gap:7px}
+.camera-icon{display:inline-block;width:12px;height:9px;border:1px solid currentColor;border-radius:2px;position:relative;margin-right:3px}
+.camera-icon:after{content:"";position:absolute;width:3px;height:4px;border:1px solid currentColor;left:11px;top:1px}
+.tune-icon{display:inline-block;transform:rotate(90deg);font-size:21px;line-height:1}
+#settings{width:236px;max-width:calc(100vw - 36px);max-height:calc(100dvh - 120px);overflow-y:auto;padding:10px 13px;border:1px solid #ffffff6e;background:#eeefe2ea;backdrop-filter:blur(18px);border-radius:14px;box-shadow:0 10px 32px #2431221a,inset 0 1px 0 #ffffff40}
+#settings label{display:grid;grid-template-columns:33px minmax(0,1fr) 32px;align-items:center;gap:9px;min-height:32px;font-size:11px}
+output{text-align:right;opacity:.65;font-size:10px;font-variant-numeric:tabular-nums}
+input[type=range]{display:block;margin:0;width:100%;height:20px;accent-color:#687954;cursor:pointer}
+#settings .view-picker{grid-template-columns:33px minmax(0,1fr);border-top:1px solid #30423815;margin-top:5px;padding-top:7px;padding-bottom:2px}
+select{width:100%;min-width:0;height:28px;border:1px solid #30423820;border-radius:5px;padding:0 6px;background:#ffffff55;font-size:11px}
+#loading{position:fixed;inset:0;display:flex;flex-direction:column;gap:19px;align-items:center;justify-content:center;background:#dce0cf;transition:opacity 1s;z-index:10}
+#loading .loader-mark{font-family:serif;color:#9b4935;font-size:39px;letter-spacing:.18em}
+#loading span{font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+#loading i{height:1px;width:100px;background:#566f4844;overflow:hidden}
+#loading i:after{content:"";display:block;height:1px;width:40px;background:#687b56;animation:loading 1.6s ease-in-out infinite}
+@keyframes loading{from{transform:translateX(-50px)}to{transform:translateX(150px)}}
+#error{position:fixed;inset:30%;padding:30px;background:#f5eedf;z-index:20;border-radius:10px;line-height:1.6}
+.night{color:#c2cfc9}
+.night .wordmark{color:#d1d7ce}
+.night .seal{color:#be8d69;border-color:#be8d6955}
+.night .environment,.night .actions{background:#142927a8;border-color:#66847b30}
+.night .environment button.active,.night .actions button[aria-pressed=true],.night .actions button[aria-expanded=true]{background:#64766a52;box-shadow:inset 0 0 0 1px #a8bda855}
+.night #settings{background:#142824f0;border-color:#66847b30;color-scheme:dark}
+.night .view-picker{border-color:#66847b30}
+.night select{background:#283d36;border-color:#66847b50}
+.night .live-dot{background:#c8bb72}
+.night button:hover{background:#71807340}
+@media(max-width:700px){
+ header{left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top))}
+ .wordmark{font-size:15px}.identity{gap:7px}
+ .bottom-left{left:12px;bottom:max(27px,env(safe-area-inset-bottom))}
+ .bottom-right{right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom))}
+ .service>span:nth-child(2),.divider{display:none}.service #journey{max-width:calc(100vw - 195px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .hint{font-size:8px;bottom:23px}.vignette{box-shadow:inset 0 0 90px #152e2114}
+}
+@media(pointer:coarse){.environment button,.actions button{width:40px;height:40px}#settings label{min-height:36px}.service #journey{max-width:calc(100vw - 214px)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}#loading i:after{animation:none}.hint{display:none}}
+[hidden]{display:none!important}

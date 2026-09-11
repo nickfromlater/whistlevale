@@ -552,6 +552,9 @@ function workshopUpdateCamera(dt){
  // Viewing controls are now tucked away; only the workbench needs extra space.
  if(building){projection[8]=innerWidth<821?0:-.22;projection[9]=innerWidth<821?-.20:-.05;}cameraProjection=projection;
  VP=mm(projection,lookAt(cameraPos,cameraTarget));
+ // The view-projection is current, so a room hosting somebody else's renderer
+ // can put their frame back on its table for this frame.
+ if(typeof embeddedFrameUpdate==='function')embeddedFrameUpdate();
 }
 function beginManualOrbit(){
  if(viewMode==='room'||viewMode==='overview')return;

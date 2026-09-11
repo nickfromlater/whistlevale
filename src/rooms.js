@@ -28,6 +28,28 @@ function registerHouseRoom(key,definition){
  return HOUSE_ROOMS[key];
 }
 
+// One lettered credit plaque per embedded project, in the free atlas band
+// beside the manuals. Omitted the same way the room plaques are when the
+// atlas runs out, rather than overrunning it.
+function initEmbeddedArt(){
+ if(typeof EMBEDDED_PROJECTS!=='object')return;
+ for(const [i,project] of Object.values(EMBEDDED_PROJECTS).entries()){
+  const x=3310,y=856+i*200,w=780,h=196;
+  if(y+h>1260||x+w>roomArt.width){delete roomLabels['embed-credit-'+i];continue;}
+  artSlot('embed-credit-'+i,x,y,w,h,(c,cw,ch)=>{
+   const by=project.credits?.[0];
+   c.fillStyle='#2c3832';c.fillRect(0,0,cw,ch);
+   c.strokeStyle='#b19a62';c.lineWidth=3;c.strokeRect(11,11,cw-22,ch-22);
+   c.textAlign='center';
+   c.fillStyle='#e6d6a9';c.font='34px Georgia';c.fillText(project.title,cw/2,60);
+   if(project.subtitle){c.fillStyle='#c3b483';c.font='italic 22px Georgia';c.fillText(project.subtitle,cw/2,92);}
+   c.fillStyle='#efe2bd';c.font='27px Georgia';c.fillText('Made by '+(by?.name||'a guest'),cw/2,project.subtitle?136:122);
+   c.fillStyle='#a9b79c';c.font='17px Arial';
+   c.fillText((by&&by.platform==='x'?'@'+by.handle+'  ·  ':'')+(project.licence?project.licence+', shown with permission':'shown with permission'),cw/2,project.subtitle?170:158);
+  });
+ }
+}
+
 function initHouseArt(){
  let omittedPlaques=0;
  for(const [i,room]of Object.values(HOUSE_ROOMS).entries()){
