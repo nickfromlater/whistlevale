@@ -6,18 +6,26 @@ await loadContributionDefinitions(state,catalogue);
 const noop=()=>{};context.glStub=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});context.assert=assert;context.inspectScenes=keys=>inspectCommunityScenes(state,keys);
 context.uploadCheck=data=>{assert.equal(data.length%36,0);for(const n of data)assert.ok(Number.isFinite(n),'geometry attributes must be finite');return{count:data.length/12};};
 run('gl=glStub;upload=uploadCheck;disposeMesh=function(){};initTracks();initLabels();initRoomArt();initHouseArt();');
-const results=run(`(()=>{
- const reports=[];
+run(`
  // The contribution path follows the registry when another room is added.
  registerHouseRoom('qa-gallery',{name:'QA gallery',build(scene){const route={length:1,at:()=>({p:[20,1,20]})};scene.routes=[route];scene.height=()=>1;scene.trains=[{edge:route,distance:0,speed:0}];},shell:()=>[]});
  communityCatalogue.works.push({id:'qa-gallery-person',title:'QA figure',room:'qa-gallery',credits:[{name:'Test fixture'}],miniatures:[{builder:'person',at:[0,0]}]});
 
- for(const key of HOUSE_ROOM_BUILDERS.keys()){
+`);
+// Keep the existing per-invocation guard, but exercise each registered room
+// independently so adding a room cannot exhaust the entire suite's deadline.
+const results=[];
+for(const key of run('[...HOUSE_ROOM_BUILDERS.keys()]')){
+ context.qaRoom=key;
+ results.push(run(`(()=>{
+  const key=qaRoom;
   const scene=getHouseScene(key),expected=communityCatalogue.works.filter(w=>w.room===key).reduce((n,w)=>n+(w.miniatures?.length||0),0),actual=scene.lifeDetails.details.filter(d=>d.contribution).length;
   assert.equal(actual,expected,key+' has no silently omitted community placements; inspect slope and rail clearances');
   assert.ok(scene.lifeDetails.communityVertices<=COMMUNITY_LIMITS.vertices,key+' miniature vertex budget');
-  reports.push({room:key,placements:actual,vertices:scene.lifeDetails.communityVertices});
- }
+  return{room:key,placements:actual,vertices:scene.lifeDetails.communityVertices};
+ })()`));
+}
+run(`(()=>{
  // Every allowed miniature builder runs through the actual mapping, including
  // scaled compositions and the default pose/prop parameter paths.
  const original=communityCatalogue.works;
@@ -94,7 +102,6 @@ const results=run(`(()=>{
    for(let i=0;i<b.data.length;i+=12)assert.ok(Math.hypot(b.data[i],b.data[i+2])<=COMMUNITY_BUILDERS[builder]*scale+1e-8,builder+' geometry exceeds its declared footprint');
   }
  }finally{communityCatalogue.works=original;}
- return reports;
 })()`);
 const beforeMeasureSeed=run('seed'),models=inspectCommunityModels(state,['commons']);
 assert.equal(run('seed'),beforeMeasureSeed,'model measurement preserves the procedural sequence');
