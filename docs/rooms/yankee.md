@@ -40,6 +40,11 @@ and grab poles. When both services are outside the display, the follow camera
 waits at the platform. The clipped staging beyond the board edges is a theatrical
 model railway return, not a modeled closed Bronx track circuit.
 
+The train cabinet names the actual running subway. After choosing another train,
+**Restore room train** returns the ten-car River Avenue Local at its current
+timetable position, with the door state and opposite service preserved. The
+restored default carries through saved preferences and playable exports.
+
 ## The gallery and night lighting
 
 Walnut trestles support the brass-trimmed display cabinet. Navy walls and walnut
@@ -47,7 +52,9 @@ paneling surround a woven runner, a reading bench and potted plants. Framed
 pinstriped jerseys, a field blueprint, 1923 / 2009 prints, a subway diagram,
 pennants, books and individually stitched display baseballs dress the room.
 Ceiling beams and pendants lift away in high aerial views; close views retain
-them. Brass sconces and pendant lamps use the room dimmer.
+them. Brass sconces, pendant lamps and picture lights use the room dimmer. The jersey
+pinstripes follow the shoulders and sleeves, with individually cut block numerals,
+stitches, hem seams and small brass number plates.
 
 Six aimed stadium floodlights illuminate the grass and seating. Two warm
 uplights pick out the limestone facade; localized platform and street lighting
@@ -75,14 +82,17 @@ Architectural and dimensional references:
 
 `npm run test:yankee` checks emitted geometry and footprint, field scale, station
 berths, door interlocks, throttle stop, staging, complete formations, wheel and
-roof drawing, mapped lighting, public credit, and mesh disposal on replacement
+roof drawing, restoring the original subway without resetting its timetable,
+mapped lighting, public credit, and mesh disposal on replacement
 and failed construction. The full room has a fixed 5.1-million-vertex ceiling;
 existing contribution and Hall budgets are unchanged. Static room construction
 is cached and there is no geometry generation in the frame loop.
 
-This is a dense model: approximately 139 MiB of indexed room, wall and stock
+This is a dense model: approximately 140 MiB of indexed room, wall and stock
 buffers before renderer targets and the other rooms. Desktop/phone browser
-performance remains a review requirement. Local evidence was rendered from the
+performance remains a review requirement. The published PR preview loads in the
+cloud browser, but its WebGL 2 context is unavailable; live 3D interaction and
+physical-phone checks remain unverified. Local evidence was rendered from the
 native emitted geometry, shaders and camera parameters using Mesa EGL; those
 images do not constitute browser interaction or physical-device testing.
 
@@ -96,5 +106,7 @@ geometry measurements, checks and render receipts remain under ignored
 ![A ten-car 4 service calls at the elevated station.](yankee-preview/subway.jpg)
 
 ![The complete handcrafted display in daylight.](yankee-preview/day.jpg)
+
+![Stitched jersey numerals and a brass picture light.](yankee-preview/jersey.jpg)
 
 The images above are native-shader review renders, without the browser UI.

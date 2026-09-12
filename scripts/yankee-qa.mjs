@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {communityContext,loadCommunity,loadContributionDefinitions,prepareCommunityGeometry} from './community-lib.mjs';
 const state=await communityContext();state.context.assert=assert;
+const savedCollection=new Map();state.context.localStorage={getItem:key=>savedCollection.get(key)||null,setItem:(key,value)=>savedCollection.set(key,value)};
 await loadContributionDefinitions(state,await loadCommunity());prepareCommunityGeometry(state);
 // Measure emitted geometry while it is uploaded, rather than rebuilding this
 // deliberately detailed model for every assertion.
@@ -46,6 +47,15 @@ state.run(`(()=>{
   draws.length=0;drawYankeeTrain(s,train,shadowProgram);assert.equal(draws.filter(m=>m===s.stockMeshes.roof).length,10,'cutaway does not delete roof shadows');
  }finally{draw=savedDraw;cutaway=false;}
  assert.equal(collectionTrainLabel('yankee').name,'River Avenue Local');assert.equal(collectionPower('yankee'),'electric');assert.equal(selectedCollection.yankee,undefined);
+ assert.equal(collectionActiveChoice('yankee'),null,'a cabinet preview candidate is not the running subway');
+ const native=s.trains[0],other=s.trains[1],phase=native.serviceTime,position=native.distance,door=native.doorOpen;
+ chooseCollectionTrain('yankee',{id:'kingfisher',livery:0,cars:2});
+ assert.equal(collectionActiveChoice('yankee').id,'kingfisher');assert.equal(native.cars,2);assert.equal(s.trains[1],other);
+ assert.equal(restoreRoomTrain('yankee'),true);
+ assert.equal(native.cars,9);assert.equal(native.type,'mountain');assert.equal(native.stock,undefined);assert.equal(native.collectionChoice,undefined);assert.equal(native.draw,drawYankeeTrain);assert.equal(native.advance,yankeeService);
+ assert.equal(native.serviceTime,phase);assert.equal(native.distance,position);assert.equal(native.doorOpen,door);assert.equal(s.trains[1],other,'restore preserves the opposite service');
+ assert.equal(collectionExport().rooms.yankee,undefined,'restored defaults survive portable export without an override');
+ assert.equal(collectionActiveChoice('yankee'),null);assert.equal(collectionTrainLabel('yankee').name,'River Avenue Local');
  const disposed=new Set();disposeMesh=mesh=>{if(mesh){assert.ok(!disposed.has(mesh));disposed.add(mesh);}};
  registerHouseRoom('yankee',{...q,build:buildYankeeRoom,shell:yankeeGallery});
  for(const mesh of[s.mesh,s.lifeDetails.mesh,...s.walls.map(w=>w.mesh),...s.ownedMeshes])if(mesh)assert.ok(disposed.has(mesh),'cache invalidation releases every room-owned mesh');

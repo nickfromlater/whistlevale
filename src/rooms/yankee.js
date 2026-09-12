@@ -14,8 +14,30 @@ function yankeeJersey(b,x,y,z,number){
  yankeeFrame(b,x,y,z,16,21);b.push(x,y,z+.42);
  const outline=[[-4,7],[-7,5],[-5,1],[-3.5,2],[-3.5,-7],[3.5,-7],[3.5,2],[5,1],[7,5],[4,7],[1.7,5.9],[-1.7,5.9]];
  for(let i=0;i<outline.length;i++){const a=outline[i],q=outline[(i+1)%outline.length];b.tri([0,0,.04],[a[0],a[1],.04],[q[0],q[1],.04],'#e9e3d0',0);}
- for(let xx=-3.2;xx<3.3;xx+=.47)b.box(xx,-.65,.065,.034,12.6,.01,'#6e8290',0);
- yankeeText(b,number,0,-.4,.086,4,6,'#193349');b.pop();
+ // Clip every pinstripe to the actual shoulders and sleeves of the fabric.
+ for(let xx=-6.8;xx<6.9;xx+=.47){const hits=[];for(let i=0;i<outline.length;i++){const a=outline[i],q=outline[(i+1)%outline.length];if((a[0]<=xx&&q[0]>xx)||(q[0]<=xx&&a[0]>xx))hits.push(a[1]+(q[1]-a[1])*(xx-a[0])/(q[0]-a[0]));}hits.sort((a,q)=>a-q);for(let i=0;i+1<hits.length;i+=2)b.box(xx,(hits[i]+hits[i+1])/2,.063,.027,hits[i+1]-hits[i]-.08,.01,'#657b89',0);}
+ for(let i=0;i<outline.length;i++){const a=outline[i],q=outline[(i+1)%outline.length];b.beam([a[0]*.97,a[1]*.97,.083],[q[0]*.97,q[1]*.97,.083],.025,'#c8c0aa',0,5);}
+ b.beam([-1.7,5.9,.09],[0,5.45,.09],.09,'#c5baa3',0,6);b.beam([0,5.45,.09],[1.7,5.9,.09],.09,'#c5baa3',0,6);
+ // Individually cut twill numerals, with a contrasting stitched edge.
+ const numerals={
+  '2':[[[0,.75],[0,.87],[.14,1],[.85,1],[1,.86],[1,.7],[.78,.7],[.78,.79],[.70,.82],[.28,.82],[.22,.78],[.22,.75]],[[.78,.74],[1,.7],[.22,.18],[0,.18],[0,.33]],[[0,0],[1,0],[1,.2],[0,.2]]],
+  '4':[[[0,.4],[.48,1],[.72,1],[.26,.4]],[[0,.23],[1,.23],[1,.43],[0,.43]],[[.60,0],[.83,0],[.83,1],[.60,1]]]
+ };
+ const width=number.length>1?2.25:3.1,gap=.35;
+ for(const [i,digit]of [...number].entries()){
+  const cx=(i-(number.length-1)/2)*(width+gap);
+  for(const points of numerals[digit]){const p=points.map(([u,v])=>[cx+(u-.5)*width,-3+v*4.7,.12]);
+   // The cap is a narrow ring; a simple strip follows its concave edge.
+   if(digit==='2'&&points===numerals['2'][0]){const a=p.slice(0,6),q=p.slice(6).reverse();for(let j=0;j<5;j++)b.quad(a[j],a[j+1],q[j+1],q[j],'#17364d',0);}
+   else for(let j=1;j<p.length-1;j++)b.tri(p[0],p[j],p[j+1],'#17364d',0);
+   for(let j=0;j<p.length;j++){const a=p[j],q=p[(j+1)%p.length],length=Math.hypot(q[0]-a[0],q[1]-a[1]);for(let t=.04;t<length;t+=.13){const at=d=>[a[0]+(q[0]-a[0])*d/length,a[1]+(q[1]-a[1])*d/length,.14];b.beam(at(t),at(Math.min(t+.047,length)),.013,'#a5afac',0,4);}}
+  }
+ }
+ b.box(0,-8.5,.07,7,.62,.06,'#b59b64',41);yankeeText(b,number,0,-8.5,.108,2,.42,'#243d4c');b.pop();
+}
+function yankeePictureLight(b,x,y,width){
+ for(const dx of[-width*.32,width*.32]){b.box(x+dx,y,.7,.8,1.0,.40,'#aa8a55',41);b.beam([x+dx,y,.85],[x+dx,y,3.6],.085,'#bca06b',41,8);}
+ YankeeModel.softBox(b,x,y,3.6,width,.58,.76,'#b89a60',41,.12);b.box(x,y-.3,3.62,width-.3,.035,.52,'#ffe2ad',25);
 }
 function yankeeBlueprint(b,x,y,z,w=46,h=26){
  yankeeFrame(b,x,y,z,w,h);b.push(x,y,z+.40);
@@ -46,14 +68,17 @@ function yankeeGallery(b){
   w.box(0,49.8,.6,width,1.2,1.1,'#a38b5d',22);w.box(0,48.85,.78,width,.13,.35,'#d1b477',41);
   for(const x of[-74,74])yankeeSconce(w,x,13);
   if(which==='back'){
+   yankeePictureLight(w,0,29,17);
    yankeeText(w,'YANKEE STADIUM',0,40,1.2,82,6,'#e0cca0');yankeeText(w,'THE BRONX, IN MINIATURE',0,31.4,1.21,61,2.4);
    yankeeBlueprint(w,0,10,1.25,47,28);
    for(const x of[-42,42]){yankeeFrame(w,x,11,1.2,18,24);yankeeText(w,x<0?'1923':'2009',x,15,1.62,13,4);yankeeText(w,'NEW YORK',x,6,1.63,12,1.8);}
   }else if(which==='left'){
+   for(const x of[-40,0,40])yankeePictureLight(w,x,26,11);
    for(const[x,n]of[[-40,'4'],[0,'2'],[40,'42']])yankeeJersey(w,x,13,1.2,n);
    yankeeText(w,'PINSTRIPES & POSSIBILITIES',0,34,1.2,77,3.2);
    for(let x=-54;x<=54;x+=18){w.box(x,-11,4,15,8,5.8,'#58422e',22);w.box(x,-6.8,4,15.5,.4,6.2,'#aa8c5e',22);w.box(x,-6.55,4,13,.06,4.8,'#e4d4af',0);for(let k=0;k<5;k++)w.box(x-5+k*2.1,-10,7.0,1.7,6,.05,['#233e50','#8e5440','#b09565'][k%3],22);}
   }else if(which==='right'){
+   yankeePictureLight(w,0,29,17);
    yankeeText(w,'RIVER AVENUE',0,35,1.2,67,4);yankeeFrame(w,0,12,1.2,62,29);
    w.box(-15,11,1.66,.8,20,.03,'#4da272',0);w.box(10,11,1.66,.8,20,.03,'#d9864c',0);
    for(let y=3;y<22;y+=5){for(const x of[-15,10])w.cylinder(x,y,1.7,.8,.8,.04,'#eadbc0',0,16,PI/2);}
@@ -62,6 +87,7 @@ function yankeeGallery(b){
    w.box(0,-4,4,58,.7,7,'#af8a55',22);w.box(0,-4.45,6.8,58,.15,.2,'#d2b574',41);
    for(const x of[-18,0,18]){w.cylinder(x,-3.2,4,1.7,1.6,.7,'#253d49',0,16);w.sphere(x,-1.4,4,1.58,1.58,1.58,'#e6d9bc',0,20,12);for(let a=0;a<36;a++){let t=a*TAU/36;w.beam([x+Math.cos(t)*1.54,-1.4+Math.sin(t)*1.54,4-.28],[x+Math.cos(t+.04)*1.58,-1.4+Math.sin(t+.04)*1.58,4+.28],.027,'#ae5845',0,4);}}
   }else{
+   yankeePictureLight(w,0,35,17);
    yankeeText(w,'A LITTLE CLOSER TO THE GAME',0,27,1.1,102,4);yankeeText(w,'WHISTLEVALE',0,18,1.1,42,2.8);
    for(const x of[-84,84]){yankeeFrame(w,x,14,1.1,23,30);w.tri([x-8,24,1.52],[x+8,24,1.52],[x-8,6,1.52],'#c8b07a',0);yankeeText(w,'NY',x-2,19,1.55,8,4,'#243d50');}
   }
@@ -125,7 +151,7 @@ function buildYankeeRoom(scene,b){
   {name:'The Great Hall',target:YankeeModel.world([-4,8,63]),distance:84,phoneDistance:171,pitch:.28,yaw:-.21},
   {name:'River Avenue',target:[89,5,18],distance:62,phoneDistance:143,pitch:.28,yaw:-.87},
   {name:'Beyond center field',target:YankeeModel.world([0,13,-42]),distance:97,phoneDistance:165,pitch:.37,yaw:-.48},
-  {name:'Pinstripes on the wall',target:[-144,12,0],distance:31,phoneDistance:66,pitch:.11,yaw:1.21}
+  {name:'Pinstripes on the wall',target:[-143,15,0],distance:52,phoneDistance:91,pitch:.09,yaw:1.34}
  ];
 }
 const yankeeFloodLights=[[-44,29,8],[44,29,8],[-35,29,-30],[35,29,-30],[-12,29,55],[12,29,55]].map(p=>({position:YankeeModel.world(p),target:YankeeModel.world([p[0]*.16,1,4]),color:[1.08,1.13,1.05],radius:70,cone:.81,strength:.70}));
@@ -137,7 +163,7 @@ registerHouseRoom('yankee',{
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Yankee Stadium miniature, Bronx gallery and R142-family subway; built with agent assistance.'}],
  map:{plot:'west-4',scale:.22,footprint:[292,282],focus:[0,10,2]},
  layoutLightFalloff:.075,
- lights:[[-48,49.8,24],[48,49.8,-35],[-142,15,-74],[-142,15,74],[142,15,-74],[142,15,74]],
+ lights:[[-48,49.8,24],[48,49.8,-35],[-140,25.7,0],[0,28.7,-135],[140,28.7,0],[0,34.7,135]],
  layoutLights:[[70,8,10],[82,8,32],[70,8,55],[82,8,72],[88,5,-42],[88,5,-76],[89,5,98],[48,5,78]],floodLights:yankeeFloodLights,
  build:buildYankeeRoom,shell:yankeeGallery
 });
