@@ -364,6 +364,9 @@ const TRAIN_COLLECTION=[
 ];
 const collectionById=new Map(TRAIN_COLLECTION.map(q=>[q.id,q]));
 const selectedCollection=Object.create(null),runningCollectionMeshes=new Map(),collectionOffsetCache=new Map();
+// Keep authored stock separate from its moving timetable and route state.
+const collectionOriginalStock=new WeakMap();
+const collectionStockFields=['cars','type','stock','collectionChoice'];
 const collectionStorageKey='whistlevale-train-collection-v1';
 const cabinetInitLabels=initLabels;
 initLabels=function(){
@@ -391,7 +394,12 @@ function collectionDefault(room){
  const q=collectionById.get(id);return {id,livery:id==='nightingale'?Math.max(0,['green','blue','claret'].indexOf(livery)):0,cars:room==='valley'?Math.min(6,offsets.length-2):Math.max(1,Math.min(6,stock?.cars??q.cars))};
 }
 function collectionChoice(room){return selectedCollection[room]||collectionDefault(room);}
-function collectionTrainLabel(room){const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
+function collectionActiveChoice(room){
+ if(selectedCollection[room])return selectedCollection[room];
+ if(HOUSE_ROOMS[room]?.train&&!HOUSE_ROOMS[room]?.defaultCollection)return null;
+ return collectionDefault(room);
+}
+function collectionTrainLabel(room){if(!selectedCollection[room]&&HOUSE_ROOMS[room]?.train)return HOUSE_ROOMS[room].train;const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
 function collectionPower(room){
  if(HOUSE_ROOMS[room]?.railway===false)return null;
  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
@@ -418,6 +426,7 @@ function restoreCollectionSelections(){
 function applyCollectionToScene(scene){
  const choice=selectedCollection[scene.key];if(!choice||!scene.trains[0]||scene.trains[0].collectionChoice===choice)return;
  ensureRunningCollection(choice);const q=collectionById.get(choice.id),train=scene.trains[0];
+ if(!collectionOriginalStock.has(train))collectionOriginalStock.set(train,Object.fromEntries(collectionStockFields.filter(key=>Object.hasOwn(train,key)).map(key=>[key,train[key]])));
  train.collectionChoice=choice;train.cars=choice.cars;train.type=q.power==='electric'?'mountain':q.power;train.stock='collection:'+q.id;
 }
 const collectionGetHouseScene=getHouseScene;
@@ -427,6 +436,15 @@ function chooseCollectionTrain(room,value){
  ensureRunningCollection(choice);selectedCollection[room]=choice;
  if(room!=='valley'&&roomScenes.has(room))applyCollectionToScene(roomScenes.get(room));
  shadowDirty=true;let saved=true;
+ try{localStorage.setItem(collectionStorageKey,JSON.stringify(collectionExport()));}catch{saved=false;}
+ pruneRunningCollection();return saved;
+}
+function restoreRoomTrain(room){
+ if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false)throw new Error('This room has no train.');
+ const train=roomScenes.get(room)?.trains[0],original=train&&collectionOriginalStock.get(train);
+ if(original?.collectionChoice)ensureRunningCollection(original.collectionChoice);
+ if(original){for(const key of collectionStockFields)delete train[key];Object.assign(train,original);collectionOriginalStock.delete(train);}
+ delete selectedCollection[room];shadowDirty=true;let saved=true;
  try{localStorage.setItem(collectionStorageKey,JSON.stringify(collectionExport()));}catch{saved=false;}
  pruneRunningCollection();return saved;
 }
@@ -653,6 +671,7 @@ workshopDrawTrains=function(p=mainProgram){
 const cabinetDrawHouse=drawHouseTrainFormation;
 drawHouseTrainFormation=function(scene,train,p){
  if(train.collectionChoice)drawSelectedCollection(train.collectionChoice,offset=>circuitMatrix(train.edge,train.distance-offset),p,-collectionWheelPhase(train));
+ else if(typeof train.draw==='function')train.draw(scene,train,p);
  else cabinetDrawHouse(scene,train,p);
 };
 

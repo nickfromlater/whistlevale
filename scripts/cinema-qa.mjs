@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
-const [railway,hobby]=await Promise.all(['src/railway.js','src/hobby.js'].map(read));
+const [railway,hobby,rooms]=await Promise.all(['src/railway.js','src/hobby.js','src/rooms.js'].map(read));
 const events=new Map(),captured=new Set(),nodes=new Map(),classes=new Set();
 const listen=(type,fn)=>{if(!events.has(type))events.set(type,[]);events.get(type).push(fn);};
 const document={activeElement:null,hidden:false,addEventListener:listen,querySelector:()=>null,body:{classList:{add:(...names)=>names.forEach(n=>classes.add(n)),remove:(...names)=>names.forEach(n=>classes.delete(n))}}};
@@ -14,7 +14,7 @@ const canvas={...node('world'),setPointerCapture:id=>captured.add(id),hasPointer
 const context=vm.createContext({assert,document,canvas,$:node,window:{addEventListener:listen},setTimeout:()=>1,clearTimeout(){},innerWidth:1440,innerHeight:900,screenW:1440,screenH:900});
 const run=code=>vm.runInContext(code,context);
 run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
- let throttle=65,paused=true,viewMode='engine',orbit={target:[2,3,4],distance:47,pitch:.6,yaw:.8},cameraPos=[12,14,28],cameraTarget=[2,3,4],cameraNear=.1,cameraProjection,VP;
+ let throttle=65,paused=true,viewMode='engine',orbit={target:[2,3,4],distance:47,pitch:.6,yaw:.8},cameraPos=[12,14,28],cameraTarget=[2,3,4],cameraFar=500,cameraNear=.1,cameraProjection,VP;
  let building=false,hidden=false,reduceMotion=false,roomClock=0,speed=1,leadInfo={p:[0,1,0],f:[0,0,1]},audio={active:true};
  const HOUSE_ROOMS={valley:{layout:'Valley',tag:'A railway'},coast:{layout:'Coast',tag:'The sea'}};
  function start(){}function setView(){}function updateCamera(){}function updateUI(){}function enterBuild(){}function beginManualOrbit(){viewMode='overview';}
@@ -24,9 +24,17 @@ run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
  function setThrottle(value){throttle=value;}function togglePause(){paused=!paused;}function enableSound(){throw new Error('Camera gestures must not restart audio');}
  let exportPlayable;
 `);
+run(railway.match(/function houseCameraFar\(\).*$/m)[0]+'\n'+railway.match(/function houseCameraNear\(.*$/m)[0]+'\n'+rooms.match(/function advanceHouseTrain\(.*$/m)[0]);
 run(hobby);
 run('const I=Object.freeze([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);');
 run('hobby.ready=true;updateUI=function(){};bindCinemaCamera()');
+run(railway.slice(railway.indexOf('let houseFrameNext=0;'),railway.indexOf('function animate(now)')));
+run(`
+ HOUSE_ROOMS.coast.maxFPS=60;hobby.room='coast';let accepted=0;
+ for(let i=0;i<120;i++)if(houseFrameDue(1000+i*1000/120+(i%3===1?.7:0),999))accepted++;
+ assert.ok(accepted>=59&&accepted<=61,'60 Hz pacing remains stable on a jittered 120 Hz display');
+ hobby.room='valley';assert.ok(houseFrameDue(2001,2000),'other rooms keep their existing cadence');delete HOUSE_ROOMS.coast.maxFPS;
+`);
 function fire(type,extra={}){
  const e={type,target:canvas,button:0,pointerId:1,clientX:700,clientY:450,deltaY:0,deltaMode:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra};
  for(const fn of events.get(type)||[]){fn(e);if(e.stopped)break;}return e;
@@ -105,3 +113,10 @@ run('embeddedCinemaView=()=>({target:[8,1,12],position:[20,2,62],groundHandled:t
 assert.ok(Math.abs(run('cameraPos[1]')-2)<.001,'the house floor must not lift a guest camera out of its tunnel clearance');
 run('leaveCinema(false)');
 console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');
+run(`embeddedCinemaView=()=>null;HOUSE_ROOMS.coast.far=1600;hobby.scene.cinemaView=()=>({target:[0,0,0],position:[0,120,160]});enterCinema();cinemaCamera(20);`);
+assert.ok(Math.abs(run('cameraNear')-.8)<.001,'a large native display retains depth precision in its wide cinema view');
+assert.equal(run('cameraFar'),1600);
+run('hobby.scene.cinemaView=()=>({target:[0,0,0],position:[0,12,28]});cinemaCamera(20);');
+assert.equal(run('cameraNear'),.5,'close cinema views still preserve the distant gallery lettering');
+run('delete HOUSE_ROOMS.coast.far;cinemaCamera(20);');
+assert.equal(run('cameraNear'),.1,'ordinary rooms retain their existing cinema near plane');

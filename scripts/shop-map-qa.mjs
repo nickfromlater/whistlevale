@@ -38,7 +38,7 @@ vm.runInContext(railway.slice(0,railway.indexOf("const canvas=$('world')"))+'\n'
  const FLOOR=-23.97,I=ident(),mainProgram='main',roomLabels={};
  let meshId=0;function upload(data){return{id:++meshId,count:data.length/12};}function disposeMesh(){}
  let viewMode='engine',orbit={target:[2,3,4],distance:41,yaw:.7,pitch:.6},cameraPos=[12,14,28],cameraTarget=[2,3,4];
- let cameraNear=.1,cameraProjection=perspective(.64,screenW/screenH,.1,500),VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget)),lightVP=ident();
+ let cameraFar=500,cameraNear=.1,cameraProjection=perspective(.64,screenW/screenH,.1,500),VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget)),lightVP=ident();
  let lensAmount=.63,cutaway=true,building=false,hidden=false,shadowDirty=false,paused=false,speed=2,reduceMotion=false;
  let sunDir=norm([-48,74,-25]),travel=4,leadInfo={p:[1,2,3],f:[0,0,1]},failRoom=null;
  const hobby={ready:true,room:'valley',scene:null,cinema:false,transition:false};

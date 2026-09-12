@@ -95,8 +95,9 @@ precision highp float;
 in vec3 vPos,vNormal,vColor;in float vMat;in vec2 vUV;in vec4 vShadow;
 uniform sampler2D uShadow,uAtlas,uRoomAtlas,uMoonlightFilm,uMoonlightNameplate;
 uniform float uMoonlightReady;
-uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6];
-uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
+uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6],uClipZ,uFloodColors[8];
+uniform vec4 uFloodPositions[8],uFloodDirections[8];
+uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid,uLampFalloff;out vec4 frag;
 float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float shadow(vec3 n){vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;float bias=max(.00024,.00064*(1.-dot(n,uSun)));float s=0.;vec2 texel=1./vec2(textureSize(uShadow,0));for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){float w=(x==0?2.:1.)*(y==0?2.:1.);s+=w*(p.z-bias<texture(uShadow,p.xy+vec2(x,y)*texel*1.05).r?1.:0.);}return s/16.;}
@@ -179,7 +180,7 @@ vec4 moonlightBeam(vec2 uv,float night){
  return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
 }
 // MOONLIGHT_BEAM_END
-void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
+void main(){if(uClipZ.z>.5&&(vPos.z<uClipZ.x||vPos.z>uClipZ.y))discard;float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
  if(m==83.){frag=vec4(moonlightPicture(vUV,uTime),1.);return;}
  if(m==84.){frag=moonlightBeam(vUV,uNight);return;}
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
@@ -227,6 +228,16 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  float spec=pow(max(dot(n,h),0.),mix(10.,145.,1.-rough))*mix(.045,.67,metal);lit+=lightColor*spec*sh*mix(vec3(1),albedo,.48*metal);
  lit+=albedo*ambient*.13*(1.-hemi)*ao;lit+=albedo*vec3(.10,.082,.055)*max(n.z,0.)*ao*mix(1.,.18,dusk);
  if(m==8.||m==24.)lit+=albedo*lightColor*max(dot(-n,l),0.)*.16*sh;
+ // A room may opt into aimed floodlights. Position and radius use the same
+ // transform as its scenery in the live map; zero colors disable unused slots.
+ if(dusk>.01)for(int i=0;i<8;i++){
+  if(uFloodPositions[i].w<=0.)continue;
+  vec3 lp=uFloodPositions[i].xyz-p;float ld=length(lp);vec3 ll=lp/max(ld,.001);
+  float cone=smoothstep(uFloodDirections[i].w,min(.999,uFloodDirections[i].w+.17),dot(-ll,uFloodDirections[i].xyz));
+  float fall=1./(1.+pow(ld/uFloodPositions[i].w,2.));vec3 beam=uFloodColors[i]*dusk*cone*fall;
+  lit+=albedo*beam*(max(dot(n,ll),0.)+.045);
+  lit+=beam*pow(max(dot(n,normalize(ll+v)),0.),mix(18.,140.,1.-rough))*mix(.012,.18,metal);
+ }
  // Warm practical lights keep their own dimmer, independent of the sun. The
  // pendants have broad central pools; task lamps fall off more locally.
  for(int i=0;i<6;i++){
@@ -236,7 +247,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   lit+=albedo*warm*(diff+.08)*ao;
   vec3 rh=normalize(ll+v);lit+=warm*pow(max(dot(n,rh),0.),mix(12.,140.,1.-rough))*mix(.025,.22,metal);
  }
- if(dusk>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*.65);lit+=albedo*vec3(1.,.66,.31)*max(dot(n,normalize(lp)),.08)*dusk*fall*3.;}}
+ if(dusk>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*uLampFalloff);lit+=albedo*vec3(1.,.66,.31)*max(dot(n,normalize(lp)),.08)*dusk*fall*3.;}}
  vec3 toHead=uHead-p;float hd=length(toHead);float cone=pow(max(dot(-normalize(toHead),uForward),0.),18.);lit+=albedo*vec3(1.,.69,.32)*cone*max(dot(n,normalize(toHead)),.1)*(dusk*.9+.08)*4./(1.+hd*hd*.15);
  if(m==7.){
   float w1=sin(p.z*13.+p.x*6.-uTime*.95),w2=sin(p.x*23.-p.z*8.+uTime*.67);n=normalize(vec3(w1*.037,1.,w2*.028));float fres=pow(1.-max(dot(n,v),0.),3.);vec3 wh=normalize(l+v);float sparkle=pow(max(dot(n,wh),0.),260.);
@@ -250,17 +261,17 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  lit=mix(lit,uInvalid>.5?vec3(.48,.12,.06):vec3(.12,.42,.22),uPreview*.25);float dist=length(uEye-p);vec3 fog=mix(vec3(.07,.077,.062),mix(vec3(.018,.027,.044),vec3(.011,.019,.033),deepNight),dusk);float fogF=1.-exp(-dist*dist*.0000010);lit=mix(lit,fog,clamp(fogF,0.,.25));frag=vec4(lit,1.);
 }`;
 const SHVS=`#version 300 es
-precision highp float;layout(location=0)in vec3 aPosition;uniform mat4 uModel,uVP;void main(){gl_Position=uVP*uModel*vec4(aPosition,1.);}`;
+precision highp float;layout(location=0)in vec3 aPosition;uniform mat4 uModel,uVP;out float vWorldZ;void main(){vec4 p=uModel*vec4(aPosition,1.);vWorldZ=p.z;gl_Position=uVP*p;}`;
 const SHFS=`#version 300 es
-precision highp float;void main(){}`;
+precision highp float;in float vWorldZ;uniform vec3 uClipZ;void main(){if(uClipZ.z>.5&&(vWorldZ<uClipZ.x||vWorldZ>uClipZ.y))discard;}`;
 const FULLVS=`#version 300 es
 precision highp float;out vec2 uv;void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);uv=p;gl_Position=vec4(p*2.-1.,0.,1.);}`;
 const POSTFS=`#version 300 es
 precision highp float;in vec2 uv;out vec4 frag;
-uniform sampler2D uScene,uDepth;uniform vec2 uResolution;uniform float uTime,uNight,uMacro,uFocus,uNear;
+uniform sampler2D uScene,uDepth;uniform vec2 uResolution;uniform float uTime,uNight,uMacro,uFocus,uNear,uFar;
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 float lum(vec3 c){return dot(c,vec3(.2126,.7152,.0722));}
-float linearDepth(float d){return 1000.*uNear/(500.+uNear-(d*2.-1.)*(500.-uNear));}
+float linearDepth(float d){return 2.*uFar*uNear/(uFar+uNear-(d*2.-1.)*(uFar-uNear));}
 void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
  vec3 a=texture(uScene,uv+vec2(t.x,0)).rgb,b=texture(uScene,uv-vec2(t.x,0)).rgb,d=texture(uScene,uv+vec2(0,t.y)).rgb,e=texture(uScene,uv-vec2(0,t.y)).rgb;
  float edge=max(max(lum(a),lum(b)),max(lum(d),lum(e)))-min(min(lum(a),lum(b)),min(lum(d),lum(e)));c=mix(c,(c*2.+a+b+d+e)/6.,clamp(edge*1.5,0.,.55));
@@ -272,29 +283,35 @@ void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
 }`;
 function program(vs,fs){function compile(s,t){let sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,compile(vs,gl.VERTEX_SHADER));gl.attachShader(p,compile(fs,gl.FRAGMENT_SHADER));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));p.u={};return p}
 function uniform(p,n){return p.u[n]??(p.u[n]=gl.getUniformLocation(p,n))}const uf=(p,n,x)=>gl.uniform1f(uniform(p,n),x), uv3=(p,n,v)=>gl.uniform3fv(uniform(p,n),v), um=(p,n,m)=>gl.uniformMatrix4fv(uniform(p,n),false,m);
-function uploadTriangles(data,compact=true,owned=false){
+function uploadTriangles(data,compact=true,owned=false,smallIndices=false){
  const floats=owned?data:new Float32Array(data),packed=compact?compactMeshVertices(floats):{data:floats,indices:null};
- const vao=gl.createVertexArray(),buf=gl.createBuffer(),mesh={vao,buf,count:data.length/12,bytes:packed.data.byteLength};
+ if(smallIndices&&packed.indices&&packed.data.length/12<=65535)packed.indices=new Uint16Array(packed.indices);
+ // Native solid-geometry rooms often have no texture coordinates. Omitting
+ // only identically +0 UV pairs saves eight bytes per vertex, losslessly.
+ let stride=48,zeroUV=smallIndices;
+ if(zeroUV){const words=new Uint32Array(packed.data.buffer,packed.data.byteOffset,packed.data.length);for(let i=10;i<words.length;i+=12)if(words[i]||words[i+1]){zeroUV=false;break;}}
+ if(zeroUV){const values=new Float32Array(packed.data.length/12*10);for(let i=0,j=0;i<packed.data.length;i+=12)for(let k=0;k<10;k++)values[j++]=packed.data[i+k];packed.data=values;stride=40;}
+ const vao=gl.createVertexArray(),buf=gl.createBuffer(),mesh={vao,buf,count:data.length/12,bytes:packed.data.byteLength,zeroUV};
  try{
   gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,packed.data,gl.STATIC_DRAW);
-  [3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,48,[0,12,24,36,40][i]);});
-  if(packed.indices){mesh.ibo=gl.createBuffer();mesh.indexed=true;mesh.bytes+=packed.indices.byteLength;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,packed.indices,gl.STATIC_DRAW);}
+  [3,3,3,1,2].forEach((n,i)=>{if(i===4&&zeroUV)return;gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,stride,[0,12,24,36,40][i]);});
+  if(packed.indices){mesh.ibo=gl.createBuffer();mesh.indexed=true;mesh.indexType=packed.indices.BYTES_PER_ELEMENT===2?gl.UNSIGNED_SHORT:gl.UNSIGNED_INT;mesh.bytes+=packed.indices.byteLength;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,packed.indices,gl.STATIC_DRAW);}
   return mesh;
  }catch(error){disposeMesh(mesh);throw error;}finally{gl.bindVertexArray(null);}
 }
 // Material 76 is glazing; 78–80/82 are celestial effects; 84 is projector haze.
 // Transparent triangles keep a separate, sortable stream; opaque triangles
 // share identical vertices without changing their emitted order or attributes.
-function upload(data,compact=true){
+function upload(data,compact=true,smallIndices=false){
  let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84){first=i-9;break;}
- if(first<0)return uploadTriangles(data,compact);
+ if(first<0)return uploadTriangles(data,compact,false,smallIndices);
  // A few transparent panes must not duplicate the entire scenery in JS arrays.
  let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84)clearLength+=36;
  const opaque=new Float32Array(data.length-clearLength),clear=[];let offset=0;
  for(let i=0;i<data.length;i+=36){const transparent=data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
  let mesh,glass;
  try{
-  mesh=uploadTriangles(opaque,compact,true);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
+  mesh=uploadTriangles(opaque,compact,true,smallIndices);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
   glass.centers=[];for(let i=0;i<clear.length;i+=36)glass.centers.push([(clear[i]+clear[i+12]+clear[i+24])/3,(clear[i+1]+clear[i+13]+clear[i+25])/3,(clear[i+2]+clear[i+14]+clear[i+26])/3]);
   glass.center=[0,0,0];for(const point of glass.centers)for(let axis=0;axis<3;axis++)glass.center[axis]+=point[axis]/glass.centers.length;
   glass.indices=new Uint32Array(glass.count);glass.order=glass.centers.map((_,i)=>i);glass.depths=new Float64Array(glass.order.length);
@@ -303,8 +320,21 @@ function upload(data,compact=true){
 }
 const architecturalGlassDraws=[];
 function draw(mesh,model=I,p=mainProgram){
+ if(mesh?.parts){const clip=p===mainProgram?mm(VP,model):p===shadowProgram?mm(lightVP,model):null;for(const part of mesh.parts)if(!clip||meshBoundsVisible(part.bounds,clip))drawMeshPart(part,model,p);return;}
+ drawMeshPart(mesh,model,p);
+}
+function meshBoundsVisible(bounds,clip){
+ if(!bounds)return true;
+ // Test the most positive corner against all six homogeneous clip planes.
+ for(let axis=0;axis<3;axis++)for(let sign=-1;sign<=1;sign+=2){
+  const x=clip[3]+sign*clip[axis],y=clip[7]+sign*clip[axis+4],z=clip[11]+sign*clip[axis+8],w=clip[15]+sign*clip[axis+12];
+  if(x*bounds[x>=0?'max':'min'][0]+y*bounds[y>=0?'max':'min'][1]+z*bounds[z>=0?'max':'min'][2]+w<0)return false;
+ }
+ return true;
+}
+function drawMeshPart(mesh,model,p){
  if(!mesh)return;const count=mesh.opaqueCount??mesh.count;
- if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);if(mesh.indexed)gl.drawElements(gl.TRIANGLES,count,gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,count);}
+ if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);if(mesh.zeroUV)gl.vertexAttrib2f(4,0,0);if(mesh.indexed)gl.drawElements(gl.TRIANGLES,count,mesh.indexType??gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,count);}
  if(mesh.glass&&p===mainProgram)architecturalGlassDraws.push({mesh:mesh.glass,model:Array.from(model)});
 }
 function drawArchitecturalGlass(){
@@ -485,8 +515,8 @@ function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.rou
 function render(){if(typeof embeddedFrameUpdate==='function')embeddedFrameUpdate();if(!building||!(ghost||gesture?.kind==='move'))releaseTemplatePreview();updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
- gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasNativeTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
- if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
+ gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasNativeTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);bindHouseFloodLights(hobby.room,mainProgram);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
+ if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);uf(postProgram,'uFar',cameraFar);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
 // Movie decoding is limited to a nearby, front-facing screen. Map views keep
 // the static picture, and object transforms follow edits instead of a fixed site.
 function drawMoonlightHouseAir(){
@@ -511,7 +541,14 @@ function updateMoonlightHouse(){
  if(access&&access.hidden===focused){access.hidden=!focused;document.body.classList.toggle('moonlight-focused',focused);}
  if(!focused&&typeof quietControls!=='undefined'&&quietControls.panel?.id==='moonlightPanel')closeQuietControls();
 }
-function animate(now){if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}if(typeof embeddedFrameDue==='function'&&!embeddedFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
+let houseFrameNext=0;
+function houseFrameDue(now,last){
+ const limit=typeof hobby!=='undefined'&&HOUSE_ROOMS[hobby.room]?.maxFPS;
+ if(!limit||!last){houseFrameNext=0;return true;}
+ const interval=1000/limit;if(!houseFrameNext||now-houseFrameNext>interval)houseFrameNext=now;
+ if(now+1<houseFrameNext)return false;houseFrameNext+=interval;return true;
+}
+function animate(now){if(!houseFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}if(typeof embeddedFrameDue==='function'&&!embeddedFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
 function showHelp(){returnHelpFocus=document.activeElement;$('help').hidden=false;$('helpClose').focus()}function closeHelp(){$('help').hidden=true;if(returnHelpFocus&&returnHelpFocus.focus)returnHelpFocus.focus()}
 function hideUI(){hidden=!hidden;document.body.classList.toggle('hidden-ui',hidden)}
 function workshopSetView(mode,announce=true){
@@ -548,7 +585,7 @@ function workshopUpdateCamera(dt){
   pos=transform([.39,1.68,-.97],trainModels[0]);target=add(where(travel+8).p,[0,1.45,0]);fov=1.02;rate=16;
  }
  const blend=1-Math.exp(-dt*rate);cameraPos=lerpV(cameraPos,pos,blend);cameraTarget=lerpV(cameraTarget,target,blend);
- cameraNear=clamp(len(sub(cameraPos,cameraTarget))*.006,.06,.75);const projection=perspective(fov,screenW/screenH,cameraNear,500);
+ cameraNear=houseCameraNear(len(sub(cameraPos,cameraTarget)),.006,.75);const projection=perspective(fov,screenW/screenH,cameraNear,(cameraFar=houseCameraFar()));
  // Viewing controls are now tucked away; only the workbench needs extra space.
  if(building){projection[8]=innerWidth<821?0:-.22;projection[9]=innerWidth<821?-.20:-.05;}cameraProjection=projection;
  VP=mm(projection,lookAt(cameraPos,cameraTarget));
@@ -634,7 +671,7 @@ function workshopBindControls(){
  });
  canvas.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,[e.clientX,e.clientY]);
-  if(pointers.size===2&&pinchStart){contributionTap=null;beginManualOrbit();const p=[...pointers.values()],d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);orbit.distance=clamp(pinchStart.zoom*pinchStart.distance/Math.max(d,10),6,430);const cx=(p[0][0]+p[1][0])/2,cy=(p[0][1]+p[1][1])/2,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)],scale=orbit.distance*.001;orbit.target=add(pinchStart.target,add(mul(r,-(cx-pinchStart.cx)*scale),mul(f,-(cy-pinchStart.cy)*scale)));dragMoved=true;return;}
+  if(pointers.size===2&&pinchStart){contributionTap=null;beginManualOrbit();const p=[...pointers.values()],d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);orbit.distance=clamp(pinchStart.zoom*pinchStart.distance/Math.max(d,10),6,houseOrbitLimit());const cx=(p[0][0]+p[1][0])/2,cy=(p[0][1]+p[1][1])/2,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)],scale=orbit.distance*.001;orbit.target=add(pinchStart.target,add(mul(r,-(cx-pinchStart.cx)*scale),mul(f,-(cy-pinchStart.cy)*scale)));dragMoved=true;return;}
   if(!drag||pointers.size!==1)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)dragMoved=true;if(!dragMoved)return;if(drag.auto){beginManualOrbit();drag.yaw=orbit.yaw;drag.pitch=orbit.pitch;drag.target=orbit.target.slice();drag.auto=false;}
   contributionTap=null;
   if(drag.pan){const scale=orbit.distance*.00085,r=[Math.cos(orbit.yaw),0,-Math.sin(orbit.yaw)],f=[Math.sin(orbit.yaw),0,Math.cos(orbit.yaw)];orbit.target=add(drag.target,add(mul(r,-dx*scale),mul(f,-dy*scale)));orbit.target[0]=clamp(orbit.target[0],-92,92);orbit.target[2]=clamp(orbit.target[2],-76,76);}else{orbit.yaw=drag.yaw-dx*.0048;orbit.pitch=clamp(drag.pitch+dy*.0036,.065,1.43);}
@@ -649,7 +686,7 @@ function workshopBindControls(){
   }
  };
  canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);canvas.addEventListener('contextmenu',e=>e.preventDefault());
- canvas.addEventListener('wheel',e=>{e.preventDefault();beginManualOrbit();orbit.distance=clamp(orbit.distance*Math.exp(clamp(e.deltaY,-160,160)*.0012),6,430);},{passive:false});
+ canvas.addEventListener('wheel',e=>{e.preventDefault();beginManualOrbit();orbit.distance=clamp(orbit.distance*Math.exp(clamp(e.deltaY,-160,160)*.0012),6,houseOrbitLimit());},{passive:false});
  canvas.addEventListener('dblclick',e=>{if(contributionTap&&e.timeStamp-contributionTap.time<650&&Math.hypot(e.clientX-contributionTap.x,e.clientY-contributionTap.y)<8){contributionTap=null;return;}beginManualOrbit();orbit.target=add(leadInfo.p,[0,1,0]);orbit.distance=15;toast('A closer look. Drag to explore.');});
  document.addEventListener('visibilitychange',()=>{lastTime=0;if(audio){if(document.hidden)audio.ctx.suspend();else if(audio.active)audio.ctx.resume().catch(()=>{});}});
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();architecturalGlassDraws.length=0;houseMoonlight?.dispose();paused=true;$('error').style.display='block';$('error').innerHTML='The graphics context was interrupted.<br><button onclick="location.reload()" style="margin-top:12px;color:#e7cc91;text-decoration:underline">Reload the railway room</button>';});
@@ -658,6 +695,10 @@ function workshopBindControls(){
 
 // The collector's atelier. All geometry, illustrations and surfaces are built here.
 // Scene units are shared with the railway: the board is at Y=0, floor at Y=-24.
+let cameraFar=500;
+function houseCameraFar(){return typeof HOUSE_ROOMS!=='undefined'&&typeof hobby!=='undefined'?HOUSE_ROOMS[hobby.room]?.far||500:500;}
+function houseCameraNear(distance,factor,limit){return clamp(distance*factor,.06,houseCameraFar()>500?12:limit);}
+function houseOrbitLimit(){return typeof HOUSE_ROOMS!=='undefined'&&typeof hobby!=='undefined'?HOUSE_ROOMS[hobby.room]?.maxDistance||430:430;}
 let cameraNear=.7,msaaFbo=null,msaaColor=null,msaaDepth=null,msaaSamples=0;let roomFloorMesh, roomFurnitureMesh, roomCeilingMesh, roomWalls=[], roomAtlasTexture;
 let rainAmount=0,rainTarget=0;let roomClock=0, roomLampLevel=1, roomLampTarget=1, lensAmount=.5, tourStart=0;
 const roomDisplays=[], roomDust=[], FLOOR=-23.97;
@@ -1152,7 +1193,7 @@ function appendInstance(dst,src,m){
   a.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],(m[0]*nx+m[4]*ny+m[8]*nz)/s,(m[1]*nx+m[5]*ny+m[9]*nz)/s,(m[2]*nx+m[6]*ny+m[10]*nz)/s,src[i+6],src[i+7],src[i+8],src[i+9],src[i+10],src[i+11]);
  }
 }
-function disposeMesh(m){if(m){if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
+function disposeMesh(m){if(m){if(m.parts){for(const part of m.parts)disposeMesh(part);return;}if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
 function rebuildScenery(exclude=null){
  if(exclude&&!sceneryMesh?.glass){shadowDirty=true;return;}
  const b=new Builder();sceneryRanges.clear();stationMarkerCache=null;
@@ -2193,7 +2234,7 @@ function updateCamera(dt){
   const tt=(roomClock-tourStart)/14,i=Math.floor(tt)%views.length,a=views[i],q=views[(i+1)%views.length],t=smooth(.45,1,tt%1);pos=lerpV(a.p,q.p,t);target=lerpV(a.t,q.t,t);
   if(innerWidth<700)pos=add(target,mul(sub(pos,target),1.6));
  }
- const blend=1-Math.exp(-dt*3);cameraPos=lerpV(cameraPos,pos,blend);cameraTarget=lerpV(cameraTarget,target,blend);cameraNear=clamp(len(sub(cameraPos,cameraTarget))*.004,.06,.7);cameraProjection=perspective(fov,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
+ const blend=1-Math.exp(-dt*3);cameraPos=lerpV(cameraPos,pos,blend);cameraTarget=lerpV(cameraTarget,target,blend);cameraNear=houseCameraNear(len(sub(cameraPos,cameraTarget)),.004,.7);cameraProjection=perspective(fov,screenW/screenH,cameraNear,(cameraFar=houseCameraFar()));VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 function renderCatalog(){workshopRenderCatalog();}
 function drawMap(){
