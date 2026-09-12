@@ -20,6 +20,17 @@ Park and Heritage Field. The compressed neighborhood has masonry buildings,
 fire escapes, rooftop water tanks, awnings, vendors, benches and 467 miniature
 figures, plus small seated crowd marks.
 
+The plaza has a promenade following the stadium facade, stone paving joints,
+low sculpted planting beds and a small garden connecting Heritage Field to
+River Avenue. Street trees have branching trunks, uneven crowns and three
+foliage palettes. The lawns, paths and mature canopy shapes are compressed
+modelmaking interpretations; stadium gates and railway clearances stay open.
+
+Sign dimensions now describe the visible lettering rather than its padded
+font canvas. Matching scanline runs are joined before building the geometry.
+The roof and scoreboard lettering has physical thickness and braced supports;
+station panels use consistent margins and a clear gap in front of the backing.
+
 The field uses 0.136 scene units per foot. The 90-foot base square and 60.5-foot
 pitching distance share that scale with the published 318 / 399 / 408 / 385 / 314
 foot field anchors. These anchors are dimensional; the outer building, seating
@@ -36,8 +47,12 @@ station, berth completely within the platforms, open the platform-side doors,
 close them before departure, then accelerate away. The shared throttle scales
 the timetable; pause holds its state. Bogies, rotating wheelsets, roofs and door
 leaves reuse ten small meshes. Roof cutaway also exposes the interior benches
-and grab poles. When both services are outside the display, the follow camera
-waits at the platform. The clipped staging beyond the board edges is a theatrical
+and grab poles. Individual recessed windows, rubber gaskets, stainless fluting,
+stacked cab lamps, a red route display, inter-car connections and rooftop
+ventilation distinguish the stock. Thin applied panels use just their exposed
+faces, preserving those layers without multiplying hidden triangles. Open
+doorways expose the saloon instead of a continuous body panel. When both services
+are outside the display, the follow camera waits at the platform. The clipped staging beyond the board edges is a theatrical
 model railway return, not a modeled closed Bronx track circuit.
 
 The train cabinet names the actual running subway. After choosing another train,
@@ -85,6 +100,7 @@ Architectural and dimensional references:
 
 - [Populous: Yankee Stadium](https://populous.com/showcases/yankee-stadium)
 - [MLB: Yankee Stadium guide](https://www.mlb.com/news/featured/yankee-stadium-guide-capacity-seating-chart-parking-and-more)
+- [R142 cab and side reference — photograph by Chao-Hwa Chen](https://www.nycsubway.org/perl/show?161106)
 - [161st Street–Yankee Stadium station](https://en.wikipedia.org/wiki/161st_Street%E2%80%93Yankee_Stadium_station)
 
 `npm run test:yankee` checks emitted geometry and footprint, field scale, station
@@ -96,12 +112,16 @@ to unbounded construction. The full room has a fixed 5.1-million-vertex ceiling;
 existing contribution and Hall budgets are unchanged. Static room construction
 is cached and there is no geometry generation in the frame loop.
 
-The static model uploads in 76 batches, each containing at most 65,535 vertices.
+The static model uploads in 67 batches, each containing at most 65,535 vertices.
 The numeric construction array holds at most 786,420 values (about 6 MiB of
 numeric payload), instead of 59,411,952 values (about 453 MiB before capacity,
-Float32 conversion and indexing). All original triangles remain. Small indices
-and omission of identically zero texture coordinates reduce room, wall and stock
-GPU buffers from approximately 140 MiB to **111.71 MiB**. This excludes renderer
+Float32 conversion and indexing). The landscape/signage refinement reduces the
+static scene from 4,950,996 to 4,364,154 vertices while retaining all 35,829 seats
+and 467 figures. Joined lettering runs preserve the baked silhouettes; irregular
+tree crowns replace overlapping spheres. Shared subway parts use 14,412 vertices,
+within the unchanged 18,000-vertex allowance. Small indices, omitted zero UVs and
+these revisions reduce room, wall and stock GPU buffers from approximately
+140 MiB initially, through 111.71 MiB, to **105.94 MiB**. This excludes renderer
 targets, textures and other rooms. Batches outside the camera or shadow frustum
 are skipped; entering this room caps rendering at 60 FPS. Other rooms retain
 their existing cadence. Completed buffers are released on cache replacement or
@@ -118,13 +138,14 @@ Construction still blocks for several seconds on first entry. This change does
 not claim asynchronous loading or physical-phone stability.
 
 `npm test` and the full geometry comparison passed. The comparison retained
-15,400,122 vertices and checked 184,801,464 Float32 attributes bit for bit across
-567 meshes. Automated export, persistence and credit checks passed. Physical
+14,804,124 vertices and checked 177,649,488 Float32 attributes bit for bit across
+558 meshes. Automated export, persistence and credit checks passed. Physical
 phone testing and playback of a downloaded standalone export remain unverified.
 
 Selected review images are in `docs/rooms/yankee-preview/`; the complete local
 geometry measurements, checks and render receipts remain under ignored
-`evidence/yankee-room/` and `evidence/pr35-performance/`.
+`evidence/yankee-room/`, `evidence/pr35-performance/` and
+`evidence/bronx-landscape-subway/`.
 
 
 ![The floodlit ballpark in its walnut and navy gallery.](yankee-preview/night.jpg)

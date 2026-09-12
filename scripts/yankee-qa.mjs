@@ -4,6 +4,27 @@ import {communityContext,loadCommunity,loadContributionDefinitions,prepareCommun
 const state=await communityContext();state.context.assert=assert;
 const savedCollection=new Map();state.context.localStorage={getItem:key=>savedCollection.get(key)||null,setItem:(key,value)=>savedCollection.set(key,value)};
 await loadContributionDefinitions(state,await loadCommunity());prepareCommunityGeometry(state);
+// The new lettering uses the ink bounds, and still has real depth on the roof.
+state.run(`(()=>{
+ for(const depth of[0,.12]){
+  const b=new Builder();YankeeModel.lettering(b,'YANKEE STADIUM',4,8,2,28,2.4,'#ffffff',0,'bold 44px Georgia',0,depth);
+  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  for(let i=0;i<b.data.length;i+=12)for(let j=0;j<3;j++){min[j]=Math.min(min[j],b.data[i+j]);max[j]=Math.max(max[j],b.data[i+j]);}
+  for(const [actual,expected]of[[min[0],-10],[max[0],18],[min[1],6.8],[max[1],9.2],[min[2],2-depth],[max[2],2]])assert.ok(Math.abs(actual-expected)<Math.max(1,Math.abs(expected))*4*2**-23,'lettering occupies its requested ink bounds within Float32 transform precision');
+ }
+ // A ray through each open doorway must clear the exterior body, rather than
+ // reveal a continuous silver wall behind the animated door leaves.
+ for(const cab of[true,false]){
+  const b=new Builder();YankeeModel.buildTrain(b,cab,false);
+  for(const z of[-2.38,0,2.38])for(const y of[.81,1.12])for(let i=0;i<b.data.length;i+=36){
+   const p=[0,12,24].map(o=>b.data.slice(i+o,i+o+3));
+   if(!p.every(t=>Math.abs(t[0])>.55)||Math.abs(b.data[i+3])<.9)continue;
+   const cross=(a,c)=>a[0]*c[1]-a[1]*c[0],a=[p[1][1]-p[0][1],p[1][2]-p[0][2]],c=[p[2][1]-p[0][1],p[2][2]-p[0][2]],q=[y-p[0][1],z-p[0][2]],det=cross(a,c);
+   if(Math.abs(det)<1e-9)continue;const u=cross(q,c)/det,v=cross(a,q)/det;
+   assert.ok(!(u>0&&v>0&&u+v<1),'open subway doorway is not filled by the body skin');
+  }
+ }
+})()`);
 // Measure emitted geometry while it is uploaded, rather than rebuilding this
 // deliberately detailed model for every assertion.
 const uploads=[];state.context.communityUpload=data=>{
