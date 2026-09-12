@@ -23,7 +23,7 @@ function registerHouseRoom(key,definition){
  HOUSE_ROOMS[key]={number:String(Object.keys(HOUSE_ROOMS).length+1).padStart(2,'0'),name:key,layout:key,tag:'A LITTLE WORLD',description:'A railway waiting to be explored.',color:'#99ad83',distance:150,target:[0,0,0],pitch:.65,yaw:.35,ambient:'forest',...HOUSE_ROOMS[key],...metadata};
  HOUSE_ROOM_BUILDERS.set(key,build);if(shell)ROOM_SHELLS[key]=shell;
  const cached=roomScenes.get(key);
- if(cached){for(const mesh of[cached.mesh,cached.lifeDetails?.mesh,...cached.walls.map(w=>w.mesh)])disposeMesh(mesh);roomScenes.delete(key);}
+ if(cached){for(const mesh of[cached.mesh,cached.lifeDetails?.mesh,...cached.walls.map(w=>w.mesh),...(cached.ownedMeshes||[])])disposeMesh(mesh);roomScenes.delete(key);}
  houseRoomRevision++;
  return HOUSE_ROOMS[key];
 }
@@ -219,19 +219,39 @@ function getHouseScene(key){
  }catch(error){
   // Shell walls may already be uploaded when a scene builder or its train
   // contract fails. Release those buffers; a partial room never enters the cache.
-  const owned=[scene.mesh,scene.lifeDetails?.mesh,...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
+  const owned=[scene.mesh,scene.lifeDetails?.mesh,...(scene.ownedMeshes||[]),...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
   for(const mesh of new Set(owned))if(mesh)disposeMesh(mesh);
   throw error;
  }finally{seed=oldSeed;}
 }
 
-function houseRoomWallVisible(which,eye){return which==='back'?eye[2]>-63.4:which==='front'?eye[2]<63.4:which==='left'?eye[0]>-77.4:eye[0]<77.4;}
+function houseRoomWallVisible(which,eye,boundary=null){const x=boundary??77.4,z=boundary??63.4;return which==='ceiling'?eye[1]<boundary:which==='back'?eye[2]>-z:which==='front'?eye[2]<z:which==='left'?eye[0]>-x:eye[0]<x;}
 function drawHouseRoom(scene,p,shadow=false){
  draw(scene.mesh,I,p);draw(scene.lifeDetails?.mesh,I,p);
- if(!shadow)for(const wall of scene.walls){const visible=houseRoomWallVisible(wall.which,cameraPos);if(visible)draw(wall.mesh,I,p);}
+ if(!shadow)for(const wall of scene.walls){const visible=houseRoomWallVisible(wall.which,cameraPos,wall.boundary);if(visible)draw(wall.mesh,I,p);}
 }
 
+// Optional authored timetables still obey the shared pause and throttle controls.
+function advanceHouseTrain(train,dt,rate){if(typeof train.advance==='function')train.advance(train,dt,rate);else train.distance+=dt*train.speed*rate;}
+const houseFloodCache=new Map();
+function houseFloodLights(key,model=null){
+ const definition=HOUSE_ROOMS[key],cached=houseFloodCache.get(key);
+ if(cached?.definition===definition&&cached.model===model)return cached;
+ const value={definition,model,positions:new Float32Array(32),directions:new Float32Array(32),colors:new Float32Array(24)};
+ for(const [i,l]of (definition?.floodLights||[]).slice(0,8).entries()){
+  const p=model?transform(l.position,model):l.position,t=model?transform(l.target,model):l.target,scale=model?Math.hypot(model[0],model[1],model[2]):1;
+  value.positions.set([...p,l.radius*scale],i*4);value.directions.set([...norm(sub(t,p)),l.cone],i*4);value.colors.set(l.color.map(c=>c*l.strength),i*3);
+ }
+ houseFloodCache.set(key,value);return value;
+}
+function bindHouseFloodLights(key,p,model=null){
+ if(p!==mainProgram)return;const q=houseFloodLights(key,model);uf(p,'uLampFalloff',(HOUSE_ROOMS[key]?.layoutLightFalloff??.65)/(model?model[0]*model[0]:1));
+ gl.uniform4fv(uniform(p,'uFloodPositions[0]'),q.positions);gl.uniform4fv(uniform(p,'uFloodDirections[0]'),q.directions);gl.uniform3fv(uniform(p,'uFloodColors[0]'),q.colors);
+}
 function houseTrainAt(train,offset=0){return circuitAt(train.edge,train.distance-offset);}
 function drawHouseTrains(scene,p){
- for(const train of scene.trains)drawHouseTrainFormation(scene,train,p);
+ const clip=scene.trainClip,model=typeof shopRoomModel!=='undefined'?shopRoomModel:null,scale=model?model[10]:1,z=model?model[14]:0;
+ if(clip)uv3(p,'uClipZ',[clip[0]*scale+z,clip[1]*scale+z,1]);
+ try{for(const train of scene.trains)drawHouseTrainFormation(scene,train,p);}
+ finally{if(clip)uv3(p,'uClipZ',[0,0,0]);}
 }

@@ -17,9 +17,10 @@ function hobbyTrainInfo(){
  // A guest room's railway runs inside the guest's own scene; its pose arrives
  // already converted into house coordinates.
  const guest=hobbyGuestTrain();if(guest)return guest;
+ if(hobby.scene.trainFocus)return hobby.scene.trainFocus();
  return hobby.scene.trains.length?houseTrainAt(hobby.scene.trains[0]):{p:HOUSE_ROOMS[hobby.room].target,f:[0,0,1]};
 }
-function hobbyTrainMatrix(){return hobby.room==='valley'||!hobby.scene?trainModels[0]:hobby.scene.trains.length?circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance):I;}
+function hobbyTrainMatrix(){if(hobby.scene?.trainFocus){const q=hobbyTrainInfo();return basis(add(q.p,[0,.072,0]),q.f);}return hobby.room==='valley'||!hobby.scene?trainModels[0]:hobby.scene.trains.length?circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance):I;}
 function hobbyTrainInTunnel(){return hobby.room==='valley'&&leadInfo&&inTunnel(leadInfo.edge,leadInfo.d,2);}
 function hobbyTrainLabel(key=hobby.room){
  if(typeof collectionTrainLabel==='function')return collectionTrainLabel(key);
@@ -79,6 +80,7 @@ function activateHouseRoom(key){
  if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
  hobby.room=key;hobby.scene=scene;hobby.spot=-1;
+ const bounds=HOUSE_ROOMS[key].shadowBounds||[120,107];lightVP=mm(ortho(-bounds[0],bounds[0],-bounds[1],bounds[1],1,HOUSE_ROOMS[key].shadowBounds?520:440),lookAt(add(mul(sunDir,235),[0,-8,0]),[0,-8,0]));
  if(typeof conductorRoomAllowed==='function'){if(!conductorRoomAllowed()){conductorStop();if(typeof stopArrival==='function')stopArrival();}conductorPaintControl();}
  if(typeof embeddedEnter==='function')embeddedEnter(key);
  syncRoomControls();
@@ -221,7 +223,7 @@ function bindCinemaCamera(){
   const next=[e.clientX,e.clientY],other=[...cinemaOrbit.pointers].find(([id])=>id!==e.pointerId)?.[1];
   if(other){
    const before=Math.hypot(previous[0]-other[0],previous[1]-other[1]),after=Math.hypot(next[0]-other[0],next[1]-other[1]);
-   if(before>8&&after>8&&Math.abs(after-before)>.1){const orbit=beginCinemaOrbit();orbit.distance=clamp(orbit.distance*before/after,6,hobbyHasTrain()?180:360);}
+   if(before>8&&after>8&&Math.abs(after-before)>.1){const orbit=beginCinemaOrbit();orbit.distance=clamp(orbit.distance*before/after,6,HOUSE_ROOMS[hobby.room]?.maxDistance||(hobbyHasTrain()?180:360));}
   }else{
    if(cinemaOrbit.origin&&Math.hypot(next[0]-cinemaOrbit.origin[0],next[1]-cinemaOrbit.origin[1])<4)return;
    cinemaOrbit.origin=null;const orbit=beginCinemaOrbit();
@@ -241,7 +243,7 @@ function bindCinemaCamera(){
  window.addEventListener('wheel',e=>{
   if(!hobby.cinema||e.target!==canvas)return;block(e);wakeCinema();if(!e.deltaY)return;
   const orbit=beginCinemaOrbit(),pixels=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?innerHeight:1);
-  orbit.distance=clamp(orbit.distance*Math.exp(clamp(pixels,-160,160)*.0015),6,hobbyHasTrain()?180:360);
+  orbit.distance=clamp(orbit.distance*Math.exp(clamp(pixels,-160,160)*.0015),6,HOUSE_ROOMS[hobby.room]?.maxDistance||(hobbyHasTrain()?180:360));
  },{capture:true,passive:false});
  for(const type of['click','dblclick','contextmenu'])window.addEventListener(type,e=>{if(hobby.cinema&&e.target===canvas)block(e);},true);
  window.addEventListener('keydown',e=>{
@@ -250,7 +252,7 @@ function bindCinemaCamera(){
   block(e);if(key==='0'){resumeCinemaCamera();return;}const orbit=beginCinemaOrbit();
   if(key==='ArrowLeft'||key==='ArrowRight')orbit.yaw+=key==='ArrowLeft'?.08:-.08;
   else if(key==='ArrowUp'||key==='ArrowDown')orbit.pitch=clamp(orbit.pitch+(key==='ArrowUp'?-.06:.06),.08,1.43);
-  else orbit.distance=clamp(orbit.distance*(key==='-'?1.1:1/1.1),6,hobbyHasTrain()?180:360);
+  else orbit.distance=clamp(orbit.distance*(key==='-'?1.1:1/1.1),6,HOUSE_ROOMS[hobby.room]?.maxDistance||(hobbyHasTrain()?180:360));
   wakeCinema();
  },true);
  window.addEventListener('blur',clearCinemaPointers);
@@ -259,7 +261,7 @@ function bindCinemaCamera(){
 
 updateSimulation=function(dt){
  baseHobbySimulation(dt);
- if(hobby.room!=='valley'&&hobby.scene&&!paused)for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;
+ if(hobby.room!=='valley'&&hobby.scene&&!paused)for(const train of hobby.scene.trains)advanceHouseTrain(train,dt,speed);
 };
 
 function cinemaCamera(dt){
@@ -286,7 +288,7 @@ function cinemaCamera(dt){
   for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
  }
  cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*(manual?10:1.45)));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*(manual?10:2.5)));
- cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
+ cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,(cameraFar=houseCameraFar()));VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 
 updateCamera=function(dt){
@@ -309,7 +311,7 @@ updateCamera=function(dt){
  else {pos=add(add(add(p,mul(f,-10*portrait)),mul(r,8*portrait)),[0,6*portrait,0]);pos[1]=Math.max(pos[1],hobby.scene.height(pos[0],pos[2])+2);}
  cameraPos=lerpV(cameraPos,pos,1-Math.exp(-dt*2));
  if(viewMode==='engine'){const ground=hobby.scene.height(cameraPos[0],cameraPos[2]);if(Number.isFinite(ground))cameraPos[1]=Math.max(cameraPos[1],ground+1.6);}
- cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*3));cameraNear=.1;cameraProjection=perspective(viewMode==='cab'?.97:.74,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
+ cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*3));cameraNear=.1;cameraProjection=perspective(viewMode==='cab'?.97:.74,screenW/screenH,cameraNear,(cameraFar=houseCameraFar()));VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 };
 
 updateUI=function(){

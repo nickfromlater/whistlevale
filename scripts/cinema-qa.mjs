@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const read=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
-const [railway,hobby]=await Promise.all(['src/railway.js','src/hobby.js'].map(read));
+const [railway,hobby,rooms]=await Promise.all(['src/railway.js','src/hobby.js','src/rooms.js'].map(read));
 const events=new Map(),captured=new Set(),nodes=new Map(),classes=new Set();
 const listen=(type,fn)=>{if(!events.has(type))events.set(type,[]);events.get(type).push(fn);};
 const document={activeElement:null,hidden:false,addEventListener:listen,querySelector:()=>null,body:{classList:{add:(...names)=>names.forEach(n=>classes.add(n)),remove:(...names)=>names.forEach(n=>classes.delete(n))}}};
@@ -14,7 +14,7 @@ const canvas={...node('world'),setPointerCapture:id=>captured.add(id),hasPointer
 const context=vm.createContext({assert,document,canvas,$:node,window:{addEventListener:listen},setTimeout:()=>1,clearTimeout(){},innerWidth:1440,innerHeight:900,screenW:1440,screenH:900});
 const run=code=>vm.runInContext(code,context);
 run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
- let throttle=65,paused=true,viewMode='engine',orbit={target:[2,3,4],distance:47,pitch:.6,yaw:.8},cameraPos=[12,14,28],cameraTarget=[2,3,4],cameraNear=.1,cameraProjection,VP;
+ let throttle=65,paused=true,viewMode='engine',orbit={target:[2,3,4],distance:47,pitch:.6,yaw:.8},cameraPos=[12,14,28],cameraTarget=[2,3,4],cameraFar=500,cameraNear=.1,cameraProjection,VP;
  let building=false,hidden=false,reduceMotion=false,roomClock=0,speed=1,leadInfo={p:[0,1,0],f:[0,0,1]},audio={active:true};
  const HOUSE_ROOMS={valley:{layout:'Valley',tag:'A railway'},coast:{layout:'Coast',tag:'The sea'}};
  function start(){}function setView(){}function updateCamera(){}function updateUI(){}function enterBuild(){}function beginManualOrbit(){viewMode='overview';}
@@ -24,6 +24,7 @@ run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
  function setThrottle(value){throttle=value;}function togglePause(){paused=!paused;}function enableSound(){throw new Error('Camera gestures must not restart audio');}
  let exportPlayable;
 `);
+run(railway.match(/function houseCameraFar\(\).*$/m)[0]+'\n'+rooms.match(/function advanceHouseTrain\(.*$/m)[0]);
 run(hobby);
 run('const I=Object.freeze([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);');
 run('hobby.ready=true;updateUI=function(){};bindCinemaCamera()');

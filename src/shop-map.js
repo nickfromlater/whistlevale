@@ -38,6 +38,7 @@ function shopWallVisible(w,entry){
 }
 function shopRoomLights(entry,p){
  if(p!==mainProgram)return;
+ bindHouseFloodLights(entry.key,p,entry.model);
  let lights=shopLightCache.get(entry);
  if(!lights){lights={room:new Float32Array(houseRoomLights(entry.key).map(point=>transform(point,entry.model)).flat()),layout:new Float32Array(houseLayoutLights(entry.key).map(point=>transform(point,entry.model)).flat())};shopLightCache.set(entry,lights);}
  gl.uniform3fv(uniform(p,'uRoomLights[0]'),lights.room);
@@ -46,7 +47,7 @@ function shopRoomLights(entry,p){
 }
 drawHobbyStatic=function(p,shadow){
  if(!shopMap.active)return shopBase.static(p,shadow);
- draw(shopHouseBuilt.mesh,I,p);
+ bindHouseFloodLights('',p);draw(shopHouseBuilt.mesh,I,p);
  for(const entry of SHOP_HOUSE_LAYOUT.rooms)shopRoomScope(entry,()=>{
   shopRoomLights(entry,p);
   if(entry.key==='valley'){
@@ -74,7 +75,7 @@ updateSimulation=function(dt){
   catch(error){console.error(error);toast('The updated room could not open. Please try again.');}
  }
  shopBase.simulation(dt);
- if(shopMap.active&&!paused)for(const [key,scene]of roomScenes)if(key!==hobby.room)for(const train of scene.trains)train.distance+=dt*train.speed*speed;
+ if(shopMap.active&&!paused)for(const [key,scene]of roomScenes)if(key!==hobby.room)for(const train of scene.trains)advanceHouseTrain(train,dt,speed);
 };
 updateHobbyAudio=function(dt){
  if(!shopMap.active)return shopBase.audio(dt);
@@ -92,7 +93,7 @@ function shopProjection(){
  // A proportionate near plane preserves depth precision across the full estate.
  // A fixed 0.3 plane made stacked stone floors fight at the distant overview.
  const phone=innerWidth<700;cameraNear=Math.max(.3,len(sub(cameraPos,cameraTarget))*.01);
- cameraProjection=perspective(.72,screenW/screenH,cameraNear,Math.max(700,shopMap.orbit.distance*4));
+ cameraProjection=perspective(.72,screenW/screenH,cameraNear,(cameraFar=Math.max(700,shopMap.orbit.distance*4)));
  cameraProjection[9]=phone?-.07:0;
  VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
