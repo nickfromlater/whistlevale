@@ -155,7 +155,7 @@ function embeddedBuildShapes(table){
 
  // 5 — the forest. Cones need a base ring or they read as spiders.
  const forest=[];
- for(let i=0;i<74;i++){
+ for(let i=0;i<46;i++){
   const x=clampX(-W*.94+rnd()*W*1.88),z=clampZ(-D*.92+rnd()*D*1.84);
   if(Math.abs(x-cutX)<6.4&&Math.abs(z)<D*.7)continue;
   if(Math.abs(x-stationX)<9&&Math.abs(z-stationZ)<5)continue;
@@ -297,18 +297,28 @@ function embeddedBuildAdvance(active,text){
 function embeddedBuildFrame(active){
  const build=active.build,canvas=document.getElementById('embedBuild');
  if(!build||!canvas)return;
- const dpr=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;
+ const now=performance.now();
+ // Line art does not need the second device pixel, and the fourfold drop in
+ // fill cost matters far more here than the slightly softer stroke.
+ const dpr=1,w=innerWidth,h=innerHeight;
  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){
   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
   canvas.style.width=w+'px';canvas.style.height=h+'px';
  }
- const ctx=canvas.getContext('2d');
- ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const now=performance.now();
  const stage=build.stages[build.revealed];
  const span=reduceMotion?0:Math.min(1500,420+(stage?.points||0)*2.6);
- build.edge=span?Math.min(1,(now-build.at)/span):1;
- build.warm=Math.min(1,build.warm+(reduceMotion?1:.06));
+ const edge=span?Math.min(1,(now-build.at)/span):1;
+ const warm=Math.min(1,build.warm+(reduceMotion?1:.06));
+ // Nothing to redraw unless the camera moved, the drawing advanced, or it is
+ // still warming in. A still camera costs nothing at all.
+ const pose=cameraPos[0]+cameraPos[1]*3+cameraPos[2]*7+cameraTarget[0]*11+cameraTarget[1]*13+cameraTarget[2]*17;
+ const step=Math.round(edge*60);
+ const same=build.pose===pose&&build.step===step&&build.shown===build.revealed&&build.warm>=1&&warm>=1;
+ build.edge=edge;build.warm=warm;
+ if(same||now-(build.drawn||0)<32)return;
+ build.pose=pose;build.step=step;build.shown=build.revealed;build.drawn=now;
+ const ctx=canvas.getContext('2d');
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
  embeddedBuildVellum(ctx,active.project.table,build.warm);
  embeddedBuildDraw(ctx,build.stages,build.revealed,build.edge,build.warm);
 }
