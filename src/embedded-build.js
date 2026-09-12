@@ -203,6 +203,7 @@ function embeddedBuildShapes(table){
 
  // 8 — lighting adds no new shapes; the sketch warms, then gives way.
  stages.push({lines:[]});
+ for(const stage of stages)stage.points=stage.lines.reduce((n,line)=>n+line.length,0);
  return stages;
 }
 
@@ -224,24 +225,47 @@ function embeddedBuildDraw(ctx,stages,revealed,edge,warm){
  const cream='#f6ecc9',brass='#bda067';
  ctx.save();
  ctx.lineJoin='round';ctx.lineCap='round';
+ let head=null;
  for(let s=0;s<Math.min(revealed+1,stages.length);s++){
-  const settled=s<revealed;
-  const portion=settled?1:edge;
-  if(portion<=0)continue;
-  const lines=stages[s].lines,count=Math.ceil(lines.length*portion);
+  const settled=s<revealed,lines=stages[s].lines;
+  if(!lines.length)continue;
   ctx.strokeStyle=settled?brass:cream;
-  ctx.globalAlpha=(settled?.5:.95)*warm;
-  ctx.lineWidth=settled?1:1.35;
+  ctx.globalAlpha=(settled?.42:.95)*warm;
+  ctx.lineWidth=settled?1:1.5;
   ctx.beginPath();
-  for(let i=0;i<count;i++){
-   const points=lines[i];let started=false;
-   for(const point of points){
-    const p=project(point);
-    if(!p.visible){started=false;continue;}
-    if(started)ctx.lineTo(p.x,p.y);else{ctx.moveTo(p.x,p.y);started=true;}
+  if(settled){
+   for(const points of lines){
+    let started=false;
+    for(const point of points){
+     const p=project(point);
+     if(!p.visible){started=false;continue;}
+     if(started)ctx.lineTo(p.x,p.y);else{ctx.moveTo(p.x,p.y);started=true;}
+    }
+   }
+  }else{
+   // The newest stage is drawn point by point rather than line by line, so it
+   // reads as a pen moving instead of shapes switching on.
+   let budget=Math.max(1,Math.round(edge*stages[s].points));
+   for(const points of lines){
+    if(budget<=0)break;
+    let started=false;
+    for(const point of points){
+     if(budget--<=0)break;
+     const p=project(point);
+     if(!p.visible){started=false;continue;}
+     if(started)ctx.lineTo(p.x,p.y);else{ctx.moveTo(p.x,p.y);started=true;}
+     head=p;
+    }
    }
   }
   ctx.stroke();
+ }
+ // The nib: a small bright point where the drawing has got to.
+ if(head&&edge<1&&warm>.3){
+  ctx.globalAlpha=warm;ctx.fillStyle='#fff6da';
+  ctx.beginPath();ctx.arc(head.x,head.y,1.9,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.22*warm;
+  ctx.beginPath();ctx.arc(head.x,head.y,6.5,0,Math.PI*2);ctx.fill();
  }
  ctx.restore();
 }
@@ -281,7 +305,9 @@ function embeddedBuildFrame(active){
  const ctx=canvas.getContext('2d');
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
  const now=performance.now();
- build.edge=reduceMotion?1:Math.min(1,(now-build.at)/620);
+ const stage=build.stages[build.revealed];
+ const span=reduceMotion?0:Math.min(1500,420+(stage?.points||0)*2.6);
+ build.edge=span?Math.min(1,(now-build.at)/span):1;
  build.warm=Math.min(1,build.warm+(reduceMotion?1:.06));
  embeddedBuildVellum(ctx,active.project.table,build.warm);
  embeddedBuildDraw(ctx,build.stages,build.revealed,build.edge,build.warm);

@@ -80,7 +80,8 @@ function initHouseArt(){
 }
 
 function roomShell(kind,b,backPlaque=null){
- const walls=[],coast=kind==='coast',alpine=kind==='alpine',panel=coast?'#456971':alpine?'#686052':'#4b5b49',paint=coast?'#d5d4c0':alpine?'#c4bba5':'#d1c4a9';
+ const walls=[],coast=kind==='coast',alpine=kind==='alpine',yamaai=kind==='yamaai';
+ const panel=coast?'#456971':alpine?'#686052':yamaai?'#4a4536':'#4b5b49',paint=coast?'#d5d4c0':alpine?'#c4bba5':yamaai?'#ddd0b2':'#d1c4a9';
  b.box(0,FLOOR-.25,0,158,.45,130,'#9b7951',21);
  b.push(0,FLOOR+.03,0,-PI/2);roomSign(b,'rug',0,0,0,113,83);b.pop();
  for(const which of['back','left','right','front']){

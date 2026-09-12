@@ -104,10 +104,17 @@ function yamaaiTansu(b){
 
 // Three paper lanterns over the table, hung at different heights the way they
 // actually are along a shrine approach — and the way they are on the model.
+// Paper lanterns on iron wall brackets, echoing the ones along the model's
+// shrine approach. They live near the walls rather than over the table: the
+// miniature is scaled to rise as much as forty units off the top, and anything
+// above the surface ends up inside somebody else's mountain.
 function yamaaiLanterns(b){
- for(const [x,z,drop] of[[-50,-17,0],[-50,15,-3.2],[50,-15,-2.1],[50,17,-4.6]]){
-  const y=FLOOR+30+drop;
-  b.cylinder(x,y+8,z,.09,.09,16,'#3b3025',22,6);
+ for(const [side,z,drop] of[[-1,-20,0],[-1,16,-3.2],[1,-16,-2.1],[1,20,-4.6]]){
+  const wall=side*73,x=side*63,y=FLOOR+29+drop;
+  // Bracket: a short arm off the wall with a diagonal stay under it.
+  b.box((wall+x)/2,y+7.4,z,Math.abs(wall-x),.7,.7,'#3b3025',41);
+  b.box(wall-side*.6,y+4.4,z,.8,6.6,.8,'#3b3025',41);
+  b.cylinder(x,y+3.7,z,.09,.09,7.4,'#3b3025',22,6);
   b.cylinder(x,y,z,2.5,2.5,5.4,'#e7d7a8',23,14);
   for(let i=0;i<5;i++)b.cylinder(x,y-2.2+i*1.1,z,2.56,2.56,.12,'#c3ab77',23,14);
   b.cylinder(x,y+2.9,z,1.2,1.5,.8,'#4a3a28',22,12);
@@ -158,5 +165,10 @@ registerHouseRoom('yamaai',{
  tag:'MOUNTAIN RAILWAY · BY '+YAMAAI_PROJECT.credits[0].name.toUpperCase(),
  description:embeddedCreditLine(YAMAAI_PROJECT)+'. A local train winds through a Japanese mountain gorge, over a bridge and into the tunnel, past a station, a shrine, a river and a waterfall.',
  color:'#8fa38c',ambient:'forest',railway:false,target:[0,FLOOR+23,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
- credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:b=>roomShell('yamaai',b,yamaaiPlaque)
+ credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:b=>roomShell('yamaai',b,yamaaiPlaque),
+ lights:[
+  [-22,26,-7],[21,27,0],
+  [-63,FLOOR+29,-20],[-63,FLOOR+25.8,16],[63,FLOOR+26.9,-16],[63,FLOOR+24.4,20],
+  [-44,FLOOR+21,-57],[49,28,-58]
+ ]
 });
