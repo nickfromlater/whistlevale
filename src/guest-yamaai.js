@@ -138,7 +138,7 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   if(key==='tail'){
    const station=train.progress>.90||train.progress<world.stationU+.035;
    cinemaTarget.copy(train.focus);cinemaEye.copy(cinemaTarget);
-   if(station)cinemaEye.add(V(16*portrait,5*portrait,-8*portrait));
+   if(station)cinemaEye.add(V(16,5,-8));
    else{
     // Follow the actual clear rail corridor, including inside the bore. An
     // offset beside the track cuts through the forest on the far side.
@@ -146,11 +146,11 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
    }
   }else{
    cinemaTarget.copy(world.stationCenter).add(V(0,1.4,0));
-   cinemaEye.copy(cinemaTarget).add(V(16*portrait,5*portrait,-8*portrait));
+   cinemaEye.copy(cinemaTarget).add(V(16,5,-8));
   }
   const onRail=key==='tail'&&train.progress<=.90&&train.progress>=world.stationU+.035;
   if(!onRail&&world.inFootprint(cinemaEye.x,cinemaEye.z))cinemaEye.y=Math.max(cinemaEye.y,world.height(cinemaEye.x,cinemaEye.z)+2.3);
-  return {position:anchor(cinemaEye),target:anchor(cinemaTarget),groundHandled:true};
+  return {position:anchor(cinemaEye),target:anchor(cinemaTarget),groundHandled:onRail};
  };
  return {dispose,views,cinemaView,train:trainPose,readTrainPose,frame(state){
    if(disposed)return;
