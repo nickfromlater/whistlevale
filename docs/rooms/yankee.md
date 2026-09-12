@@ -110,11 +110,12 @@ failed construction.
 Focused Chrome testing on an Apple M4 Pro covered desktop, 390px and 320px
 layouts, day/night cinema, train selection/restoration, the live map and travel
 to Alder Valley and Yamaai. It also found and fixed a map-stopping floodlight
-cache error when drawing the shared house shell. The browser sampled roughly
-77–196 MiB of settled JS heap in the revised room, versus about 1.25 GiB in the
-original preview; these are garbage-collection-dependent samples, not measured
-peak memory or a phone guarantee. Construction still blocks for several seconds
-on first entry; this change does not claim asynchronous or faster loading.
+cache error when drawing the shared house shell. Revised browser heap samples
+varied widely, from about 77 to 748 MiB depending on garbage collection and page
+visits. They are not peak or live-memory measurements; the bounded construction
+array and actual GPU buffer sizes above provide the repeatable comparison.
+Construction still blocks for several seconds on first entry. This change does
+not claim asynchronous loading or physical-phone stability.
 
 `npm test` and the full geometry comparison passed. The comparison retained
 15,400,122 vertices and checked 184,801,464 Float32 attributes bit for bit across
