@@ -327,3 +327,6 @@ body.has-embed.cinematic .cinema-separator{display:none}
  .embed-steps li{font-size:8px;padding:3px 5px;letter-spacing:.6px}
 }
 @media(prefers-reduced-motion:reduce){.embed-build{transition:none}.embed-steps li{transition:none}}
+
+body.cinematic .embed-credit-dock,body.cinematic .embed-loading{opacity:0;pointer-events:none;transition:opacity .35s}
+@media(prefers-reduced-motion:reduce){body.cinematic .embed-credit-dock,body.cinematic .embed-loading{transition:none}}

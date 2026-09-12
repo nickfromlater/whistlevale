@@ -24,7 +24,7 @@ function embeddedAttribution(project){
  const by=document.createElement('p');by.className='embed-credit-by';by.append('Made by ');
  project.credits.forEach((credit,i)=>{if(i)by.append(' · ');by.append(link(credit.name,communityCreditURL(credit)));});wrap.append(by);
  const meta=document.createElement('p');meta.className='embed-credit-meta';
- meta.append(link('Original project ↗',project.source),' · ',link(project.licence+' licence',project.source+'/blob/'+project.commit+'/LICENSE'));wrap.append(meta);
+ meta.append(link('Original project ↗',project.source));wrap.append(meta);
  return wrap;
 }
 
@@ -110,13 +110,19 @@ function embeddedPhotograph(houseCanvas){
  const c=photo.getContext('2d');c.drawImage(houseCanvas,0,0);c.drawImage(guest,0,0,houseCanvas.width,houseCanvas.height);
  c.fillStyle='#192b24';c.fillRect(0,houseCanvas.height,photo.width,80);c.fillStyle='#f1ead2';c.font='17px Georgia';
  c.fillText(embeddedCreditLine(active.project),16,houseCanvas.height+27,photo.width-32);
- c.font='12px Arial';c.fillStyle='#c6cfba';c.fillText(active.project.licence+' · '+active.project.source,16,houseCanvas.height+49,photo.width-32);
+ c.font='12px Arial';c.fillStyle='#c6cfba';c.fillText(active.project.source,16,houseCanvas.height+49,photo.width-32);
  return photo;
 }
 
 // Presets are anchors from the original scene, expressed in house coordinates.
 // The house still owns interpolation and manual cinema orbit/pan/zoom.
+const embeddedTrainInfo=()=>embeddedActive?.session?.train||null;
+
 function embeddedCinemaView(key,elapsed){
+ // A guest that publishes a train gets the house's own following shot, which
+ // already knows how to sit behind a moving locomotive. Returning null here is
+ // what hands that shot back to the house rather than pinning it to an anchor.
+ if(key==='tail'&&embeddedTrainInfo())return null;
  const shot=embeddedActive?.session?.views?.[key];if(!shot)return null;
  const portrait=innerWidth<700?Math.max(1.9,innerHeight/innerWidth*1.15):1;
  const yaw=shot.yaw+(reduceMotion?0:Math.sin(elapsed*.035)*.12),distance=shot.distance*portrait,cp=Math.cos(shot.pitch),target=shot.target;

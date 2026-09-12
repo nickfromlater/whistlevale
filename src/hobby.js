@@ -9,8 +9,15 @@ function syncHouseAnalytics(){
  try{window.railwayAnalytics?.sync({ready:hobby.ready&&!hobby.transition,room:Object.hasOwn(HOUSE_ROOMS,hobby.room)?hobby.room:null,cinema:hobby.cinema,map:typeof shopMap!=='undefined'&&shopMap.open});}catch{}
 }
 
-function hobbyHasTrain(){return hobby.room==='valley'||!!hobby.scene?.trains.length;}
-function hobbyTrainInfo(){return hobby.room==='valley'||!hobby.scene?leadInfo:hobbyHasTrain()?houseTrainAt(hobby.scene.trains[0]):{p:HOUSE_ROOMS[hobby.room].target,f:[0,0,1]};}
+const hobbyGuestTrain=()=>typeof embeddedTrainInfo==='function'?embeddedTrainInfo():null;
+function hobbyHasTrain(){return hobby.room==='valley'||!!hobby.scene?.trains.length||!!hobbyGuestTrain();}
+function hobbyTrainInfo(){
+ if(hobby.room==='valley'||!hobby.scene)return leadInfo;
+ // A guest room's railway runs inside the guest's own scene; its pose arrives
+ // already converted into house coordinates.
+ const guest=hobbyGuestTrain();if(guest)return guest;
+ return hobby.scene.trains.length?houseTrainAt(hobby.scene.trains[0]):{p:HOUSE_ROOMS[hobby.room].target,f:[0,0,1]};
+}
 function hobbyTrainMatrix(){return hobby.room==='valley'||!hobby.scene?trainModels[0]:hobbyHasTrain()?circuitMatrix(hobby.scene.trains[0].edge,hobby.scene.trains[0].distance):I;}
 function hobbyTrainInTunnel(){return hobby.room==='valley'&&leadInfo&&inTunnel(leadInfo.edge,leadInfo.d,2);}
 function hobbyTrainLabel(key=hobby.room){

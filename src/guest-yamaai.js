@@ -103,7 +103,21 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   world.prepareCompile();vegetation.prepareCompile();
   try{renderer.compile(scene,camera);}finally{world.finishCompile();vegetation.finishCompile();}
   signal.throwIfAborted();data.buildMs=String(Math.round(performance.now()-started));
-  return {dispose,views,frame(state){
+  // The original curve is the exact path; sampling it beats differencing the
+ // car's position between frames, which stalls whenever the train is paused.
+ const curvePoint=new THREE.Vector3(),curveTangent=new THREE.Vector3();
+ const trainPose={p:[0,0,0],f:[0,0,1]};
+ const readTrainPose=()=>{
+  const t=train.progress;
+  world.curve.getPointAt(t,curvePoint);world.curve.getTangentAt(t,curveTangent);
+  curvePoint.applyMatrix4(model);
+  curveTangent.transformDirection(model).normalize();
+  trainPose.p[0]=curvePoint.x;trainPose.p[1]=curvePoint.y;trainPose.p[2]=curvePoint.z;
+  trainPose.f[0]=curveTangent.x;trainPose.f[1]=curveTangent.y;trainPose.f[2]=curveTangent.z;
+  return trainPose;
+ };
+ readTrainPose();
+ return {dispose,views,train:trainPose,readTrainPose,frame(state){
    if(disposed)return;
    const frameStart=performance.now();
    if(width!==state.width||height!==state.height){width=state.width;height=state.height;renderer.setPixelRatio(Math.min(devicePixelRatio||1,width<700?1.25:1.5));renderer.setSize(width,height,false);}
@@ -115,6 +129,7 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
    shared.night.value=n;shared.wetness.value=Math.max(r,n*.46);shared.sunDir.value.copy(sun.position).sub(sun.target.position).normalize();shared.sunColor.value.copy(sun.color);shared.sunAmt.value=(1-n*.4)*(1-r*.9);
    renderer.toneMappingExposure=lerp(.98,1.03,n);scene.environmentIntensity=lerp(.27,.03,n);
    train.update(state.paused?0:dt,elapsed,{speed:1,paused:state.paused,night:n,rain:r});architecture.update(elapsed,n,r);lanterns.update(elapsed,n);weather.update(elapsed,{rain:r,warm:Math.sin(n*Math.PI)},train);
+   readTrainPose();
    world.updateLOD(camera);vegetation.update(elapsed,camera);
    if(state.now-lastShadow>=50){lastShadow=state.now;sun.shadow.needsUpdate=true;train.spotlights.forEach(light=>light.shadow.needsUpdate=true);}
    renderer.info.reset();weather.refreshReflection(renderer,camera,state.now,false);
