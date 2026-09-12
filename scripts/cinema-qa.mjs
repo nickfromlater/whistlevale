@@ -25,6 +25,7 @@ run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
  let exportPlayable;
 `);
 run(hobby);
+run('const I=Object.freeze([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);');
 run('hobby.ready=true;updateUI=function(){};bindCinemaCamera()');
 function fire(type,extra={}){
  const e={type,target:canvas,button:0,pointerId:1,clientX:700,clientY:450,deltaY:0,deltaMode:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra};
@@ -66,3 +67,41 @@ fire('keydown',{key:'0'});run("hobby.shot='tail';cinemaCamera(10);beginCinemaOrb
 const wideLandscape=run('cinemaOrbit.manual.distance');assert.ok(wideLandscape>180,'phone room view starts beyond the train camera limit');fire('wheel',{deltaY:30});assert.ok(run('cinemaOrbit.manual.distance')>wideLandscape,'zooming out from a wide landscape never jumps inward');assert.ok(run('cinemaOrbit.manual.distance')<=360);
 run('cinemaCamera(1);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
 console.log('Cinema QA passed: drag, tap threshold, pinch/release, wheel, keyboard, moving train anchor, pause/audio preservation, auto return and focus, capture cleanup, lifecycle restoration and finite phone cameras.');
+// Guest presets supply original-model anchors; manual house camera input still
+// wins, and a guest never changes another railway's throttle or pause state.
+run(`let guestPresetCalls=0;function embeddedCinemaView(){guestPresetCalls++;return {target:[8,5,12],position:[20,24,62]};}innerWidth=1440;screenW=1440;screenH=900;enterCinema();cinemaCamera(20);`);
+assert.ok(run('len(sub(cameraTarget,[8,5,12]))')<1e-6,'cinema frames the guest model anchor');
+assert.ok(run('len(sub(cameraPos,[20,24,62]))')<.001,'cinema uses the guest preset eye');
+const presetCalls=run('guestPresetCalls');fire('pointerdown');fire('pointermove',{clientX:780,clientY:430});fire('pointerup');run('cinemaCamera(2)');
+assert.equal(run('guestPresetCalls'),presetCalls,'automatic guest presets cannot take back a manual camera');assert.ok(run('cinemaOrbit.manual'));
+run('resumeCinemaCamera();cinemaCamera(20);leaveCinema(false)');assert.equal(run('paused'),true);assert.equal(run('throttle'),51);
+// Following the guest's own train. A guest room has no house train, so the
+// shot is only possible because the adapter publishes the locomotive's pose in
+// house coordinates and embeddedCinemaView returns null for that shot.
+run(`let guestTrain={p:[30,6,-10],f:[1,0,0]};
+ function embeddedTrainInfo(){return guestTrain;}
+ function embeddedCinemaView(key){return key==='tail'?null:{target:[8,5,12],position:[20,24,62]};}
+ hobby.room='coast';hobby.scene={trains:[],height:()=>0};`);
+assert.equal(run('JSON.stringify(hobbyTrainInfo())'),JSON.stringify({p:[30,6,-10],f:[1,0,0]}),'the house reads the guest locomotive as its train');
+assert.equal(run('hobbyHasTrain()'),true,'a guest train counts as a train, so the no-train orbit stops firing');
+assert.equal(run('hobbyHasNativeTrain()'),false,'a published camera pose is not a native train');
+assert.equal(run('hobbyTrainMatrix()===I'),true,'rendering a guest never reads an empty native train list');
+assert.doesNotThrow(()=>run('drawHobbyParticles()'),'guest geometry never enters native steam rendering');
+const guestControls=run('JSON.stringify({paused,throttle})');
+run(`hobby.shot='tail';cameraPos=[0,0,0];cameraTarget=[0,0,0];hobby.heading=[1,0,0];
+ hobby.shotBlend={side:0,back:0,height:0};enterCinema();for(let i=0;i<40;i++)cinemaCamera(.1);`);
+const near=run('len(sub(cameraTarget,guestTrain.p))');
+assert.equal(run('JSON.stringify({paused,throttle})'),guestControls,'following a guest leaves other railways untouched');
+assert.ok(near<12,'the following shot looks at the locomotive, not a fixed anchor: '+near.toFixed(2));
+run('guestTrain={p:[90,6,-10],f:[1,0,0]};for(let i=0;i<40;i++)cinemaCamera(.1);');
+const moved=run('len(sub(cameraTarget,guestTrain.p))');
+assert.ok(moved<12,'the shot tracks the locomotive when it moves: '+moved.toFixed(2));
+assert.ok(run('cameraPos[0]')>40,'the camera travelled with it');
+run('leaveCinema(false);hobby.room="valley";hobby.scene=null;');
+run('function embeddedProject(key){return key==="coast"?{cinemaShot:"tail"}:null;}hobby.room="coast";hobby.scene={trains:[],height:()=>0};hobby.shot="wide";enterCinema();');
+assert.equal(run('hobby.shot'),'tail','guest cinema opens with its authored close-up');assert.equal(node('cinemaShot').value,'tail');
+run('leaveCinema(false)');assert.equal(run('hobby.shot'),'wide','a guest default does not replace the camera selection in other rooms');
+run('embeddedCinemaView=()=>({target:[8,1,12],position:[20,2,62],groundHandled:true});enterCinema();cinemaCamera(20);');
+assert.ok(Math.abs(run('cameraPos[1]')-2)<.001,'the house floor must not lift a guest camera out of its tunnel clearance');
+run('leaveCinema(false)');
+console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');

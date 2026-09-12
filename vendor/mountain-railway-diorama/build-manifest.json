@@ -1,0 +1,30 @@
+{
+  "buildId": "918940cbeeb15c22",
+  "three": "0.185.0",
+  "files": {
+    "architecture.js": "30c292d727e00c2aea3c2393b1123afc35ce12a006892ace03d61866f894ab86",
+    "atmosphere.js": "943a301b82de9648c0b620ab6397917101ed33c2cf056ddc03c5ac2ccae2301f",
+    "cascade.js": "b2009a6ba3562b1d6a2c5fbbe59c8f3071a8ec7b19eb29aaa65e47a4de08396a",
+    "cinematography.js": "6c8c2efd57f7df5250d82d7145a8e0da4c9499873d8cfa8afa21d1da05d8cf9d",
+    "geology.js": "4fcf823649b44ecc8b8786dd076320bcc3923daab74d8485d16388628c0100a3",
+    "geometry.js": "7d3abc6f10af8a406e9ded6a257aa674c76c03ac1012543d986bdb504d0064b4",
+    "index.html": "a3940e3cf43026fa54ec9bb4c62b531f23f83dda4393764d1b5e0d23a3c8d77f",
+    "lanterns.js": "2cf3239e9ea6a11ab07896de7d73f4a0b29a8bdba15cede799eb878bc32717cb",
+    "luminous.js": "07247b59714c67a64e6dc91fbad1493f9b5463656a14540b53460c984b97a9fc",
+    "main.js": "6dafc2e5ac02ab4b4d97c469b21199596260295aaebcaccde0c24a6ee3077879",
+    "render-budget.js": "8c704a5e474e92889ef38e6a8be48366097ee40781f901ccf82ff73db4058051",
+    "river.js": "6b13f7fe37a45e26bc99b0ac3a6d17e821fa115193f77e3b12890411cfb42854",
+    "style.css": "a553abcd1a0d1eaaf80ff439c9206f1f28a2d77173f6a9b1e658dcdb844aa449",
+    "train.js": "69a82c2649485c6306a79ff9bde1731be81c2911288b6ca721a478d263c1aec9",
+    "vegetation.js": "0bc94461aa7d8bb2c93fb76c36437e0f5f4bb6830b03829cf8c9d15c9d650c62",
+    "vendor/THREE-LICENSE.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+    "vendor/addons/controls/OrbitControls.js": "faabb4e8dfd9235ee4a9fd7c9a3d75f90f1689dbd4944bd6fd32117dacec5f93",
+    "vendor/addons/environments/RoomEnvironment.js": "55f466192cc84298755a424c5e040345006b2ee1455589b3b54126c2ea4123f4",
+    "vendor/addons/objects/Reflector.js": "57836df976f02a474b2dcfbb6609bca8bde0ccc6e77159ad8e418fa11c065d3b",
+    "vendor/addons/utils/BufferGeometryUtils.js": "5c552223a9309883743b80538d6e9cdb45e3227f30d3ec56fb2c39b46e78d595",
+    "vendor/three.core.js": "78b2c4218834ca8670547ed2315bfc21a00ff4dc3403bbffc8c31493d31d14de",
+    "vendor/three.module.js": "bbf5ed13fe4373f5bd38b14ea8e62e9f157327da5638edc6d3863e08b167c9c7",
+    "weather.js": "9aa0abb693232dc642a66c1632f2466a4f989be77030a4c3a9e1262c68826d2a",
+    "world.js": "83aa08109b8b65f057764caeed22a50c3337a78725de26f94ba47a00a5060aea"
+  }
+}

@@ -21,7 +21,7 @@ const attributes=text=>new Map([...text.matchAll(/(?:^|\s)([a-z][a-z0-9-]*)\s*=\
 class PackingDocument{
  constructor(html){
   this.html=html;this.nodes=[];
-  for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>|<link\b([^>]*)>|<video\b([^>]*)>([\s\S]*?)<\/video>|<section\b([^>]*\bdata-moonlight-programme[^>]*)>([\s\S]*?)<\/section>/gi)){
+  for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>|<link\b([^>]*)>|<video\b([^>]*)>([\s\S]*?)<\/video>|<section\b([^>]*\b(?:data-moonlight-programme|id="embedStage")[^>]*)>([\s\S]*?)<\/section>/gi)){
    const script=match[1]!==undefined,video=match[4]!==undefined,programme=match[6]!==undefined,attributes=script?match[1]:video?match[4]:programme?match[6]:match[3];
    const node={tag:script?'script':video?'video':programme?'section':'link',attributes,textContent:script?match[2]:video?match[5]:programme?match[7]:'',start:match.index,end:match.index+match[0].length,replacement:null,
     getAttribute(name){return this.attributes.match(new RegExp('(?:^|\\s)'+name+'\\s*=\\s*(["\\\'])(.*?)\\1'))?.[2]??null;},
@@ -43,6 +43,7 @@ class PackingDocument{
   if(selector==='script[src],script[data-src]')return nodes.filter(n=>n.tag==='script'&&(n.hasAttribute('src')||n.hasAttribute('data-src')));
   if(selector==='script[type="application/x-whistlevale-exhibit"]')return nodes.filter(n=>n.tag==='script'&&n.getAttribute('type')==='application/x-whistlevale-exhibit');
   if(selector==='video[data-moonlight-film]')return nodes.filter(n=>n.tag==='video'&&n.hasAttribute('data-moonlight-film'));
+  if(selector==='[data-guest-import],#embedStage')return nodes.filter(n=>n.hasAttribute('data-guest-import')||n.getAttribute('id')==='embedStage');
   if(selector==='[data-moonlight-programme]')return nodes.filter(n=>n.hasAttribute('data-moonlight-programme'));
   if(selector==='link[rel=stylesheet]')return nodes.filter(n=>n.tag==='link'&&n.getAttribute('rel')==='stylesheet');
   const icons=/^link\[rel~="([a-z-]+)"\](?:,link\[rel~="([a-z-]+)"\])?$/.exec(selector);
@@ -144,8 +145,9 @@ async function checkPortableHall(build){
 
  // Execute the exact house cleanup and script-packing blocks against a cloned
  // page containing the same runtime trackers. One real app source must survive.
+ const guestRuntime='<script type="importmap" data-guest-import="yamaai">{"scopes":{"PRIVATE RUNTIME URL":{}}}</script><section id="embedStage"><canvas data-context="active"></canvas></section>';
  const retainedVideo='<video id="ordinary-video" src="data:video/mp4;base64,AAAA"></video>';
- const houseDocument=new PackingDocument(withTracking('<html><head><script src="'+build.refs.find(url=>url.includes('/people.'))+'"></script><script>window.example="analytics";</script></head><body><video data-moonlight-film="true" hidden src="assets/moonlight/moon-clip.mp4" preload="auto"></video>'+retainedVideo+'<section data-moonlight-programme="true"><details><summary>Projectionist: PRIVATE VISITOR NAME</summary><input value="PRIVATE VISITOR NAME"></details></section></body></html>'));
+ const houseDocument=new PackingDocument(withTracking('<html><head><script src="'+build.refs.find(url=>url.includes('/people.'))+'"></script><script>window.example="analytics";</script></head><body><video data-moonlight-film="true" hidden src="assets/moonlight/moon-clip.mp4" preload="auto"></video>'+retainedVideo+guestRuntime+'<section data-moonlight-programme="true"><details><summary>Projectionist: PRIVATE VISITOR NAME</summary><input value="PRIVATE VISITOR NAME"></details></section></body></html>'));
  assert.equal(houseDocument.querySelectorAll('video[data-moonlight-film]').length,1,'the clone includes the playing runtime decoder');
  sandbox.source=houseDocument;
  const cleanupStart=hobby.indexOf('  removeHouseAnalytics(source);',hobby.indexOf('exportPlayable=async function('));
@@ -158,6 +160,8 @@ async function checkPortableHall(build){
  assert.equal(requests.length,beforeHouse+1,'the house packs its app source without fetching any tracker');assertNoPortableAnalytics(houseDocument.outerHTML);
  assert.ok(houseDocument.outerHTML.includes('window.example="analytics"'),'ordinary inline scripts are preserved');
  assert.equal(houseDocument.querySelectorAll('video[data-moonlight-film]').length,0,'packing removes the cloned runtime decoder instead of creating a second external media request');
+ assert.equal(houseDocument.querySelectorAll('[data-guest-import],#embedStage').length,0,'portable exports remove guest context DOM and host-specific module maps');
+ assert.ok(!houseDocument.outerHTML.includes('PRIVATE RUNTIME URL'));
  assert.ok(houseDocument.outerHTML.includes(retainedVideo),'runtime decoder cleanup preserves unrelated embedded video');
  assert.ok(!houseDocument.outerHTML.includes('PRIVATE VISITOR NAME'),'portable exports strip local projectionist names and their runtime form');
  assert.deepEqual(external(houseDocument.outerHTML),[],'the retained house source is embedded');

@@ -55,3 +55,30 @@ ElevenLabs recordings have separate [Sound Effects Terms](https://elevenlabs.io/
 [Prohibited Use Policy](https://elevenlabs.io/use-policy), including restrictions
 on distributing sound-effect outputs as isolated files or a sound library.
 The source license does not grant rights to those recordings.
+
+## Yamaai score
+
+**Between the Mountains** (`yamaai-between-mountains.mp3`) is a 90-second
+instrumental generated with ElevenLabs `music_v2` for the host room: sparse
+koto, bamboo flute, felt piano and a quiet sustained bed. It is separate from
+Techartist's original scene and music. Generation was requested by nickfromlater.
+The [master metadata](../../scripts/yamaai-music.json) preserves the prompt,
+processing and exact checksum; the recording itself remains outside Git.
+
+Place the supplied master in this directory to preview it. Automatic cinema
+selects it in Yamaai by day and night, while pinned tracks and the existing mixer
+remain available. A source checkout without it falls back to the house score.
+No recording is fetched from ElevenLabs by the browser or build.
+
+The new master is published on the reviewed Yamaai preview. Its manifest entry
+has an explicit HTTPS `origin`, allowing Git builds to retrieve it before the
+production site carries it. All other recordings still use
+`WHISTLEVALE_AUDIO_ORIGIN`. A per-record origin uses the same exact immutable
+path, byte limit, checksum, timeout and no-redirect rules as the main collection;
+source-only builds remain offline. No playback request goes to another host:
+each build packages its own copy.
+
+Keep that source deployment available until production carries the recording.
+After verifying its exact immutable file on production, remove the temporary
+`origin` override so later builds use the main preservation collection. Never
+add a master to the manifest before its reviewed source actually serves it.

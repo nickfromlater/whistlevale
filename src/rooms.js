@@ -28,6 +28,29 @@ function registerHouseRoom(key,definition){
  return HOUSE_ROOMS[key];
 }
 
+// One lettered credit plaque per embedded project, in the free atlas band
+// below the Coastal window, then below the blueprint. These slots must not
+// overlap the lazily painted coast-window (3390,620,690,420). Omitted when the
+// atlas runs out, rather than overrunning it.
+function initEmbeddedArt(){
+ if(typeof EMBEDDED_PROJECTS!=='object')return;
+ for(const [i,project] of Object.values(EMBEDDED_PROJECTS).entries()){
+  const [x,y]=[[3310,1056],[610,524]][i]||[-1,-1],w=780,h=196;
+  if(x<0||y+h>roomArt.height||x+w>roomArt.width){delete roomLabels[project.plaque];continue;}
+  artSlot(project.plaque,x,y,w,h,(c,cw,ch)=>{
+   const by=project.credits?.[0];
+   c.fillStyle='#2c3832';c.fillRect(0,0,cw,ch);
+   c.strokeStyle='#b19a62';c.lineWidth=3;c.strokeRect(11,11,cw-22,ch-22);
+   c.textAlign='center';
+   c.fillStyle='#e6d6a9';c.font='34px Georgia';c.fillText(project.title,cw/2,60);
+   if(project.subtitle){c.fillStyle='#c3b483';c.font='italic 22px Georgia';c.fillText(project.subtitle,cw/2,92);}
+   c.fillStyle='#efe2bd';c.font='27px Georgia';c.fillText('Made by '+(by?.name||'a guest'),cw/2,project.subtitle?136:122);
+   c.fillStyle='#a9b79c';c.font='17px Arial';
+   c.fillText(by&&by.platform==='x'?'@'+by.handle:by?.handle||'',cw/2,project.subtitle?170:158);
+  });
+ }
+}
+
 function initHouseArt(){
  let omittedPlaques=0;
  for(const [i,room]of Object.values(HOUSE_ROOMS).entries()){
@@ -52,11 +75,13 @@ function initHouseArt(){
   else for(let k=0;k<7;k++){const x=32+k*32,y=113+(k%2)*7;c.fillStyle=k%2?'#3d6852':'#51775a';c.beginPath();c.moveTo(x,y-64-k%3*8);c.lineTo(x-23,y);c.lineTo(x+23,y);c.closePath();c.fill();c.fillStyle='#817052';c.fillRect(x-2,y-5,4,18);}
   c.fillStyle='#334c40';c.textAlign='center';c.font='21px Georgia';c.fillText(title,w/2,164);c.font='8px Arial';c.fillText('WHISTLEVALE  /  THE MINIATURE COLLECTION',w/2,186);
  }));
+ initEmbeddedArt();
  gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,roomArt);gl.generateMipmap(gl.TEXTURE_2D);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
 }
 
-function roomShell(kind,b){
- const walls=[],coast=kind==='coast',alpine=kind==='alpine',panel=coast?'#456971':alpine?'#686052':'#4b5b49',paint=coast?'#d5d4c0':alpine?'#c4bba5':'#d1c4a9';
+function roomShell(kind,b,backPlaque=null){
+ const walls=[],coast=kind==='coast',alpine=kind==='alpine',yamaai=kind==='yamaai';
+ const panel=coast?'#456971':alpine?'#686052':yamaai?'#4a4536':'#4b5b49',paint=coast?'#d5d4c0':alpine?'#c4bba5':yamaai?'#ddd0b2':'#d1c4a9';
  b.box(0,FLOOR-.25,0,158,.45,130,'#9b7951',21);
  b.push(0,FLOOR+.03,0,-PI/2);roomSign(b,'rug',0,0,0,113,83);b.pop();
  for(const which of['back','left','right','front']){
@@ -69,7 +94,7 @@ function roomShell(kind,b){
    roomSign(w,'window',0,12,.8,43,28,0,33);for(const x of[-22,-11,0,11,22])w.box(x,12,1,.45,29,.65,'#c4b590',22);for(const y of[-2.3,12,26.3])w.box(0,y,1,44,.5,.7,'#c4b590',22);
    w.box(0,-2.8,1.6,46,.60,3.0,'#b59a72',22);roomFrame(w,'clock',26.3,12,1,5.4,5.4);
    const plaqueKey='house-'+Object.keys(HOUSE_ROOMS).indexOf(kind);if(roomLabels[plaqueKey])roomFrame(w,plaqueKey,-49,20,1,41,10);
-   roomFrame(w,kind==='studio'?'kits-sign':kind==='coast'?'coast-sign':'mountain-sign',49,19,1,37,10);
+   if(backPlaque)backPlaque(w);else roomFrame(w,kind==='studio'?'kits-sign':kind==='coast'?'coast-sign':'mountain-sign',49,19,1,37,10);
   }else if(!front){roomFrame(w,coast?'poster':'blueprint',-28,10,1,25,17);roomFrame(w,'slow',29,9,1,15,21);}
   if(front){w.box(0,-3,1,19,42,1,'#79674a',22);w.box(0,-3,1.6,16,39,.2,panel,22);w.cylinder(6,-4,1.95,.35,.35,.5,'#c6ae71',41,14,PI/2);roomFrame(w,'shop-sign',0,23,1,35,8);}
   w.pop();walls.push({which,mesh:w.mesh()});
@@ -200,9 +225,10 @@ function getHouseScene(key){
  }finally{seed=oldSeed;}
 }
 
+function houseRoomWallVisible(which,eye){return which==='back'?eye[2]>-63.4:which==='front'?eye[2]<63.4:which==='left'?eye[0]>-77.4:eye[0]<77.4;}
 function drawHouseRoom(scene,p,shadow=false){
  draw(scene.mesh,I,p);draw(scene.lifeDetails?.mesh,I,p);
- if(!shadow)for(const wall of scene.walls){const visible=wall.which==='back'?cameraPos[2]>-63.4:wall.which==='front'?cameraPos[2]<63.4:wall.which==='left'?cameraPos[0]>-77.4:cameraPos[0]<77.4;if(visible)draw(wall.mesh,I,p);}
+ if(!shadow)for(const wall of scene.walls){const visible=houseRoomWallVisible(wall.which,cameraPos);if(visible)draw(wall.mesh,I,p);}
 }
 
 function houseTrainAt(train,offset=0){return circuitAt(train.edge,train.distance-offset);}

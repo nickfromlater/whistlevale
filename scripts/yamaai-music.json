@@ -1,0 +1,18 @@
+{
+  "id": "yamaai-between-mountains",
+  "provider": "ElevenLabs",
+  "model": "music_v2",
+  "duration": 90,
+  "prompt": "A deeply peaceful ambient instrumental for a miniature Japanese mountain railway and a tiny rural station, through daylight and lantern-lit night. Very sparse soft koto plucks with long warm resonances, occasional breathy bamboo flute phrases, felt piano single notes, a low warm sustained string and analog pad bed. Slow floating suspended and pentatonic harmonies, intimate handmade feeling, lots of silence between phrases, delicate woody texture, a small train winding quietly through cedar-covered hills. Around 50 BPM with no audible beat, no drums, no percussion, no vocals, no choir, no speech, no sound effects, no train sounds, no dramatic swells, no bright bells or sharp attacks. Consistent restrained dynamics, unhurried and contemplative, gentle beginning and lingering soft ending suitable for an eight-second loop crossfade. An original understated composition, not a pastiche or quotation.",
+  "title": "Between the Mountains",
+  "requestedBy": "nickfromlater",
+  "generatedOn": "2026-09-12",
+  "file": "yamaai-between-mountains.mp3",
+  "bytes": 1441584,
+  "sha256": "7068ea4cdc713897724fe358b080d996d043a9eb93d9639fabe8724631cb87b4",
+  "processing": "Gain -6 dB; 1-second fade in and 1.5-second fade out; stereo 44.1 kHz MP3 at 128 kbps.",
+  "measuredLUFS": -23.55,
+  "measuredTruePeakDBTP": -10.79,
+  "publication": "Published as an immutable master on the reviewed Yamaai preview; listed as the new score source in hosted-audio.json.",
+  "origin": "https://endless-railroad-efcagru6w-nick-paolinos-projects.vercel.app"
+}

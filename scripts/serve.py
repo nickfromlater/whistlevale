@@ -17,7 +17,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not path:
             path = 'index.html'
         parts = Path(path).parts
-        allowed = path in ('index.html', 'grandhall.html') or (bool(parts) and parts[0] in ('assets', 'src'))
+        allowed = path in ('index.html', 'grandhall.html') or (bool(parts) and parts[0] in ('assets', 'src', 'vendor'))
         resolved = (ROOT / path).resolve()
         if not allowed or any(p.startswith('.') for p in parts) or not resolved.is_relative_to(ROOT) or not resolved.is_file():
             self.send_error(404)

@@ -20,7 +20,8 @@ async function copyPublic(directory){
   if(entry.isDirectory()){await copyPublic(relative);continue;}
   if(!entry.isFile()||(relative.startsWith('assets/')&&relative.endsWith('.json')))continue;
   const data=await readFile(path.join(root,relative));
-  const versioned=/\.(js|css|mp3)$/.test(relative)||/^assets\/(favicon\.svg|favicon-\d+\.png|apple-touch-icon\.png)$/.test(relative);
+  const vendored=relative.startsWith('vendor/');
+  const versioned=!vendored&&(/\.(js|css|mp3)$/.test(relative)||/^assets\/(favicon\.svg|favicon-\d+\.png|apple-touch-icon\.png)$/.test(relative));
   let target=relative;
   if(versioned){
    const extension=path.posix.extname(relative),hash=createHash('sha256').update(data).digest('hex').slice(0,16);
@@ -33,7 +34,7 @@ async function copyPublic(directory){
   if(path.posix.dirname(relative)==='assets/audio'&&relative.endsWith('.mp3'))audioURLs[entry.name.slice(0,-4)]=target;
  }
 }
-await copyPublic('src');await copyPublic('assets');
+await copyPublic('src');await copyPublic('assets');await copyPublic('vendor');
 const audioIds=Object.keys(audioURLs).sort(),json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
 const catalog=`<script id="audioCatalog">window.HOUSE_AUDIO_AVAILABLE=${json(audioIds)};window.HOUSE_AUDIO_URLS=${json(audioURLs)};</script>`;
 const community=await loadCommunity();
