@@ -86,7 +86,11 @@ inside the front wall and its trim. Close shots stay close on phones; only
 **Whole miniature** backs out to fit the complete model across a narrow screen.
 Reduced motion disables automatic drift.
 The adapter supplies close train/station framing through `session.cinemaView`,
-using the original train focus, station position and terrain clearance. The
+using the original train focus, station position and terrain clearance. Away
+from the station the following camera rides ahead on the original rail curve,
+inside its clear corridor and tunnel bore, instead of cutting through trees.
+`groundHandled:true` keeps the house's unrelated floor-height clamp from lifting
+that camera into the tunnel roof. The
 station angle sees the train past the platform canopy. A guest's default shot
 does not overwrite the camera selection saved for other rooms. The adapter also
 publishes its moving train pose in house coordinates for manual framing.

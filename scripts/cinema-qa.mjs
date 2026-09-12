@@ -101,4 +101,7 @@ run('leaveCinema(false);hobby.room="valley";hobby.scene=null;');
 run('function embeddedProject(key){return key==="coast"?{cinemaShot:"tail"}:null;}hobby.room="coast";hobby.scene={trains:[],height:()=>0};hobby.shot="wide";enterCinema();');
 assert.equal(run('hobby.shot'),'tail','guest cinema opens with its authored close-up');assert.equal(node('cinemaShot').value,'tail');
 run('leaveCinema(false)');assert.equal(run('hobby.shot'),'wide','a guest default does not replace the camera selection in other rooms');
+run('embeddedCinemaView=()=>({target:[8,1,12],position:[20,2,62],groundHandled:true});enterCinema();cinemaCamera(20);');
+assert.ok(Math.abs(run('cameraPos[1]')-2)<.001,'the house floor must not lift a guest camera out of its tunnel clearance');
+run('leaveCinema(false)');
 console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');

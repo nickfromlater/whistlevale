@@ -279,10 +279,12 @@ function cinemaCamera(dt){
   desired=add(p,[Math.sin(angle)*distance,.62*distance,Math.cos(angle)*distance]);
  }
  if(manual){const {yaw,pitch,distance}=manual;desired=add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance]);}
- const ground=(x,z)=>hobby.room==='valley'?naturalH(x,z):hobby.scene.height(x,z);
- desired[1]=Math.max(desired[1],ground(desired[0],desired[2])+3.3);
- // Keep the line of sight above ridges without twitching at each terrain sample.
- for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
+ if(!guestShot?.groundHandled){
+  const ground=(x,z)=>hobby.room==='valley'?naturalH(x,z):hobby.scene.height(x,z);
+  desired[1]=Math.max(desired[1],ground(desired[0],desired[2])+3.3);
+  // Keep the line of sight above ridges without twitching at each terrain sample.
+  for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
+ }
  cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*(manual?10:1.45)));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*(manual?10:2.5)));
  cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }

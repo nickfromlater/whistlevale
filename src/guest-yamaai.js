@@ -137,13 +137,20 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   const portrait=innerWidth<700?1.25:1;
   if(key==='tail'){
    const station=train.progress>.90||train.progress<world.stationU+.035;
-   cinemaTarget.copy(train.focus);cinemaEye.copy(cinemaTarget).add(V((station?16:13)*portrait,5*portrait,(station?-8:15)*portrait));
+   cinemaTarget.copy(train.focus);cinemaEye.copy(cinemaTarget);
+   if(station)cinemaEye.add(V(16*portrait,5*portrait,-8*portrait));
+   else{
+    // Follow the actual clear rail corridor, including inside the bore. An
+    // offset beside the track cuts through the forest on the far side.
+    cinemaEye.copy(world.curve.getPointAt((train.progress+12*portrait/world.curve.getLength())%1));cinemaEye.y+=3.2;
+   }
   }else{
    cinemaTarget.copy(world.stationCenter).add(V(0,1.4,0));
    cinemaEye.copy(cinemaTarget).add(V(16*portrait,5*portrait,-8*portrait));
   }
-  if(world.inFootprint(cinemaEye.x,cinemaEye.z))cinemaEye.y=Math.max(cinemaEye.y,world.height(cinemaEye.x,cinemaEye.z)+2.3);
-  return {position:anchor(cinemaEye),target:anchor(cinemaTarget)};
+  const onRail=key==='tail'&&train.progress<=.90&&train.progress>=world.stationU+.035;
+  if(!onRail&&world.inFootprint(cinemaEye.x,cinemaEye.z))cinemaEye.y=Math.max(cinemaEye.y,world.height(cinemaEye.x,cinemaEye.z)+2.3);
+  return {position:anchor(cinemaEye),target:anchor(cinemaTarget),groundHandled:true};
  };
  return {dispose,views,cinemaView,train:trainPose,readTrainPose,frame(state){
    if(disposed)return;
