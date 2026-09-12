@@ -79,6 +79,7 @@ function activateHouseRoom(key){
  if(typeof closeQuietControls==='function')closeQuietControls();
  if(building)baseHobbyBuild(false);if(hobby.cinema)leaveCinema(false);
  hobby.room=key;hobby.scene=scene;hobby.spot=-1;
+ if(typeof conductorRoomAllowed==='function'){if(!conductorRoomAllowed()){conductorStop();if(typeof stopArrival==='function')stopArrival();}conductorPaintControl();}
  if(typeof embeddedEnter==='function')embeddedEnter(key);
  syncRoomControls();
  document.body.classList.toggle('annex',key!=='valley');document.body.dataset.room=key;shadowDirty=true;

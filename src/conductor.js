@@ -72,10 +72,12 @@ function conductorRegister(){
 function conductorAvailable(id){
  return typeof houseRecordingAvailable!=='function'||houseRecordingAvailable(id);
 }
+function conductorRoomAllowed(){return typeof HOUSE_ROOMS==='undefined'||HOUSE_ROOMS[hobby?.room]?.conductor!==false;}
 
 /* One-shot straight to the train bus, with its own envelope. */
 async function conductorSay(id){
- if(!conductorOn||!soundscape||!audio?.active||!id||!conductorAvailable(id))return;
+ if(!conductorRoomAllowed()||!conductorOn||!soundscape||!audio?.active||!id||!conductorAvailable(id))return;
+ const room=hobby?.room;
  const ctx=soundscape.ctx,now=ctx.currentTime;
  if(now<conductorSpeaking||now-conductorLast<CONDUCTOR_GAP)return;
  if(now-(conductorHeard.get(id)??-Infinity)<CONDUCTOR_REPEAT)return;
@@ -93,6 +95,8 @@ async function conductorSay(id){
    buffer=await ctx.decodeAudioData(await res.arrayBuffer());
    soundscape.buffers.set(id,buffer);
   }
+  // Navigation or muting may have happened while the recording was decoding.
+  if(!conductorRoomAllowed()||hobby?.room!==room||!conductorOn||!audio?.active)return;
   const start=Math.max(ctx.currentTime,now);
   conductorSpeaking=start+buffer.duration;
   const node=ctx.createBufferSource(),gain=ctx.createGain();
@@ -112,13 +116,18 @@ async function conductorSay(id){
  }catch(error){console.warn('Conductor unavailable:',id,error.message);}
 }
 
-/* Cut the current call short and switch him off for good. */
-function conductorSilence(){
+/* Room changes stop the voice without changing the saved preference. */
+function conductorStop(){
  if(conductorVoice&&soundscape){
   const g=conductorVoice.gain.gain,t=soundscape.ctx.currentTime;
   try{g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(0,t+.18);}catch{}
+  try{conductorVoice.node.stop(t+.2);}catch{}
  }
  conductorVoice=null;conductorSpeaking=0;
+ conductorHideNow();
+}
+function conductorSilence(){
+ conductorStop();
  conductorOn=false;conductorRemember();
  conductorPaintControl();conductorHideNow();
  toast('The conductor has stepped off. Turn him back on in Sound & music.');
@@ -140,6 +149,7 @@ function conductorPick(room,kind){
  * which is the only footing on which any of this makes sense. It also puts the
  * welcome call exactly where it belongs — the moment the tour begins. */
 function conductorWatch(){
+ if(!conductorRoomAllowed()){if(conductorVoice)conductorStop();if(conductorWas.cinema)conductorWas={...conductorWas,cinema:false};return;}
  if(!conductorOn||!audio?.active)return;
  if(!hobby?.cinema){conductorWas={...conductorWas,cinema:false};return;}
  const room=hobby?.room||'valley';
@@ -231,6 +241,7 @@ function conductorBuildControl(){
  .conductor-row{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;
   padding:11px 12px;margin-top:12px;border-radius:11px;border:1px solid var(--line);
   background:#ffffff05;transition:background .2s}
+ .conductor-row[hidden]{display:none}
  .conductor-row:hover{background:#c6af7719}
  .conductor-row.on{background:#cab07924;border-color:#e9bc7155}
  .conductor-dot{width:7px;height:7px;border-radius:50%;background:#6f7d6b;margin-top:6px;flex:none;transition:background .2s}
@@ -255,6 +266,7 @@ function conductorBuildControl(){
 
 function conductorPaintControl(){
  const button=$('conductorToggle');if(!button)return;
+ button.hidden=!conductorRoomAllowed();
  button.classList.toggle('on',conductorOn);
  button.setAttribute('aria-pressed',String(conductorOn));
 }

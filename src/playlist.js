@@ -25,6 +25,7 @@ const PLAYLIST_TRACKS = [
  {id:'workbench-sunday',   title:'Workbench Sunday', blurb:'Fingerpicked and sunlit.',                    trim:0},
  {id:'coast-gallery',      title:'Sea Air',          blurb:'Concertina and bright water.',                trim:0},
  {id:'alpine-loft',        title:'High Clear Air',   blurb:'Flute and clarinet, a window open.',          trim:0},
+ {id:'yamaai-between-mountains',title:'Between the Mountains',blurb:'Soft koto, bamboo flute and still mountain air.',trim:0},
 ];
 
 // Which piece belongs where.
@@ -39,7 +40,7 @@ const PLAYLIST_TRACKS = [
 // Sea Air and High Clear Air stayed put. They measure just as busy, but their
 // activity is shimmer rather than incident, which sits under a slow camera
 // perfectly well — density alone was never the right test.
-const PLAYLIST_ROOM = {valley:'toy-shop-waltz',coast:'coast-gallery',alpine:'alpine-loft',studio:'waltz-woodwind-warm'};
+const PLAYLIST_ROOM = {valley:'toy-shop-waltz',coast:'coast-gallery',alpine:'alpine-loft',studio:'waltz-woodwind-warm',yamaai:'yamaai-between-mountains'};
 const PLAYLIST_CINEMA = 'waltz-slow-cinema';
 const PLAYLIST_NIGHT = 'waltz-after-hours';
 const PLAYLIST_FALLBACK = 'toy-shop-waltz';
@@ -57,6 +58,7 @@ function playlistAvailableTracks(){return PLAYLIST_TRACKS.filter(track=>houseRec
  * open the right piece before cinema starts rather than after. */
 function playlistWanted(){
  if(playlistChoice!=='auto'&&playlistKnown(playlistChoice))return playlistChoice;
+ if(hobby?.room==='yamaai'&&houseRecordingAvailable(PLAYLIST_ROOM.yamaai))return PLAYLIST_ROOM.yamaai;
  if(typeof night==='number'&&night>.62)return PLAYLIST_NIGHT;
  // The room decides, not the fact that cinema is running. Cinema is now the
  // only time the score sounds at all, so checking it first here made every
@@ -285,6 +287,12 @@ let arrivalPlayed=false;
  * starting the tour mid-greeting raised a second piece over the top of it
  * instead of replacing it, and you heard both at once. */
 let arrivalUntil=0;
+let arrivalVoice=null;
+function arrivalRoomAllowed(){return typeof HOUSE_ROOMS==='undefined'||HOUSE_ROOMS[hobby?.room]?.conductor!==false;}
+function stopArrival(){
+ if(arrivalVoice){try{arrivalVoice.node.stop();}catch{}arrivalVoice.node.disconnect();arrivalVoice.gain.disconnect();arrivalVoice=null;}
+ arrivalUntil=0;
+}
 
 function soundMuted(){try{return localStorage.getItem(SOUND_PREF)==='off';}catch{return false;}}
 function rememberSound(){try{localStorage.setItem(SOUND_PREF,audio?.active?'on':'off');}catch{}}
@@ -292,7 +300,8 @@ function rememberSound(){try{localStorage.setItem(SOUND_PREF,audio?.active?'on':
 /* One-shot, straight to the music bus. Deliberately not a SCORE_ASSET: it is a
  * greeting, not a record on the shelf, and must never be picked or looped. */
 async function playArrival(){
- if(arrivalPlayed||!soundscape||!audio?.active)return;
+ if(!arrivalRoomAllowed()||arrivalPlayed||!soundscape||!audio?.active)return;
+ const room=hobby?.room;
  if(typeof houseRecordingAvailable==='function'&&!houseRecordingAvailable(ARRIVAL_ID))return;
  arrivalPlayed=true;
  try{
@@ -300,6 +309,7 @@ async function playArrival(){
   const source=houseRecordingURL(ARRIVAL_ID);
   const response=await fetch(source);if(!response.ok)return;
   const buffer=await ctx.decodeAudioData(await response.arrayBuffer());
+  if(!arrivalRoomAllowed()||hobby?.room!==room||!audio?.active)return;
   const node=ctx.createBufferSource(),gain=ctx.createGain();
   node.buffer=buffer;node.connect(gain).connect(soundscape.buses.music);
   const now=ctx.currentTime,level=.72,out=Math.max(.05,buffer.duration-1.1);
@@ -311,7 +321,8 @@ async function playArrival(){
   // room's piece rises into the tail rather than after a gap.
   arrivalUntil=now+Math.max(.05,buffer.duration-1.6);
   node.start(now);node.stop(now+buffer.duration+.05);
-  node.onended=()=>{node.disconnect();gain.disconnect();};
+  arrivalVoice={node,gain};
+  node.onended=()=>{node.disconnect();gain.disconnect();if(arrivalVoice?.node===node)arrivalVoice=null;};
  }catch(error){console.warn('Arrival flourish unavailable:',error.message);}
 }
 

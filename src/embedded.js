@@ -132,7 +132,9 @@ function embeddedCinemaView(key,elapsed){
  // what hands that shot back to the house rather than pinning it to an anchor.
  if(key==='tail'&&embeddedTrainInfo())return null;
  const shot=embeddedActive?.session?.views?.[key];if(!shot)return null;
- const portrait=innerWidth<700?Math.max(1.9,innerHeight/innerWidth*1.15):1;
+ // Close shots keep their subject large in portrait. Only the whole-model
+ // view backs out far enough to fit the entire miniature across a narrow frame.
+ const portrait=innerWidth<700?(key==='wide'?Math.max(1.9,innerHeight/innerWidth*1.15):1.2):1;
  const yaw=shot.yaw+(reduceMotion?0:Math.sin(elapsed*.035)*.12),distance=shot.distance*portrait,cp=Math.cos(shot.pitch),target=shot.target;
  return {target,position:[target[0]+Math.sin(yaw)*cp*distance,target[1]+Math.sin(shot.pitch)*distance,target[2]+Math.cos(yaw)*cp*distance]};
 }

@@ -55,3 +55,24 @@ ElevenLabs recordings have separate [Sound Effects Terms](https://elevenlabs.io/
 [Prohibited Use Policy](https://elevenlabs.io/use-policy), including restrictions
 on distributing sound-effect outputs as isolated files or a sound library.
 The source license does not grant rights to those recordings.
+
+## Yamaai score
+
+**Between the Mountains** (`yamaai-between-mountains.mp3`) is a 90-second
+instrumental generated with ElevenLabs `music_v2` for the host room: sparse
+koto, bamboo flute, felt piano and a quiet sustained bed. It is separate from
+Techartist's original scene and music. Generation was requested by nickfromlater.
+The [master metadata](../../scripts/yamaai-music.json) preserves the prompt,
+processing and exact checksum; the recording itself remains outside Git.
+
+Place the supplied master in this directory to preview it. Automatic cinema
+selects it in Yamaai by day and night, while pinned tracks and the existing mixer
+remain available. A source checkout without it falls back to the house score.
+No recording is fetched from ElevenLabs by the browser or build.
+
+This new recording is not yet in the live preservation collection. Before a
+production release, publish the supplied master with the complete existing
+audio collection from the maintainer's machine, following Hosted builds above;
+then add its exact metadata to `scripts/hosted-audio.json`. Do not add it to that
+manifest before its immutable file is published: automatic builds would fail
+while trying to retrieve a recording the current live site does not yet carry.

@@ -88,6 +88,19 @@ run('embeddedFrameUpdate()');assert.equal(timers.size,0,'map loading cannot rest
 // Cap the composited renderers together; other rooms remain uncapped.
 assert.equal(run('embeddedFrameDue(108,100)'),true);
 enter();assert.equal(run('embeddedFrameDue(108,100)'),false);assert.equal(run('embeddedFrameDue(117,100)'),true);leave();
+// The opening close-up stays inside the room's front wall throughout its
+// drift, including portrait; only the explicit wide shot fits the whole model.
+run('embeddedActive={session:{views:{drift:{target:[0,1.4,2.8],distance:48,pitch:.42,yaw:.36},wide:{target:[0,2,0],distance:105,pitch:.53,yaw:.3}}}}');
+for(const width of [1440,390,320]){
+ context.innerWidth=width;context.innerHeight=844;
+ for(let elapsed=0;elapsed<190;elapsed+=5){
+  const shot=run('embeddedCinemaView("drift",'+elapsed+')');
+  assert.ok(shot.position[2]<60,'opening camera clears the front wall and its trim');
+  assert.ok(Math.hypot(...shot.position.map((v,i)=>v-shot.target[i]))<60,'cinema opens close to the miniature');
+ }
+ const wide=run('embeddedCinemaView("wide",0)');assert.ok(Math.hypot(...wide.position)>100,'wide remains an explicit whole-miniature view');
+}
+run('embeddedActive=null');
 for(const [w,h,dpr] of [[1920,1080,2],[2560,1440,2],[390,844,3],[320,720,3]]){
  f.context.viewport={w,h,dpr};const ratio=f.run('yamaaiPixelRatio(viewport.w,viewport.h,viewport.dpr)');
  assert.ok(w*h*ratio*ratio<=2100000.01,'guest framebuffer respects the pixel budget');assert.ok(ratio<=dpr);

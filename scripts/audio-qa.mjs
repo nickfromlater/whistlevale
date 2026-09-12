@@ -95,7 +95,7 @@ sandbox.addEventListener=()=>{};sandbox.localStorage={getItem(){return null;},se
 sandbox.hobby={room:'valley',cinema:false,scene:null};sandbox.night=0;sandbox.paused=false;sandbox.window.HOUSE_EMBEDDED_AUDIO={};
 vm.runInContext(await readFile(new URL('../src/playlist.js',import.meta.url),'utf8'),context);
 sandbox.window.HOUSE_AUDIO_AVAILABLE=vm.runInContext('[...AUDIO_ASSETS]',context);
-assert.equal(vm.runInContext('AUDIO_ASSETS.length',context),17,'portable export retains the full soundtrack registry');
+assert.equal(vm.runInContext('AUDIO_ASSETS.length',context),18,'portable export retains the full soundtrack registry including Yamaai');
 const downloaded=[];sandbox.fetch=async url=>{downloaded.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};};
 const playlistContext=new Context(),mixer=new HouseSoundscape(playlistContext);await mixer.load();
 assert.equal(downloaded.length,7,'initial load is six room effects and the selected piece');assert.equal(mixer.buffers.size,7);
@@ -132,6 +132,38 @@ sandbox.playlistTest=mixer;vm.runInContext('soundscape=playlistTest; audio={acti
 assert.equal(sandbox.playlistEnableArgument,true,'deliberate record selection enables audio in the user gesture');await mixer.loadPromise;
 assert.ok(mixer.buffers.has('workbench-sunday'));assert.equal(vm.runInContext('playlistChoice',context),'workbench-sunday');mixer.update();assert.equal(mixer.layers.get('workbench-sunday').gain.gain.target,.66,'a pinned piece plays outside cinema');
 console.log('Playlist QA passed: cinema-only automatic music, per-room cues, lazy start, one score automation owner, room-change continuity, bounded fallback, retry, and pinned playback.');
+
+// Yamaai has a quiet room score in both lighting states; pinned choices win.
+sandbox.HOUSE_ROOMS.yamaai={ambient:'forest',railway:false,conductor:false};
+sandbox.hobby={room:'yamaai',cinema:true,scene:{trains:[]}};
+vm.runInContext('playlistChoice="auto"',context);
+for(const lighting of [0,1]){sandbox.night=lighting;assert.equal(vm.runInContext('playlistWanted()',context),'yamaai-between-mountains');}
+vm.runInContext('playlistChoice="workbench-sunday"',context);
+assert.equal(vm.runInContext('playlistWanted()',context),'workbench-sunday');
+// A direct guest-room visit never starts the spoken house greeting.
+const greetingRequests=downloaded.length;
+await vm.runInContext('playArrival()',context);assert.equal(downloaded.length,greetingRequests);
+assert.equal(vm.runInContext('arrivalPlayed',context),false,'a quiet room does not consume another room’s greeting');
+// The conductor cannot start here, leak in after a late fetch, or remain
+// sounding on room entry. Suppression preserves the visitor’s global choice.
+vm.runInContext(await readFile(new URL('../src/conductor.js',import.meta.url),'utf8'),context);
+vm.runInContext('conductorShowNow=function(){};conductorHideNow=function(){};',context);
+sandbox.window.HOUSE_AUDIO_AVAILABLE.push('cond-welcome');
+await vm.runInContext('conductorSay("cond-welcome")',context);
+assert.equal(downloaded.length,greetingRequests,'no conductor request in Yamaai');
+sandbox.hobby.room='valley';let finishCall;
+sandbox.fetch=()=>new Promise(resolve=>{finishCall=()=>resolve({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});});
+const pendingCall=vm.runInContext('conductorSay("cond-welcome")',context),voicesBefore=playlistContext.sources.length;
+sandbox.hobby.room='yamaai';finishCall();await pendingCall;
+assert.equal(playlistContext.sources.length,voicesBefore,'late decoded conductor cannot enter a quiet room');
+sandbox.hobby.room='valley';playlistContext.currentTime+=300;
+await vm.runInContext('conductorSay("cond-welcome")',context);
+const speaking=playlistContext.sources.at(-1);assert.ok(vm.runInContext('conductorVoice',context));
+sandbox.hobby.room='yamaai';vm.runInContext('conductorWatch()',context);
+assert.equal(vm.runInContext('conductorVoice',context),null);assert.ok(speaking.stopTime<=playlistContext.currentTime+.21);
+assert.equal(vm.runInContext('conductorOn',context),true,'room suppression never writes a global mute');
+assert.equal(vm.runInContext('conductorSpeaking',context),0,'quiet room does not duck its ambient score');
+console.log('Yamaai audio QA passed: day/night score, pinned overrides, silent entry, late voice cancellation and room-only conductor suppression.');
 
 // A public source checkout carries no optional recordings. It must make no
 // recording requests, including fallback probes, and retain its synthesizer.

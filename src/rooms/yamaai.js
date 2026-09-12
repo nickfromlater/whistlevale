@@ -203,7 +203,7 @@ registerHouseRoom('yamaai',{
  name:YAMAAI_PROJECT.roomName,layout:YAMAAI_PROJECT.title,
  tag:'MOUNTAIN RAILWAY · BY '+YAMAAI_PROJECT.credits[0].name.toUpperCase(),
  description:embeddedCreditLine(YAMAAI_PROJECT)+'. A local train winds through a Japanese mountain gorge, over a bridge and into the tunnel, past a station, a shrine, a river and a waterfall.',
- color:'#8fa38c',ambient:'forest',railway:false,target:[0,FLOOR+23,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
+ color:'#8fa38c',ambient:'forest',railway:false,conductor:false,target:[0,FLOOR+23,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
  credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:yamaaiShell,
  lights:[
   [-22,26,-7],[21,27,0],

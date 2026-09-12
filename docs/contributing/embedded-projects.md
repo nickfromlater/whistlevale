@@ -80,14 +80,25 @@ The usual Cinema button opens four views: **Mountain drift**, **Station side**,
 **Whole miniature** and **Follow the local**. Station and landscape anchors come
 from the original builders, transformed into house coordinates. The house
 interpolates the camera and retains drag, pinch, scroll, keyboard framing and
-return-to-automatic controls. Phone framing increases the viewing distance to
-account for the narrow aspect ratio. Reduced motion disables automatic drift.
+return-to-automatic controls. The opening shot moves close to the railway,
+inside the front wall and its trim. Close shots stay close on phones; only
+**Whole miniature** backs out to fit the complete model across a narrow screen.
+Reduced motion disables automatic drift.
 The fourth shot is now **Follow the local**: the adapter publishes its moving
 train pose in house coordinates. A guest pose does **not** populate the native
 train registry. Use `hobbyHasNativeTrain()` for native matrices, steam and
 throttle controls; `hobbyHasTrain()` also accepts a guest camera anchor. This
 distinction prevents an empty native train list from crashing the frame loop.
 The guest’s pause control is available beside its credit outside cinema.
+
+Yamaai sets `conductor:false` in its room definition. Both conductor calls and
+the spoken arrival greeting are suppressed, including audio finishing a fetch
+after navigation. Entering the room stops an existing announcement without
+changing the visitor's global conductor preference. Its optional host score,
+**Between the Mountains**, plays in automatic cinema by day and night; pinned
+record selections and the regular music/mute controls still take precedence.
+This ElevenLabs instrumental belongs to the host presentation, not Techartist's
+original project. See the [recording handoff](../../assets/audio/README.md#yamaai-score).
 
 ## Attribution comes from one record
 
