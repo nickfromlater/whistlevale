@@ -45,6 +45,12 @@ The train cabinet names the actual running subway. After choosing another train,
 timetable position, with the door state and opposite service preserved. The
 restored default carries through saved preferences and playable exports.
 
+Cinema opens **Over the ballpark**, with three other room-specific views:
+**The station platform**, **The Bronx in miniature**, and **Along the elevated**.
+The platform view waits beside the station; the following view travels with the
+train while staying on the display. Dragging and zooming still take over the
+camera, and leaving cinema restores the previous view and controls.
+
 ## The gallery and night lighting
 
 Walnut trestles support the brass-trimmed display cabinet. Navy walls and walnut
@@ -59,11 +65,12 @@ stitches, hem seams and small brass number plates.
 Six aimed stadium floodlights illuminate the grass and seating. Two warm
 uplights pick out the limestone facade; localized platform and street lighting
 and lit city windows surround the field. The native HDR bloom supplies the light
-glow. Floodlight positions, directions and falloff radii follow the actual room
-transform on the live map. Other rooms receive zero floodlight strength.
+glow, including the illuminated scoreboard. Floodlight positions, directions and
+falloff radii follow the actual room transform on the live map. Other rooms
+receive zero floodlight strength.
 
-The larger display has a proportional camera near plane, a 1,600-unit far plane,
-and matching depth reconstruction in the macro lens pass. Its actual footprint
+The larger display has a proportional near plane in room and cinema views, a
+1,600-unit far plane, and matching depth reconstruction in the macro lens pass. Its actual footprint
 is 292 × 282 units at map scale 0.22. The stable west-4 plot preserves the newly
 merged Yamaai room's place in the east wing.
 
@@ -84,21 +91,39 @@ Architectural and dimensional references:
 berths, door interlocks, throttle stop, staging, complete formations, wheel and
 roof drawing, restoring the original subway without resetting its timetable,
 mapped lighting, public credit, and mesh disposal on replacement
-and failed construction. The full room has a fixed 5.1-million-vertex ceiling;
+and failed construction. It runs with a 192 MiB Node heap limit to catch a return
+to unbounded construction. The full room has a fixed 5.1-million-vertex ceiling;
 existing contribution and Hall budgets are unchanged. Static room construction
 is cached and there is no geometry generation in the frame loop.
 
-This is a dense model: approximately 140 MiB of indexed room, wall and stock
-buffers before renderer targets and the other rooms. Desktop/phone browser
-performance remains a review requirement. The published PR preview loads in the
-cloud browser, but its WebGL 2 context is unavailable; live 3D interaction and
-physical-phone checks remain unverified. Local evidence was rendered from the
-native emitted geometry, shaders and camera parameters using Mesa EGL; those
-images do not constitute browser interaction or physical-device testing.
+The static model uploads in 76 batches, each containing at most 65,535 vertices.
+The numeric construction array holds at most 786,420 values (about 6 MiB of
+numeric payload), instead of 59,411,952 values (about 453 MiB before capacity,
+Float32 conversion and indexing). All original triangles remain. Small indices
+and omission of identically zero texture coordinates reduce room, wall and stock
+GPU buffers from approximately 140 MiB to **111.71 MiB**. This excludes renderer
+targets, textures and other rooms. Batches outside the camera or shadow frustum
+are skipped; entering this room caps rendering at 60 FPS. Other rooms retain
+their existing cadence. Completed buffers are released on cache replacement or
+failed construction.
+
+Focused Chrome testing on an Apple M4 Pro covered desktop, 390px and 320px
+layouts, day/night cinema, train selection/restoration, the live map and travel
+to Alder Valley and Yamaai. It also found and fixed a map-stopping floodlight
+cache error when drawing the shared house shell. The browser sampled roughly
+77–196 MiB of settled JS heap in the revised room, versus about 1.25 GiB in the
+original preview; these are garbage-collection-dependent samples, not measured
+peak memory or a phone guarantee. Construction still blocks for several seconds
+on first entry; this change does not claim asynchronous or faster loading.
+
+`npm test` and the full geometry comparison passed. The comparison retained
+15,400,122 vertices and checked 184,801,464 Float32 attributes bit for bit across
+567 meshes. Automated export, persistence and credit checks passed. Physical
+phone testing and playback of a downloaded standalone export remain unverified.
 
 Selected review images are in `docs/rooms/yankee-preview/`; the complete local
 geometry measurements, checks and render receipts remain under ignored
-`evidence/yankee-room/`.
+`evidence/yankee-room/` and `evidence/pr35-performance/`.
 
 
 ![The floodlit ballpark in its walnut and navy gallery.](yankee-preview/night.jpg)
@@ -109,4 +134,5 @@ geometry measurements, checks and render receipts remain under ignored
 
 ![Stitched jersey numerals and a brass picture light.](yankee-preview/jersey.jpg)
 
-The images above are native-shader review renders, without the browser UI.
+The first three images are captures from a focused Chrome WebGL 2 tab, without
+the browser UI. The jersey detail is the earlier Mesa EGL review render.

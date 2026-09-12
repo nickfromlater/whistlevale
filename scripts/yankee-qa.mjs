@@ -19,10 +19,12 @@ state.run(`(()=>{
  const s=yankeeScene,q=HOUSE_ROOMS.yankee,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6);
  assert.equal(getHouseScene('yankee'),s);assert.equal(s.trains.length,2);assert.equal(s.routes.length,2);assert.equal(s.walls.length,5);assert.equal(s.spots.length,6);
  assert.ok(s.mesh.count>4000000&&s.mesh.count<5100000,'fixed 5.1M vertex ceiling for the complete authored room');
- assert.equal(s.mesh.reversedGround,0,'ground winding agrees with its normals in the two-sided host shader');assert.equal(s.bronx.seats,35829);assert.equal(s.bronx.population,467);assert.deepEqual(Array.from(s.bronx.fieldFeet),[318,399,408,385,314]);
+ const chunks=s.mesh.parts||[s.mesh];
+ assert.ok(s.mesh.buildPeakValues<=65535*12,'dense room construction never retains more than one bounded batch');
+ assert.equal(chunks.reduce((n,m)=>n+m.reversedGround,0),0,'ground winding agrees with its normals in the two-sided host shader');assert.equal(s.bronx.seats,35829);assert.equal(s.bronx.population,467);assert.deepEqual(Array.from(s.bronx.fieldFeet),[318,399,408,385,314]);
  assert.equal(YankeeModel.constants.gauge,.64);near(YankeeModel.constants.footUnit*90,12.24);
  assert.equal(q.map.plot,'west-4');assert.ok(validateCredits(q.credits).some(c=>c.handle==='nickfromlater'));
- for(const mesh of[s.mesh,...s.walls.map(w=>w.mesh)])for(const axis of[0,2])assert.ok(Math.max(Math.abs(mesh.min[axis]),Math.abs(mesh.max[axis]))<=q.map.footprint[axis===0?0:1]/2+.001,'finished gallery fits its map footprint');
+ for(const mesh of[...chunks,...s.walls.map(w=>w.mesh)])for(const axis of[0,2])assert.ok(Math.max(Math.abs(mesh.min[axis]),Math.abs(mesh.max[axis]))<=q.map.footprint[axis===0?0:1]/2+.001,'finished gallery fits its map footprint');
  assert.equal(s.ownedMeshes.length,10);assert.equal(new Set(s.ownedMeshes).size,10);assert.ok(s.ownedMeshes.reduce((n,m)=>n+m.count,0)<18000,'shared stock geometry stays small');
  for(const train of s.trains){
   assert.equal(train.cars,9);assert.equal(train.type,'mountain');assert.ok(train.speed>=0);
@@ -33,11 +35,17 @@ state.run(`(()=>{
   for(const t of[0,107.999]){train.serviceTime=t;yankeeService(train,0,1);for(let i=0;i<10;i++){const z=houseTrainAt(train,i*7.12).p[2];assert.ok(z<-109||z>115,'timetable wraps only with every car outside the model');}}
  }
  for(let t=0;t<108;t+=.5){for(const [i,train]of s.trains.entries()){train.serviceTime=(t+i*49)%108;yankeeService(train,0,1);}const focus=s.trainFocus();assert.ok(focus.p[2]>=-99&&focus.p[2]<=103,'cinema and cab views stay on the display during hidden staging');}
+ const width=innerWidth;
+ for(const w of[320,390,1440]){innerWidth=w;for(const shot of['drift','side','wide','tail'])for(const time of[0,30,57,107]){
+  const camera=s.cinemaView(shot,time);assert.ok([...camera.position,...camera.target].every(Number.isFinite));assert.ok(len(sub(camera.position,camera.target))>10);
+  if(shot==='side'||shot==='tail')assert.ok(camera.position[0]>82&&camera.position[0]<90,'the elevated camera stays in the open corridor before the city facades');
+ }}innerWidth=width;
  // The same aimed lamps illuminate the room's geometry after map scaling.
  const local=houseFloodLights('yankee'),model=mm(trans(20,3,-40),scaling(.22,.22,.22)),mapped=houseFloodLights('yankee',model);
  assert.equal(local.positions.length,32);assert.ok(local.colors.every(v=>v>0));
  for(let i=0;i<8;i++){const light=q.floodLights[i],p=transform(light.position,model);for(let j=0;j<3;j++)assert.ok(Math.abs(mapped.positions[i*4+j]-p[j])<.0001);near(mapped.positions[i*4+3],light.radius*.22);}
  assert.ok(houseFloodLights('coast').colors.every(v=>v===0),'other rooms do not inherit the stadium lamps');
+ const unlit=houseFloodLights('');assert.ok(unlit.colors.every(v=>v===0),'the map architecture has no room definition and must not crash the renderer');assert.equal(houseFloodLights(''),unlit,'unregistered-room lighting can be cached safely');
  const savedDraw=draw,draws=[];mainProgram={u:{}};shadowProgram={u:{}};
  try{
   draw=(mesh,m)=>{assert.ok(Array.from(m).every(Number.isFinite));draws.push(mesh);};
@@ -62,7 +70,7 @@ state.run(`(()=>{
  let partial;
  registerHouseRoom('yankee-fixture',{build(scene,b){b.box(0,0,0,1,1,1,'#ffffff');partial=b.mesh();scene.ownedMeshes=[partial];throw Error('fixture');},shell(){return[];}});
  assert.throws(()=>getHouseScene('yankee-fixture'),/fixture/);assert.ok(disposed.has(partial),'failed room construction releases already-uploaded train parts');
- globalThis.report={roomVertices:s.mesh.count,wallVertices:s.walls.reduce((n,w)=>n+w.mesh.count,0),sharedTrainVertices:s.ownedMeshes.reduce((n,m)=>n+m.count,0),seats:s.bronx.seats,figures:s.bronx.population,services:2,carsPerService:10,floodLights:8,viewpoints:s.spots.length};
+ globalThis.report={roomVertices:s.mesh.count,roomBatches:chunks.length,maxBuildValues:s.mesh.buildPeakValues,wallVertices:s.walls.reduce((n,w)=>n+w.mesh.count,0),sharedTrainVertices:s.ownedMeshes.reduce((n,m)=>n+m.count,0),seats:s.bronx.seats,figures:s.bronx.population,services:2,carsPerService:10,floodLights:8,viewpoints:s.spots.length};
 })()`);
 const railway=await readFile(new URL('../src/railway.js',import.meta.url),'utf8');
 assert.ok(railway.includes("uf(postProgram,'uFar',cameraFar)"));

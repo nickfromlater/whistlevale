@@ -32,7 +32,7 @@
     "grandhall:align": "node scripts/grandhall-align.mjs",
     "test:moonlight": "node scripts/moonlight-model-qa.mjs && node scripts/moonlight-valley-qa.mjs && node scripts/moonlight-media-qa.mjs && node scripts/moonlight-click-qa.mjs",
     "test:hall": "node scripts/grandhall-qa.mjs && node scripts/hall-scene-qa.mjs && node scripts/hall-glass-qa.mjs && node scripts/hall-residency-qa.mjs && node scripts/hall-navigation-qa.mjs && node scripts/meridian-observatory-qa.mjs && node scripts/meridian-celestial-qa.mjs && node scripts/night-post-qa.mjs && node scripts/codex-reset-qa.mjs",
-    "test:yankee": "node scripts/yankee-qa.mjs"
+    "test:yankee": "node --max-old-space-size=192 scripts/yankee-qa.mjs"
   },
   "license": "MIT",
   "engines": {

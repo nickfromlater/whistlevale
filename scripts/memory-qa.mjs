@@ -19,10 +19,10 @@ const offset=new Float32Array(new ArrayBuffer(50004*48),48,50001*12);assert.ok(v
 
 const state=await communityContext();await loadContributionDefinitions(state,JSON.parse(await read('contributions/world.json')));
 const resources=new Map(),bindings=new Map(),draws=[];let vao=null;const noop=()=>{};
-const gl={ARRAY_BUFFER:1,ELEMENT_ARRAY_BUFFER:2,STATIC_DRAW:3,DYNAMIC_DRAW:4,FLOAT:5,UNSIGNED_INT:6,TRIANGLES:7,
+const gl={ARRAY_BUFFER:1,ELEMENT_ARRAY_BUFFER:2,STATIC_DRAW:3,DYNAMIC_DRAW:4,FLOAT:5,UNSIGNED_INT:6,TRIANGLES:7,UNSIGNED_SHORT:8,
  createBuffer:()=>{const r={};resources.set(r,0);return r;},createVertexArray:()=>({}),bindVertexArray:value=>vao=value,
  bindBuffer:(kind,value)=>{bindings.set(kind,value);if(vao)vao[kind]=value;},bufferData:(kind,data)=>{const b=bindings.get(kind);resources.set(b,data.byteLength);b.data=data.slice();},
- enableVertexAttribArray:noop,vertexAttribPointer:noop,deleteBuffer:r=>resources.delete(r),deleteVertexArray:noop,drawArrays:(mode,start,count)=>draws.push({start,count,indexed:false}),drawElements:(mode,count,type,offset)=>draws.push({start:offset/4,count,indexed:true}),getUniformLocation:()=>0,uniformMatrix4fv:noop};
+ enableVertexAttribArray:noop,vertexAttribPointer:noop,vertexAttrib2f:noop,deleteBuffer:r=>resources.delete(r),deleteVertexArray:noop,drawArrays:(mode,start,count)=>draws.push({start,count,indexed:false}),drawElements:(mode,count,type,offset)=>draws.push({start:offset/4,count,indexed:true}),getUniformLocation:()=>0,uniformMatrix4fv:noop};
 Object.assign(state.context,{assert,memoryGL:gl});state.run('gl=memoryGL;mainProgram={u:{}};');
 const report=state.run(`(()=>{
  const t=getTemplate({type:'moonlight',seed:0}),alias=getTemplate({type:'moonlight',seed:2});
@@ -74,4 +74,46 @@ state.run(`
 `);
 assert.equal(resources.size,allocations+2,'repeated edits retain only the current opaque and glass buffers');
 state.run('disposeMesh(sceneryMesh);sceneryMesh=null;');assert.equal(resources.size,0,'scenery rebuilds release both opaque and transparent indices');
-console.log('Memory QA passed: exact GPU reconstruction, no-op fallback, seams/signed zero, original CPU precision, one lazy editor preview, indexed/glass editing, complete cleanup, both renderers. '+JSON.stringify(report));
+// Bounded room construction preserves the original Float32 stream, including
+// triangle order, transparent materials and geometry spanning chunk boundaries.
+const savedUpload=state.run('upload'),captured=[];
+state.context.recordRoomBatch=data=>{const mesh={count:data.length/12,values:new Float32Array(data)};captured.push(mesh);return mesh;};
+state.run(`
+ upload=recordRoomBatch;
+ function memoryRoomShapes(b){for(let i=0;i<15;i++){
+  b.push(i*.7,-i*.13,.2,.17,-.3,.11,.5,1.3,.9);
+  b.box(0,0,0,.8,1.1,.7,'#91ad76',4);b.sphere(.3,.4,0,.2,.3,.5,'#557766',8,7,4);
+  b.quad([0,0,0],[1,0,0],[1,1,0],[0,1,0],'#99aabb',76,[0,0,1]);b.pop();
+ }}
+ const roomReference=new Builder();memoryRoomShapes(roomReference);
+ const roomBatched=new RoomMeshBuilder(93);memoryRoomShapes(roomBatched);const roomBundle=roomBatched.mesh();
+ assert.equal(roomBundle.count,roomReference.data.length/12);assert.equal(roomBatched.data.length,0);assert.equal(roomBatched.parts.length,0,'completed mesh takes ownership of uploaded batches');
+ assert.ok(roomBundle.buildPeakValues<=93*12);
+ let offset=0;for(const part of roomBundle.parts){assert.ok(part.values.length<=93*12);assert.equal(part.values.length%36,0);for(const value of part.values)assert.ok(Object.is(value,Math.fround(roomReference.data[offset++])),'streaming preserves every original Float32 attribute');}
+ assert.equal(offset,roomReference.data.length);
+ const inside={min:[-.5,-.5,-.5],max:[.5,.5,.5]},crossing={min:[-2,-2,-2],max:[2,2,2]};
+ assert.ok(meshBoundsVisible(inside,I));assert.ok(meshBoundsVisible(crossing,I),'large intersecting bounds stay visible even with every corner outside');
+ for(let axis=0;axis<3;axis++)for(const sign of[-1,1]){const min=[-.1,-.1,-.1],max=[.1,.1,.1];min[axis]+=sign*3;max[axis]+=sign*3;assert.equal(meshBoundsVisible({min,max},I),false,'all six clip planes reject offscreen chunks');}
+ assert.equal(meshBoundsVisible(inside,trans(4,0,0)),false,'model transform is included exactly once');
+ assert.ok(meshBoundsVisible(inside,mm(scaling(.1),trans(4,0,0))),'map scaling uses the actual model-to-clip transform');
+`);
+state.context.restoredUpload=savedUpload;state.run('upload=restoredUpload;');
+// Verify real 16-bit uploads and their expanded attributes, not just metadata.
+state.run(`const shortData=new Float32Array(60000*12);for(let i=0;i<60000;i++){shortData[i*12]=i%3;shortData[i*12+4]=1;}const shortMesh=upload(shortData,true,true);assert.equal(shortMesh.indexType,gl.UNSIGNED_SHORT);`);
+const shortMesh=state.run('shortMesh'),shortValues=shortMesh.vao[1].data,shortIndices=shortMesh.vao[2].data;
+assert.equal(shortIndices.BYTES_PER_ELEMENT,2);assert.equal(shortMesh.bytes,shortValues.byteLength+shortIndices.byteLength);
+assert.equal(shortMesh.zeroUV,true);for(let i=0;i<60000;i++)for(let j=0;j<12;j++)assert.equal(j<10?shortValues[shortIndices[i]*10+j]:0,j===0?i%3:j===4?1:0,'omitting constant UVs preserves every expanded Float32 value');
+state.run('disposeMesh(shortMesh);');assert.equal(resources.size,0);
+state.run(`shortData[10]=.25;const texturedBatch=upload(shortData,true,true);assert.equal(texturedBatch.zeroUV,false,'authored UVs are never omitted');disposeMesh(texturedBatch);shortData[10]=-0;const signedUV=upload(shortData,true,true);assert.equal(signedUV.zeroUV,false,'signed-zero UVs preserve their bytes');disposeMesh(signedUV);`);
+assert.equal(resources.size,0);
+// A failed build after several uploads must release the prefix as well as any
+// completed walls. Replacement must release all children of the cached bundle.
+state.run(`
+ const streamedDefinition={streamGeometry:true,railway:false,shell(){return[];},build(scene,b){for(let i=0;i<2000;i++)b.box(i%30,0,Math.floor(i/30),.2,.2,.2,'#99aabb');}};
+ registerHouseRoom('streamed-fixture',streamedDefinition);getHouseScene('streamed-fixture');
+ registerHouseRoom('streamed-fixture',streamedDefinition);
+`);
+assert.equal(resources.size,0,'replacement releases every streamed child buffer');
+state.run(`registerHouseRoom('streamed-failure',{...streamedDefinition,build(scene,b){streamedDefinition.build(scene,b);throw Error('streamed failure');}});assert.throws(()=>getHouseScene('streamed-failure'),/streamed failure/);assert.equal(roomScenes.has('streamed-failure'),false);`);
+assert.equal(resources.size,0,'failure releases already-uploaded batches');
+console.log('Memory QA passed: exact GPU reconstruction, bounded room batches, clip-plane culling, 16-bit indices, failed-build cleanup, original CPU precision, one lazy editor preview, indexed/glass editing, complete cleanup, both renderers. '+JSON.stringify(report));

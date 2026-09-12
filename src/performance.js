@@ -21,10 +21,11 @@ if(new URLSearchParams(location.search).has('profile')){
  buildWorld=measure('buildWorld',buildWorld);createRoom=measure('createRoom',createRoom);initializeWorkshop=measure('initializeWorkshop',initializeWorkshop);buildTrains=measure('buildTrains',buildTrains);
  buildValleyLife=measure('buildValleyLife',buildValleyLife);initWalkingFigures=measure('initWalkingFigures',initWalkingFigures);getHouseScene=measure('getHouseScene',getHouseScene);buildShopHouse=measure('buildShopHouse',buildShopHouse);
  updateSimulation=measure('simulation',updateSimulation);updateCamera=measure('camera',updateCamera);updateHobbyAudio=measure('soundscape',updateHobbyAudio);updateUI=measure('ui',updateUI);updateEditorOverlay=measure('editorOverlay',updateEditorOverlay);
- const originalUpload=upload,originalDispose=disposeMesh,originalDraw=draw,originalRender=render,originalInitGL=initGL;
+ const originalUpload=upload,originalDispose=disposeMesh,originalDraw=drawMeshPart,originalRender=render,originalInitGL=initGL;
  upload=function(data,...args){const mesh=originalUpload(data,...args),bytes=mesh.bytes??data.length*4;meshSizes.set(mesh,bytes);gpuBytes+=bytes;meshes++;return mesh;};
  disposeMesh=function(mesh){const bytes=mesh&&meshSizes.get(mesh);if(bytes){gpuBytes-=bytes;meshes--;meshSizes.delete(mesh);}return originalDispose(mesh);};
- draw=function(mesh,...args){if(mesh){const opaque=mesh.opaqueCount??mesh.count;if(opaque){drawCalls++;vertices+=opaque;}if(mesh.glass&&(args[1]??mainProgram)===mainProgram){drawCalls++;vertices+=mesh.glass.count;}}return originalDraw(mesh,...args);};
+ const countDraw=(mesh,p)=>{if(!mesh)return;if(mesh.parts){for(const part of mesh.parts)countDraw(part,p);return;}const opaque=mesh.opaqueCount??mesh.count;if(opaque){drawCalls++;vertices+=opaque;}if(mesh.glass&&p===mainProgram){drawCalls++;vertices+=mesh.glass.count;}};
+ drawMeshPart=function(mesh,...args){countDraw(mesh,args[1]??mainProgram);return originalDraw(mesh,...args);};
  initGL=function(){const t=performance.now();originalInitGL();stages.push({stage:'initGL',ms:round(performance.now()-t)});timerExt=gl.getExtension('EXT_disjoint_timer_query_webgl2');const debug=gl.getExtension('WEBGL_debug_renderer_info');gpuInfo=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);};
  function publish(now){
   const dt=samples.map(s=>s.interval).filter(n=>n>0),mean=values=>values.length?values.reduce((a,b)=>a+b,0)/values.length:0;

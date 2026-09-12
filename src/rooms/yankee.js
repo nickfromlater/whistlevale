@@ -131,6 +131,18 @@ function drawYankeeTrain(scene,train,p){
   }
  }
 }
+function yankeeCinemaView(scene,key,elapsed){
+ const phone=innerWidth<700,drift=reduceMotion?0:Math.sin(elapsed*.035);
+ if(key==='side')return{position:[87.5,phone?17:12.3,phone?100:83],target:[74.5,6.1,55]};
+ if(key==='tail'){
+  const q=scene.trainFocus(),z=clamp(q.p[2],-80,87);
+  // Keep the stadium behind the silver cars as the two services pass. A
+  // reversal changes the train, not which side of the avenue the camera uses.
+  return{position:[87.2,phone?17:13,z+24],target:[74.3,6.3,z-2]};
+ }
+ const target=key==='wide'?[0,7,4]:YankeeModel.world([0,8,0]),distance=(key==='wide'?390:190)*(phone?1.8:1),pitch=key==='wide'?.66:.65,yaw=key==='wide'?.43:.12+drift*.20;
+ return{target,position:add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance])};
+}
 function buildYankeeRoom(scene,b){
  YankeeModel.build(scene,b);scene.population=scene.bronx.population;scene.trainClip=[-105.2,111.1];
  scene.ownedMeshes=[];scene.stockMeshes={};
@@ -145,6 +157,7 @@ function buildYankeeRoom(scene,b){
   for(const train of scene.trains){const q=houseTrainAt(train);if(q.p[2]>-99&&q.p[2]<103)return q;}
   return {p:[74.25,5.1,40],f:[0,0,1]};
  };
+ scene.cinemaView=(key,elapsed)=>yankeeCinemaView(scene,key,elapsed);
  scene.spots=[
   {name:'Inside the cathedral',target:YankeeModel.world([0,8,0]),distance:183,phoneDistance:360,pitch:.79,yaw:.01},
   {name:'161 St · Yankee Stadium',target:[76,6,39],distance:66,phoneDistance:137,pitch:.32,yaw:-.58},
@@ -165,5 +178,6 @@ registerHouseRoom('yankee',{
  layoutLightFalloff:.075,
  lights:[[-48,49.8,24],[48,49.8,-35],[-140,25.7,0],[0,28.7,-135],[140,28.7,0],[0,34.7,135]],
  layoutLights:[[70,8,10],[82,8,32],[70,8,55],[82,8,72],[88,5,-42],[88,5,-76],[89,5,98],[48,5,78]],floodLights:yankeeFloodLights,
- build:buildYankeeRoom,shell:yankeeGallery
+ cinemaLabels:['Over the ballpark','The station platform','The Bronx in miniature','Along the elevated'],cinemaShot:'drift',
+ streamGeometry:true,maxFPS:60,build:buildYankeeRoom,shell:yankeeGallery
 });

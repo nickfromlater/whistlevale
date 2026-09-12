@@ -189,6 +189,21 @@ shell spans approximately X ±78 and Z ±64; provide map footprint metadata when
 your room differs. A shell is optional and falls back to the shared room shell,
 but a new room should earn its own architectural character.
 
+Dense native rooms may opt into `streamGeometry: true`, as the Bronx Gallery
+does. Its builder uploads complete triangles in batches of at most 65,535
+vertices, then releases the temporary array. The returned mesh owns its child
+buffers; normal room drawing, map transforms, shadow passes and disposal handle
+them together. Triangle order, Float32 attributes and every authored detail are
+preserved. Batches outside the camera or light frustum are skipped. This mode is
+for builders that emit geometry directly: `builder.data` contains only the current
+batch, so do not use it to inspect or rewrite the completed scene. Keep the default
+Builder for retained templates and geometry that needs a complete CPU stream.
+
+Rooms may set `maxFPS: 60` to limit rendering on high-refresh displays without
+changing simulation speed. Optional `cinemaLabels`, `cinemaShot`, and a scene's
+`cinemaView(key, elapsed)` callback provide authored automatic camera positions
+and targets. Manual cinema gestures still take precedence.
+
 Room metadata can set `phoneDistance` for a deliberate portrait overview;
 otherwise phones use `distance * 1.78`. Individual camera spots also accept
 `phoneDistance`; their default is `distance * 1.7`. Use an explicit distance for

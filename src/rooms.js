@@ -195,12 +195,28 @@ function houseStation(scene,b,x,y,z,key,alpine=false,angle=0){
  b.cylinder(2.95,.6,.05,.15,.15,.66,'#6d826c',41,12);b.cylinder(2.95,.94,.05,.18,.18,.045,'#b1b49a',41,12);b.pop();
 }
 
+// Dense native rooms can upload completed triangles as bounded batches. Keep
+// double-precision construction and triangle order; never retain the full room
+// in a growing JavaScript array alongside its Float32 upload and index table.
+class RoomMeshBuilder extends Builder{
+ constructor(limit=65535){super();this.limit=Math.max(3,Math.floor(limit/3)*3)*12;this.parts=[];this.peak=0;}
+ vertex(p,n,c,mat=0,uv=null){super.vertex(p,n,c,mat,uv);if(this.data.length>=this.limit)this.flush();}
+ flush(){
+  if(!this.data.length)return;this.peak=Math.max(this.peak,this.data.length);
+  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  for(let i=0;i<this.data.length;i+=12)for(let j=0;j<3;j++){min[j]=Math.min(min[j],this.data[i+j]-.1);max[j]=Math.max(max[j],this.data[i+j]+.1);}
+  const mesh=upload(this.data,true,true);mesh.bounds={min,max};this.parts.push(mesh);this.data=[];
+ }
+ mesh(){this.flush();const parts=this.parts;this.parts=[];return{parts,count:parts.reduce((n,p)=>n+p.count,0),bytes:parts.reduce((n,p)=>n+(p.bytes||0),0),buildPeakValues:this.peak};}
+ dispose(){for(const part of this.parts)disposeMesh(part);this.parts=[];this.data=[];}
+}
+
 function getHouseScene(key){
  if(roomScenes.has(key))return roomScenes.get(key);
  const build=HOUSE_ROOM_BUILDERS.get(key);
  if(!build)throw new Error('No scene builder is registered for '+key+'.');
  const oldSeed=seed;seed=1783+Object.keys(HOUSE_ROOMS).indexOf(key)*3721;
- const scene={key,mesh:null,walls:[],routes:[],trains:[],actors:[],population:0,spots:[],height:()=>1},b=new Builder();
+ const scene={key,mesh:null,walls:[],routes:[],trains:[],actors:[],population:0,spots:[],height:()=>1},b=HOUSE_ROOMS[key].streamGeometry?new RoomMeshBuilder():new Builder();
  try{
   scene.walls=(ROOM_SHELLS[key]||((builder)=>roomShell(key,builder)))(b);
   build(scene,b);
@@ -217,6 +233,7 @@ function getHouseScene(key){
   if(typeof communityRoomPlaces==='function')communityRoomPlaces(scene);
   roomScenes.set(key,scene);return scene;
  }catch(error){
+  if(b instanceof RoomMeshBuilder)b.dispose();
   // Shell walls may already be uploaded when a scene builder or its train
   // contract fails. Release those buffers; a partial room never enters the cache.
   const owned=[scene.mesh,scene.lifeDetails?.mesh,...(scene.ownedMeshes||[]),...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
@@ -236,7 +253,7 @@ function advanceHouseTrain(train,dt,rate){if(typeof train.advance==='function')t
 const houseFloodCache=new Map();
 function houseFloodLights(key,model=null){
  const definition=HOUSE_ROOMS[key],cached=houseFloodCache.get(key);
- if(cached?.definition===definition&&cached.model===model)return cached;
+ if(cached&&cached.definition===definition&&cached.model===model)return cached;
  const value={definition,model,positions:new Float32Array(32),directions:new Float32Array(32),colors:new Float32Array(24)};
  for(const [i,l]of (definition?.floodLights||[]).slice(0,8).entries()){
   const p=model?transform(l.position,model):l.position,t=model?transform(l.target,model):l.target,scale=model?Math.hypot(model[0],model[1],model[2]):1;

@@ -24,10 +24,17 @@ run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
  function setThrottle(value){throttle=value;}function togglePause(){paused=!paused;}function enableSound(){throw new Error('Camera gestures must not restart audio');}
  let exportPlayable;
 `);
-run(railway.match(/function houseCameraFar\(\).*$/m)[0]+'\n'+rooms.match(/function advanceHouseTrain\(.*$/m)[0]);
+run(railway.match(/function houseCameraFar\(\).*$/m)[0]+'\n'+railway.match(/function houseCameraNear\(.*$/m)[0]+'\n'+rooms.match(/function advanceHouseTrain\(.*$/m)[0]);
 run(hobby);
 run('const I=Object.freeze([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);');
 run('hobby.ready=true;updateUI=function(){};bindCinemaCamera()');
+run(railway.slice(railway.indexOf('let houseFrameNext=0;'),railway.indexOf('function animate(now)')));
+run(`
+ HOUSE_ROOMS.coast.maxFPS=60;hobby.room='coast';let accepted=0;
+ for(let i=0;i<120;i++)if(houseFrameDue(1000+i*1000/120+(i%3===1?.7:0),999))accepted++;
+ assert.ok(accepted>=59&&accepted<=61,'60 Hz pacing remains stable on a jittered 120 Hz display');
+ hobby.room='valley';assert.ok(houseFrameDue(2001,2000),'other rooms keep their existing cadence');delete HOUSE_ROOMS.coast.maxFPS;
+`);
 function fire(type,extra={}){
  const e={type,target:canvas,button:0,pointerId:1,clientX:700,clientY:450,deltaY:0,deltaMode:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra};
  for(const fn of events.get(type)||[]){fn(e);if(e.stopped)break;}return e;
@@ -106,3 +113,10 @@ run('embeddedCinemaView=()=>({target:[8,1,12],position:[20,2,62],groundHandled:t
 assert.ok(Math.abs(run('cameraPos[1]')-2)<.001,'the house floor must not lift a guest camera out of its tunnel clearance');
 run('leaveCinema(false)');
 console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');
+run(`embeddedCinemaView=()=>null;HOUSE_ROOMS.coast.far=1600;hobby.scene.cinemaView=()=>({target:[0,0,0],position:[0,120,160]});enterCinema();cinemaCamera(20);`);
+assert.ok(Math.abs(run('cameraNear')-.8)<.001,'a large native display retains depth precision in its wide cinema view');
+assert.equal(run('cameraFar'),1600);
+run('hobby.scene.cinemaView=()=>({target:[0,0,0],position:[0,12,28]});cinemaCamera(20);');
+assert.equal(run('cameraNear'),.5,'close cinema views still preserve the distant gallery lettering');
+run('delete HOUSE_ROOMS.coast.far;cinemaCamera(20);');
+assert.equal(run('cameraNear'),.1,'ordinary rooms retain their existing cinema near plane');

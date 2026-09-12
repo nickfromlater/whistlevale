@@ -155,7 +155,7 @@ function syncRoomControls(){
  $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
  for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
  for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=!railway&&!['room','overview','tour'].includes(button.dataset.camera);
- const names=(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
+ const names=HOUSE_ROOMS[hobby.room]?.cinemaLabels||(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
  for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
 }
 
@@ -163,7 +163,7 @@ function enterCinema(){
  if(hobby.cinema||!hobby.ready)return;if(building)baseHobbyBuild(false);
  if(typeof closeQuietControls==='function')closeQuietControls();
  hobby.saved={throttle,paused,view:viewMode,target:orbit.target.slice(),distance:orbit.distance,pitch:orbit.pitch,yaw:orbit.yaw};
- const guestDefault=typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaShot;
+ const guestDefault=HOUSE_ROOMS[hobby.room]?.cinemaShot||(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaShot);
  if(guestDefault){hobby.saved.shot=hobby.shot;hobby.shot=guestDefault;$('cinemaShot').value=guestDefault;}
  hobby.cinema=true;resumeCinemaCamera();hobby.cinemaStart=roomClock;hobby.heading=hobbyTrainInfo().f.slice();hobby.tunnelBlend=hobbyTrainInTunnel()?1:0;hobby.shotBlend={side:9,back:-14,height:8.5};
  viewMode='cinema';document.body.classList.add('cinematic');document.body.classList.remove('hidden-ui','train-focus');hidden=false;
@@ -274,7 +274,7 @@ function cinemaCamera(dt){
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
  const manual=cinemaOrbit.manual;let target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
- const guestShot=!manual&&typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed);
+ const guestShot=!manual&&((typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed))||hobby.scene?.cinemaView?.(hobby.shot,elapsed));
  if(guestShot){target=guestShot.target;desired=guestShot.position;}
  else if(!hobbyHasTrain()){
   const angle=.35+(reduceMotion?0:Math.sin(elapsed*.025)*.13),distance=(hobby.shot==='wide'?94:hobby.shot==='side'?61:hobby.shot==='tail'?120:73)*portrait;
@@ -288,7 +288,9 @@ function cinemaCamera(dt){
   for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
  }
  cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*(manual?10:1.45)));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*(manual?10:2.5)));
- cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,(cameraFar=houseCameraFar()));VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
+ // Large displays need the same proportional depth precision as the room
+ // camera; a fixed .1 near plane makes distant lettering fight its backing.
+ cameraFar=houseCameraFar();cameraNear=cameraFar>500?Math.max(.5,houseCameraNear(len(sub(cameraPos,cameraTarget)),.004,.7)):.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,cameraFar);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 
 updateCamera=function(dt){

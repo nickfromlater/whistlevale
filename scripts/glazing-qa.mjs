@@ -50,8 +50,8 @@ assert.throws(()=>run('draw(mesh);drawArchitecturalGlass();'),/fixture draw fail
 assert.equal(run('architecturalGlassDraws.length'),0);assert.deepEqual(calls.filter(q=>q.op==='depth').map(q=>q.value),[false,true]);assert.equal(calls.at(-1).op,'disable');
 failDraw=false;calls.length=0;
 const diagnostics=await readFile(new URL('../src/performance.js',import.meta.url),'utf8');
-const wrapper=diagnostics.match(/ draw=function\(mesh,\.\.\.args\)\{[^\n]+/);assert.ok(wrapper);
-run('let drawCalls=0,vertices=0;const originalDraw=draw;'+wrapper[0]);
+const counter=diagnostics.match(/ const countDraw=[^\n]+/),wrapper=diagnostics.match(/ drawMeshPart=function\(mesh,\.\.\.args\)\{[^\n]+/);assert.ok(counter&&wrapper);
+run('let drawCalls=0,vertices=0;const originalDraw=drawMeshPart;'+counter[0]+wrapper[0]);
 run("draw(mesh,I,'shadow');draw(mesh);draw(legacy);drawArchitecturalGlass();assert.equal(drawCalls,4);assert.equal(vertices,120);");
 assert.equal(calls.filter(q=>q.op==='opaque'||q.op==='glass').length,4,'profile draw count matches actual opaque and clear GPU draws');
 run('disposeMesh(mesh);');

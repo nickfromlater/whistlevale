@@ -283,29 +283,35 @@ void main(){vec2 t=1./uResolution;vec3 c=texture(uScene,uv).rgb;
 }`;
 function program(vs,fs){function compile(s,t){let sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,compile(vs,gl.VERTEX_SHADER));gl.attachShader(p,compile(fs,gl.FRAGMENT_SHADER));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));p.u={};return p}
 function uniform(p,n){return p.u[n]??(p.u[n]=gl.getUniformLocation(p,n))}const uf=(p,n,x)=>gl.uniform1f(uniform(p,n),x), uv3=(p,n,v)=>gl.uniform3fv(uniform(p,n),v), um=(p,n,m)=>gl.uniformMatrix4fv(uniform(p,n),false,m);
-function uploadTriangles(data,compact=true,owned=false){
+function uploadTriangles(data,compact=true,owned=false,smallIndices=false){
  const floats=owned?data:new Float32Array(data),packed=compact?compactMeshVertices(floats):{data:floats,indices:null};
- const vao=gl.createVertexArray(),buf=gl.createBuffer(),mesh={vao,buf,count:data.length/12,bytes:packed.data.byteLength};
+ if(smallIndices&&packed.indices&&packed.data.length/12<=65535)packed.indices=new Uint16Array(packed.indices);
+ // Native solid-geometry rooms often have no texture coordinates. Omitting
+ // only identically +0 UV pairs saves eight bytes per vertex, losslessly.
+ let stride=48,zeroUV=smallIndices;
+ if(zeroUV){const words=new Uint32Array(packed.data.buffer,packed.data.byteOffset,packed.data.length);for(let i=10;i<words.length;i+=12)if(words[i]||words[i+1]){zeroUV=false;break;}}
+ if(zeroUV){const values=new Float32Array(packed.data.length/12*10);for(let i=0,j=0;i<packed.data.length;i+=12)for(let k=0;k<10;k++)values[j++]=packed.data[i+k];packed.data=values;stride=40;}
+ const vao=gl.createVertexArray(),buf=gl.createBuffer(),mesh={vao,buf,count:data.length/12,bytes:packed.data.byteLength,zeroUV};
  try{
   gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,packed.data,gl.STATIC_DRAW);
-  [3,3,3,1,2].forEach((n,i)=>{gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,48,[0,12,24,36,40][i]);});
-  if(packed.indices){mesh.ibo=gl.createBuffer();mesh.indexed=true;mesh.bytes+=packed.indices.byteLength;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,packed.indices,gl.STATIC_DRAW);}
+  [3,3,3,1,2].forEach((n,i)=>{if(i===4&&zeroUV)return;gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,n,gl.FLOAT,false,stride,[0,12,24,36,40][i]);});
+  if(packed.indices){mesh.ibo=gl.createBuffer();mesh.indexed=true;mesh.indexType=packed.indices.BYTES_PER_ELEMENT===2?gl.UNSIGNED_SHORT:gl.UNSIGNED_INT;mesh.bytes+=packed.indices.byteLength;gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,packed.indices,gl.STATIC_DRAW);}
   return mesh;
  }catch(error){disposeMesh(mesh);throw error;}finally{gl.bindVertexArray(null);}
 }
 // Material 76 is glazing; 78–80/82 are celestial effects; 84 is projector haze.
 // Transparent triangles keep a separate, sortable stream; opaque triangles
 // share identical vertices without changing their emitted order or attributes.
-function upload(data,compact=true){
+function upload(data,compact=true,smallIndices=false){
  let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84){first=i-9;break;}
- if(first<0)return uploadTriangles(data,compact);
+ if(first<0)return uploadTriangles(data,compact,false,smallIndices);
  // A few transparent panes must not duplicate the entire scenery in JS arrays.
  let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84)clearLength+=36;
  const opaque=new Float32Array(data.length-clearLength),clear=[];let offset=0;
  for(let i=0;i<data.length;i+=36){const transparent=data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
  let mesh,glass;
  try{
-  mesh=uploadTriangles(opaque,compact,true);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
+  mesh=uploadTriangles(opaque,compact,true,smallIndices);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
   glass.centers=[];for(let i=0;i<clear.length;i+=36)glass.centers.push([(clear[i]+clear[i+12]+clear[i+24])/3,(clear[i+1]+clear[i+13]+clear[i+25])/3,(clear[i+2]+clear[i+14]+clear[i+26])/3]);
   glass.center=[0,0,0];for(const point of glass.centers)for(let axis=0;axis<3;axis++)glass.center[axis]+=point[axis]/glass.centers.length;
   glass.indices=new Uint32Array(glass.count);glass.order=glass.centers.map((_,i)=>i);glass.depths=new Float64Array(glass.order.length);
@@ -314,8 +320,21 @@ function upload(data,compact=true){
 }
 const architecturalGlassDraws=[];
 function draw(mesh,model=I,p=mainProgram){
+ if(mesh?.parts){const clip=p===mainProgram?mm(VP,model):p===shadowProgram?mm(lightVP,model):null;for(const part of mesh.parts)if(!clip||meshBoundsVisible(part.bounds,clip))drawMeshPart(part,model,p);return;}
+ drawMeshPart(mesh,model,p);
+}
+function meshBoundsVisible(bounds,clip){
+ if(!bounds)return true;
+ // Test the most positive corner against all six homogeneous clip planes.
+ for(let axis=0;axis<3;axis++)for(let sign=-1;sign<=1;sign+=2){
+  const x=clip[3]+sign*clip[axis],y=clip[7]+sign*clip[axis+4],z=clip[11]+sign*clip[axis+8],w=clip[15]+sign*clip[axis+12];
+  if(x*bounds[x>=0?'max':'min'][0]+y*bounds[y>=0?'max':'min'][1]+z*bounds[z>=0?'max':'min'][2]+w<0)return false;
+ }
+ return true;
+}
+function drawMeshPart(mesh,model,p){
  if(!mesh)return;const count=mesh.opaqueCount??mesh.count;
- if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);if(mesh.indexed)gl.drawElements(gl.TRIANGLES,count,gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,count);}
+ if(count){um(p,'uModel',model);gl.bindVertexArray(mesh.vao);if(mesh.zeroUV)gl.vertexAttrib2f(4,0,0);if(mesh.indexed)gl.drawElements(gl.TRIANGLES,count,mesh.indexType??gl.UNSIGNED_INT,0);else gl.drawArrays(gl.TRIANGLES,0,count);}
  if(mesh.glass&&p===mainProgram)architecturalGlassDraws.push({mesh:mesh.glass,model:Array.from(model)});
 }
 function drawArchitecturalGlass(){
@@ -522,7 +541,14 @@ function updateMoonlightHouse(){
  if(access&&access.hidden===focused){access.hidden=!focused;document.body.classList.toggle('moonlight-focused',focused);}
  if(!focused&&typeof quietControls!=='undefined'&&quietControls.panel?.id==='moonlightPanel')closeQuietControls();
 }
-function animate(now){if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}if(typeof embeddedFrameDue==='function'&&!embeddedFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
+let houseFrameNext=0;
+function houseFrameDue(now,last){
+ const limit=typeof hobby!=='undefined'&&HOUSE_ROOMS[hobby.room]?.maxFPS;
+ if(!limit||!last){houseFrameNext=0;return true;}
+ const interval=1000/limit;if(!houseFrameNext||now-houseFrameNext>interval)houseFrameNext=now;
+ if(now+1<houseFrameNext)return false;houseFrameNext+=interval;return true;
+}
+function animate(now){if(!houseFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}if(document.hidden){lastTime=now;requestAnimationFrame(animate);return}if(typeof embeddedFrameDue==='function'&&!embeddedFrameDue(now,lastTime)){requestAnimationFrame(animate);return;}let dt=lastTime?Math.min((now-lastTime)/1000,.065):1/60;lastTime=now;clock+=paused?0:dt;roomClock+=dt;rainAmount=mix(rainAmount,rainTarget,1-Math.exp(-dt*2));roomLampLevel=mix(roomLampLevel,roomLampTarget,1-Math.exp(-dt*3));resize();updateSimulation(dt);updateCamera(dt);if(audio)audio.update(dt);updateHobbyAudio(dt);render();updateEditorOverlay();uiTime+=dt;if(uiTime>.12){updateUI();uiTime=0}frame++;requestAnimationFrame(animate)}
 function showHelp(){returnHelpFocus=document.activeElement;$('help').hidden=false;$('helpClose').focus()}function closeHelp(){$('help').hidden=true;if(returnHelpFocus&&returnHelpFocus.focus)returnHelpFocus.focus()}
 function hideUI(){hidden=!hidden;document.body.classList.toggle('hidden-ui',hidden)}
 function workshopSetView(mode,announce=true){
@@ -1167,7 +1193,7 @@ function appendInstance(dst,src,m){
   a.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],(m[0]*nx+m[4]*ny+m[8]*nz)/s,(m[1]*nx+m[5]*ny+m[9]*nz)/s,(m[2]*nx+m[6]*ny+m[10]*nz)/s,src[i+6],src[i+7],src[i+8],src[i+9],src[i+10],src[i+11]);
  }
 }
-function disposeMesh(m){if(m){if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
+function disposeMesh(m){if(m){if(m.parts){for(const part of m.parts)disposeMesh(part);return;}if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
 function rebuildScenery(exclude=null){
  if(exclude&&!sceneryMesh?.glass){shadowDirty=true;return;}
  const b=new Builder();sceneryRanges.clear();stationMarkerCache=null;
