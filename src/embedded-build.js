@@ -275,6 +275,7 @@ function embeddedBuildDraw(ctx,stages,revealed,edge,warm){
 const EMBEDDED_BUILD_STEP_NAMES=['Gorge','Rock','Station','Lanterns','Forest','Train','Water','Light'];
 
 function embeddedBuildSteps(stage){
+ const bar=stage.querySelector('.embed-progress span');if(bar)bar.style.width='0%';
  const list=stage.querySelector('.embed-steps');if(!list)return;
  list.replaceChildren(...EMBEDDED_BUILD_STEP_NAMES.map(name=>{
   const item=document.createElement('li');item.textContent=name;return item;

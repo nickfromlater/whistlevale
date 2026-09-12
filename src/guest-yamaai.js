@@ -97,7 +97,7 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   const anchor=point=>point.clone().applyMatrix4(model).toArray();
   const views={
    drift:{target:anchor(V(0,10,4)),distance:73,pitch:.42,yaw:.36},
-   side:{target:anchor(architecture.stationTarget),distance:36,pitch:.30,yaw:.38},
+   side:{target:anchor(world.stationCenter),distance:32,pitch:.55,yaw:1.18},
    wide:{target:project.focus.slice(),distance:105,pitch:.53,yaw:.3},
    tail:{target:anchor(world.bridgeTarget),distance:42,pitch:.25,yaw:-.24}
   };
