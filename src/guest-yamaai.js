@@ -32,6 +32,18 @@ function yamaaiCamera(THREE,camera,state,toLocal,scale){
  camera.projectionMatrix.fromArray(state.projection);camera.projectionMatrix.elements[14]/=scale;
  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();camera.updateMatrixWorld(true);
 }
+// The vendored compileAsync owns timers which survive disposal. Poll its same
+// compiled programs through our abortable yield instead, before the first draw.
+async function yamaaiCompile(renderer,scene,camera,signal){
+ const materials=renderer.compile(scene,camera);
+ while(materials.size){
+  await yamaaiYield(signal);
+  for(const material of materials)if(renderer.properties.get(material).currentProgram.isReady())materials.delete(material);
+ }
+}
+function yamaaiPixelRatio(width,height,nativeRatio){
+ return Math.max(.75,Math.min(nativeRatio||1,width<700?1.25:1.5,Math.sqrt(2100000/(width*height))));
+}
 function yamaaiDisposeScene(scene){
  const geometries=new Set(),materials=new Set(),textures=new Set();
  scene.traverse(node=>{
@@ -96,12 +108,12 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   });
   train.spotlights.forEach(light=>light.shadow.autoUpdate=false);
   const day={sun:new THREE.Color('#fff0cd'),hemi:new THREE.Color('#a5c5d8'),ground:new THREE.Color('#5a6546'),pos:V(-37,75,30)},dusk={sun:new THREE.Color('#ffaf66'),hemi:new THREE.Color('#8ba8bc'),ground:new THREE.Color('#484c31'),pos:V(-63,25,37)},dark={sun:new THREE.Color('#8eaee0'),hemi:new THREE.Color('#4e7096'),ground:new THREE.Color('#071114'),pos:V(-24,37,-85)};
-  let last=0,elapsed=0,lastShadow=-Infinity,reportAt=0,width=0,height=0,frameCount=0,cpuTime=0;
+  let last=0,elapsed=0,lastShadow=-Infinity,activeReflection=0,reportAt=0,width=0,height=0,frameCount=0,cpuTime=0;
   const data=embeddedStage().dataset;data.scale=scale.toFixed(5);data.bounds=JSON.stringify({min:bounds.min.toArray(),max:bounds.max.toArray(),tableTop:project.table.top+.18});
   progress('Lighting the miniature…');await yamaaiYield(signal);
   camera.position.set(48,34,98);camera.lookAt(0,13,0);camera.updateMatrixWorld(true);
   world.prepareCompile();vegetation.prepareCompile();
-  try{renderer.compile(scene,camera);}finally{world.finishCompile();vegetation.finishCompile();}
+  try{await yamaaiCompile(renderer,scene,camera,signal);}finally{world.finishCompile();vegetation.finishCompile();}
   signal.throwIfAborted();data.buildMs=String(Math.round(performance.now()-started));
   // The original curve is the exact path; sampling it beats differencing the
  // car's position between frames, which stalls whenever the train is paused.
@@ -120,22 +132,22 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
  return {dispose,views,train:trainPose,readTrainPose,frame(state){
    if(disposed)return;
    const frameStart=performance.now();
-   if(width!==state.width||height!==state.height){width=state.width;height=state.height;renderer.setPixelRatio(Math.min(devicePixelRatio||1,width<700?1.25:1.5));renderer.setSize(width,height,false);}
+   if(width!==state.width||height!==state.height){width=state.width;height=state.height;renderer.setPixelRatio(yamaaiPixelRatio(width,height,devicePixelRatio));renderer.setSize(width,height,false);data.pixelRatio=String(renderer.getPixelRatio());data.pixels=String(canvas.width*canvas.height);}
    yamaaiCamera(THREE,camera,state,toLocal,scale);depth.update(state.eye);
    const dt=last?Math.min((state.now-last)/1000,.065):0;last=state.now;if(!state.paused)elapsed+=dt;shared.time.value=elapsed;
    const n=state.night,r=state.rain,blend=n<.62?n/.62:(n-.62)/.38,a=n<.62?day:dusk,b=n<.62?dusk:dark,lerp=THREE.MathUtils.lerp;
    sun.color.copy(a.sun).lerp(b.sun,blend);sun.position.copy(a.pos).lerp(b.pos,blend);sun.intensity=lerp(n<.62?3.35:3.6,n<.62?3.6:.52,blend)*(1-r*.75);
-   hemi.color.copy(a.hemi).lerp(b.hemi,blend);hemi.groundColor.copy(a.ground).lerp(b.ground,blend);hemi.intensity=lerp(n<.62?1.04:.55,n<.62?.55:.15,blend)+n*.14;bounce.intensity=lerp(.22,.08,n);
+   hemi.color.copy(a.hemi).lerp(b.hemi,blend);hemi.groundColor.copy(a.ground).lerp(b.ground,blend);hemi.intensity=lerp(n<.62?1.04:.55,n<.62?.55:.15,blend)+n*.28;bounce.intensity=lerp(.22,.12,n);
    shared.night.value=n;shared.wetness.value=Math.max(r,n*.46);shared.sunDir.value.copy(sun.position).sub(sun.target.position).normalize();shared.sunColor.value.copy(sun.color);shared.sunAmt.value=(1-n*.4)*(1-r*.9);
    renderer.toneMappingExposure=lerp(.98,1.03,n);scene.environmentIntensity=lerp(.27,.03,n);
    train.update(state.paused?0:dt,elapsed,{speed:1,paused:state.paused,night:n,rain:r});architecture.update(elapsed,n,r);lanterns.update(elapsed,n);weather.update(elapsed,{rain:r,warm:Math.sin(n*Math.PI)},train);
    readTrainPose();
    world.updateLOD(camera);vegetation.update(elapsed,camera);
-   if(state.now-lastShadow>=50){lastShadow=state.now;sun.shadow.needsUpdate=true;train.spotlights.forEach(light=>light.shadow.needsUpdate=true);}
-   renderer.info.reset();weather.refreshReflection(renderer,camera,state.now,false);
+   if(state.now-lastShadow>=100){lastShadow=state.now;sun.shadow.needsUpdate=true;train.spotlights.forEach(light=>light.shadow.needsUpdate=true);}
+   renderer.info.reset();if(state.now-(activeReflection||0)>=200){weather.refreshReflection(renderer,camera,state.now,false);activeReflection=state.now;}
    renderer.setRenderTarget(null);renderer.clear();renderer.render(depth.scene,camera);renderer.render(scene,camera);
    frameCount++;cpuTime+=performance.now()-frameStart;
-   if(state.now-reportAt>1000){data.fps=String(Math.round(frameCount*1000/(state.now-reportAt)));data.cpuMs=(cpuTime/frameCount).toFixed(2);frameCount=0;cpuTime=0;reportAt=state.now;data.drawCalls=String(renderer.info.render.calls);data.triangles=String(renderer.info.render.triangles);data.geometries=String(renderer.info.memory.geometries);data.textures=String(renderer.info.memory.textures);data.trainProgress=String(train.progress);data.foreground=String(document.visibilityState==='visible'&&document.hasFocus());data.camera=JSON.stringify({eye:state.eye,target:state.target});}
+   if(state.now-reportAt>1000){data.fps=String(Math.round(frameCount*1000/(state.now-reportAt)));data.cpuMs=(cpuTime/frameCount).toFixed(2);frameCount=0;cpuTime=0;reportAt=state.now;data.drawCalls=String(renderer.info.render.calls);data.triangles=String(renderer.info.render.triangles);data.geometries=String(renderer.info.memory.geometries);data.textures=String(renderer.info.memory.textures);data.trainProgress=String(train.progress);data.foreground=String(document.visibilityState==='visible'&&document.hasFocus());data.guestCamera=JSON.stringify({eye:state.eye,target:state.target});}
   }};
  }catch(error){dispose();throw error;}
 }

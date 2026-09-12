@@ -17,26 +17,66 @@ const YAMAAI_PROJECT=registerEmbeddedProject('yamaai',{
 });
 
 function yamaaiTable(b){
- const {top,halfWidth,halfDepth}=YAMAAI_TABLE;
- const w=halfWidth*2,d=halfDepth*2,oak='#6b5336',dark='#4a3a28',felt='#2f4034';
- // A plain display table: the work on it is the thing worth looking at.
- slab(b,w+5.2,d+5.2,1.5,top-.75,2.2,oak,22);
- slab(b,w+4.4,d+4.4,.22,top+.06,2,dark,22);
- b.box(0,top-3.1,0,w+2.6,3.2,d+2.6,dark,22);
- b.box(0,top-4.9,0,w-1.4,1.2,d-1.4,felt,23);
- for(const x of[-halfWidth-.4,halfWidth+.4])for(const z of[-halfDepth-.2,halfDepth+.2]){
-  b.box(x,(top+FLOOR)/2-2,z,2.5,top-FLOOR-3.4,2.5,oak,22);
-  b.box(x,FLOOR+.7,z,3.3,1.4,3.3,dark,22);
+ const {top}=YAMAAI_TABLE;
+ // A carved cedar support follows the author's irregular geological section.
+ // The mountain stays intact; its lower strata nest into the thin dark reveal.
+ const ring=(y,scale)=>Array.from({length:96},(_,i)=>{const a=i*TAU/96,r=1+.065*Math.sin(a*3+.3)+.045*Math.cos(a*5-.5)+.025*Math.sin(a*8);return[.05+Math.cos(a)*30.4*r*scale,y,.814+Math.sin(a)*23.4*r*scale];});
+ const layers=[[FLOOR+.12,.75,'#373b30'],[FLOOR+.9,.79,'#4a3b2b'],[top-2.5,.80,'#765c3c'],[top-1.8,.98,'#4d3c2c'],[top-.35,1,'#8b6d49'],[top-.23,1,'#bc9c5e'],[top+.16,.99,'#554632']];
+ let previous=ring(layers[0][0],layers[0][1]);
+ for(let j=1;j<layers.length;j++){
+  const [y,s,color]=layers[j],next=ring(y,s);
+  for(let i=0;i<96;i++)b.quad(previous[i],previous[(i+1)%96],next[(i+1)%96],next[i],color,j===5?41:22);
+  previous=next;
  }
- // Stretchers, so the table reads as furniture rather than a floating plane.
- for(const z of[-halfDepth-.2,halfDepth+.2])b.box(0,FLOOR+6.4,z,w+.8,1.1,1.5,oak,22);
- b.box(0,FLOOR+6.4,0,1.5,1.1,d+.4,oak,22);
- // A low brass rail: museum furniture, and it keeps the eye on the tabletop.
- for(const [x,z,rw,rd] of[[0,-halfDepth-4.6,w+11,1],[0,halfDepth+4.6,w+11,1],[-halfWidth-5.5,0,1,d+9],[halfWidth+5.5,0,1,d+9]]){
-  b.box(x,FLOOR+7.2,z,rw,.42,rd,'#b09a63',41);
-  const posts=rw>rd?[[-rw/2+1,z],[0,z],[rw/2-1,z]]:[[x,-rd/2+1],[x,0],[x,rd/2-1]];
-  for(const [px,pz] of posts)b.cylinder(rw>rd?px:x,(FLOOR+7.2+FLOOR)/2+.3,rw>rd?z:pz,.42,.42,7.4,'#8d7a4e',41,10);
+ for(let i=0;i<96;i++)b.tri([.05,top+.16,.814],previous[(i+1)%96],previous[i],'#554632',22);
+ // Slender vertical cedar staves give the cabinet scale without busy hardware.
+ const low=ring(FLOOR+1,.792),high=ring(top-2.7,.802);
+ for(let i=0;i<96;i+=3)b.beam(low[i],high[i],.045,'#b19063',22,4);
+}
+
+function yamaaiShell(b){
+ const walls=[],cedar='#71563d',pale='#d6c9aa',dark='#454438';
+ b.box(0,FLOOR-.25,0,158,.45,130,'#897252',21);
+ // Quiet woven mats and a timber border, sized to the display rather than a
+ // second decorative landscape competing underneath it.
+ for(const x of[-28,28])for(const z of[-22,22]){
+  b.box(x,FLOOR+.045,z,55.6,.08,43.6,'#938d65',23);
+  for(const side of[-1,1])b.box(x+side*27.3,FLOOR+.10,z,.65,.035,43.6,dark,23);
  }
+ for(const which of['back','left','right','front']){
+  const w=new Builder(),back=which==='back',front=which==='front',width=back||front?156:128;
+  const pos=back?[0,0,-64]:front?[0,0,64]:which==='left'?[-78,0,0]:[78,0,0],angle=back?0:front?PI:which==='left'?PI/2:-PI/2;
+  w.push(...pos,0,angle);w.box(0,4,0,width,56,.6,pale,20);
+  w.box(0,FLOOR+6,.5,width,12,.7,cedar,22);
+  for(let x=-width/2+2;x<width/2;x+=4.3)w.box(x,FLOOR+6,.88,.12,10.5,.10,'#a18560',22);
+  for(const y of[FLOOR+.5,FLOOR+12,30.7])w.box(0,y,.85,width,.8,1.2,cedar,22);
+  for(const x of[-width/2+1,width/2-1])w.box(x,4,1,1.9,56,1.6,cedar,22);
+  if(back){
+   roomSign(w,'window',0,12,.8,43,28,0,33);
+   for(const x of[-22,22])w.box(x,12,1.1,1.4,30,1.2,cedar,22);
+   // Two open shoji leaves frame the garden view. Paper is opaque and softly
+   // lit; the opening uses the house's existing day/night window artwork.
+   for(const side of[-1,1]){
+    const x=side*17.5;w.box(x,12,1.4,8,28,.26,'#e5d7b7',23);
+    for(const dx of[-4,0,4])w.box(x+dx,12,1.62,.24,28,.2,cedar,22);
+    for(let y=-2;y<=26;y+=4.7)w.box(x,y,1.62,8,.22,.2,cedar,22);
+   }
+   for(const y of[-2.7,26.7])w.box(0,y,1.5,46,.8,2.5,cedar,22);
+   yamaaiPlaque(w);
+  }else if(!front){
+   for(const x of[-27,29]){
+    w.box(x,10,1,31,27,.5,cedar,22);w.box(x,10,1.28,29,25,.1,'#ddd2b2',23);
+    for(let dx=-14;dx<=14;dx+=7)w.box(x+dx,10,1.4,.25,25,.2,cedar,22);
+    for(let y=-2;y<=22;y+=6)w.box(x,y,1.4,29,.25,.2,cedar,22);
+   }
+  }else{
+   w.box(0,FLOOR+19,1,28,38,.8,cedar,22);
+   for(const x of[-7,7]){w.box(x,FLOOR+19,1.5,12.8,35,.3,dark,22);w.box(x,FLOOR+25,1.7,11,21,.2,'#dbccaa',23);for(let y=FLOOR+15;y<FLOOR+35;y+=5)w.box(x,y,1.85,11,.25,.2,cedar,22);}
+   roomFrame(w,'shop-sign',0,23,1,35,8);
+  }
+  w.pop();walls.push({which,mesh:w.mesh()});
+ }
+ return walls;
 }
 
 // The plaque. Geometry always; the lettering only when the atlas has room for
@@ -90,13 +130,12 @@ function yamaaiTansu(b){
  const cedar='#6d5334',face='#7f6440',iron='#2f3a33';
  b.push(-70,FLOOR,8,0,PI/2);
  for(let step=0;step<4;step++){
-  const h=9+step*5.2,w=13,z=-19.5+step*13;
-  b.box(0,h/2,z,w,h,12.6,cedar,22);
+  const h=9+step*5.2,w=12.6,x=-19.5+step*13;
+  b.box(x,h/2,0,w,h,13,cedar,22);
   for(let d=0;d<2+step;d++){
    const y=2.6+d*4.2;if(y>h-2)continue;
-   b.box(.9,y,z,w-2.2,3.2,.5,face,22);
-   b.cylinder(.9,y,z+6.6,.55,.55,.5,'#b09a63',41,8,0,PI/2);
-   b.box(.9,y,z-6.5,w-2.2,3.2,.18,iron,41);
+   b.box(x,y,6.55,w-1,3.2,.3,face,22);
+   b.box(x,y,6.77,1.4,.5,.2,iron,41);
   }
  }
  b.pop();
@@ -165,7 +204,7 @@ registerHouseRoom('yamaai',{
  tag:'MOUNTAIN RAILWAY · BY '+YAMAAI_PROJECT.credits[0].name.toUpperCase(),
  description:embeddedCreditLine(YAMAAI_PROJECT)+'. A local train winds through a Japanese mountain gorge, over a bridge and into the tunnel, past a station, a shrine, a river and a waterfall.',
  color:'#8fa38c',ambient:'forest',railway:false,target:[0,FLOOR+23,0],distance:118,phoneDistance:208,pitch:.5,yaw:.3,
- credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:b=>roomShell('yamaai',b,yamaaiPlaque),
+ credits:[...YAMAAI_PROJECT.credits,...YAMAAI_PROJECT.hostCredits],build:yamaaiRoom,shell:yamaaiShell,
  lights:[
   [-22,26,-7],[21,27,0],
   [-63,FLOOR+29,-20],[-63,FLOOR+25.8,16],[63,FLOOR+26.9,-16],[63,FLOOR+24.4,20],

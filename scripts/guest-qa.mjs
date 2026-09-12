@@ -75,6 +75,31 @@ context.mapOpen=true;run('embeddedFrameUpdate()');assert.equal(disposals,2);asse
 context.mapOpen=false;run('embeddedFrameUpdate()');assert.equal(builds,2,'return starts with deferred rebuild');leave();
 context.location.protocol='file:';enter();mount();assert.equal(builds,2,'portable file never attempts guest imports');assert.equal(document.getElementById('embedStage').dataset.state,'unavailable');leave();
 const adapter=await read('src/guest-yamaai.js');assert.ok(!adapter.includes('compileAsync('),'upstream compileAsync has uncancellable timers after disposal');
+assert.ok(!adapter.includes('data.camera='),'guest diagnostics must not become a house camera control');
+assert.ok(!(await read('src/hobby.js')).includes("querySelectorAll('[data-camera]')"),'camera UI operates on buttons, not the guest stage');
+// Loading the map starts before its first 3D frame. Residency must end then,
+// and the lightweight sketch canvas must survive so the next entry can draw.
+context.shopMap={open:false};context.location.protocol='http:';enter();mount();resolvers.shift()();await flush();
+const sketch=document.getElementById('embedBuild'),beforeMapDisposals=disposals;
+context.shopMap.open=true;context.mapOpen=false;run('embeddedFrameUpdate()');
+assert.equal(disposals,beforeMapDisposals+1,'opening map disposes before the map becomes active');
+assert.equal(document.getElementById('embedBuild'),sketch,'re-entry retains the sketch surface');
+run('embeddedFrameUpdate()');assert.equal(timers.size,0,'map loading cannot restart the guest');context.shopMap.open=false;
+// Cap the composited renderers together; other rooms remain uncapped.
+assert.equal(run('embeddedFrameDue(108,100)'),true);
+enter();assert.equal(run('embeddedFrameDue(108,100)'),false);assert.equal(run('embeddedFrameDue(117,100)'),true);leave();
+for(const [w,h,dpr] of [[1920,1080,2],[2560,1440,2],[390,844,3],[320,720,3]]){
+ f.context.viewport={w,h,dpr};const ratio=f.run('yamaaiPixelRatio(viewport.w,viewport.h,viewport.dpr)');
+ assert.ok(w*h*ratio*ratio<=2100000.01,'guest framebuffer respects the pixel budget');assert.ok(ratio<=dpr);
+}
+// Compile completion is polled only across owned, cancellable yields. No
+// callback may inspect renderer properties after its context was disposed.
+f.context.compileSignal=new AbortController();let compileYields=0,compileReads=0;
+f.context.compileYield=async signal=>{compileYields++;signal.throwIfAborted();};
+f.context.compileRenderer={compile:()=>new Set([{}]),properties:{get:()=>{compileReads++;return {currentProgram:{isReady:()=>compileYields>=3}};}}};
+f.run('yamaaiYield=compileYield;');await f.run('yamaaiCompile(compileRenderer,null,null,compileSignal.signal)');assert.equal(compileYields,3);
+const readsBeforeAbort=compileReads;f.context.compileYield=async signal=>{f.context.compileSignal.abort();signal.throwIfAborted();};f.run('yamaaiYield=compileYield;');
+await assert.rejects(f.run('yamaaiCompile(compileRenderer,null,null,compileSignal.signal)'),{name:'AbortError'});assert.equal(compileReads,readsBeforeAbort);
 assert.ok(!adapter.includes('requestAnimationFrame('),'house is the only animation loop');
 assert.match(adapter,/renderer\.forceContextLoss\(\)/);assert.match(adapter,/signal\.addEventListener\('abort',dispose/);
 assert.ok(!/iframe|matrix3d/.test(await read('src/embedded.js')),'flat embedded page has been removed');

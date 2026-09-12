@@ -281,16 +281,17 @@ function embeddedBuildSteps(stage){
  }));
 }
 
-// Match the adapter's own progress label to a stage. Falling back to "one more"
-// keeps the sketch honest if the upstream wording ever changes under us.
+// Only known build stages advance the drawing; fetching modules is not a
+// completed landscape. Progress reports the actual stage, never a fake timer.
 function embeddedBuildAdvance(active,text){
  const build=active.build;if(!build)return;
  const index=EMBEDDED_BUILD_STAGES.indexOf(text);
- const next=index>=0?index:Math.min(build.revealed+1,build.stages.length-1);
- if(next<=build.revealed&&build.revealed>0)return;
+ if(index<0)return;const next=index;
+ if(next<=build.revealed)return;
  build.revealed=next;build.edge=0;build.at=performance.now();
  const list=document.querySelector('.embed-steps');
- if(list)[...list.children].forEach((item,i)=>item.classList.toggle('done',i<next));
+ if(list)[...list.children].forEach((item,i)=>{item.classList.toggle('done',i<next);item.classList.toggle('current',i===next);});
+ const bar=document.querySelector('.embed-progress span');if(bar)bar.style.width=(next/EMBEDDED_BUILD_STAGES.length*100)+'%';
 }
 
 // Called each frame while the guest is still building.
@@ -327,5 +328,5 @@ function embeddedBuildFrame(active){
 function embeddedBuildFinish(){
  const canvas=document.getElementById('embedBuild');if(!canvas)return;
  canvas.classList.add('done');
- setTimeout(()=>{if(!canvas.isConnected)return;const ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);canvas.classList.remove('done');},900);
+ embeddedActive.finishTimer=setTimeout(()=>{if(!canvas.isConnected||!canvas.classList.contains('done'))return;canvas.width=canvas.height=1;},650);
 }

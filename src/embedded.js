@@ -31,15 +31,16 @@ function embeddedAttribution(project){
 function embeddedStage(){
  let stage=document.getElementById('embedStage');if(stage)return stage;
  stage=document.createElement('section');stage.id='embedStage';stage.hidden=true;stage.setAttribute('aria-label','Guest miniature');
- const loading=document.createElement('div');loading.className='embed-loading';loading.setAttribute('aria-label','Loading Mountain Railway Diorama');
- loading.innerHTML='<p class="embed-loading-kicker">Guest miniature</p><strong class="embed-loading-title">Mountain Railway Diorama</strong><span class="embed-loading-by">Being built on the table by Techartist</span><ol class="embed-steps" aria-hidden="true"></ol>';
+ const loading=document.createElement('div');loading.className='embed-loading';loading.setAttribute('aria-label','Loading guest miniature');
+ loading.innerHTML='<p class="embed-loading-kicker">A small world takes shape</p><strong class="embed-loading-title"></strong><span class="embed-loading-by"></span><div class="embed-progress" aria-hidden="true"><span></span></div><ol class="embed-steps" aria-hidden="true"></ol>';
  const status=document.createElement('p');status.id='embedStatus';status.className='embed-status';status.setAttribute('role','status');
  const dock=document.createElement('div');dock.id='embedCredit';dock.className='embed-credit-dock';
  const sketch=document.createElement('canvas');sketch.id='embedBuild';sketch.className='embed-build';sketch.setAttribute('aria-hidden','true');
- loading.append(status);stage.append(sketch,loading,dock);(document.getElementById('app')||document.body).append(stage);return stage;
+ const back=document.createElement('button');back.className='embed-loading-back';back.textContent='Back to rooms';back.onclick=()=>openHouseMap();
+ loading.append(status,back);stage.append(sketch,loading,dock);(document.getElementById('app')||document.body).append(stage);return stage;
 }
 function embeddedOnStage(room){
- return hobby.room===room&&!(typeof isShopMapActive==='function'&&isShopMapActive());
+ return hobby.room===room&&!(typeof shopMap!=='undefined'&&shopMap.open)&&!(typeof isShopMapActive==='function'&&isShopMapActive());
 }
 function embeddedEnter(room){
  if(embeddedActive?.room===room)return embeddedActive;
@@ -47,8 +48,12 @@ function embeddedEnter(room){
  const stage=embeddedStage(),controller=new AbortController();
  const active={room,project,controller,session:null,timer:0,paused:!!reduceMotion};embeddedActive=active;
  stage.hidden=false;stage.dataset.state='loading';document.body.classList.add('has-embed');
+ stage.setAttribute('aria-busy','true');
+ const title=stage.querySelector('.embed-loading-title'),by=stage.querySelector('.embed-loading-by');
+ if(title)title.textContent=project.title;if(by)by.textContent='An original miniature by '+project.credits[0].name;
+ const sketch=stage.querySelector('#embedBuild');if(sketch)sketch.classList.remove('done');
  if(typeof embeddedBuildShapes==='function'&&project.table){
-  active.build={stages:embeddedBuildShapes(project.table),revealed:0,edge:0,at:performance.now(),warm:0};
+  active.build={stages:embeddedBuildShapes(project.table),revealed:-1,edge:0,at:performance.now(),warm:0};
   embeddedBuildSteps(stage);
  }
  const dock=stage.querySelector('#embedCredit');dock.replaceChildren(embeddedAttribution(project));
@@ -62,7 +67,7 @@ function embeddedEnter(room){
  // A portable HTML keeps the room and credits; the vendored module graph is
  // intentionally not embedded into that file. Do not try to fetch file:// URLs.
  if(!/^https?:$/.test(location.protocol)){
-  stage.dataset.state='unavailable';status.textContent='Visit the online house to explore this guest miniature. The original project is linked below.';return active;
+  stage.dataset.state='unavailable';stage.setAttribute('aria-busy','false');status.textContent='Visit the online house to explore this guest miniature. The original project is linked below.';return active;
  }
  active.timer=setTimeout(()=>{active.timer=0;embeddedMount(active);},520);
  return active;
@@ -74,18 +79,18 @@ async function embeddedMount(active){
    mount:canvas=>{if(embeddedActive===active)stage.prepend(canvas);},
    progress:text=>{if(embeddedActive!==active)return;status.textContent=text;embeddedBuildAdvance(active,text);}});
   if(embeddedActive!==active||!embeddedOnStage(active.room)){session.dispose();return;}
-  active.session=session;if(typeof embeddedBuildFinish==='function')embeddedBuildFinish();stage.dataset.state='ready';status.hidden=true;stage.querySelector('.embed-loading').hidden=true;stage.querySelector('#embedPause').disabled=false;
+  active.session=session;if(typeof embeddedBuildFinish==='function')embeddedBuildFinish();stage.dataset.state='ready';stage.setAttribute('aria-busy','false');status.hidden=true;stage.querySelector('.embed-loading').hidden=true;stage.querySelector('#embedPause').disabled=false;
  }catch(error){
   if(embeddedActive!==active||active.controller.signal.aborted)return;
-  console.error('Guest miniature could not open:',error);stage.dataset.state='error';
+  console.error('Guest miniature could not open:',error);stage.dataset.state='error';stage.setAttribute('aria-busy','false');
   status.hidden=false;stage.querySelector('.embed-loading').hidden=false;status.textContent='The miniature could not open here. You can still visit the original project below.';
  }
 }
 function embeddedLeave(){
  const active=embeddedActive;embeddedActive=null;if(!active)return;
- clearTimeout(active.timer);active.controller.abort();active.session?.dispose();active.session=null;
+ clearTimeout(active.timer);clearTimeout(active.finishTimer);active.controller.abort();active.session?.dispose();active.session=null;
  const stage=document.getElementById('embedStage');
- if(stage){stage.hidden=true;stage.dataset.state='idle';stage.querySelector('.embed-loading').hidden=false;stage.querySelectorAll('canvas').forEach(node=>node.remove());}
+ if(stage){stage.hidden=true;stage.dataset.state='idle';stage.querySelector('.embed-loading').hidden=false;stage.querySelectorAll('.embed-canvas').forEach(node=>node.remove());}
  document.body.classList.remove('has-embed');
 }
 // One call after the final house camera update, including cinema and all room
@@ -117,6 +122,9 @@ function embeddedPhotograph(houseCanvas){
 // Presets are anchors from the original scene, expressed in house coordinates.
 // The house still owns interpolation and manual cinema orbit/pan/zoom.
 const embeddedTrainInfo=()=>embeddedActive?.session?.train||null;
+// Limit both composited renderers together. Independent throttling misaligns
+// their cameras; the other house rooms retain their existing refresh cadence.
+function embeddedFrameDue(now,last){return !embeddedActive||!last||now-last>=1000/60-1;}
 
 function embeddedCinemaView(key,elapsed){
  // A guest that publishes a train gets the house's own following shot, which

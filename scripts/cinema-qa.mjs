@@ -25,6 +25,7 @@ run(railway.slice(0,railway.indexOf("const canvas=$('world')"))+`
  let exportPlayable;
 `);
 run(hobby);
+run('const I=Object.freeze([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);');
 run('hobby.ready=true;updateUI=function(){};bindCinemaCamera()');
 function fire(type,extra={}){
  const e={type,target:canvas,button:0,pointerId:1,clientX:700,clientY:450,deltaY:0,deltaMode:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra};
@@ -83,9 +84,14 @@ run(`let guestTrain={p:[30,6,-10],f:[1,0,0]};
  hobby.room='coast';hobby.scene={trains:[],height:()=>0};`);
 assert.equal(run('JSON.stringify(hobbyTrainInfo())'),JSON.stringify({p:[30,6,-10],f:[1,0,0]}),'the house reads the guest locomotive as its train');
 assert.equal(run('hobbyHasTrain()'),true,'a guest train counts as a train, so the no-train orbit stops firing');
+assert.equal(run('hobbyHasNativeTrain()'),false,'a published camera pose is not a native train');
+assert.equal(run('hobbyTrainMatrix()===I'),true,'rendering a guest never reads an empty native train list');
+assert.doesNotThrow(()=>run('drawHobbyParticles()'),'guest geometry never enters native steam rendering');
+const guestControls=run('JSON.stringify({paused,throttle})');
 run(`hobby.shot='tail';cameraPos=[0,0,0];cameraTarget=[0,0,0];hobby.heading=[1,0,0];
  hobby.shotBlend={side:0,back:0,height:0};enterCinema();for(let i=0;i<40;i++)cinemaCamera(.1);`);
 const near=run('len(sub(cameraTarget,guestTrain.p))');
+assert.equal(run('JSON.stringify({paused,throttle})'),guestControls,'following a guest leaves other railways untouched');
 assert.ok(near<12,'the following shot looks at the locomotive, not a fixed anchor: '+near.toFixed(2));
 run('guestTrain={p:[90,6,-10],f:[1,0,0]};for(let i=0;i<40;i++)cinemaCamera(.1);');
 const moved=run('len(sub(cameraTarget,guestTrain.p))');

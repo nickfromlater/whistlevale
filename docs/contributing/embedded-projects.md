@@ -19,10 +19,21 @@ The guest’s authorship and licence remain attached to the work.
   on actual room entry, after the native room has built and a 520 ms delay.
   The adapter installs the vendored project’s `three` and `three/addons/`
   mappings as a **scoped runtime import map** before importing the builders.
-- The builders run in stages, with a visible status anchored over the table.
+- The builders run in stages, with a pen-drawn landscape on the table and a
+  compact progress card. Only actual builder stages advance the progress;
+  fetching modules does not claim completed geometry. **Back to rooms** cancels
+  the load. Loading remains visible in cinema. Re-entry restores the sketch,
+  and its drawing buffer is released when the miniature takes over.
   Between stages, loading yields to the house and waits for a visible tab.
   Each original builder is synchronous: a large stage can still briefly block
   interaction. Background-tab timings do not describe foreground performance.
+- Shader readiness uses the vendored renderer's program readiness checks with
+  house-owned, abortable waits. Never use the upstream `compileAsync()` loop:
+  its polling timers can outlive a destroyed context.
+- The two renderers share a maximum 60 Hz cadence while a guest is open, so
+  their cameras stay aligned. The guest framebuffer is limited to roughly
+  2.1 million pixels at typical desktop sizes, shadows refresh at 10 Hz and
+  river reflections at 5 Hz. The original geometry and near/far LOD remain.
 - `embeddedFrameUpdate()` runs once in the house render path, after the final
   camera update, including room, layout and cinema views. The guest creates no
   animation loop and starts no audio. A pause button stops its train and weather
@@ -66,19 +77,24 @@ with a little additional room fill at night so details remain readable.
 ## Cinema
 
 The usual Cinema button opens four views: **Mountain drift**, **Station side**,
-**Whole miniature** and **Across the bridge**. Station and bridge anchors come
+**Whole miniature** and **Follow the local**. Station and landscape anchors come
 from the original builders, transformed into house coordinates. The house
 interpolates the camera and retains drag, pinch, scroll, keyboard framing and
 return-to-automatic controls. Phone framing increases the viewing distance to
 account for the narrow aspect ratio. Reduced motion disables automatic drift.
-The guest’s pause control remains available beside its credit.
+The fourth shot is now **Follow the local**: the adapter publishes its moving
+train pose in house coordinates. A guest pose does **not** populate the native
+train registry. Use `hobbyHasNativeTrain()` for native matrices, steam and
+throttle controls; `hobbyHasTrain()` also accepts a guest camera anchor. This
+distinction prevents an empty native train list from crashing the frame loop.
+The guest’s pause control is available beside its credit outside cinema.
 
 ## Attribution comes from one record
 
 `YAMAAI_PROJECT`, registered before the room, supplies:
 
-1. The always-visible dock: title, linked author profiles, source, MIT licence,
-   and the permission date (public permission on 11 September 2026).
+1. The room dock: title, linked author profiles and original source. The dock
+   yields to the loading card during construction and hides in cinema.
 2. The in-world plaque painted by `initEmbeddedArt()`.
 3. The house map’s room name, tag and description.
 4. The room’s validated `credits`, used by the builders panel and exports.
@@ -86,6 +102,9 @@ The guest’s pause control remains available beside its credit.
 `hostCredits` separately preserves Nick’s credit for the guest room. It does not
 attribute the guest model to the host. Use the artist’s supplied public identity;
 never infer another person or turn an `@handle` into a different platform.
+The supplied permission was public on 11 September 2026; the maintainer removed
+the on-screen permission notice. MIT remains recorded with the project and in
+the vendored licence; do not describe the current dock as displaying that notice.
 
 Plaques are painted **before** `initHouseArt()` uploads the texture. The reserved
 780 × 196 slots are `(3310,1056)` and `(610,524)`. Do not use the old `(3310,856)`
@@ -138,7 +157,7 @@ Playable HTML exports retain the room, the attribution record and links, but do
 **not** bundle this large ES-module graph. File/blob exports show an explanatory
 message instead of attempting guest imports. Runtime guest canvases and import
 maps are removed during packing. The rest of the exported house remains playable. Photographs composite both
-canvases and include an artist/source/licence footer.
+canvases and include an artist/source footer.
 
 Run `npm test`, `npm run test:geometry:full` and
 `npm run check:contributions -- --json`. `npm run test:guests` checks camera/depth

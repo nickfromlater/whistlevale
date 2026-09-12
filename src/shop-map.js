@@ -131,6 +131,7 @@ async function openHouseMap(){
  if(building)enterBuild(false);if(hobby.cinema)leaveCinema(false);
  shopMap.saved={view:viewMode,orbit:{...orbit,target:orbit.target.slice()},eye:cameraPos.slice(),target:cameraTarget.slice(),light:lightVP,lens:lensAmount};
  shopMap.open=true;shopMap.loading=true;shopMap.selected=hobby.room;shopLightCache=new WeakMap();const token=++shopMap.token;
+ if(typeof embeddedLeave==='function')embeddedLeave();
  for(const id of['soundPanel','playlistPanel','ambiencePanel','layoutPanel','trainInspector'])if($(id))$(id).hidden=true;
  // Capture the opener before hiding the room controls, which can blur it.
  document.body.classList.remove('hidden-ui');hidden=false;ShopMapUI.show(hobby.room);document.body.classList.add('shop-map-open');
