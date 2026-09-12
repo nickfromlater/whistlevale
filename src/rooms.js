@@ -203,9 +203,9 @@ class RoomMeshBuilder extends Builder{
  vertex(p,n,c,mat=0,uv=null){super.vertex(p,n,c,mat,uv);if(this.data.length>=this.limit)this.flush();}
  flush(){
   if(!this.data.length)return;this.peak=Math.max(this.peak,this.data.length);
-  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
-  for(let i=0;i<this.data.length;i+=12)for(let j=0;j<3;j++){min[j]=Math.min(min[j],this.data[i+j]-.1);max[j]=Math.max(max[j],this.data[i+j]+.1);}
-  const mesh=upload(this.data,true,true);mesh.bounds={min,max};this.parts.push(mesh);this.data=[];
+  let x0=Infinity,y0=Infinity,z0=Infinity,x1=-Infinity,y1=-Infinity,z1=-Infinity;
+  for(let i=0;i<this.data.length;i+=12){const x=this.data[i],y=this.data[i+1],z=this.data[i+2];if(x<x0)x0=x;if(y<y0)y0=y;if(z<z0)z0=z;if(x>x1)x1=x;if(y>y1)y1=y;if(z>z1)z1=z;}
+  const mesh=upload(this.data,true,true);mesh.bounds={min:[x0-.1,y0-.1,z0-.1],max:[x1+.1,y1+.1,z1+.1]};this.parts.push(mesh);this.data=[];
  }
  mesh(){this.flush();const parts=this.parts;this.parts=[];return{parts,count:parts.reduce((n,p)=>n+p.count,0),bytes:parts.reduce((n,p)=>n+(p.bytes||0),0),buildPeakValues:this.peak};}
  dispose(){for(const part of this.parts)disposeMesh(part);this.parts=[];this.data=[];}
