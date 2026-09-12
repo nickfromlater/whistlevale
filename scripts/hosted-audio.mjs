@@ -25,7 +25,10 @@ async function readManifest(root){
  if(!keysAre(manifest,['version','recordings'])||manifest.version!==1||!Array.isArray(manifest.recordings)||!manifest.recordings.length||manifest.recordings.length>HOSTED_AUDIO_LIMITS.recordings)throw fail('invalid manifest version or empty/oversized recording list.');
  const ids=new Set();let bytes=0;
  for(const record of manifest.recordings){
-  if(!keysAre(record,['id','bytes','sha256'])||typeof record.id!=='string'||record.id.length>100||!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(record.id)||ids.has(record.id)||!Number.isSafeInteger(record.bytes)||record.bytes<=0||record.bytes>HOSTED_AUDIO_LIMITS.fileBytes||typeof record.sha256!=='string'||!/^[a-f0-9]{64}$/.test(record.sha256))throw fail('invalid, duplicate or oversized recording in manifest.');
+  if(!keysAre(record,record?.origin===undefined?['id','bytes','sha256']:['id','bytes','sha256','origin'])||typeof record.id!=='string'||record.id.length>100||!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(record.id)||ids.has(record.id)||!Number.isSafeInteger(record.bytes)||record.bytes<=0||record.bytes>HOSTED_AUDIO_LIMITS.fileBytes||typeof record.sha256!=='string'||!/^[a-f0-9]{64}$/.test(record.sha256))throw fail('invalid, duplicate or oversized recording in manifest.');
+  // A newly published master can be preserved from a reviewed preview until
+  // production carries it. It has the same exact-path, hash and byte checks.
+  if(record.origin!==undefined)publicOrigin(record.origin);
   ids.add(record.id);bytes+=record.bytes;
   if(bytes>HOSTED_AUDIO_LIMITS.totalBytes)throw fail('manifest exceeds the total recording byte limit.');
  }
@@ -37,7 +40,7 @@ async function existingFile(file){
 }
 
 async function recordingBytes(record,origin,fetchImpl,timeoutMs,batchSignal){
- const address=origin+'/immutable/assets/audio/'+record.id+'.'+record.sha256.slice(0,16)+'.mp3';
+ const address=(record.origin?publicOrigin(record.origin):origin)+'/immutable/assets/audio/'+record.id+'.'+record.sha256.slice(0,16)+'.mp3';
  const timeout=new AbortController(),signal=AbortSignal.any([batchSignal,timeout.signal]);
  const timer=setTimeout(()=>timeout.abort(fail(record.id+' download timed out.')),timeoutMs);
  let onAbort,reader,response;

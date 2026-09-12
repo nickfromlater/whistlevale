@@ -70,9 +70,15 @@ selects it in Yamaai by day and night, while pinned tracks and the existing mixe
 remain available. A source checkout without it falls back to the house score.
 No recording is fetched from ElevenLabs by the browser or build.
 
-This new recording is not yet in the live preservation collection. Before a
-production release, publish the supplied master with the complete existing
-audio collection from the maintainer's machine, following Hosted builds above;
-then add its exact metadata to `scripts/hosted-audio.json`. Do not add it to that
-manifest before its immutable file is published: automatic builds would fail
-while trying to retrieve a recording the current live site does not yet carry.
+The new master is published on the reviewed Yamaai preview. Its manifest entry
+has an explicit HTTPS `origin`, allowing Git builds to retrieve it before the
+production site carries it. All other recordings still use
+`WHISTLEVALE_AUDIO_ORIGIN`. A per-record origin uses the same exact immutable
+path, byte limit, checksum, timeout and no-redirect rules as the main collection;
+source-only builds remain offline. No playback request goes to another host:
+each build packages its own copy.
+
+Keep that source deployment available until production carries the recording.
+After verifying its exact immutable file on production, remove the temporary
+`origin` override so later builds use the main preservation collection. Never
+add a master to the manifest before its reviewed source actually serves it.

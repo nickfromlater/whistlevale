@@ -127,6 +127,7 @@ const embeddedTrainInfo=()=>embeddedActive?.session?.train||null;
 function embeddedFrameDue(now,last){return !embeddedActive||!last||now-last>=1000/60-1;}
 
 function embeddedCinemaView(key,elapsed){
+ const custom=embeddedActive?.session?.cinemaView?.(key);if(custom)return custom;
  // A guest that publishes a train gets the house's own following shot, which
  // already knows how to sit behind a moving locomotive. Returning null here is
  // what hands that shot back to the house rather than pinning it to an anchor.

@@ -101,6 +101,9 @@ for(const width of [1440,390,320]){
  const wide=run('embeddedCinemaView("wide",0)');assert.ok(Math.hypot(...wide.position)>100,'wide remains an explicit whole-miniature view');
 }
 run('embeddedActive=null');
+run('embeddedActive={session:{cinemaView:key=>key==="tail"?{target:[2,3,4],position:[6,8,10]}:null,train:{p:[0,0,0]}}}');
+assert.equal(run('embeddedCinemaView("tail",0).position[0]'),6,'a guest close-up takes precedence over the generic train following shot');
+run('embeddedActive=null');
 for(const [w,h,dpr] of [[1920,1080,2],[2560,1440,2],[390,844,3],[320,720,3]]){
  f.context.viewport={w,h,dpr};const ratio=f.run('yamaaiPixelRatio(viewport.w,viewport.h,viewport.dpr)');
  assert.ok(w*h*ratio*ratio<=2100000.01,'guest framebuffer respects the pixel budget');assert.ok(ratio<=dpr);

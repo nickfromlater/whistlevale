@@ -129,7 +129,23 @@ async function createYamaaiMiniature({project,signal,host,mount,progress}){
   return trainPose;
  };
  readTrainPose();
- return {dispose,views,train:trainPose,readTrainPose,frame(state){
+ // Original train/architecture anchors make these true miniature close-ups.
+ // The house still interpolates and owns the view/projection in both contexts.
+ const cinemaEye=V(),cinemaTarget=V();
+ const cinemaView=key=>{
+  if(key!=='tail'&&key!=='side')return null;
+  const portrait=innerWidth<700?1.25:1;
+  if(key==='tail'){
+   const station=train.progress>.90||train.progress<world.stationU+.035;
+   cinemaTarget.copy(train.focus);cinemaEye.copy(cinemaTarget).add(V((station?16:13)*portrait,5*portrait,(station?-8:15)*portrait));
+  }else{
+   cinemaTarget.copy(world.stationCenter).add(V(0,1.4,0));
+   cinemaEye.copy(cinemaTarget).add(V(16*portrait,5*portrait,-8*portrait));
+  }
+  if(world.inFootprint(cinemaEye.x,cinemaEye.z))cinemaEye.y=Math.max(cinemaEye.y,world.height(cinemaEye.x,cinemaEye.z)+2.3);
+  return {position:anchor(cinemaEye),target:anchor(cinemaTarget)};
+ };
+ return {dispose,views,cinemaView,train:trainPose,readTrainPose,frame(state){
    if(disposed)return;
    const frameStart=performance.now();
    if(width!==state.width||height!==state.height){width=state.width;height=state.height;renderer.setPixelRatio(yamaaiPixelRatio(width,height,devicePixelRatio));renderer.setSize(width,height,false);data.pixelRatio=String(renderer.getPixelRatio());data.pixels=String(canvas.width*canvas.height);}

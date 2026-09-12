@@ -161,6 +161,8 @@ function enterCinema(){
  if(hobby.cinema||!hobby.ready)return;if(building)baseHobbyBuild(false);
  if(typeof closeQuietControls==='function')closeQuietControls();
  hobby.saved={throttle,paused,view:viewMode,target:orbit.target.slice(),distance:orbit.distance,pitch:orbit.pitch,yaw:orbit.yaw};
+ const guestDefault=typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaShot;
+ if(guestDefault){hobby.saved.shot=hobby.shot;hobby.shot=guestDefault;$('cinemaShot').value=guestDefault;}
  hobby.cinema=true;resumeCinemaCamera();hobby.cinemaStart=roomClock;hobby.heading=hobbyTrainInfo().f.slice();hobby.tunnelBlend=hobbyTrainInTunnel()?1:0;hobby.shotBlend={side:9,back:-14,height:8.5};
  viewMode='cinema';document.body.classList.add('cinematic');document.body.classList.remove('hidden-ui','train-focus');hidden=false;
  $('trainInspector').hidden=true;$('ambiencePanel').hidden=true;$('layoutPanel').hidden=true;
@@ -171,6 +173,7 @@ function enterCinema(){
 function leaveCinema(restore=true){
  if(!hobby.cinema)return;clearCinemaPointers();cinemaOrbit.manual=null;clearTimeout(cinemaIdleTimer);hobby.cinema=false;document.body.classList.remove('cinematic','cinema-idle');$('cinemaStart').setAttribute('aria-pressed','false');
  const saved=hobby.saved;hobby.saved=null;
+ if(saved?.shot){hobby.shot=saved.shot;$('cinemaShot').value=saved.shot;}
  if(saved){setThrottle(saved.throttle);if(paused!==saved.paused)togglePause();viewMode=saved.view==='cinema'?'room':saved.view;Object.assign(orbit,{target:saved.target,distance:saved.distance,pitch:saved.pitch,yaw:saved.yaw});}
  else viewMode='room';
  if(restore){$('cinemaStart').focus();updateUI();}

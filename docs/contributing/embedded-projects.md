@@ -76,16 +76,21 @@ with a little additional room fill at night so details remain readable.
 
 ## Cinema
 
-The usual Cinema button opens four views: **Mountain drift**, **Station side**,
-**Whole miniature** and **Follow the local**. Station and landscape anchors come
+The usual Cinema button starts with **Follow the local**, zoomed into the moving
+train. **Mountain drift**, **Station side** and **Whole miniature** remain
+available. Station and landscape anchors come
 from the original builders, transformed into house coordinates. The house
 interpolates the camera and retains drag, pinch, scroll, keyboard framing and
 return-to-automatic controls. The opening shot moves close to the railway,
 inside the front wall and its trim. Close shots stay close on phones; only
 **Whole miniature** backs out to fit the complete model across a narrow screen.
 Reduced motion disables automatic drift.
-The fourth shot is now **Follow the local**: the adapter publishes its moving
-train pose in house coordinates. A guest pose does **not** populate the native
+The adapter supplies close train/station framing through `session.cinemaView`,
+using the original train focus, station position and terrain clearance. The
+station angle sees the train past the platform canopy. A guest's default shot
+does not overwrite the camera selection saved for other rooms. The adapter also
+publishes its moving train pose in house coordinates for manual framing.
+A guest pose does **not** populate the native
 train registry. Use `hobbyHasNativeTrain()` for native matrices, steam and
 throttle controls; `hobbyHasTrain()` also accepts a guest camera anchor. This
 distinction prevents an empty native train list from crashing the frame loop.

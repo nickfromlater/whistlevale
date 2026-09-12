@@ -54,8 +54,22 @@ for(const replacement of [Buffer.from('Different length'),Buffer.alloc(audio('ch
 });
 
 const original=record('track');
+await fixture([{...record('new-score'),origin:'https://preview.example.com'}],async root=>{
+ const item=record('new-score');
+ const result=await ensureHostedAudio({root,origin,fetchImpl:async(url,options)=>{
+  assert.equal(url,address(item).replace(origin,'https://preview.example.com'));assert.equal(options.redirect,'error');return response(audio(item.id));
+ }});
+ assert.equal(result.downloaded,1);assert.deepEqual(await readFile(audioPath(root,item.id)),audio(item.id));
+});
+for(const bad of ['http://example.com','https://localhost','https://127.0.0.1','https://user:secret@example.com','https://example.com/path',null,17])await fixture([{...record('new-score'),origin:bad}],async root=>{
+ await assert.rejects(()=>ensureHostedAudio({root,origin,fetchImpl:noFetch}),/origin/);assert.deepEqual(await files(root),[]);
+});
+await fixture([{...record('new-score'),origin:'https://preview.example.com'}],async root=>{
+ await assert.rejects(()=>ensureHostedAudio({root,origin,fetchImpl:async()=>response(Buffer.alloc(audio('new-score').length))}),/SHA-256/);
+ assert.deepEqual(await files(root),[],'preview sources must pass the same content validation');
+});
 const malformed=[
- manifest([]),{version:2,recordings:[]},{version:1,recordings:{}},{...manifest([]),extra:true},manifest([original,original]),
+ manifest([]),manifest([null]),{version:2,recordings:[]},{version:1,recordings:{}},{...manifest([]),extra:true},manifest([original,original]),
  ...['../outside','a/b','a%2fb','.hidden','Uppercase'].map(id=>manifest([{...original,id}])),
  ...[0,-1,1.5,limits.fileBytes+1].map(bytes=>manifest([{...original,bytes}])),
  ...['0'.repeat(63),'Z'.repeat(64)].map(sha256=>manifest([{...original,sha256}])),

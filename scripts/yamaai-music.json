@@ -13,5 +13,6 @@
   "processing": "Gain -6 dB; 1-second fade in and 1.5-second fade out; stereo 44.1 kHz MP3 at 128 kbps.",
   "measuredLUFS": -23.55,
   "measuredTruePeakDBTP": -10.79,
-  "publication": "Local master; not yet in the live hosted-audio preservation collection."
+  "publication": "Published as an immutable master on the reviewed Yamaai preview; listed as the new score source in hosted-audio.json.",
+  "origin": "https://endless-railroad-efcagru6w-nick-paolinos-projects.vercel.app"
 }

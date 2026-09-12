@@ -98,4 +98,7 @@ const moved=run('len(sub(cameraTarget,guestTrain.p))');
 assert.ok(moved<12,'the shot tracks the locomotive when it moves: '+moved.toFixed(2));
 assert.ok(run('cameraPos[0]')>40,'the camera travelled with it');
 run('leaveCinema(false);hobby.room="valley";hobby.scene=null;');
+run('function embeddedProject(key){return key==="coast"?{cinemaShot:"tail"}:null;}hobby.room="coast";hobby.scene={trains:[],height:()=>0};hobby.shot="wide";enterCinema();');
+assert.equal(run('hobby.shot'),'tail','guest cinema opens with its authored close-up');assert.equal(node('cinemaShot').value,'tail');
+run('leaveCinema(false)');assert.equal(run('hobby.shot'),'wide','a guest default does not replace the camera selection in other rooms');
 console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');

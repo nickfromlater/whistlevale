@@ -5,6 +5,7 @@ const YAMAAI_TABLE={top:FLOOR+11.4,halfWidth:37,halfDepth:23.1};
 const YAMAAI_PROJECT=registerEmbeddedProject('yamaai',{
  base:'vendor/mountain-railway-diorama/',create:createYamaaiMiniature,
  cinemaLabels:['Mountain drift','Station side','Whole miniature','Follow the local'],
+ cinemaShot:'tail',
  roomName:'Yamaai',title:'Mountain Railway Diorama',subtitle:'Yamaai 山あい',
  commit:'6e8b0fbb806e486d7819b6d297b92f4ecf3d258b',
  source:'https://github.com/iamtechartist/mountain-railway-diorama',licence:'MIT',
