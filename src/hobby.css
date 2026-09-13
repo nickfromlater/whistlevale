@@ -308,6 +308,11 @@
 .queens-controls-body{width:min(326px,calc(100vw - 54px));padding:0 12px 12px}
 .queens-controls-body .embed-actions{margin-top:7px}
 .queens-controls-body .embed-actions button{flex:1}
+.queens-seat-action button{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#dcc389;color:#203a30;border-color:#efdcaa}
+.queens-seat-action button:hover{background:#edd8a5}
+.queens-seat-action span{font:bold 15px Georgia,serif}
+.queens-seat-action small{max-width:125px;text-align:right;font:11px/1.4 Arial,sans-serif}
+@media(max-width:700px){.quiet-ui #cinemaControls #queensMatchPause{flex:0 0 44px;justify-content:center}.quiet-ui #queensMatchPause span{display:none}.quiet-ui #queensMatchPause svg{width:18px;height:18px}}
 .queens-point-note{font:italic 11px/1.4 Georgia,serif;color:#b7c1a6;margin:9px 0 0}
 @media(max-width:760px){
  .embed-loading{width:min(300px,calc(100vw - 24px));padding:13px 13px 12px}

@@ -11,7 +11,7 @@ const QUEENS_PROJECT=registerEmbeddedProject('queens',{
  table:QUEENS_TABLE,focus:queensWorld([0,7,0]),distance:132,phoneDistance:240,
  buildShapes:queensBuildShapes,buildStages:QUEENS_BUILD_STAGES,
  buildStageNames:['Court','Stadium','Roof','Park','Queens','Railway','Trains','Light'],
- cinemaLabels:['Arthur Ashe','At the station','A little Queens','Follow the 7'],cinemaShot:'drift'
+ cinemaLabels:['Stadium seat','At the station','A little Queens','Follow the 7'],cinemaShot:'drift'
 });
 const QUEENS_PALETTE={green:'#284c42',deep:'#20392f',sage:'#8f9f83',cream:'#ded2b4',oak:'#927047',walnut:'#634931',gold:'#b9a16a',dark:'#30362c',clay:'#aa785d'};
 function queensText(b,text,x,y,z,w,color=QUEENS_PALETTE.cream){hudsonText(b,text,x,y,z,w,color);}
@@ -234,7 +234,7 @@ function buildQueensRoom(scene,b){
  scene.routes=[];scene.trains=[];scene.height=()=>FLOOR;
  scene.spots=[
   {name:'The whole little world',detail:'Arthur Ashe, the Queens streets and two trains taking the long way home.',target:QUEENS_PROJECT.focus,distance:132,phoneDistance:260,pitch:.65,yaw:.28},
-  {name:'Arthur Ashe Stadium',detail:'Thousands of individually painted seats. Lift the roof from At the stadium to see the final point.',target:queensWorld([-25,7,-16]),distance:49,phoneDistance:75,pitch:.82,yaw:.18},
+  {name:'Arthur Ashe Stadium',detail:'Open Miniature controls and Take a seat to watch the players and scoreboard from the stands.',target:queensWorld([-25,7,-16]),distance:49,phoneDistance:75,pitch:.82,yaw:.18},
   {name:'Mets–Willets Point',detail:'Wait for the silver 7 at the green-roofed station.',target:queensWorld([-23,7,65]),distance:25,phoneDistance:39,pitch:.40,yaw:.70},
   {name:'The racquet collection',detail:'Wire-strung racquets, leather grips and miniature silverware.',target:[-71,7,-7],distance:46,phoneDistance:65,pitch:.13,yaw:-1.25},
   {name:'The maker’s bench',detail:'Cutting mat, brass tools, paint pots, paper stadium parts and a lamp still on.',target:[68,FLOOR+15,9],distance:37,phoneDistance:57,pitch:.46,yaw:1.4},

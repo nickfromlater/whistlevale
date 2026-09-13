@@ -4,6 +4,12 @@
 // miniature is imported only after actual room entry, never for the map.
 const QUEENS_MODEL={scale:.49,y:-8.5};
 const queensWorld=p=>[p[0]*QUEENS_MODEL.scale,p[1]*QUEENS_MODEL.scale+QUEENS_MODEL.y,p[2]*QUEENS_MODEL.scale];
+// Stadium-local coordinates include the district's original tabletop transform.
+const queensStadiumWorld=p=>queensWorld([-25+p[0]*.74,1+p[1]*.74,-16+p[2]*.74]);
+function queensSeatView(width,height){
+ const portrait=width<700&&height>width;
+ return {position:queensStadiumWorld(portrait?[0,11.2,30.6]:[0,6.95,25.9]),target:queensStadiumWorld(portrait?[0,7.8,-4]:[0,5.5,-4.3]),fov:portrait?1.43:.90,fixed:true,groundHandled:true};
+}
 const QUEENS_BUILD_STAGES=[
  'Painting the court and materials…','Building Arthur Ashe Stadium…',
  'Assembling the roof trusses…','Carving the landscape and creek…',
@@ -70,10 +76,10 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
  renderer.setClearColor(0,0);renderer.autoClear=false;renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.info.autoReset=false;
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),started=performance.now();
- let disposed=false,depth=null,model=null,tools=null;
+ let disposed=false,depth=null,model=null,tools=null,matchPause=null;
  const data=embeddedStage().dataset;
  const dispose=()=>{
-  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);tools?.remove();embeddedStage().querySelector('#embedCredit').classList.remove('queens-compact-controls');
+  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);tools?.remove();matchPause?.remove();embeddedStage().querySelector('#embedCredit').classList.remove('queens-compact-controls');
   queensDisposeScene(scene);if(depth)queensDisposeScene(depth.scene);
   renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();
   data.context=renderer.getContext().isContextLost()?'released':'release-requested';
@@ -100,6 +106,7 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
   }
   readTrainPose();
   function cinemaView(key){
+   if(key==='drift')return queensSeatView(innerWidth,innerHeight);
    if(key!=='tail')return null;
    readTrainPose();const portrait=innerWidth<700?1.12:1;
    // An outboard three-quarter angle stays in the clear perimeter aisle.
@@ -110,19 +117,28 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
   const heading=document.createElement('summary');heading.textContent='Miniature controls';
   const controls=document.createElement('div');controls.className='queens-controls-body';
   const actions=document.createElement('div');actions.className='embed-actions';
+  const seatAction=document.createElement('div');seatAction.className='embed-actions queens-seat-action';
+  const seat=document.createElement('button');seat.id='queensSeat';seat.innerHTML='<span>Take a seat</span><small>Watch from inside Arthur Ashe</small>';
+  seat.onclick=()=>{enterCinema();hobby.shot='drift';document.getElementById('cinemaShot').value='drift';resumeCinemaCamera();const view=queensSeatView(innerWidth,innerHeight);cameraPos=view.position.slice();cameraTarget=view.target.slice();if(embeddedActive?.paused)document.getElementById('embedPause').click();if(paused)togglePause();model.setWatching(true);tools.open=false;};seatAction.append(seat);
+  matchPause=document.createElement('button');matchPause.id='queensMatchPause';matchPause.hidden=true;
+  matchPause.onclick=()=>{const stopping=!(paused||embeddedActive?.paused);if(stopping){if(!embeddedActive.paused)document.getElementById('embedPause').click();}else{if(embeddedActive.paused)document.getElementById('embedPause').click();if(paused)togglePause();}wakeCinema();};
+  document.getElementById('cinemaControls').prepend(matchPause);
   const roof=document.createElement('button');roof.id='queensRoof';roof.textContent='Lift stadium roof';roof.setAttribute('aria-pressed','false');
   roof.onclick=()=>{const open=model.stats().roofTarget<.5;model.setRoof(open);roof.setAttribute('aria-pressed',String(open));roof.textContent=open?'Replace roof':'Lift stadium roof';};
   const play=document.createElement('button');play.id='queensPoint';play.textContent='Play final point';
   play.onclick=()=>{if(embeddedActive?.paused)document.getElementById('embedPause').click();if(paused)togglePause();model.play();setView('overview',false);Object.assign(orbit,{target:queensWorld([-25,3,-16]),distance:innerWidth<700?31:28,pitch:1.03,yaw:.10});};
   const note=document.createElement('p');note.className='queens-point-note';note.textContent='A miniature final, imagined for this little world.';
   const dock=embeddedStage().querySelector('#embedCredit');
-  actions.append(roof,play);controls.append(dock.querySelector('.embed-actions'),actions,note);tools.append(heading,controls);dock.classList.add('queens-compact-controls');dock.append(tools);
-  let last=0,width=0,height=0,lastNight=-1,lastShadow=-Infinity,reportAt=0,frames=0,cpu=0,wasPlaying=false;
+  actions.append(roof,play);controls.append(seatAction,dock.querySelector('.embed-actions'),actions,note);tools.append(heading,controls);dock.classList.add('queens-compact-controls');dock.append(tools);
+  let last=0,width=0,height=0,lastNight=-1,lastShadow=-Infinity,reportAt=0,frames=0,cpu=0,wasPlaying=false,wasSeated=false,lastPaused=null;
   return {dispose,views,cinemaView,train,readTrainPose,inspect:()=>model.stats(),frame(state){
    if(disposed)return;const start=performance.now();
    if(width!==state.width||height!==state.height){width=state.width;height=state.height;const ratio=Math.min(devicePixelRatio||1,width<700?1.25:1.5,Math.sqrt(2100000/(width*height)));renderer.setPixelRatio(ratio);renderer.setSize(width,height,false);data.pixels=String(canvas.width*canvas.height);}
    queensCamera(THREE,camera,state,toLocal,QUEENS_MODEL.scale);depth.update(state.eye);
    const dt=last?Math.min((state.now-last)/1000,.065):0;last=state.now;
+   const seated=hobby.cinema&&hobby.shot==='drift';
+   if(seated!==wasSeated){wasSeated=seated;model.setWatching(seated);matchPause.hidden=!seated;}
+   if(state.paused!==lastPaused){lastPaused=state.paused;const label=state.paused?'Resume match':'Pause match';matchPause.innerHTML=icon(state.paused?'play':'pause')+'<span>'+label+'</span>';matchPause.setAttribute('aria-label',label);matchPause.setAttribute('aria-pressed',String(state.paused));}
    model.tick(dt,state.night,state.paused);readTrainPose();
    if(Math.abs(state.night-lastNight)>.04&&state.now-lastShadow>180){renderer.shadowMap.needsUpdate=true;lastNight=state.night;lastShadow=state.now;}
    const status=model.stats();if(status.playing!==wasPlaying){wasPlaying=status.playing;play.disabled=wasPlaying;play.textContent=wasPlaying?'The final point…':status.matchWon?'Replay final point':'Play final point';}

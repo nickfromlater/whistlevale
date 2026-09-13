@@ -18,6 +18,14 @@ crisp painted lines, net collars and winders, spare wire-strung racquets,
 stitched bags, bottles, folded towels, wheeled ball baskets, a scoring console,
 broadcast cameras and small courtside planters.
 
+The **Stadium seat** camera sits inside the bowl, looking across both players
+to the far scoreboard. Narrow screens use a higher club-level seat and a wider
+lens so both baselines remain visible. The two painted figures have caps,
+collars, wristbands, articulated legs, laced shoes and wire-strung racquets.
+Their preparation, contact and follow-through follow the miniature ball's
+choreography. The larger physical scoreboards identify the imagined exhibition
+and count successive rallies.
+
 The native room is a tennis pavilion with green walls, walnut paneling,
 parquet, brass picture lights, wire-strung racquets, a glazed trophy cabinet,
 court drawings, banker lamp, cutting mat, paint pots, rolled plans, ferns,
@@ -31,6 +39,11 @@ the live map while the guest renderer is absent.
   no visible attribution card for this room; the source and licence records
   remain attached to the work. The wall inscription names the model and place.
 - **Explore the miniature** frames the complete tabletop.
+- **Take a seat** enters Stadium seat, replaces a lifted roof and starts a
+  repeating exhibition rally. **Pause match** freezes the players, ball and
+  trains; **Resume match** continues. Changing to another cinema view or leaving
+  cinema ends the exhibition. The normal Cinema entry respects reduced-motion
+  pause; Take a seat is an explicit request to start watching.
 - **Pause train** stops both railways, traffic and model animation. Reduced
   motion starts paused. Global pause remains effective too.
 - **Lift stadium roof** and **Play final point** are in the same tray. The imagined point
@@ -38,8 +51,10 @@ the live map while the guest renderer is absent.
   and updates the miniature scoreboard. Scores are not live.
 - **Views → Places** includes the stadium, station, racquet collection,
   maker's bench and pavilion inscription.
-- **Cinema** offers Arthur Ashe, At the station, A little Queens and Follow
+- **Cinema** offers Stadium seat, At the station, A little Queens and Follow
   the 7. House drag, pinch, keyboard framing and manual/automatic controls remain.
+  Manual stadium framing keeps the court as its anchor and preserves the seated
+  lens; it does not start following the passing train.
 - House atmosphere controls govern day/night lighting. The pavilion is an
   indoor model; outdoor rain is not added to its tabletop. House music and mute
   remain in control; the standalone's separate audio engine is not loaded.
@@ -74,8 +89,11 @@ Run `npm test`, `npm run test:geometry:full`,
 `npm run check:contributions -- --json` and `npm run test:queens`.
 The focused check covers room geometry and footprint, attribution atlas slots,
 camera/depth equivalence, opaque facade and roof continuity from both sides,
-original model counts, closed rail curves, station
-stopping, pause, roof and match choreography, and pinned source identity.
+51 spectator framing/sightline samples at desktop, 390px and 320px, seven actual
+racquet/ball contacts, repeating rallies and frozen player poses, original model
+counts, closed rail curves, station stopping, pause, roof and match choreography,
+and pinned source identity. Guest geometry is 41.08 MiB under its 55 MiB budget;
+the native room remains 192,087 vertices including all walls.
 
 Browser screenshots, export files and measured reports belong in ignored
 `evidence/queens-pavilion/`. A resized Chromium viewport is not a physical

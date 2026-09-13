@@ -15,7 +15,7 @@ by the room. Its SHA-256 is:
 ```
 
 `model.js` is the explicit host adaptation. The builders, original deterministic
-seed, textures, seat counts, neighbourhood, routes, stock and point choreography
+seed, textures, seat counts, neighbourhood, routes, stock and ball trajectory
 are retained. Presentation changes:
 
 - An asynchronous factory yields between eight actual construction stages.
@@ -43,6 +43,13 @@ are retained. Presentation changes:
 - At the owner's request, Queens omits its visible attribution card and
   authorship text on the wall inscription. Controls fold into one compact tray.
   The original source and licence records are retained.
+- Added a seated stadium camera through the house cinema API, with a wider
+  club-level view on portrait screens and a court anchor for manual framing.
+- Enlarged both physical scoreboards and their type. Added more detailed
+  articulated players, caps, wristbands, shoes and racquets; their footwork and
+  swings now meet each ball contact. A repeating exhibition counts rallies on
+  the board and runs only while the visitor watches from the Stadium seat view.
+  Pause, scheduling and audio remain owned by the house.
 
 `three.module.min.js` is the unchanged ES-module build of **Three.js 0.160.1**,
 from `https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.min.js`.

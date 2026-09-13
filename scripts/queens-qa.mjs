@@ -42,6 +42,23 @@ let shellSamples=0,roofSamples=0;
 for(const y of[1.7,7.3,12.8,19.8])for(let i=0;i<192;i++)for(const inside of[false,true]){const a=i*Math.PI*2/192,x=Math.sin(a),z=Math.cos(a),r=inside?0:65,sign=inside?1:-1;assert.ok(probe(shell,x*r,y,z*r,x*sign,0,z*sign).length,'opaque shell closes every facade bay from inside and outside');shellSamples++;}
 for(let i=0;i<=24;i++)for(const side of[-1,1]){assert.ok(probe(roofMeshes,-24+i*2,40,side*38,0,-1,0).length,'continuous end canopy');assert.ok(probe(roofMeshes,side*33,40,-28+i*56/24,0,-1,0).length,'continuous side canopy');roofSamples+=2;}
 assert.equal(probe(roofMeshes,0,40,0,0,-1,0).length,0,'the roof still has its intentional centre opening');
+// Test authored spectator cameras against the actual transformed scene, with
+// the roof in place. Both baselines and the complete far scoreboard fit.
+const opaque=[];scene.traverse(o=>{if(o.isMesh&&o.material&&!o.material.transparent)opaque.push(o);});
+let seatSamples=0;
+const houseTransform=new THREE.Matrix4().makeScale(.49,.49,.49).setPosition(0,-8.5,0),seatPoint=new THREE.Vector3();
+for(const [width,height]of[[1180,850],[390,844],[320,844]]){
+ const view=f.run(`queensSeatView(${width},${height})`),camera=new THREE.PerspectiveCamera(view.fov*180/Math.PI,width/height,.1,500);camera.position.fromArray(view.position);camera.lookAt(...view.target);camera.updateMatrixWorld(true);
+ for(const x of[-5.485,5.485])for(const z of[-11.885,11.885]){seatPoint.set(x,1.35,z).applyMatrix4(modelTransform).applyMatrix4(houseTransform).project(camera);assert.ok(Math.abs(seatPoint.x)<.9&&seatPoint.y>-.84&&seatPoint.y<.8,'both baselines fit above the controls at '+width);seatSamples++;}
+ for(const x of[-10.4,10.4])for(const y of[15.335,23.865]){seatPoint.set(x,y,-30.74).applyMatrix4(modelTransform).applyMatrix4(houseTransform).project(camera);assert.ok(Math.abs(seatPoint.x)<.8&&seatPoint.y>-.7&&seatPoint.y<.8,'the whole scoreboard fits below the header at '+width);seatSamples++;}
+ for(const p of[[-4.7,1.36,13.3],[4.7,1.36,13.3],[-5.3,3.2,-13.5],[5.3,3.2,-13.5]]){seatPoint.fromArray(p).applyMatrix4(modelTransform).applyMatrix4(houseTransform).project(camera);assert.ok(Math.abs(seatPoint.x)<.9&&seatPoint.y>-.84&&seatPoint.y<.8,'both players stay clear of cinema controls at '+width);seatSamples++;}
+ origin.fromArray(view.position).applyMatrix4(houseTransform.clone().invert());
+ for(const p of[[0,1.4,-11.885],[0,1.4,11.885],[-4.115,1.4,-6.4],[4.115,1.4,6.4],[0,19.2,-30.74]]){
+  seatPoint.fromArray(p).applyMatrix4(modelTransform);const distance=seatPoint.distanceTo(origin);ray.set(origin,direction.copy(seatPoint).sub(origin).normalize());ray.far=distance+.02;
+  const hit=ray.intersectObjects(opaque,false)[0];assert.ok(!hit||hit.distance>=distance-.05,'clear spectator sightline at '+width+' to '+p+'; blocked by '+hit?.object.material.name+' at '+hit?.distance);seatSamples++;
+ }
+}
+ray.far=Infinity;
 const arrays=new Set();let instances=0,meshes=0;
 scene.traverse(o=>{if(!o.geometry)return;meshes++;for(const attr of Object.values(o.geometry.attributes)){arrays.add(attr.array);assert.ok(attr.array.every(Number.isFinite),'finite vertex attributes');}if(o.geometry.index)arrays.add(o.geometry.index.array);if(o.instanceMatrix){arrays.add(o.instanceMatrix.array);instances+=o.count;}if(o.instanceColor)arrays.add(o.instanceColor.array);});
 const bytes=[...arrays].reduce((n,a)=>n+a.byteLength,0);console.log('Model geometry MiB:',bytes/1024/1024);assert.ok(bytes<55*1024*1024,'model GPU geometry stays below 55 MiB');
@@ -53,10 +70,20 @@ let before=model.trains.map(t=>t.u);model.tick(1,0,true);assert.deepEqual(model.
 model.seven.u=model.stationStop-.00001;model.seven.hold=0;model.tick(.1,0,false);assert.equal(model.seven.u,model.stationStop);assert.equal(model.seven.hold,6,'7 stops at its platform');
 model.setRoof(true);for(let i=0;i<80;i++)model.tick(.05,1,true);assert.ok(model.stats().roofLift>.99);assert.equal(model.roof.visible,false);assert.equal(model.stats().night,1);
 model.play();for(let i=0;i<230;i++)model.tick(.05,1,false);assert.equal(model.stats().matchWon,true,'point reaches championship state');for(let i=0;i<140;i++)model.tick(.05,1,false);assert.equal(model.stats().playing,false,'replay becomes available');
+// Watch mode has real, synchronized racquet contacts and repeating rallies.
+const ball=scene.getObjectByName('Queens match ball'),rackets=['01','02'].map(n=>scene.getObjectByName('Queens racket '+n));
+model.setWatching(true);assert.equal(model.stats().roofTarget,0,'watching replaces the roof around the spectators');
+let contactTime=0;for(const [t,player]of[[.93,0],[2.15,1],[3.5,0],[4.88,1],[6.27,0],[7.72,1],[9.15,0]]){
+ model.tick(t-contactTime,0,false);contactTime=t;scene.updateMatrixWorld(true);const face=rackets[player].localToWorld(new THREE.Vector3(0,0,.49)),position=ball.getWorldPosition(new THREE.Vector3());assert.ok(face.distanceTo(position)/.74<.13,'the racquet meets the ball at '+t);
+}
+const pausedPose=()=>JSON.stringify({time:model.stats().matchTime,ball:ball.position.toArray(),players:['01','02'].map(n=>{const p=scene.getObjectByName('Queens player '+n);return[p.position.toArray(),rackets[n==='01'?0:1].parent.quaternion.toArray()];})});
+const frozen=pausedPose();model.tick(5,0,true);assert.equal(pausedPose(),frozen,'pause freezes the ball and both player poses');
+for(let i=0;i<650;i++)model.tick(.05,0,false);assert.ok(model.stats().rally>=4&&model.stats().watching&&model.stats().playing,'watching continues into successive rallies');assert.equal(model.stats().matchWon,false,'exhibition rallies do not repeat championship celebrations');
+model.setWatching(false);assert.equal(model.stats().playing,false,'leaving the seat stops watch mode');assert.equal(model.stats().rally,0);model.play();assert.equal(model.stats().watching,false);assert.equal(model.stats().roofTarget,1,'the standalone final point still lifts the roof');
 const sha=s=>createHash('sha256').update(s).digest('hex');
 assert.equal(sha(await read('vendor/queens-miniature/original-model.js')),'9068666955859b62f98eae97afbf108830d24dfa3e0597ef524c78f91f2c478d');
 assert.equal(sha(await read('vendor/queens-miniature/three.module.min.js')),'3e690ac7d180b0aadf0891bea39eec643e29e2d3e75c99b18689518665f69ba6');
 const adapter=await read('src/guest-queens.js'),modelSource=await read('vendor/queens-miniature/model.js');
 assert.ok(!adapter.includes('requestAnimationFrame(')&&!modelSource.includes('requestAnimationFrame('));assert.ok(!modelSource.includes('setTimeout('));assert.match(adapter,/renderer\.forceContextLoss\(\)/);assert.match(adapter,/signal\.addEventListener\('abort',dispose/);
 f.context.qscene=scene;f.run('queensDisposeScene(qscene)');assert.equal(scene.children.length,0);
-console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,railSamples:2400,shellSamples,roofSamples},null,2));
+console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,seatSamples,racquetContacts:7,railSamples:2400,shellSamples,roofSamples},null,2));

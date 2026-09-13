@@ -183,12 +183,14 @@ let cinemaIdleTimer=0;
 function wakeCinema(){if(!hobby.cinema)return;document.body.classList.remove('cinema-idle');clearTimeout(cinemaIdleTimer);cinemaIdleTimer=setTimeout(()=>{if(hobby.cinema&&$('soundPanel').hidden&&!document.querySelector('#cinemaControls :focus-visible'))document.body.classList.add('cinema-idle');},5500);}
 
 // Cinema has its own gesture state: adjusting the frame must not restore the
-// pre-cinema throttle, pause state or room camera. The train remains the anchor.
-const cinemaOrbit={manual:null,pointers:new Map(),origin:null};
+// pre-cinema throttle, pause state or room camera. Fixed guest views keep their
+// own anchor and lens when a visitor takes over, rather than following a train.
+const cinemaOrbit={manual:null,preset:null,pointers:new Map(),origin:null};
 function beginCinemaOrbit(){
  if(cinemaOrbit.manual)return cinemaOrbit.manual;
  const delta=sub(cameraPos,cameraTarget),distance=Math.max(.1,len(delta));
- cinemaOrbit.manual={offset:sub(cameraTarget,hobbyTrainInfo().p),distance,yaw:Math.atan2(delta[0],delta[2]),pitch:Math.asin(clamp(delta[1]/distance,-1,1))};
+ const preset=cinemaOrbit.preset,anchor=preset?.fixed?cameraTarget.slice():null;
+ cinemaOrbit.manual={anchor,offset:anchor?[0,0,0]:sub(cameraTarget,hobbyTrainInfo().p),fov:preset?.fov,groundHandled:!!preset?.groundHandled,distance,yaw:Math.atan2(delta[0],delta[2]),pitch:Math.asin(clamp(delta[1]/distance,-1,1))};
  $('cinemaShot').hidden=true;$('cinemaCameraLabel').hidden=true;$('cinemaAuto').hidden=false;wakeCinema();
  window.railwayAnalytics?.control('camera_manual');return cinemaOrbit.manual;
 }
@@ -199,7 +201,7 @@ function clearCinemaPointers(){
 }
 function resumeCinemaCamera(){
  if(cinemaOrbit.manual)window.railwayAnalytics?.control('camera_auto');
- clearCinemaPointers();cinemaOrbit.manual=null;
+ clearCinemaPointers();cinemaOrbit.manual=null;cinemaOrbit.preset=null;
  const restoreFocus=document.activeElement===$('cinemaAuto');
  $('cinemaAuto').hidden=true;$('cinemaShot').hidden=false;$('cinemaCameraLabel').hidden=false;
  if(restoreFocus)$('cinemaShot').focus();wakeCinema();
@@ -270,23 +272,25 @@ function cinemaCamera(dt){
  for(const key of['side','back','height'])hobby.shotBlend[key]=mix(hobby.shotBlend[key],q[key],blend);
  hobby.tunnelBlend=mix(hobby.tunnelBlend,hobbyTrainInTunnel()?1:0,1-Math.exp(-dt*.4));
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
- const manual=cinemaOrbit.manual;let target=manual?add(p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
+ const manual=cinemaOrbit.manual;let target=manual?add(manual.anchor||p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
  const guestShot=!manual&&typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed);
+ if(!manual)cinemaOrbit.preset=guestShot||null;
  if(guestShot){target=guestShot.target;desired=guestShot.position;}
  else if(!hobbyHasTrain()){
   const angle=.35+(reduceMotion?0:Math.sin(elapsed*.025)*.13),distance=(hobby.shot==='wide'?94:hobby.shot==='side'?61:hobby.shot==='tail'?120:73)*portrait;
   desired=add(p,[Math.sin(angle)*distance,.62*distance,Math.cos(angle)*distance]);
  }
  if(manual){const {yaw,pitch,distance}=manual;desired=add(target,[Math.sin(yaw)*Math.cos(pitch)*distance,Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance]);}
- if(!guestShot?.groundHandled){
+ if(!(manual||guestShot)?.groundHandled){
   const ground=(x,z)=>hobby.room==='valley'?naturalH(x,z):hobby.scene.height(x,z);
   desired[1]=Math.max(desired[1],ground(desired[0],desired[2])+3.3);
   // Keep the line of sight above ridges without twitching at each terrain sample.
   for(let i=1;i<9;i++){const u=i/10,s=lerpV(target,desired,u),h=ground(s[0],s[2]);if(h>s[1]&&u>.20)desired[1]=Math.max(desired[1],target[1]+(h+1-target[1])/u);}
  }
  cameraPos=lerpV(cameraPos,desired,1-Math.exp(-dt*(manual?10:1.45)));cameraTarget=lerpV(cameraTarget,target,1-Math.exp(-dt*(manual?10:2.5)));
- cameraNear=.10;cameraProjection=perspective(innerWidth<700?.78:.64,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
+ const fov=(manual||guestShot)?.fov;
+ cameraNear=.10;cameraProjection=perspective(Number.isFinite(fov)?clamp(fov,.3,1.6):innerWidth<700?.78:.64,screenW/screenH,cameraNear,500);VP=mm(cameraProjection,lookAt(cameraPos,cameraTarget));
 }
 
 updateCamera=function(dt){

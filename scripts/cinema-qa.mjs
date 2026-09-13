@@ -104,4 +104,14 @@ run('leaveCinema(false)');assert.equal(run('hobby.shot'),'wide','a guest default
 run('embeddedCinemaView=()=>({target:[8,1,12],position:[20,2,62],groundHandled:true});enterCinema();cinemaCamera(20);');
 assert.ok(Math.abs(run('cameraPos[1]')-2)<.001,'the house floor must not lift a guest camera out of its tunnel clearance');
 run('leaveCinema(false)');
+// A seated guest view keeps its authored wide phone lens and fixed court
+// anchor when a visitor drags, even while the model's train keeps moving.
+run(`innerWidth=320;screenW=320;screenH=844;embeddedCinemaView=()=>({target:[8,1,12],position:[8,2,23],fov:1.43,fixed:true,groundHandled:true});enterCinema();cinemaCamera(20);`);
+const seatLens=run('JSON.stringify(cameraProjection)');fire('wheel',{deltaY:-30});run('cinemaCamera(2)');
+const seatTarget=run('JSON.stringify(cameraTarget)');run('guestTrain.p=[-90,6,60];cinemaCamera(2)');
+assert.equal(run('JSON.stringify(cameraTarget)'),seatTarget,'manual seat framing does not ride away with the train');
+assert.equal(run('JSON.stringify(cameraProjection)'),seatLens,'taking over a seat view preserves its phone lens');
+assert.ok(run('cameraPos[1]')<3.3,'manual seating preserves guest floor clearance');
+run('leaveCinema(false);embeddedCinemaView=()=>null;enterCinema();cinemaCamera(20);');
+assert.notEqual(run('JSON.stringify(cameraProjection)'),seatLens,'a later railway view restores the house lens');run('leaveCinema(false)');
 console.log('Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.');

@@ -171,9 +171,15 @@ for(let i=0;i<9;i++)for(let x of [-23.5,23.5]){let z=lerp(-24,24,i/8);box(.56,.4
 const roofWord=label('ARTHUR ASHE',19,2.1,{bg:'#d8d6c3',fg:'#365251',size:85},roof);roofWord.rotation.x=-PI/2;roofWord.position.set(0,30.77,-36.7);
 // Display boards: imagined match, never represented as a live feed.
 let scoreCanvas,scoreTexture;scoreTexture=tex(1024,420,(c,w,h)=>{scoreCanvas=c.canvas;});
-function drawScore(state='point'){const c=scoreCanvas.getContext('2d'),w=1024,h=420;c.fillStyle='#102b36';c.fillRect(0,0,w,h);c.fillStyle='#deb96d';c.fillRect(0,0,w,7);c.font='bold 34px Arial';c.fillText('US OPEN',44,65);c.font='23px Arial';c.fillStyle='#a7c7c5';c.textAlign='right';c.fillText('ARTHUR ASHE STADIUM',980,65);c.textAlign='left';c.font='23px Arial';c.fillStyle='#c3cab9';c.fillText('THE FINAL',44,116);c.fillStyle='#405c61';c.fillRect(44,142,936,2);c.font='bold 45px Arial';c.fillStyle='#f2ecd9';c.fillText('PLAYER 01',44,216);c.fillText('PLAYER 02',44,292);c.textAlign='right';c.fillText(state==='win'?'6    4    7':'6    4    6',808,216);c.fillText('4    6    5',808,292);c.fillStyle='#eed188';c.fillText(state==='win'?'GAME':'40',980,216);c.fillStyle='#e0e2d9';c.fillText(state==='win'?'':'30',980,292);c.fillStyle='#183e47';c.fillRect(0,329,w,91);c.textAlign='center';c.fillStyle='#ecd594';c.font='bold 28px Arial';c.fillText(state==='win'?'GAME. SET. CHAMPIONSHIP.':state==='rally'?'CHAMPIONSHIP POINT  •  IN PLAY':'CHAMPIONSHIP POINT',w/2,382);c.textAlign='left';if(scoreTexture)scoreTexture.needsUpdate=true;}
+function drawScore(state='point',rally=0){
+const c=scoreCanvas.getContext('2d'),w=1024;c.textAlign='left';c.fillStyle='#102b36';c.fillRect(0,0,w,420);c.fillStyle='#deb96d';c.fillRect(0,0,w,7);c.font='bold 46px Arial';c.fillText('US OPEN',34,68);c.font='28px Arial';c.fillStyle='#c4dbd0';c.textAlign='right';c.fillText('ARTHUR ASHE',990,65);
+c.font='24px Arial';c.fillStyle='#a7bdb6';c.textAlign='left';c.fillText(rally?'EXHIBITION':'THE FINAL',34,118);c.textAlign='center';for(const [x,text]of[[590,'1'],[674,'2'],[758,'3'],[918,'PTS']])c.fillText(text,x,118);c.fillStyle='#395861';c.fillRect(34,137,956,2);c.fillRect(835,146,2,172);
+for(let i=0;i<2;i++){const y=211+i*88;c.fillStyle=i?'#8ad7cf':'#f3ac72';c.fillRect(34,y-39,7,47);c.fillStyle='#f9f2dc';c.textAlign='left';c.font='bold 62px Arial';c.fillText('PLAYER 0'+(i+1),57,y);c.textAlign='center';for(const [j,n]of(i?[4,6,5]:[6,4,state==='win'?7:6]).entries())c.fillText(String(n),590+j*84,y);c.fillStyle=i?'#edf4e2':'#ffe098';c.fillText(state==='win'?(i?'':'W'):i?'30':'40',918,y);}
+c.fillStyle='#234952';c.fillRect(0,330,w,90);c.textAlign='center';c.fillStyle='#f5df9e';c.font='bold 33px Arial';c.fillText(rally?'RALLY '+String(rally).padStart(2,'0')+'  ·  '+(state==='ready'?'NEXT SERVE':'IN PLAY'):state==='win'?'GAME. SET. CHAMPIONSHIP.':'CHAMPIONSHIP POINT',w/2,387);c.textAlign='left';if(scoreTexture)scoreTexture.needsUpdate=true;
+}
 drawScore();const scoreMat=mat('#ffffff',{map:scoreTexture,emissive:'#ffffff',emissiveMap:scoreTexture,emissiveIntensity:.65,roughness:.45});glowMaterials.push([scoreMat,.65]);
-for(let sign of [-1,1]){box(12.8,5.7,.45,0,20.1,sign*31.0,M.dark,stadium,.12);let s=mesh(new T.PlaneGeometry(12.1,4.96),scoreMat,0,20.2,sign*30.74,stadium);if(sign>0)s.rotation.y=PI;rod([-5,21.8,sign*31],[-5,25.1,sign*31],.11,M.steel,stadium);rod([5,21.8,sign*31],[5,25.1,sign*31],.11,M.steel,stadium);}
+scoreMat.name='Queens scoreboard';
+for(let sign of [-1,1]){box(21.5,9.0,.45,0,19.6,sign*31.0,M.dark,stadium,.12);let s=mesh(new T.PlaneGeometry(20.8,8.53),scoreMat,0,19.6,sign*30.74,stadium);if(sign>0)s.rotation.y=PI;for(const x of[-7.7,7.7])rod([x,24.0,sign*31],[x,25.1,sign*31],.11,M.steel,stadium);}
 // The landscaped base: textured flock, broadleaf trees and topiary.
 function garden(x,z,w,d){box(w,.27,d,x,1.08,z,M.cream,world,.18);box(w-.36,.15,d-.36,x,1.29,z,M.soil,world,.15);for(let i=0;i<w*d*.75;i++){instance('flock',headGeo,personMat,[x+(rand()-.5)*(w-.4),1.4+rand()*.14,z+(rand()-.5)*(d-.4)],[.23+rand()*.24,.12+rand()*.12,.23+rand()*.24],[0,rand()*TAU,0],pick(['#6c7d4f','#7c8951','#4f6c4b','#7d855a']));}}
 function tree(x,z,s=1){const y=1.45;rod([x,y,z],[x+.15*s,y+3.8*s,z],.13*s,M.trunk,world,7);for(let a=0;a<4;a++){let angle=a*1.8;rod([x,y+2*s,z],[x+Math.cos(angle)*.8*s,y+4*s,z+Math.sin(angle)*.8*s],.075*s,M.trunk,world,5)}for(let i=0;i<23;i++){const a=rand()*TAU,r=Math.sqrt(rand())*1.25*s;const xx=x+Math.cos(a)*r,zz=z+Math.sin(a)*r,yy=y+3.5*s+rand()*1.85*s;instance('tree-flock',sphereGeo,personMat,[xx,yy,zz],[(.65+rand()*.48)*s,(.65+rand()*.45)*s,(.65+rand()*.48)*s],[rand(),rand(),rand()],pick(['#7f9261','#567552','#66865b','#8e9c65','#536e52','#99a36e']));}for(let i=0;i<28;i++){const a=rand()*TAU,r=rand()*1.7*s;instance('tree-fine',headGeo,personMat,[x+Math.cos(a)*r,y+4*s+rand()*1.3*s,z+Math.sin(a)*r],[.27*s,.3*s,.28*s],[rand(),rand(),rand()],pick(['#7f925e','#a2a96d','#527451']));}}
@@ -218,12 +224,21 @@ const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Flo
 consolidateWires(world,roof);consolidateWires(roof);
 
 // Hand-painted articulated players, with wire-strung racquets.
-function player(color,x,z,dir){const g=new T.Group();g.position.set(x,1.36,z);g.rotation.y=dir;stadium.add(g);const jersey=mat(color),skin=mat('#d8a47d');const torso=mesh(new T.CylinderGeometry(.21,.18,.56,8),jersey,0,.91,0,g);mesh(new T.SphereGeometry(.15,8,6),skin,0,1.39,0,g);mesh(new T.SphereGeometry(.158,8,6),M.navy,0,1.47,-.03,g).scale.set(1,.4,1);box(.30,.03,.15,0,1.48,.12,M.navy,g);box(.42,.24,.27,0,.55,0,M.navy,g,.04);
-const legs=[];for(let side of [-1,1]){const l=new T.Group();l.position.set(side*.12,.53,0);g.add(l);rod([0,0,0],[side*.025,-.34,.02],.07,skin,l);box(.16,.11,.3,side*.03,-.43,.10,M.white,l,.035);legs.push(l)}
-const arm=new T.Group();arm.position.set(-.2,1.14,0);g.add(arm);rod([0,0,0],[-.18,-.18,.20],.065,skin,arm);rod([-.18,-.18,.20],[-.26,-.09,.49],.055,skin,arm);const racket=new T.Group();racket.position.set(-.26,-.09,.57);racket.rotation.x=.65;arm.add(racket);rod([0,0,0],[0,0,.25],.026,M.navy,racket);let r=mesh(new T.TorusGeometry(.27,.025,6,24),M.white,0,0,.51,racket);r.rotation.x=PI/2;r.scale.y=1.25;for(let i=-2;i<=2;i++){let n=i*.072,k=Math.sqrt(.26*.26-n*n);wire([[n,0,.51-k],[n,0,.51+k]],'#e6e5c7',.8,racket);wire([[-k,0,.51+n],[k,0,.51+n]],'#e6e5c7',.8,racket)}
-const left=new T.Group();left.position.set(.22,1.12,0);g.add(left);rod([0,0,0],[.17,-.35,.19],.06,skin,left);return {g,arm,left,legs,torso,baseZ:z};}
-const p1=player('#d9a06d',-1.8,12.9,PI),p2=player('#a4c8c0',2.3,-12.9,0);
-const ball=mesh(new T.SphereGeometry(.13,10,8),mat('#e2e968',{emissive:'#d2e02f',emissiveIntensity:.35}),-1.8,1.6,12.4,stadium);const ballShadow=mesh(new T.CircleGeometry(.22,16),new T.MeshBasicMaterial({color:'#152f45',transparent:true,opacity:.28,depthWrite:false}),-1.8,1.347,12.4,stadium);ballShadow.rotation.x=-PI/2;ballShadow.castShadow=false;const trails=[];for(let i=0;i<7;i++){const m=mesh(new T.SphereGeometry(.10-i*.009,6,4),new T.MeshBasicMaterial({color:'#e4e78c',transparent:true,opacity:.28*(1-i/7),depthWrite:false}),0,0,0,stadium);m.visible=false;trails.push(m)}const trailPositions=[];
+function player(number,color,skinColor,x,z,dir){
+const g=new T.Group();g.name='Queens player '+number;g.position.set(x,1.36,z);g.rotation.y=dir;stadium.add(g);const jersey=mat(color),skin=mat(skinColor);
+const torso=mesh(new T.CylinderGeometry(.235,.19,.59,10),jersey,0,1.035,0,g);mesh(new T.CylinderGeometry(.083,.10,.12,8),skin,0,1.37,0,g);mesh(new T.SphereGeometry(.165,12,8),skin,0,1.54,0,g).scale.y=1.09;mesh(new T.SphereGeometry(.049,8,6),skin,0,1.53,.155,g).scale.set(.62,.68,1);
+for(const side of[-1,1]){mesh(new T.SphereGeometry(.047,8,6),skin,side*.153,1.53,0,g).scale.z=.6;mesh(new T.SphereGeometry(.018,6,4),M.black,side*.067,1.579,.145,g);rod([side*.025,1.32,.15],[side*.14,1.27,.16],.023,M.white,g);box(.021,.39,.027,side*.16,1.035,.158,M.white,g);}
+mesh(new T.SphereGeometry(.174,12,8),M.navy,0,1.655,-.015,g).scale.set(1,.43,1);box(.31,.033,.21,0,1.66,.135,M.navy,g,.012);box(.435,.27,.28,0,.68,0,M.navy,g,.035);
+const legs=[];for(const side of[-1,1]){const l=new T.Group();l.position.set(side*.125,.63,0);g.add(l);rod([0,0,0],[side*.035,-.24,.04],.079,skin,l);mesh(new T.SphereGeometry(.080,8,6),skin,side*.035,-.24,.04,l);rod([side*.035,-.24,.04],[side*.045,-.45,.015],.065,skin,l);rod([side*.045,-.4,.018],[side*.045,-.50,.03],.071,M.white,l);box(.19,.115,.33,side*.045,-.548,.10,M.white,l,.025);box(.18,.028,.31,side*.045,-.595,.11,jersey,l);for(let i=0;i<3;i++)rod([side*.045-.06,-.488,.08+i*.045],[side*.045+.06,-.488,.08+i*.045],.009,M.navy,l);legs.push(l);}
+const arm=new T.Group();arm.position.set(-.23,1.25,0);g.add(arm);rod([0,0,0],[-.13,-.12,.12],.10,jersey,arm);rod([-.13,-.12,.12],[-.22,-.20,.22],.071,skin,arm);rod([-.22,-.20,.22],[-.25,-.05,.41],.057,skin,arm);rod([-.247,-.085,.363],[-.25,-.05,.413],.068,M.white,arm);mesh(new T.SphereGeometry(.066,8,6),skin,-.25,-.05,.44,arm);
+const racket=new T.Group();racket.name='Queens racket '+number;racket.position.set(-.25,-.05,.43);racket.rotation.x=.22;arm.add(racket);rod([0,0,-.06],[0,0,.17],.032,M.navy,racket);for(let i=0;i<5;i++)rod([-.028,0,i*.035],[.028,0,.016+i*.035],.009,M.white,racket);for(const side of[-1,1])rod([0,0,.16],[side*.135,0,.28],.023,jersey,racket);
+for(const [radius,tube,material]of[[.275,.028,M.white],[.247,.009,jersey]]){const hoop=mesh(new T.TorusGeometry(radius,tube,6,36),material,0,0,.49,racket);hoop.rotation.x=PI/2;hoop.scale.y=1.25;}
+for(let i=-3;i<=3;i++){const n=i*.058,k=Math.sqrt(.246*.246-n*n);wire([[n,0,.49-k*1.25],[n,0,.49+k*1.25]],'#f7f2d7',1,racket);wire([[-k,0,.49+n*1.25],[k,0,.49+n*1.25]],'#f7f2d7',1,racket);}
+const left=new T.Group();left.position.set(.23,1.25,0);g.add(left);rod([0,0,0],[.1,-.15,.10],.10,jersey,left);rod([.1,-.15,.10],[.17,-.33,.20],.066,skin,left);rod([.17,-.33,.20],[.12,-.40,.34],.056,skin,left);rod([.13,-.38,.30],[.12,-.40,.34],.065,M.white,left);mesh(new T.SphereGeometry(.064,8,6),skin,.11,-.41,.38,left);
+racket.updateMatrix();const reach=new T.Vector3(0,0,.49).applyMatrix4(racket.matrix);return {g,arm,left,legs,torso,racket,reach,baseX:x,baseZ:z,sign:z>0?1:-1};
+}
+const p1=player('01','#eaa065','#d6a07d',-2.55,13.20,PI),p2=player('02','#77c7c3','#9d7157',-2.35,-13.15,0);
+const ball=mesh(new T.SphereGeometry(.13,10,8),mat('#e2e968',{emissive:'#d2e02f',emissiveIntensity:.35}),-1.8,1.6,12.4,stadium);ball.name='Queens match ball';const ballShadow=mesh(new T.CircleGeometry(.22,16),new T.MeshBasicMaterial({color:'#152f45',transparent:true,opacity:.28,depthWrite:false}),-1.8,1.347,12.4,stadium);ballShadow.rotation.x=-PI/2;ballShadow.castShadow=false;const trails=[];for(let i=0;i<7;i++){const m=mesh(new T.SphereGeometry(.10-i*.009,6,4),new T.MeshBasicMaterial({color:'#e4e78c',transparent:true,opacity:.28*(1-i/7),depthWrite:false}),0,0,0,stadium);m.visible=false;trails.push(m)}const trailPositions=[];
 const confettiCount=mobile?240:500,confetti=new T.InstancedMesh(new T.PlaneGeometry(.15,.24),new T.MeshStandardMaterial({color:'#ffffff',side:T.DoubleSide,roughness:.55,metalness:.12}),confettiCount);stadium.add(confetti);confetti.visible=false;const confettiData=[];for(let i=0;i<confettiCount;i++){confetti.setColorAt(i,new T.Color(pick(['#d9b35b','#efdaa0','#f0e9d0','#87b9b0','#c7d6c5'])));confettiData.push({x:(rand()-.5)*20,z:(rand()-.5)*30,y:4+rand()*8,vx:(rand()-.5)*2.4,vz:(rand()-.5)*2.4,vy:6+rand()*7,spin:rand()*TAU,s:rand()+.5})}
 // Very sparse, warm airborne dust catches the floodlights.
 const dustN=90,dustPos=new Float32Array(dustN*3);for(let i=0;i<dustN;i++){dustPos[i*3]=(rand()-.5)*80;dustPos[i*3+1]=3+rand()*30;dustPos[i*3+2]=(rand()-.5)*90}const dustG=new T.BufferGeometry();dustG.setAttribute('position',new T.BufferAttribute(dustPos,3));const dust=new T.Points(dustG,new T.PointsMaterial({color:'#f1d7a6',size:.085,transparent:true,opacity:.33,depthWrite:false}));world.add(dust);
@@ -384,21 +399,34 @@ const shots=[
 {t:8.74,p:[2.1,1.47,9.35]}, {t:9.15,p:[2.4,2.2,12.4]},
 {t:10.15,p:[4.0,1.47,-7.9]}, {t:10.9,p:[6.6,1.5,-16.2]}
 ];
-function updateMatch(dt){if(!playing){p1.g.position.y=1.36+(reduced?0:Math.sin(time*1.4)*.018);p2.g.position.y=1.36+(reduced?0:Math.sin(time*1.3+2)*.018);if(!matchWon){ball.position.set(p1.g.position.x+.22,1.75+Math.abs(Math.sin(time*2))*.25,p1.g.position.z-.5);}return}
-matchTime=time-matchStart;let t=matchTime,idx=0;for(let i=0;i<shots.length-1;i++)if(t>=shots[i].t)idx=i;idx=Math.min(idx,shots.length-2);const a=shots[idx],b=shots[idx+1],u=clamp((t-a.t)/(b.t-a.t),0,1);ball.position.set(lerp(a.p[0],b.p[0],u),lerp(a.p[1],b.p[1],u)+((b.t-a.t)>.7?Math.sin(u*PI)*1.65:Math.sin(u*PI)*.1),lerp(a.p[2],b.p[2],u));
-if(idx!==lastShot)lastShot=idx;
-let target1=-1.8,target2=2.3;for(let i=idx;i<shots.length;i++){if(shots[i].p[2]>12&&shots[i].p[1]>2){target1=shots[i].p[0]+.2;break}}for(let i=idx;i<shots.length;i++){if(shots[i].p[2]<-12&&shots[i].p[1]>2){target2=shots[i].p[0]-.2;break}}
-if(t>9.1)target2=-.4;
-p1.g.position.x=lerp(p1.g.position.x,target1,1-Math.exp(-dt*3));p2.g.position.x=lerp(p2.g.position.x,target2,1-Math.exp(-dt*3));
-for(let p of [p1,p2]){p.g.position.y=1.36+Math.abs(Math.sin(t*11))*.055;p.legs[0].rotation.x=Math.sin(t*11)*.24;p.legs[1].rotation.x=-Math.sin(t*11)*.24;p.arm.rotation.x=-.1+Math.sin(t*5.2)*.4;p.arm.rotation.z=Math.sin(t*5.2)*.35;}
-if(t<1.0){p1.arm.rotation.x=-1.6*Math.sin(t*PI);p1.left.rotation.x=-2*Math.sin(t*PI)}else p1.left.rotation.x=0;
-if(t>11.1&&!matchWon){matchWon=true;celebrateAt=time;confetti.visible=true;drawScore('win');}
-if(matchWon){p1.arm.rotation.z=-2.5;p1.left.rotation.z=2.5;p1.g.position.y=1.36+Math.abs(Math.sin(t*5))*.25;trails.forEach(m=>m.visible=false);}
-if(t>17.2){playing=false;p1.arm.rotation.set(0,0,0);p1.left.rotation.set(0,0,0);p1.legs.forEach(l=>l.rotation.x=0);p2.legs.forEach(l=>l.rotation.x=0);}
+// The figures arrive before each contact; the racquet face meets that shot's
+// ball position, with a preparation and follow-through on either side.
+const contacts=[shots.filter((s,i)=>i>=2&&s.p[2]>12&&s.p[1]>2),shots.filter(s=>s.p[2]<-12&&s.p[1]>2)];
+const aim=new T.Quaternion(),swing=new T.Quaternion(),rest=new T.Quaternion().setFromEuler(new T.Euler(-.18,.12,0)),up=new T.Vector3(0,1,0),reach=new T.Vector3(),toward=new T.Vector3();
+function posePlayer(p,hits,t){
+const home={t:-.8,p:[p.baseX+p.sign*.75,2.3,p.baseZ-p.sign*.75]},finish={...home,t:13.2};let previous=home,next=finish,nearest=hits[0];
+for(const hit of hits){if(hit.t<t)previous=hit;else if(next===finish)next=hit;if(Math.abs(t-hit.t)<Math.abs(t-nearest.t))nearest=hit;}
+const u=clamp((t-previous.t-.28)/Math.max(.1,next.t-previous.t-.53),0,1),ease=u*u*(3-2*u),moving=4*u*(1-u);
+p.g.position.set(lerp(previous.p[0],next.p[0],ease)-p.sign*.75,1.36,lerp(previous.p[2],next.p[2],ease)+p.sign*.75);
+for(let i=0;i<2;i++)p.legs[i].rotation.x=Math.sin(t*13+i*PI)*.27*moving;
+p.arm.quaternion.copy(rest);const phase=t-nearest.t,weight=1-T.MathUtils.smoothstep(Math.abs(phase),.28,.72);
+if(weight>0){toward.fromArray(nearest.p).sub(p.g.position).applyAxisAngle(up,-p.g.rotation.y).sub(p.arm.position);aim.setFromUnitVectors(reach.copy(p.reach).normalize(),toward.normalize());swing.setFromAxisAngle(up,clamp(phase/.42,-1,1)*.9);aim.premultiply(swing);p.arm.quaternion.slerp(aim,weight);}
+p.left.rotation.set(p===p1&&t<.93?-1.9*Math.sin(t/.93*PI):-.15,0,0);
+}
+function resetPoint(){matchWon=false;matchStart=time;matchTime=0;lastShot=-1;celebrateAt=-100;confetti.visible=false;trailPositions.length=0;trails.forEach(m=>m.visible=false);posePlayer(p1,contacts[0],0);posePlayer(p2,contacts[1],0);}
+function updateMatch(dt){if(!playing){p1.g.position.y=1.36+(reduced?0:Math.sin(time*1.4)*.018);p2.g.position.y=1.36+(reduced?0:Math.sin(time*1.3+2)*.018);if(!matchWon)ball.position.set(p1.g.position.x+.45,1.75+Math.abs(Math.sin(time*2))*.25,p1.g.position.z-.5);return;}
+matchTime=time-matchStart;let t=matchTime;
+if(watching&&t>13.6){rally++;resetPoint();t=0;drawScore('rally',rally);}
+let idx=0;for(let i=0;i<shots.length-1;i++)if(t>=shots[i].t)idx=i;idx=Math.min(idx,shots.length-2);const a=shots[idx],b=shots[idx+1],u=clamp((t-a.t)/(b.t-a.t),0,1);ball.position.set(lerp(a.p[0],b.p[0],u),lerp(a.p[1],b.p[1],u)+((b.t-a.t)>.7?Math.sin(u*PI)*1.65:Math.sin(u*PI)*.1),lerp(a.p[2],b.p[2],u));
+if(idx!==lastShot)lastShot=idx;posePlayer(p1,contacts[0],t);posePlayer(p2,contacts[1],t);
+if(t>11.1&&!matchWon&&!betweenRallies){if(watching){betweenRallies=true;drawScore('ready',rally);}else{matchWon=true;celebrateAt=time;confetti.visible=true;drawScore('win');}}
+if(t<1)betweenRallies=false;
+if(matchWon){p1.arm.rotation.set(0,0,-2.5);p1.left.rotation.set(0,0,2.5);p1.g.position.y=1.36+Math.abs(Math.sin(t*5))*.25;trails.forEach(m=>m.visible=false);}
+if(!watching&&t>17.2){playing=false;for(const p of[p1,p2]){p.arm.rotation.set(0,0,0);p.left.rotation.set(0,0,0);p.legs.forEach(l=>l.rotation.x=0);}}
 }
 
 let time=0,night=0,roofLift=0,roofTarget=0,lastRoofVisible=true;
-let playing=false,matchStart=0,matchWon=false,celebrateAt=-100,matchTime=0,lastShot=-1;
+let playing=false,watching=false,rally=0,betweenRallies=false,matchStart=0,matchWon=false,celebrateAt=-100,matchTime=0,lastShot=-1;
 function tick(dt,n,paused){
 const delta=paused?0:dt;time+=delta;night=n;trainsRunning=!paused;
 const ease=1-Math.exp(-dt*5.5);updateRailway(delta,time);
@@ -411,7 +439,7 @@ for(const g of glows)g.m.material.opacity=g.opacity*night*(g.m.parent===roof?opa
 for(const m of pools)m.material.opacity=night;dust.material.opacity=.25*night;
 dt=delta;
 if(!reduced){for(let f of flags){let a=f.g.attributes.position.array;for(let i=0;i<a.length;i+=3){let x=f.original[i];a[i+2]=Math.sin(x*2.1-time*2.5+f.phase)*.18*(x/2.8)+Math.sin(x*4.3-time*3)*.04*(x/2.8);a[i+1]=f.original[i+1]-.1*(x/2.8)+Math.sin(x*2-time*1.8)*.035*x;}f.g.attributes.position.needsUpdate=true;f.g.computeVertexNormals();}for(let i=0;i<dustN;i++){dustPos[i*3]+=.012*dt*Math.sin(time+i);dustPos[i*3+1]+=.015*dt;if(dustPos[i*3+1]>34)dustPos[i*3+1]=3}dustG.attributes.position.needsUpdate=true;}
-updateMatch(dt);ballShadow.position.set(ball.position.x,1.347,ball.position.z);ballShadow.material.opacity=clamp(.4-(ball.position.y-1.4)*.075,.07,.38);trailPositions.unshift(ball.position.clone());if(trailPositions.length>35)trailPositions.pop();if(playing&&!matchWon)trails.forEach((m,i)=>{m.visible=true;m.position.copy(trailPositions[Math.min(i*2+2,trailPositions.length-1)]);});
+updateMatch(dt);ballShadow.position.set(ball.position.x,1.347,ball.position.z);ballShadow.material.opacity=clamp(.4-(ball.position.y-1.4)*.075,.07,.38);if(dt>0){trailPositions.unshift(ball.position.clone());if(trailPositions.length>35)trailPositions.pop();if(playing&&!matchWon&&!betweenRallies)trails.forEach((m,i)=>{m.visible=true;m.position.copy(trailPositions[Math.min(i*2+2,trailPositions.length-1)]);});else trails.forEach(m=>m.visible=false);}
 const ct=time-celebrateAt;if(ct<11&&confetti.visible){for(let i=0;i<confettiCount;i++){let a=confettiData[i],age=Math.max(0,ct-(i%7)*.09);const y=a.y+a.vy*(1-Math.exp(-age*.5))*2-age*2.5;dummy.position.set(a.x+a.vx*age+Math.sin(age*2+a.spin)*.5,Math.max(1.43,y),a.z+a.vz*age);dummy.rotation.set(a.spin+age*2.1,a.spin+age*1.2,age*1.7);dummy.scale.setScalar(a.s);dummy.updateMatrix();confetti.setMatrixAt(i,dummy.matrix);}confetti.instanceMatrix.needsUpdate=true;}else confetti.visible=false;
 
 }
@@ -419,7 +447,8 @@ tick(0,0,false);await step('Lighting the little world…');
 const indexed=new Set();scene.traverse(node=>{if(node.isMesh&&!node.userData.queensAnimated&&!indexed.has(node.geometry)){indexed.add(node.geometry);indexQueensGeometry(T,node.geometry);}});
 return {trains,seven,local,stationStop,seats,spectators,roof,tick,
  setRoof:open=>{roofTarget=open?1:0;},
- play(){if(playing)return;playing=true;matchWon=false;matchStart=time;lastShot=-1;drawScore('rally');roofTarget=1;},
- stats:()=>({seats,spectators,playing,matchWon,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
+ setWatching(on){if(watching===on)return;watching=on;playing=on;resetPoint();betweenRallies=false;rally=on?1:0;if(on)roofTarget=0;drawScore(on?'rally':'point',rally);},
+ play(){if(playing&&!watching)return;watching=false;playing=true;rally=0;betweenRallies=false;resetPoint();drawScore('rally');roofTarget=1;},
+ stats:()=>({seats,spectators,playing,watching,rally,matchTime,matchWon,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
 };
 }
