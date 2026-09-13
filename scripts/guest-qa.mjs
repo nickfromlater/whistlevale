@@ -22,7 +22,7 @@ const plaque=paints.find(q=>q.key===record.plaque);assert.ok(plaque,'plaque allo
 f.run('coastWindowArt()');
 for(const other of paints){if(other.key===plaque.key)continue;assert.ok(plaque.x+plaque.w<=other.x||other.x+other.w<=plaque.x||plaque.y+plaque.h<=other.y||other.y+other.h<=plaque.y,`guest credit must not overlap ${other.key}`);}
 f.run(`gl.texImage2D=function(){atlasUploads.push(paints.length);};initHouseArt();`);
-assert.ok(uploads.length);assert.equal(paints[uploads.at(-1)-1].key,record.plaque,'credit paint precedes final texture upload');
+assert.ok(uploads.length);const lastProject=f.run('Object.values(EMBEDDED_PROJECTS).at(-1).plaque');assert.equal(paints[uploads.at(-1)-1].key,lastProject,'all guest credits are painted before final texture upload');
 const sign=JSON.parse(JSON.stringify(f.run(`(()=>{const b=new Builder();yamaaiPlaque(b);const text=[],front=[];for(let i=0;i<b.data.length;i+=12){if(b.data[i+9]===32)text.push(b.data.slice(i,i+12));if(b.data[i+9]===23)front.push(b.data[i+2]);}return {text,front};})()`)));
 assert.equal(sign.text.length,6,'lettering has two real triangles');assert.ok(sign.text.every(v=>v[2]>Math.max(...sign.front)),'lettering sits in front of panel');
 assert.ok(sign.text.every(v=>v[0]>29),'plaque clears the mountain on the back wall');
@@ -74,6 +74,14 @@ enter();mount();resolvers.shift()();await flush();run('embeddedFrameUpdate()');a
 context.mapOpen=true;run('embeddedFrameUpdate()');assert.equal(disposals,2);assert.equal(aborts,2,'map entry destroys the active session');
 context.mapOpen=false;run('embeddedFrameUpdate()');assert.equal(builds,2,'return starts with deferred rebuild');leave();
 context.location.protocol='file:';enter();mount();assert.equal(builds,2,'portable file never attempts guest imports');assert.equal(document.getElementById('embedStage').dataset.state,'unavailable');leave();
+// The owner may omit their own presentation credit without suppressing a
+// different guest's credit when this shared dock is reused.
+const loadingBy=node('span');loadingBy.className='embed-loading-by';document.getElementById('embedStage').querySelector('.embed-loading').append(loadingBy);
+run("registerEmbeddedProject('queens',{...EMBEDDED_PROJECTS.yamaai,showAttribution:false});hobby.room='queens';embeddedEnter('queens');");
+assert.equal(document.getElementById('embedCredit').querySelector('.embed-credit'),null);
+assert.equal(document.getElementById('embedStage').querySelector('.embed-loading-by').hidden,true);
+leave();enter();assert.ok(document.getElementById('embedCredit').querySelector('.embed-credit'));
+assert.equal(document.getElementById('embedStage').querySelector('.embed-loading-by').hidden,false);leave();
 const adapter=await read('src/guest-yamaai.js');assert.ok(!adapter.includes('compileAsync('),'upstream compileAsync has uncancellable timers after disposal');
 assert.ok(!adapter.includes('data.camera='),'guest diagnostics must not become a house camera control');
 assert.ok(!(await read('src/hobby.js')).includes("querySelectorAll('[data-camera]')"),'camera UI operates on buttons, not the guest stage');

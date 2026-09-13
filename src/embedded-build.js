@@ -274,10 +274,10 @@ function embeddedBuildDraw(ctx,stages,revealed,edge,warm){
 // than a stall. Short labels: the long ones are the live status line's job.
 const EMBEDDED_BUILD_STEP_NAMES=['Gorge','Rock','Station','Lanterns','Forest','Train','Water','Light'];
 
-function embeddedBuildSteps(stage){
+function embeddedBuildSteps(stage,project){
  const bar=stage.querySelector('.embed-progress span');if(bar)bar.style.width='0%';
  const list=stage.querySelector('.embed-steps');if(!list)return;
- list.replaceChildren(...EMBEDDED_BUILD_STEP_NAMES.map(name=>{
+ list.replaceChildren(...(project?.buildStageNames||EMBEDDED_BUILD_STEP_NAMES).map(name=>{
   const item=document.createElement('li');item.textContent=name;return item;
  }));
 }
@@ -286,13 +286,13 @@ function embeddedBuildSteps(stage){
 // completed landscape. Progress reports the actual stage, never a fake timer.
 function embeddedBuildAdvance(active,text){
  const build=active.build;if(!build)return;
- const index=EMBEDDED_BUILD_STAGES.indexOf(text);
+ const names=active.project.buildStages||EMBEDDED_BUILD_STAGES,index=names.indexOf(text);
  if(index<0)return;const next=index;
  if(next<=build.revealed)return;
  build.revealed=next;build.edge=0;build.at=performance.now();
  const list=document.querySelector('.embed-steps');
  if(list)[...list.children].forEach((item,i)=>{item.classList.toggle('done',i<next);item.classList.toggle('current',i===next);});
- const bar=document.querySelector('.embed-progress span');if(bar)bar.style.width=(next/EMBEDDED_BUILD_STAGES.length*100)+'%';
+ const bar=document.querySelector('.embed-progress span');if(bar)bar.style.width=(next/names.length*100)+'%';
 }
 
 // Called each frame while the guest is still building.

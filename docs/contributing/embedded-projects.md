@@ -90,7 +90,11 @@ using the original train focus, station position and terrain clearance. Away
 from the station the following camera rides ahead on the original rail curve,
 inside its clear corridor and tunnel bore, instead of cutting through trees.
 `groundHandled:true` keeps the house's unrelated floor-height clamp from lifting
-that camera into the tunnel roof. The
+that camera into the tunnel roof. A stationary spectator preset can also return
+`fixed:true` and an optional `fov` in radians. Manual framing then keeps that
+displayed target as its anchor and retains the lens and guest floor clearance.
+Queens uses this for its seated stadium view; ordinary train shots still follow
+their moving locomotive with the house lens. The
 station angle sees the train past the platform canopy. A guest's default shot
 does not overwrite the camera selection saved for other rooms. The adapter also
 publishes its moving train pose in house coordinates for manual framing.
