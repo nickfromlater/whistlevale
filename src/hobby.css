@@ -300,6 +300,13 @@
 .embed-actions button:hover{background:#3d5542}
 .embed-actions button:disabled{opacity:.5;cursor:default}
 .embed-credit-dock :focus-visible{outline:2px solid #ecd8a3;outline-offset:3px}
+.queens-tools{margin-top:8px;border-top:1px solid #b3a06b44;padding-top:2px}
+.queens-tools summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;font:12px Arial,sans-serif;color:#ecd8a3;list-style:none}
+.queens-tools summary::-webkit-details-marker{display:none}
+.queens-tools summary::before{content:'+';font-size:18px;width:14px}
+.queens-tools[open] summary::before{content:'−'}
+.queens-tools .embed-actions{margin-top:0}
+.queens-point-note{font:italic 11px/1.4 Georgia,serif;color:#b7c1a6;margin:9px 0 0}
 @media(max-width:760px){
  .embed-loading{width:min(300px,calc(100vw - 24px));padding:13px 13px 12px}
  .embed-status{margin-top:8px;padding-top:7px;font-size:11px}

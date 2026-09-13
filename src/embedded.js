@@ -53,8 +53,8 @@ function embeddedEnter(room){
  if(title)title.textContent=project.title;if(by)by.textContent='An original miniature by '+project.credits[0].name;
  const sketch=stage.querySelector('#embedBuild');if(sketch)sketch.classList.remove('done');
  if(typeof embeddedBuildShapes==='function'&&project.table){
-  active.build={stages:embeddedBuildShapes(project.table),revealed:-1,edge:0,at:performance.now(),warm:0};
-  embeddedBuildSteps(stage);
+  active.build={stages:(project.buildShapes||embeddedBuildShapes)(project.table),revealed:-1,edge:0,at:performance.now(),warm:0};
+  embeddedBuildSteps(stage,project);
  }
  const dock=stage.querySelector('#embedCredit');dock.replaceChildren(embeddedAttribution(project));
  const actions=document.createElement('div');actions.className='embed-actions';

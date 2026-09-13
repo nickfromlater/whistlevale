@@ -22,7 +22,7 @@ const plaque=paints.find(q=>q.key===record.plaque);assert.ok(plaque,'plaque allo
 f.run('coastWindowArt()');
 for(const other of paints){if(other.key===plaque.key)continue;assert.ok(plaque.x+plaque.w<=other.x||other.x+other.w<=plaque.x||plaque.y+plaque.h<=other.y||other.y+other.h<=plaque.y,`guest credit must not overlap ${other.key}`);}
 f.run(`gl.texImage2D=function(){atlasUploads.push(paints.length);};initHouseArt();`);
-assert.ok(uploads.length);assert.equal(paints[uploads.at(-1)-1].key,record.plaque,'credit paint precedes final texture upload');
+assert.ok(uploads.length);const lastProject=f.run('Object.values(EMBEDDED_PROJECTS).at(-1).plaque');assert.equal(paints[uploads.at(-1)-1].key,lastProject,'all guest credits are painted before final texture upload');
 const sign=JSON.parse(JSON.stringify(f.run(`(()=>{const b=new Builder();yamaaiPlaque(b);const text=[],front=[];for(let i=0;i<b.data.length;i+=12){if(b.data[i+9]===32)text.push(b.data.slice(i,i+12));if(b.data[i+9]===23)front.push(b.data[i+2]);}return {text,front};})()`)));
 assert.equal(sign.text.length,6,'lettering has two real triangles');assert.ok(sign.text.every(v=>v[2]>Math.max(...sign.front)),'lettering sits in front of panel');
 assert.ok(sign.text.every(v=>v[0]>29),'plaque clears the mountain on the back wall');
