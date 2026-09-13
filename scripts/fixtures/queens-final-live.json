@@ -1,0 +1,66 @@
+{
+  "source": "ESPN public scoreboard, observed 13 September 2026 at 18:19:55 UTC during the first set; unrelated metadata omitted",
+  "events": [
+    {
+      "id": "189-2026",
+      "name": "US Open",
+      "groupings": [
+        {
+          "grouping": {
+            "slug": "mens-singles"
+          },
+          "competitions": [
+            {
+              "id": "182677",
+              "date": "2026-09-13T18:15Z",
+              "status": {
+                "period": 1,
+                "type": {
+                  "id": "2",
+                  "name": "STATUS_IN_PROGRESS",
+                  "state": "in",
+                  "completed": false,
+                  "description": "In Progress",
+                  "detail": "1st Set",
+                  "shortDetail": "1st"
+                }
+              },
+              "round": {
+                "id": "7",
+                "displayName": "Final"
+              },
+              "competitors": [
+                {
+                  "id": "9250",
+                  "athlete": {
+                    "displayName": "Ben Shelton",
+                    "shortName": "B. Shelton"
+                  },
+                  "possession": true,
+                  "linescores": [
+                    {
+                      "value": 0.0
+                    }
+                  ]
+                },
+                {
+                  "id": "2375",
+                  "athlete": {
+                    "displayName": "Alexander Zverev",
+                    "shortName": "A. Zverev"
+                  },
+                  "possession": false,
+                  "linescores": [
+                    {
+                      "value": 0.0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

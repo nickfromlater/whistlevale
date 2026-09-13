@@ -21,7 +21,8 @@ function queensReadScore(data){
   if(!c||c.athlete?.displayName!==expected.name)throw new Error('Unexpected finalist');
   // A generic competitor.score can mean sets won. Never label it as game points.
   const sets=(Array.isArray(c.linescores)?c.linescores:[]).slice(0,5).map(s=>({games:number(s.value),tiebreak:number(s.tiebreak),won:s.winner===true}));
-  return {...expected,sets,point:type.state==='in'?point(c.pointScore??c.point):null,winner:c.winner===true,serving:type.state==='in'&&c.serving===true};
+  // ESPN's live tennis feed marks the server with possession.
+  return {...expected,sets,point:type.state==='in'?point(c.pointScore??c.point):null,winner:c.winner===true,serving:type.state==='in'&&(c.possession??c.serving)===true};
  });
  return {state:type.state,status:String(type.description||type.shortDetail||'').slice(0,60),date:match.date,period:number(match.status.period)||0,players};
 }
@@ -33,7 +34,7 @@ function queensScoreView(score,connection,checkedAt=0){
  if(suspended)headline=score.status.toUpperCase();
  else if(score.state==='in')headline=(fresh?'LIVE · ':'')+headline;
  const footer=fresh?'ESPN · CHECKED '+et(checkedAt):connection==='loading'?'CONNECTING TO ESPN':checkedAt?'SCORES DELAYED · LAST '+et(checkedAt):'SCORES UNAVAILABLE';
- const rows=score.players.map(p=>p.name+(p.winner?', winner':'')+': '+(p.sets.length?p.sets.map(s=>s.games??'–').join(', '):'awaiting play')+(p.point!==null?', '+p.point+' points':''));
+ const rows=score.players.map(p=>p.name+(p.winner?', winner':p.serving?', serving':'')+': '+(p.sets.length?p.sets.map(s=>s.games??'–').join(', '):'awaiting play')+(p.point!==null?', '+p.point+' points':''));
  return {...score,connection,checkedAt,headline,footer,summary:"US Open men's final, 13 September 2026. "+headline+'. '+rows.join('. ')+'. '+footer+'. Court animation is an imagined exhibition.'};
 }
 function createQueensScoreFeed({signal,onChange,fetcher=fetch,clock=Date.now,visible=()=>!document.hidden}){
