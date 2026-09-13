@@ -6,7 +6,7 @@ const QUEENS_TABLE={top:-7.8,halfWidth:51.3,halfDepth:43.5};
 const QUEENS_PROJECT=registerEmbeddedProject('queens',{
  base:'vendor/queens-miniature/',create:createQueensMiniature,
  roomName:'The Queens Pavilion',title:'A little Queens',subtitle:'Arthur Ashe · Flushing Meadows · The 7 line',
- source:'https://github.com/nickfromlater/whistlevale',licence:'MIT',
+ source:'https://github.com/nickfromlater/whistlevale',licence:'MIT',showAttribution:false,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original US Open tabletop world and Queens Pavilion; built with agent assistance.'}],
  table:QUEENS_TABLE,focus:queensWorld([0,7,0]),distance:132,phoneDistance:240,
  buildShapes:queensBuildShapes,buildStages:QUEENS_BUILD_STAGES,
@@ -238,7 +238,7 @@ function buildQueensRoom(scene,b){
   {name:'Mets–Willets Point',detail:'Wait for the silver 7 at the green-roofed station.',target:queensWorld([-23,7,65]),distance:25,phoneDistance:39,pitch:.40,yaw:.70},
   {name:'The racquet collection',detail:'Wire-strung racquets, leather grips and miniature silverware.',target:[-71,7,-7],distance:46,phoneDistance:65,pitch:.13,yaw:-1.25},
   {name:'The maker’s bench',detail:'Cutting mat, brass tools, paint pots, paper stadium parts and a lamp still on.',target:[68,FLOOR+15,9],distance:37,phoneDistance:57,pitch:.46,yaw:1.4},
-  {name:'The maker’s plaque',detail:embeddedCreditLine(QUEENS_PROJECT)+'.',target:[0,22,-62.2],distance:47,phoneDistance:90,pitch:.01,yaw:0}
+  {name:'The pavilion inscription',detail:'Arthur Ashe, Flushing Meadows and the 7 line.',target:[0,22,-62.2],distance:47,phoneDistance:90,pitch:.01,yaw:0}
  ];
  return scene;
 }

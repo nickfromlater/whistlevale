@@ -34,6 +34,15 @@ are retained. Presentation changes:
 - Guest shadows are limited to 2048 pixels, or 1536 on narrow viewports. A
   separate native depth pass preserves room and furniture occlusion.
 - The roof and imagined final point are driven through an explicit model API.
+- The facade now has an opaque concourse shell behind its glazing, closed
+  balcony undersides and wider window panels. The canopy's missing sector is
+  filled and its edges are bound; the roof still lifts through the same API.
+- Added painted court lines, wear marks, net hardware, spare racquets,
+  stitched bags, bottles, towels, ball baskets, cameras, courtside clocks,
+  planters and umpire details. Original crowd/seat counts remain unchanged.
+- At the owner's request, Queens omits its visible attribution card and
+  authorship text on the wall inscription. Controls fold into one compact tray.
+  The original source and licence records are retained.
 
 `three.module.min.js` is the unchanged ES-module build of **Three.js 0.160.1**,
 from `https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.min.js`.

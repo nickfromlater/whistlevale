@@ -74,6 +74,14 @@ enter();mount();resolvers.shift()();await flush();run('embeddedFrameUpdate()');a
 context.mapOpen=true;run('embeddedFrameUpdate()');assert.equal(disposals,2);assert.equal(aborts,2,'map entry destroys the active session');
 context.mapOpen=false;run('embeddedFrameUpdate()');assert.equal(builds,2,'return starts with deferred rebuild');leave();
 context.location.protocol='file:';enter();mount();assert.equal(builds,2,'portable file never attempts guest imports');assert.equal(document.getElementById('embedStage').dataset.state,'unavailable');leave();
+// The owner may omit their own presentation credit without suppressing a
+// different guest's credit when this shared dock is reused.
+const loadingBy=node('span');loadingBy.className='embed-loading-by';document.getElementById('embedStage').querySelector('.embed-loading').append(loadingBy);
+run("registerEmbeddedProject('queens',{...EMBEDDED_PROJECTS.yamaai,showAttribution:false});hobby.room='queens';embeddedEnter('queens');");
+assert.equal(document.getElementById('embedCredit').querySelector('.embed-credit'),null);
+assert.equal(document.getElementById('embedStage').querySelector('.embed-loading-by').hidden,true);
+leave();enter();assert.ok(document.getElementById('embedCredit').querySelector('.embed-credit'));
+assert.equal(document.getElementById('embedStage').querySelector('.embed-loading-by').hidden,false);leave();
 const adapter=await read('src/guest-yamaai.js');assert.ok(!adapter.includes('compileAsync('),'upstream compileAsync has uncancellable timers after disposal');
 assert.ok(!adapter.includes('data.camera='),'guest diagnostics must not become a house camera control');
 assert.ok(!(await read('src/hobby.js')).includes("querySelectorAll('[data-camera]')"),'camera UI operates on buttons, not the guest stage');

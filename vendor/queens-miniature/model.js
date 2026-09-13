@@ -45,7 +45,7 @@ function label(text,width,height,{bg='#183b43',fg='#e8e0c8',size=60,font='bold',
 function outline(t,hx,hz,r){const lengths=[2*(hx-r),PI*r/2,2*(hz-r),PI*r/2,2*(hx-r),PI*r/2,2*(hz-r),PI*r/2],total=lengths.reduce((a,b)=>a+b,0);let q=((t%1)+1)%1*total,i=0;for(;i<7&&q>lengths[i];i++)q-=lengths[i];let u=q/lengths[i],a;switch(i){case 0:return [lerp(hx-r,-hx+r,u),hz];case 1:a=PI/2+u*PI/2;return [-hx+r+r*Math.cos(a),hz-r+r*Math.sin(a)];case 2:return [-hx,lerp(hz-r,-hz+r,u)];case 3:a=PI+u*PI/2;return [-hx+r+r*Math.cos(a),-hz+r+r*Math.sin(a)];case 4:return [lerp(-hx+r,hx-r,u),-hz];case 5:a=PI*1.5+u*PI/2;return [hx-r+r*Math.cos(a),-hz+r+r*Math.sin(a)];case 6:return [hx,lerp(-hz+r,hz-r,u)];default:a=u*PI/2;return [hx-r+r*Math.cos(a),hz-r+r*Math.sin(a)];}}
 function perimeter(hx,hz,r){return 4*(hx+hz-2*r)+TAU*r}
 const RSEG=192;
-function ring(hx,hz,r,width,y,depth,material,parent=stadium){const p=[],idx=[];for(let i=0;i<=RSEG;i++){let a=outline(i/RSEG,hx,hz,r),b=outline(i/RSEG,hx+width,hz+width,r+width);p.push(a[0],y,a[1],b[0],y,b[1],a[0],y-depth,a[1],b[0],y-depth,b[1]);if(i<RSEG){let k=i*4;idx.push(k,k+4,k+1,k+1,k+4,k+5,k,k+2,k+4,k+2,k+6,k+4,k+1,k+5,k+3,k+3,k+5,k+7)}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return mesh(g,material,0,0,0,parent)}
+function ring(hx,hz,r,width,y,depth,material,parent=stadium){const p=[],idx=[];for(let i=0;i<=RSEG;i++){let a=outline(i/RSEG,hx,hz,r),b=outline(i/RSEG,hx+width,hz+width,r+width);p.push(a[0],y,a[1],b[0],y,b[1],a[0],y-depth,a[1],b[0],y-depth,b[1]);if(i<RSEG){let k=i*4;idx.push(k,k+4,k+1,k+1,k+4,k+5,k,k+2,k+4,k+2,k+6,k+4,k+1,k+5,k+3,k+3,k+5,k+7,k+2,k+3,k+6,k+3,k+7,k+6)}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return mesh(g,material,0,0,0,parent)}
 function contourWire(hx,hz,r,y,color,parent=stadium){let p=[];for(let i=0;i<=RSEG;i++){let q=outline(i/RSEG,hx,hz,r);p.push([q[0],y,q[1]])}return wire(p,color,1,parent)}
 const glowTex=tex(128,128,(c,w,h)=>{const g=c.createRadialGradient(64,64,1,64,64,64);g.addColorStop(0,'rgba(255,244,211,.75)');g.addColorStop(.14,'rgba(255,231,190,.35)');g.addColorStop(.4,'rgba(255,208,143,.07)');g.addColorStop(1,'rgba(255,209,143,0)');c.fillStyle=g;c.fillRect(0,0,w,h)});
 const glows=[];function glow(x,y,z,size=2.5,opacity=.6,parent=world,color='#ffe2aa'){const sm=new T.SpriteMaterial({map:glowTex,color,blending:T.AdditiveBlending,transparent:true,opacity,depthWrite:false});const m=new T.Sprite(sm);m.position.set(x,y,z);m.scale.set(size,size,1);parent.add(m);glows.push({m,opacity});return m;}
@@ -54,6 +54,17 @@ box(93.2,.6,107.2,0,.49,3,M.cream,world,.2);box(91.5,.19,105.5,0,.83,3,mat('#fff
 await step('Building Arthur Ashe Stadium…');
 // Paved court well and layered seating bowl.
 box(25.8,.5,41.4,0,1.05,0,M.navy,stadium,.15);const court=mesh(new T.PlaneGeometry(24.8,40.4),mat('#ffffff',{map:courtTex,roughness:.94}),0,1.325,0,stadium);court.rotation.x=-PI/2;court.castShadow=false;
+// Thin, opaque paint sits just above the textured acrylic surface. Baselines
+// have a little extra weight; the centre marks read even from the gallery.
+function courtStripe(x1,z1,x2,z2,width=.055){const m=box(Math.hypot(x2-x1,z2-z1),.009,width,(x1+x2)/2,1.337,(z1+z2)/2,M.white,stadium);m.rotation.y=-Math.atan2(z2-z1,x2-x1);m.castShadow=false;}
+for(const x of[-5.485,-4.115,4.115,5.485])courtStripe(x,-11.885,x,11.885);
+for(const z of[-11.885,11.885]){courtStripe(-5.485,z,5.485,z,.10);courtStripe(0,z,0,z-Math.sign(z)*.28,.06);}
+for(const z of[-6.4,6.4])courtStripe(-4.115,z,4.115,z);
+courtStripe(0,-6.4,0,6.4);
+// Dry-brush court wear uses its own deterministic pattern, preserving the
+// original population and paint variations elsewhere in the miniature.
+{const c=courtTex.image.getContext('2d'),X=x=>512+x*1024/24.8,Z=z=>1024+z*2048/40.4;c.save();
+for(let i=0;i<130;i++){const x=Math.sin(i*5.3)*4.8,z=(i%2?1:-1)*(12.15+(Math.sin(i*2.1)+1)*.8);c.strokeStyle=i%3?'#aac8d010':'#102f5711';c.lineWidth=1+(i%3);c.beginPath();c.ellipse(X(x),Z(z),5+i%5,1.4,Math.sin(i)*.4,0,PI);c.stroke();}c.restore();courtTex.needsUpdate=true;}
 ring(12.65,20.45,3.65,.5,2.36,1.15,M.navy);
 // All the tiny chairs are two separate painted parts, with individually varied spectators.
 const chairMat=mat('#ffffff',{roughness:.72}),personMat=mat('#ffffff',{roughness:.94});let seats=0,spectators=0;
@@ -73,7 +84,7 @@ ring(19.65,27.45,10.75,1.5,7.25,.5,M.cream);contourWire(19.75,27.55,10.85,8.05,'
 makeTier(4,21.15,28.95,12.25,8.25,.56,.46);
 ring(23.5,31.3,14.6,1.15,10.4,.45,M.navy);
 makeTier(15,24.65,32.45,15.75,11.15,.58,.62);
-ring(33.4,41.2,24.5,.88,20.55,.72,M.cream);contourWire(33.85,41.65,24.95,21.4,'#d0d6bd');
+ring(33.4,41.2,24.5,1.75,20.55,.72,M.cream);contourWire(33.85,41.65,24.95,21.4,'#d0d6bd');
 // Balcony rails, radial aisle rails, numbered sections and the club level.
 for(let tier of [[19.8,27.6,10.9,7.25],[23.5,31.3,14.6,10.4],[33.8,41.6,24.9,20.6]]){for(let i=0;i<110;i++){const q=outline(i/110,tier[0],tier[1],tier[2]);instance('balustrade',boxGeo,M.steel,[q[0],tier[3]+.38,q[1]],[.045,.78,.045]);}contourWire(tier[0],tier[1],tier[2],tier[3]+.75,'#b5c3b9')}
 for(let section=0;section<24;section++){const t=section/24-.011;for(let tier of [[13.1,20.9,4.2,2.3,19.2,27,10.3,6.7],[24.65,32.45,15.75,11.25,32.8,40.6,23.9,19.9]]){const a=outline(t,tier[0],tier[1],tier[2]),b=outline(t,tier[4],tier[5],tier[6]);rod([a[0],tier[3]+.7,a[1]],[b[0],tier[7]+.7,b[1]],.036,M.steel,stadium,5);for(let i=0;i<5;i++){let u=i/4;rod([lerp(a[0],b[0],u),lerp(tier[3],tier[7],u),lerp(a[1],b[1],u)],[lerp(a[0],b[0],u),lerp(tier[3],tier[7],u)+.7,lerp(a[1],b[1],u)],.025,M.steel,stadium,5)}}}
@@ -88,9 +99,47 @@ const netPos=[];for(let i=0;i<=100;i++){let x=lerp(-6.35,6.35,i/100),top=2.25+.1
 for(let x of [-9.8,9.8]){for(let z of [-5.6,5.6]){box(1.05,.2,2.8,x,1.95,z,M.cream,stadium,.07);box(.18,.6,2.8,x+(x<0?-.5:.5),2.28,z,M.navy,stadium);for(let zz of [-.85,.85])box(.75,.6,.16,x,1.65,z+zz,M.dark,stadium);box(.4,.11,.55,x,2.12,z+.6,M.white,stadium,.04);box(.48,.3,.87,x,1.52,z+1.7,M.clay,stadium,.08)}}
 for(let z of [-.6,.6])for(let x of [-.4,.4])rod([-8.65+x,1.33,z],[-8.65+x*.7,3.7,z*.7],.04,M.steel,stadium);box(1,.15,1,-8.65,3.7,0,M.navy,stadium);for(let i=0;i<6;i++)rod([-9.12,1.55+i*.34,-.5],[-9.12,1.55+i*.34,.5],.035,M.steel,stadium);person(-8.65,3.77,0,-PI/2,.9,true);const umbrella=mesh(new T.ConeGeometry(1.27,.46,8,1,true),M.navy,-8.65,5.07,0,stadium);rod([-8.65,3.8,0],[-8.65,5.08,0],.035,M.steel,stadium);
 for(let i=0;i<6;i++){let x=i%2?-11:11,z=i<2?-18:i<4?18:0;person(x,1.36,z,x<0?PI/2:-PI/2,.82,false);}
+// Net hardware: foot plates, collar rings, winding handles and a sewn strap.
+for(const x of[-6.35,6.35]){box(.34,.06,.34,x,1.37,0,M.dark,stadium,.025);for(const y of[1.55,2.18])mesh(new T.TorusGeometry(.08,.014,5,12),M.brass,x,y,0,stadium).rotation.x=PI/2;rod([x,2.13,0],[x+.19*Math.sign(x),2.13,0],.022,M.brass,stadium);rod([x+.19*Math.sign(x),2.13,0],[x+.19*Math.sign(x),2.01,0],.028,M.navy,stadium);}
+box(.065,.93,.045,0,1.81,.024,M.white,stadium);box(.12,.06,.08,0,1.39,.05,M.brass,stadium);
+// A spare racquet has an oval hoop, a leather grip and individual strings.
+function spareRacquet(x,y,z,angle=0){const g=new T.Group();g.position.set(x,y,z);g.rotation.y=angle;stadium.add(g);const hoop=mesh(new T.TorusGeometry(.26,.026,5,24),M.cream,0,.02,.37,g);hoop.rotation.x=-PI/2;hoop.scale.y=1.3;for(let i=-3;i<=3;i++){const q=i*.065,r=Math.sqrt(.25*.25-q*q);wire([[q,.022,.37-r*1.3],[q,.022,.37+r*1.3]],'#dcd9ba',.9,g);wire([[-r,.024,.37+q*1.3],[r,.024,.37+q*1.3]],'#dcd9ba',.9,g);}for(const side of[-1,1])rod([side*.13,.02,.09],[0,.02,-.15],.019,M.navy,g);rod([0,.02,-.15],[0,.02,-.47],.035,M.woodDark,g);for(let i=0;i<6;i++)rod([-.027,.055,-.19-i*.04],[.027,.055,-.20-i*.04],.008,M.cream,g);}
+const felt=mat('#d6df69',{roughness:1});
+function tennisBall(x,y,z,r=.10){mesh(new T.SphereGeometry(r,8,6),felt,x,y,z,stadium);const seam=[];for(let i=0;i<=20;i++){const a=i*TAU/20;seam.push([x+Math.cos(a)*r*.86,y+Math.sin(a)*r*.86,z+Math.cos(a*2)*r*.35]);}wire(seam,'#f0edbf',.85,stadium);}
+for(const side of[-1,1])for(const z of[-5.6,5.6]){
+ const x=side*8.7,bag=box(.66,.44,1.45,x,1.60,z+.7,side<0?M.navy:M.clay,stadium,.07);bag.rotation.y=side*.12;
+ rod([x-.19,1.86,z+.4],[x-.19,2.04,z+.8],.022,M.cream,stadium);rod([x+.19,1.86,z+.4],[x+.19,2.04,z+.8],.022,M.cream,stadium);rod([x-.19,2.04,z+.8],[x+.19,2.04,z+.8],.022,M.cream,stadium);
+ wire([[x,1.84,z+.05],[x,1.84,z+1.34]],'#d5c4a5',1,stadium);spareRacquet(x,1.86,z+.7,side*.24);
+ for(let i=0;i<3;i++){const bx=side*9.8+(i-1)*.22,bz=z-.75;mesh(new T.CylinderGeometry(.072,.08,.26,8),M.blue,bx,2.19,bz,stadium);mesh(new T.CylinderGeometry(.043,.043,.065,8),M.white,bx,2.35,bz,stadium);}
+ for(let i=0;i<3;i++){box(.45,.045,.62,side*9.8,2.10+i*.05,z+.62,M.white,stadium,.015);box(.46,.013,.035,side*9.8,2.128+i*.05,z+.83,M.blue,stadium);}
+}
+// Wire ball baskets on casters, away from the players' run-off lanes.
+for(const [x,z]of[[-10.65,-12.8],[10.65,12.8]]){
+ for(const dx of[-.32,.32])for(const dz of[-.33,.33]){rod([x+dx,1.43,z+dz],[x+dx,2.15,z+dz],.024,M.steel,stadium);mesh(new T.SphereGeometry(.075,7,5),M.navy,x+dx,1.41,z+dz,stadium);}
+ for(const y of[1.94,2.08,2.22,2.37,2.52])wire([[x-.4,y,z-.42],[x+.4,y,z-.42],[x+.4,y,z+.42],[x-.4,y,z+.42],[x-.4,y,z-.42]],'#ced1b9',1,stadium);
+ for(let i=0;i<6;i++){const d=-.4+i*.16;for(const side of[-1,1]){rod([x+d,1.94,z+side*.42],[x+d,2.52,z+side*.42],.012,M.steel,stadium);rod([x+side*.4,1.94,z+d],[x+side*.4,2.52,z+d],.012,M.steel,stadium);}}
+ box(.77,.035,.8,x,1.93,z,M.navy,stadium);for(let i=0;i<12;i++)tennisBall(x+((i%3)-1)*.21,2.31+(i%2)*.05,z+(Math.floor(i/3)-1.5)*.19,.102);
+}
+// Umpire seat rails, a foot rest and the little scoring console.
+box(.88,.55,.12,-8.65,4.06,-.44,M.navy,stadium,.035);box(.7,.10,.52,-8.24,2.85,0,M.steel,stadium);
+for(const z of[-.44,.44])rod([-9.07,3.77,z],[-9.07,4.16,z],.026,M.steel,stadium);
+box(.43,.085,.32,-8.13,3.96,.25,M.dark,stadium,.025);box(.33,.018,.23,-8.13,4.016,.25,M.blue,stadium);
+// Quiet broadcast cameras, their wired headsets and padded tripods.
+for(const side of[-1,1]){const x=side*10.55,z=-16.65;
+for(let i=0;i<3;i++){const a=i*TAU/3;rod([x+Math.cos(a)*.45,1.38,z+Math.sin(a)*.45],[x,2.61,z],.034,M.steel,stadium);}
+box(.55,.37,.78,x,2.77,z,M.navy,stadium,.04);rod([x,2.78,z+.37],[x,2.78,z+.7],.11,M.dark,stadium,10);rod([x,2.78,z+.7],[x,2.78,z+.74],.088,M.glass,stadium,10);box(.21,.17,.23,x+side*.3,2.87,z-.17,M.dark,stadium);wire([[x,2.61,z],[x+.15,1.48,z-.2],[x+.7,1.37,z-.35],[side*11.8,1.37,-17.4]],'#233d43',1,stadium);
+}
+// Flush courtside clocks and lavender planters complete the boundary.
+for(const side of[-1,1]){const z=side*19.92;box(1.65,.96,.16,8.95,1.87,z,M.dark,stadium,.04);const clock=label('25',1.36,.57,{bg:'#102d35',fg:'#e2c585',size:290},stadium);clock.position.set(8.95,1.91,z-side*.1);if(side>0)clock.rotation.y=PI;
+for(const x of[-10.6,10.6]){box(1.35,.36,.63,x,1.52,side*18.9,M.cream,stadium,.06);box(1.20,.05,.51,x,1.71,side*18.9,M.soil,stadium);for(let i=0;i<7;i++){const xx=x+(i-3)*.15,zz=side*18.9+Math.sin(i*4)*.16;rod([xx,1.71,zz],[xx+.03,1.94+(i%3)*.04,zz],.014,M.grass,stadium);mesh(headGeo,i%2?M.white:M.blue,xx+.03,1.96+(i%3)*.04,zz,stadium).scale.set(.055,.105,.055);}}
+}
 // Exterior: closely spaced concrete ribs, warm concourse windows, balcony bands.
+// A continuous, two-sided solid wall sits behind the decorative glazing.
+// Panel spacing and the open underside of the old rings exposed the room.
+const facade=mat('#233d47',{roughness:.55});facade.name='Queens opaque concourse';
+ring(34.1,41.9,25.2,.56,20.54,19.44,facade);
 for(let band of [[34.6,42.4,25.7,2.05,1.0],[34.65,42.45,25.75,7.0,.45],[34.6,42.4,25.7,13.1,.5],[34.6,42.4,25.7,19.55,.5]])ring(band[0],band[1],band[2],.9,band[3],band[4],M.cream);
-for(let i=0;i<104;i++){const t=i/104,q=outline(t,34.9,42.7,26),qq=outline(t+.0001,34.9,42.7,26),ang=Math.atan2(-(qq[1]-q[1]),qq[0]-q[0]);const col=box(.47,17.7,.72,q[0],10.45,q[1],M.cream,stadium);col.rotation.y=ang;for(let yy of [4.5,9.8,16.4]){let q2=outline((i+.5)/104,34.85,42.65,25.95);const panel=box(1.62,yy===16.4?4.9:4.5,.22,q2[0],yy,q2[1],rand()>.52?windowMat:M.glass,stadium);panel.rotation.y=ang;box(.07,yy===16.4?4.9:4.5,.35,q2[0],yy,q2[1],M.dark,stadium).rotation.y=ang;}
+for(let i=0;i<104;i++){const t=i/104,q=outline(t,34.9,42.7,26),qq=outline(t+.0001,34.9,42.7,26),ang=Math.atan2(-(qq[1]-q[1]),qq[0]-q[0]);const col=box(.47,17.7,.72,q[0],10.45,q[1],M.cream,stadium);col.rotation.y=ang;for(let yy of [4.5,9.8,16.4]){let q2=outline((i+.5)/104,34.85,42.65,25.95);const panel=box(2.12,yy===16.4?4.9:4.5,.22,q2[0],yy,q2[1],rand()>.52?windowMat:M.glass,stadium);panel.rotation.y=ang;box(.07,yy===16.4?4.9:4.5,.35,q2[0],yy,q2[1],M.dark,stadium).rotation.y=ang;}
 }
 // Broad southern entry pavilion and tiny doors.
 box(28.4,1.1,4.4,0,6.55,43.2,M.cream,stadium,.15);box(27.7,.16,4.6,0,7.15,43.2,M.brass,stadium,.06);for(let x=-12;x<=12;x+=4){box(.5,5.3,.65,x,3.66,44.7,M.cream,stadium);box(2.5,3.45,.15,x,2.95,43.3,M.glass,stadium);box(.045,3.4,.19,x,2.95,43.42,M.brass,stadium);glow(x,5.9,44.25,3.1,.45);box(1.2,.12,.15,x,6.01,44.45,warmMat,stadium)}
@@ -103,8 +152,10 @@ for(let [x,z] of roofColumns){box(2.1,1.15,2.3,x,1.54,z,M.cream,stadium,.2);cons
 function roofY(x,z){return 28.9+1.5*(1-Math.pow(Math.abs(x)/39,2))+.5*(1-Math.pow(Math.abs(z)/45,2));}
 // Cloth roof annulus with a generous open center, seam lines and fine battens.
 {
-const pos=[],idx=[],uv=[];const steps=192;for(let i=0;i<=steps;i++){const a=outline(i/steps,27.4,32.5,1.0),b=outline(i/steps,38.8,44.5,3.2);for(let j=0;j<=5;j++){let u=j/5,x=lerp(a[0],b[0],u),z=lerp(a[1],b[1],u);pos.push(x,roofY(x,z)+.12*Math.sin(u*PI),z);uv.push(x/12,z/12);if(i>=45&&i<steps&&j<5){let k=i*6+j;idx.push(k,k+1,k+6,k+1,k+7,k+6)}}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();const canopy=mesh(g,M.roof,0,0,0,roof);roofCanopies.push(canopy);
-for(let i=0;i<36;i++){const a=outline(i/36,27.4,32.5,1),b=outline(i/36,38.8,44.5,3.2);let p=[];for(let j=0;j<=8;j++){let u=j/8,x=lerp(a[0],b[0],u),z=lerp(a[1],b[1],u);p.push([x,roofY(x,z)+.07,z])}if(i>=9)wire(p,'#bcb9a8',.43,roof)}
+const pos=[],idx=[],uv=[];const steps=192;for(let i=0;i<=steps;i++){const a=outline(i/steps,27.4,32.5,1.0),b=outline(i/steps,38.8,44.5,3.2);for(let j=0;j<=5;j++){let u=j/5,x=lerp(a[0],b[0],u),z=lerp(a[1],b[1],u);pos.push(x,roofY(x,z)+.12*Math.sin(u*PI),z);uv.push(x/12,z/12);if(i<steps&&j<5){let k=i*6+j;idx.push(k,k+1,k+6,k+1,k+7,k+6)}}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();const canopy=mesh(g,M.roof,0,0,0,roof);roofCanopies.push(canopy);
+// Bound edges give the membrane thickness from low camera angles.
+for(const dims of[[27.4,32.5,1],[38.8,44.5,3.2]]){const p=[],ix=[];for(let i=0;i<=steps;i++){const q=outline(i/steps,...dims),y=roofY(q[0],q[1]);p.push(q[0],y,q[1],q[0],y-.25,q[1]);if(i<steps){const k=i*2;ix.push(k,k+1,k+2,k+1,k+3,k+2);}}const edge=new T.BufferGeometry();edge.setAttribute('position',new T.Float32BufferAttribute(p,3));edge.setIndex(ix);edge.computeVertexNormals();mesh(edge,M.roof,0,0,0,roof);}
+for(let i=0;i<36;i++){const a=outline(i/36,27.4,32.5,1),b=outline(i/36,38.8,44.5,3.2);let p=[];for(let j=0;j<=8;j++){let u=j/8,x=lerp(a[0],b[0],u),z=lerp(a[1],b[1],u);p.push([x,roofY(x,z)+.07,z])}wire(p,'#bcb9a8',.43,roof)}
 for(let dims of [[27.4,32.5,1],[38.8,44.5,3.2]]){let p=[];for(let i=0;i<=192;i++){let a=outline(i/192,...dims);p.push([a[0],roofY(a[0],a[1]),a[1]])}wire(p,'#e7e6d8',1,roof)}
 }
 function truss(a,b,height=2.5,segments=18){rod(a,b,.14,M.steel,roof,6);const aa=[a[0],a[1]-height,a[2]],bb=[b[0],b[1]-height,b[2]];rod(aa,bb,.13,M.steel,roof,6);for(let i=0;i<=segments;i++){const u=i/segments,x=lerp(a[0],b[0],u),y=lerp(a[1],b[1],u),z=lerp(a[2],b[2],u);rod([x,y,z],[x,y-height,z],.052,M.roofMetal,roof,5);if(i<segments){const v=(i+1)/segments;rod([x,i%2?y-height:y,z],[lerp(a[0],b[0],v),lerp(a[1],b[1],v)-(i%2?0:height),lerp(a[2],b[2],v)],.059,M.roofMetal,roof,5)}}}

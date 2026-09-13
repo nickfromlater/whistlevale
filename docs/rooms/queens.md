@@ -12,6 +12,12 @@ Mets–Willets Point station, Queens shops, parks, practice courts, globe founta
 creek, boats, footbridge, railway bridges and a tunnel. The stadium retains
 8,198 individually painted chairs and its miniature audience.
 
+The facade has a continuous opaque concourse behind the glazing, closed
+balcony undersides and a complete roof canopy with bound edges. The court has
+crisp painted lines, net collars and winders, spare wire-strung racquets,
+stitched bags, bottles, folded towels, wheeled ball baskets, a scoring console,
+broadcast cameras and small courtside planters.
+
 The native room is a tennis pavilion with green walls, walnut paneling,
 parquet, brass picture lights, wire-strung racquets, a glazed trophy cabinet,
 court drawings, banker lamp, cutting mat, paint pots, rolled plans, ferns,
@@ -21,14 +27,17 @@ the live map while the guest renderer is absent.
 
 ## Explore
 
+- **Miniature controls** opens the compact control tray. The owner requested
+  no visible attribution card for this room; the source and licence records
+  remain attached to the work. The wall inscription names the model and place.
 - **Explore the miniature** frames the complete tabletop.
 - **Pause train** stops both railways, traffic and model animation. Reduced
   motion starts paused. Global pause remains effective too.
-- **At the stadium** opens roof and final-point controls. The imagined point
+- **Lift stadium roof** and **Play final point** are in the same tray. The imagined point
   moves the camera courtside, lifts the roof, animates a rally and celebration,
   and updates the miniature scoreboard. Scores are not live.
 - **Views → Places** includes the stadium, station, racquet collection,
-  maker's bench and attribution plaque.
+  maker's bench and pavilion inscription.
 - **Cinema** offers Arthur Ashe, At the station, A little Queens and Follow
   the 7. House drag, pinch, keyboard framing and manual/automatic controls remain.
 - House atmosphere controls govern day/night lighting. The pavilion is an
@@ -50,12 +59,12 @@ Re-entry builds a fresh scene. The house owns the single animation schedule.
 The two renderers share projected depth, but cannot exchange shadows or glass
 reflections. The house's fullscreen lens effect does not process the guest
 canvas. Portable HTML retains the furnished room, low relief map model,
-attribution and source links; the detailed guest module is available in the
+source credit records; the detailed guest module is available in the
 online house, following the existing Yamaai export behavior. The original
 standalone HTML remains a separate self-contained artifact.
 
 This is a handcrafted interpretation. The court uses regulation proportions,
-but the seating count, cutaway roof, rail curves and condensed neighbourhood
+but the seating count, lifting roof, rail curves and condensed neighbourhood
 serve the tabletop composition rather than survey accuracy. There is no live
 score service or official association.
 
@@ -64,7 +73,8 @@ score service or official association.
 Run `npm test`, `npm run test:geometry:full`,
 `npm run check:contributions -- --json` and `npm run test:queens`.
 The focused check covers room geometry and footprint, attribution atlas slots,
-camera/depth equivalence, original model counts, closed rail curves, station
+camera/depth equivalence, opaque facade and roof continuity from both sides,
+original model counts, closed rail curves, station
 stopping, pause, roof and match choreography, and pinned source identity.
 
 Browser screenshots, export files and measured reports belong in ignored

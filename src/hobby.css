@@ -300,12 +300,14 @@
 .embed-actions button:hover{background:#3d5542}
 .embed-actions button:disabled{opacity:.5;cursor:default}
 .embed-credit-dock :focus-visible{outline:2px solid #ecd8a3;outline-offset:3px}
-.queens-tools{margin-top:8px;border-top:1px solid #b3a06b44;padding-top:2px}
-.queens-tools summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;font:12px Arial,sans-serif;color:#ecd8a3;list-style:none}
-.queens-tools summary::-webkit-details-marker{display:none}
-.queens-tools summary::before{content:'+';font-size:18px;width:14px}
-.queens-tools[open] summary::before{content:'−'}
-.queens-tools .embed-actions{margin-top:0}
+.embed-credit-dock.queens-compact-controls{right:auto;max-width:calc(100vw - 28px);padding:0;border-left-width:1px;border-radius:12px}
+.queens-controls summary{min-height:48px;padding:0 15px;display:flex;align-items:center;gap:10px;cursor:pointer;font:12px Arial,sans-serif;color:#ecd8a3;list-style:none}
+.queens-controls summary::-webkit-details-marker{display:none}
+.queens-controls summary::before{content:'+';font-size:20px;width:14px}
+.queens-controls[open] summary::before{content:'−'}
+.queens-controls-body{width:min(326px,calc(100vw - 54px));padding:0 12px 12px}
+.queens-controls-body .embed-actions{margin-top:7px}
+.queens-controls-body .embed-actions button{flex:1}
 .queens-point-note{font:italic 11px/1.4 Georgia,serif;color:#b7c1a6;margin:9px 0 0}
 @media(max-width:760px){
  .embed-loading{width:min(300px,calc(100vw - 24px));padding:13px 13px 12px}
@@ -324,6 +326,7 @@ body.has-embed.cinematic .cinema-separator{display:none}
 .embed-loading-kicker{margin:0 0 6px;font:9px Arial,sans-serif;letter-spacing:1.8px;text-transform:uppercase;color:#c2a672}
 .embed-loading-title{display:block;font:18px/1.25 Georgia,serif;color:#f1ead2}
 .embed-loading-by{display:block;margin-top:4px;font:italic 12px/1.45 Georgia,serif;color:#b3c0ab}
+.embed-loading-by[hidden]{display:none}
 .embed-steps{display:flex;flex-wrap:wrap;gap:4px 6px;margin:11px 0 0;padding:0;list-style:none}
 .embed-steps li{font:9px Arial,sans-serif;letter-spacing:.9px;text-transform:uppercase;color:#71806c;
  border:1px solid #71806c4d;border-radius:3px;padding:3px 6px;transition:color .35s,border-color .35s,background .35s}

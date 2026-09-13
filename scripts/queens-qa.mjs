@@ -33,6 +33,15 @@ const model=await buildQueens({THREE,scene,renderer,step:async s=>{stages.push(s
 assert.equal(stages.length,8);assert.equal(model.seats,8198);assert.equal(model.spectators,6441);assert.deepEqual(model.trains.map(t=>t.cars.length),[6,4]);
 scene.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(scene);assert.ok(bounds.min.toArray().concat(bounds.max.toArray()).every(Number.isFinite));
 assert.ok(bounds.min.x>=-105&&bounds.max.x<=105&&bounds.min.z>=-89&&bounds.max.z<=89,'complete model fits its board');
+// Probe the rendered shell itself, from both sides at every facade level.
+// Decorative window panels must never be the only barrier to the room behind.
+const shell=[],roofMeshes=[];scene.traverse(o=>{if(o.isMesh&&o.material?.name==='Queens opaque concourse')shell.push(o);});assert.ok(shell.length);model.roof.traverse(o=>{if(o.isMesh)roofMeshes.push(o);});
+const modelTransform=model.roof.parent.matrixWorld,ray=new THREE.Raycaster(),origin=new THREE.Vector3(),direction=new THREE.Vector3();
+function probe(objects,x,y,z,dx,dy,dz){origin.set(x,y,z).applyMatrix4(modelTransform);direction.set(dx,dy,dz).transformDirection(modelTransform);ray.set(origin,direction);return ray.intersectObjects(objects,true);}
+let shellSamples=0,roofSamples=0;
+for(const y of[1.7,7.3,12.8,19.8])for(let i=0;i<192;i++)for(const inside of[false,true]){const a=i*Math.PI*2/192,x=Math.sin(a),z=Math.cos(a),r=inside?0:65,sign=inside?1:-1;assert.ok(probe(shell,x*r,y,z*r,x*sign,0,z*sign).length,'opaque shell closes every facade bay from inside and outside');shellSamples++;}
+for(let i=0;i<=24;i++)for(const side of[-1,1]){assert.ok(probe(roofMeshes,-24+i*2,40,side*38,0,-1,0).length,'continuous end canopy');assert.ok(probe(roofMeshes,side*33,40,-28+i*56/24,0,-1,0).length,'continuous side canopy');roofSamples+=2;}
+assert.equal(probe(roofMeshes,0,40,0,0,-1,0).length,0,'the roof still has its intentional centre opening');
 const arrays=new Set();let instances=0,meshes=0;
 scene.traverse(o=>{if(!o.geometry)return;meshes++;for(const attr of Object.values(o.geometry.attributes)){arrays.add(attr.array);assert.ok(attr.array.every(Number.isFinite),'finite vertex attributes');}if(o.geometry.index)arrays.add(o.geometry.index.array);if(o.instanceMatrix){arrays.add(o.instanceMatrix.array);instances+=o.count;}if(o.instanceColor)arrays.add(o.instanceColor.array);});
 const bytes=[...arrays].reduce((n,a)=>n+a.byteLength,0);console.log('Model geometry MiB:',bytes/1024/1024);assert.ok(bytes<55*1024*1024,'model GPU geometry stays below 55 MiB');
@@ -50,4 +59,4 @@ assert.equal(sha(await read('vendor/queens-miniature/three.module.min.js')),'3e6
 const adapter=await read('src/guest-queens.js'),modelSource=await read('vendor/queens-miniature/model.js');
 assert.ok(!adapter.includes('requestAnimationFrame(')&&!modelSource.includes('requestAnimationFrame('));assert.ok(!modelSource.includes('setTimeout('));assert.match(adapter,/renderer\.forceContextLoss\(\)/);assert.match(adapter,/signal\.addEventListener\('abort',dispose/);
 f.context.qscene=scene;f.run('queensDisposeScene(qscene)');assert.equal(scene.children.length,0);
-console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,railSamples:2400},null,2));
+console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,railSamples:2400,shellSamples,roofSamples},null,2));

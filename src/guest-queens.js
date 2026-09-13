@@ -73,7 +73,7 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
  let disposed=false,depth=null,model=null,tools=null;
  const data=embeddedStage().dataset;
  const dispose=()=>{
-  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);tools?.remove();
+  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);tools?.remove();embeddedStage().querySelector('#embedCredit').classList.remove('queens-compact-controls');
   queensDisposeScene(scene);if(depth)queensDisposeScene(depth.scene);
   renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();
   data.context=renderer.getContext().isContextLost()?'released':'release-requested';
@@ -106,15 +106,17 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
    const p=train.p,f=train.f,side=p[0]*f[2]-p[2]*f[0]>0?1:-1;
    return {target:[p[0],p[1]+.8,p[2]],position:[p[0]+f[2]*side*9*portrait+f[0]*6,p[1]+5.4,p[2]-f[0]*side*9*portrait+f[2]*6],groundHandled:true};
   }
-  tools=document.createElement('details');tools.className='queens-tools';
-  const heading=document.createElement('summary');heading.textContent='At the stadium';
+  tools=document.createElement('details');tools.className='queens-controls';
+  const heading=document.createElement('summary');heading.textContent='Miniature controls';
+  const controls=document.createElement('div');controls.className='queens-controls-body';
   const actions=document.createElement('div');actions.className='embed-actions';
   const roof=document.createElement('button');roof.id='queensRoof';roof.textContent='Lift stadium roof';roof.setAttribute('aria-pressed','false');
   roof.onclick=()=>{const open=model.stats().roofTarget<.5;model.setRoof(open);roof.setAttribute('aria-pressed',String(open));roof.textContent=open?'Replace roof':'Lift stadium roof';};
   const play=document.createElement('button');play.id='queensPoint';play.textContent='Play final point';
   play.onclick=()=>{if(embeddedActive?.paused)document.getElementById('embedPause').click();if(paused)togglePause();model.play();setView('overview',false);Object.assign(orbit,{target:queensWorld([-25,3,-16]),distance:innerWidth<700?31:28,pitch:1.03,yaw:.10});};
   const note=document.createElement('p');note.className='queens-point-note';note.textContent='A miniature final, imagined for this little world.';
-  actions.append(roof,play);tools.append(heading,actions,note);embeddedStage().querySelector('#embedCredit').append(tools);
+  const dock=embeddedStage().querySelector('#embedCredit');
+  actions.append(roof,play);controls.append(dock.querySelector('.embed-actions'),actions,note);tools.append(heading,controls);dock.classList.add('queens-compact-controls');dock.append(tools);
   let last=0,width=0,height=0,lastNight=-1,lastShadow=-Infinity,reportAt=0,frames=0,cpu=0,wasPlaying=false;
   return {dispose,views,cinemaView,train,readTrainPose,inspect:()=>model.stats(),frame(state){
    if(disposed)return;const start=performance.now();
