@@ -10,6 +10,16 @@ vm.runInContext(source+'\nglobalThis.api={read:queensReadScore,view:queensScoreV
 const {read,view,feed}=context.api,copy=x=>JSON.parse(JSON.stringify(x)),competition=x=>x.events[0].groupings[0].competitions[0];
 const pre=read(scheduled);assert.equal(pre.players[0].name,'Alexander Zverev');assert.equal(pre.players[1].name,'Ben Shelton');assert.equal(pre.players[0].sets.length,0);assert.equal(pre.players[0].point,null);
 assert.match(view(pre,'ok',Date.parse('2026-09-13T14:00Z')).headline,/13 SEP · 2:00 PM ET/);
+// Actual live response uses possession for the server and omits point scores.
+const observed=JSON.parse(await readFile(new URL('fixtures/queens-final-live.json',import.meta.url),'utf8'));
+const observedScore=read(observed);
+assert.equal(observedScore.state,'in');assert.equal(observedScore.players[0].sets[0].games,0);assert.equal(observedScore.players[1].sets[0].games,0);
+assert.equal(observedScore.players[0].serving,false);assert.equal(observedScore.players[1].serving,true,'ESPN possession identifies the current server');
+assert.ok(observedScore.players.every(p=>p.point===null),'a missing point field is not invented from game counts');
+assert.match(view(observedScore,'ok',Date.now()).summary,/Ben Shelton, serving: 0/);
+const changedServer=copy(observed);competition(changedServer).competitors.forEach(p=>{p.possession=!p.possession;p.serving=!p.possession;});
+const changedScore=read(changedServer);assert.equal(changedScore.players[0].serving,true);assert.equal(changedScore.players[1].serving,false,'explicit possession=false overrides a legacy serving flag');
+for(const state of['pre','post']){const inactive=copy(observed);competition(inactive).status.type.state=state;assert.ok(read(inactive).players.every(p=>!p.serving),'server only appears during live play');}
 // Controlled formatting/lifecycle fixtures, not claims about the real result.
 const live=copy(scheduled),c=competition(live);c.status={period:2,type:{state:'in',description:'In Progress'}};
 c.competitors.forEach(p=>{p.linescores=[{value:6,tiebreak:5,winner:false},{value:0}];p.score='1';});
