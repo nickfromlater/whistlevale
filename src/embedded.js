@@ -56,6 +56,9 @@ function embeddedEnter(room){
   active.build={stages:(project.buildShapes||embeddedBuildShapes)(project.table),revealed:-1,edge:0,at:performance.now(),warm:0};
   embeddedBuildSteps(stage,project);
  }
+ // Offline notices live in the credit dock. Restore the status node before
+ // replacing that dock on re-entry so the normal loading path can reuse it.
+ stage.querySelector('.embed-loading').append(stage.querySelector('#embedStatus'));
  const dock=stage.querySelector('#embedCredit');dock.replaceChildren(embeddedAttribution(project));
  const actions=document.createElement('div');actions.className='embed-actions';
  const closer=document.createElement('button');closer.id='embedCloser';closer.textContent='Explore the miniature';
@@ -67,7 +70,8 @@ function embeddedEnter(room){
  // A portable HTML keeps the room and credits; the vendored module graph is
  // intentionally not embedded into that file. Do not try to fetch file:// URLs.
  if(!/^https?:$/.test(location.protocol)){
-  stage.dataset.state='unavailable';stage.setAttribute('aria-busy','false');status.textContent='Visit the online house to explore this guest miniature. The original project is linked below.';return active;
+  stage.dataset.state='unavailable';stage.setAttribute('aria-busy','false');status.textContent='Visit the online house to explore this guest miniature. The original project is linked above.';
+  stage.querySelector('.embed-loading').hidden=true;pause.hidden=true;dock.append(status);return active;
  }
  active.timer=setTimeout(()=>{active.timer=0;embeddedMount(active);},520);
  return active;
