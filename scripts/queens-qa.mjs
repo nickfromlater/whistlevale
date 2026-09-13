@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import * as THREE from '../vendor/queens-miniature/three.module.min.js';
 import {buildQueens,indexQueensGeometry} from '../vendor/queens-miniature/model.js';
+import {queensRally,queensBall} from '../vendor/queens-miniature/tennis.js';
 import {communityContext,loadContributionDefinitions,prepareCommunityGeometry,read} from './community-lib.mjs';
 
 const f=await communityContext();await loadContributionDefinitions(f,JSON.parse(await read('contributions/world.json')));
@@ -44,7 +45,8 @@ for(let i=0;i<=24;i++)for(const side of[-1,1]){assert.ok(probe(roofMeshes,-24+i*
 assert.equal(probe(roofMeshes,0,40,0,0,-1,0).length,0,'the roof still has its intentional centre opening');
 // Test authored spectator cameras against the actual transformed scene, with
 // the roof in place. Both baselines and the complete far scoreboard fit.
-const opaque=[];scene.traverse(o=>{if(o.isMesh&&o.material&&!o.material.transparent)opaque.push(o);});
+// Architecture must leave clear views; moving players naturally cross those rays.
+const opaque=[];scene.traverse(o=>{for(let p=o;p;p=p.parent)if(p.userData.queensAnimated)return;if(o.isMesh&&o.material&&!o.material.transparent)opaque.push(o);});
 let seatSamples=0;
 const houseTransform=new THREE.Matrix4().makeScale(.49,.49,.49).setPosition(0,-8.5,0),seatPoint=new THREE.Vector3();
 for(const [width,height]of[[1180,850],[390,844],[320,844]]){
@@ -69,13 +71,31 @@ for(const t of model.trains){assert.ok(t.length>400);assert.ok(t.curve.getPointA
 let before=model.trains.map(t=>t.u);model.tick(1,0,true);assert.deepEqual(model.trains.map(t=>t.u),before,'pause freezes both trains');model.tick(1,0,false);assert.ok(model.trains.every((t,i)=>t.u!==before[i]));
 model.seven.u=model.stationStop-.00001;model.seven.hold=0;model.tick(.1,0,false);assert.equal(model.seven.u,model.stationStop);assert.equal(model.seven.hold,6,'7 stops at its platform');
 model.setRoof(true);for(let i=0;i<80;i++)model.tick(.05,1,true);assert.ok(model.stats().roofLift>.99);assert.equal(model.roof.visible,false);assert.equal(model.stats().night,1);
-model.play();for(let i=0;i<230;i++)model.tick(.05,1,false);assert.equal(model.stats().matchWon,true,'point reaches championship state');for(let i=0;i<140;i++)model.tick(.05,1,false);assert.equal(model.stats().playing,false,'replay becomes available');
+model.play();model.tick(model.stats().pointEnds+.1,1,false);assert.equal(model.stats().matchWon,true,'point reaches championship state');for(let i=0;i<140;i++)model.tick(.05,1,false);assert.equal(model.stats().playing,false,'replay becomes available');
 // Watch mode has real, synchronized racquet contacts and repeating rallies.
 const ball=scene.getObjectByName('Queens match ball'),rackets=['01','02'].map(n=>scene.getObjectByName('Queens racket '+n));
 model.setWatching(true);assert.equal(model.stats().roofTarget,0,'watching replaces the roof around the spectators');
-let contactTime=0;for(const [t,player]of[[.93,0],[2.15,1],[3.5,0],[4.88,1],[6.27,0],[7.72,1],[9.15,0]]){
- model.tick(t-contactTime,0,false);contactTime=t;scene.updateMatrixWorld(true);const face=rackets[player].localToWorld(new THREE.Vector3(0,0,.49)),position=ball.getWorldPosition(new THREE.Vector3());assert.ok(face.distanceTo(position)/.74<.13,'the racquet meets the ball at '+t);
+let racquetContacts=0,netCrossings=0;const variations=new Set();
+for(let index=0;index<12;index++){
+ const plan=queensRally(index);variations.add(JSON.stringify(plan.contacts.map(h=>h.p)));assert.equal(model.stats().server,index%2,'players serve in turn');
+ let contactTime=model.stats().matchTime;
+ for(const hit of plan.contacts){
+  model.tick(hit.t-contactTime,0,false);contactTime=hit.t;scene.updateMatrixWorld(true);const face=rackets[hit.player].localToWorld(new THREE.Vector3(0,0,.49)),position=ball.getWorldPosition(new THREE.Vector3());assert.ok(face.distanceTo(position)/.74<.025,'the racquet meets the ball in rally '+index+' at '+hit.t);racquetContacts++;
+ }
+ for(const s of plan.segments){
+  assert.ok(s.a.p.concat(s.b.p).every(Number.isFinite));
+  if(s.a.p[2]*s.b.p[2]<0){const u=-s.a.p[2]/(s.b.p[2]-s.a.p[2]),p=queensBall(plan,s.a.t+(s.b.t-s.a.t)*u);assert.ok(p[1]>2.45,'every shot clears the actual net');netCrossings++;}
+ }
+ for(const bounce of plan.bounces){assert.ok(Math.abs(bounce.p[0])<4.115&&Math.abs(bounce.p[2])<11.885,'bounces land inside the singles court');assert.ok(Math.abs(queensBall(plan,bounce.t)[1]-1.435)<1e-9);}
+ assert.ok(Math.abs(plan.bounces[0].p[2])<6.4&&plan.bounces[0].p[0]*plan.contacts[0].p[0]<0,'serve lands in the diagonal service box');
+ if(index<11){model.tick(plan.duration-contactTime-.0001,0,false);const feet=['01','02'].map(n=>scene.getObjectByName('Queens player '+n).position.clone());model.tick(.0002,0,false);for(let p=0;p<2;p++)assert.ok(feet[p].distanceTo(scene.getObjectByName('Queens player 0'+(p+1)).position)<.002,'players walk into the next serve without teleporting');}
 }
+assert.equal(variations.size,12,'twelve varied rallies before the sequence repeats');
+// Equivalent elapsed time produces the same ball/pose, including rally boundaries.
+const atRate=hz=>{model.setWatching(false);model.setWatching(true);const p=scene.getObjectByName('Queens player 01'),previous=p.position.clone();for(let i=0;i<hz*32;i++){model.tick(1/hz,0,false);assert.ok(previous.distanceTo(p.position)<10/hz,'footwork remains continuous through changes of stroke');previous.copy(p.position);}return {rally:model.stats().rally,ball:ball.position.clone(),player:p.position.clone()};};
+const low=atRate(30),high=atRate(120);assert.equal(low.rally,high.rally);assert.ok(low.ball.distanceTo(high.ball)<1e-7&&low.player.distanceTo(high.player)<1e-7,'motion is independent of frame rate');
+const realScore={state:'pre',headline:'13 SEP · 2:00 PM ET',footer:'ESPN',players:[{shortName:'A. Zverev',sets:[],point:null},{shortName:'B. Shelton',sets:[],point:null}]};model.setScore(realScore);model.tick(35,0,false);assert.deepEqual(model.stats().score,realScore,'exhibition rallies never overwrite the real scoreboard');
+
 const pausedPose=()=>JSON.stringify({time:model.stats().matchTime,ball:ball.position.toArray(),players:['01','02'].map(n=>{const p=scene.getObjectByName('Queens player '+n);return[p.position.toArray(),rackets[n==='01'?0:1].parent.quaternion.toArray()];})});
 const frozen=pausedPose();model.tick(5,0,true);assert.equal(pausedPose(),frozen,'pause freezes the ball and both player poses');
 for(let i=0;i<650;i++)model.tick(.05,0,false);assert.ok(model.stats().rally>=4&&model.stats().watching&&model.stats().playing,'watching continues into successive rallies');assert.equal(model.stats().matchWon,false,'exhibition rallies do not repeat championship celebrations');
@@ -86,4 +106,4 @@ assert.equal(sha(await read('vendor/queens-miniature/three.module.min.js')),'3e6
 const adapter=await read('src/guest-queens.js'),modelSource=await read('vendor/queens-miniature/model.js');
 assert.ok(!adapter.includes('requestAnimationFrame(')&&!modelSource.includes('requestAnimationFrame('));assert.ok(!modelSource.includes('setTimeout('));assert.match(adapter,/renderer\.forceContextLoss\(\)/);assert.match(adapter,/signal\.addEventListener\('abort',dispose/);
 f.context.qscene=scene;f.run('queensDisposeScene(qscene)');assert.equal(scene.children.length,0);
-console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,seatSamples,racquetContacts:7,railSamples:2400,shellSamples,roofSamples},null,2));
+console.log(JSON.stringify({queens:'PASS',native,model:{seats:model.seats,spectators:model.spectators,meshes,instances,geometryMiB:bytes/1024/1024,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}},cameraSamples:480,seatSamples,racquetContacts,netCrossings,rallyVariations:variations.size,railSamples:2400,shellSamples,roofSamples},null,2));

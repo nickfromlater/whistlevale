@@ -1,6 +1,7 @@
 /* A little Queens. Original miniature by nickfromlater, with agent assistance.
  * Adapted from original-model.js for house-owned rendering. MIT licensed.
  * No camera, input listeners, audio, timers, network or animation loop. */
+import {queensRally,queensBall,queensFootwork} from './tennis.js';
 export function indexQueensGeometry(T,geometry){
 if(geometry.index)return geometry;
 const attributes=Object.values(geometry.attributes),count=geometry.attributes.position.count;
@@ -169,13 +170,16 @@ for(let sign of [-1,1])for(let i=0;i<8;i++){let x=sign*(26.2+i*1.32);const p=box
 for(let i=0;i<12;i++){let x=lerp(-21.8,21.8,i/11);for(let z of [-28.85,28.85]){box(1.52,.48,.55,x,26.72,z,M.dark,roof);box(1.32,.2,.08,x,26.59,z+(z<0?.30:-.30),ledMat,roof);glow(x,26.57,z+(z<0?.5:-.5),2.8,.38,roof,'#d8edff');}}
 for(let i=0;i<9;i++)for(let x of [-23.5,23.5]){let z=lerp(-24,24,i/8);box(.56,.48,1.22,x,26.55,z,M.dark,roof);glow(x,26.32,z,2.4,.25,roof,'#deeeff');}
 const roofWord=label('ARTHUR ASHE',19,2.1,{bg:'#d8d6c3',fg:'#365251',size:85},roof);roofWord.rotation.x=-PI/2;roofWord.position.set(0,30.77,-36.7);
-// Display boards: imagined match, never represented as a live feed.
-let scoreCanvas,scoreTexture;scoreTexture=tex(1024,420,(c,w,h)=>{scoreCanvas=c.canvas;});
+// The host supplies real scores. Exhibition motion can never change that data.
+let scoreCanvas,scoreTexture,matchScore=null,scoreSignature='';scoreTexture=tex(1024,420,(c,w,h)=>{scoreCanvas=c.canvas;});
 function drawScore(state='point',rally=0){
-const c=scoreCanvas.getContext('2d'),w=1024;c.textAlign='left';c.fillStyle='#102b36';c.fillRect(0,0,w,420);c.fillStyle='#deb96d';c.fillRect(0,0,w,7);c.font='bold 46px Arial';c.fillText('US OPEN',34,68);c.font='28px Arial';c.fillStyle='#c4dbd0';c.textAlign='right';c.fillText('ARTHUR ASHE',990,65);
-c.font='24px Arial';c.fillStyle='#a7bdb6';c.textAlign='left';c.fillText(rally?'EXHIBITION':'THE FINAL',34,118);c.textAlign='center';for(const [x,text]of[[590,'1'],[674,'2'],[758,'3'],[918,'PTS']])c.fillText(text,x,118);c.fillStyle='#395861';c.fillRect(34,137,956,2);c.fillRect(835,146,2,172);
-for(let i=0;i<2;i++){const y=211+i*88;c.fillStyle=i?'#8ad7cf':'#f3ac72';c.fillRect(34,y-39,7,47);c.fillStyle='#f9f2dc';c.textAlign='left';c.font='bold 62px Arial';c.fillText('PLAYER 0'+(i+1),57,y);c.textAlign='center';for(const [j,n]of(i?[4,6,5]:[6,4,state==='win'?7:6]).entries())c.fillText(String(n),590+j*84,y);c.fillStyle=i?'#edf4e2':'#ffe098';c.fillText(state==='win'?(i?'':'W'):i?'30':'40',918,y);}
-c.fillStyle='#234952';c.fillRect(0,330,w,90);c.textAlign='center';c.fillStyle='#f5df9e';c.font='bold 33px Arial';c.fillText(rally?'RALLY '+String(rally).padStart(2,'0')+'  ·  '+(state==='ready'?'NEXT SERVE':'IN PLAY'):state==='win'?'GAME. SET. CHAMPIONSHIP.':'CHAMPIONSHIP POINT',w/2,387);c.textAlign='left';if(scoreTexture)scoreTexture.needsUpdate=true;
+const signature=JSON.stringify(matchScore||[state,rally]);if(signature===scoreSignature)return;scoreSignature=signature;
+const c=scoreCanvas.getContext('2d'),w=1024;c.textAlign='left';c.fillStyle='#102b36';c.fillRect(0,0,w,420);c.fillStyle='#deb96d';c.fillRect(0,0,w,7);c.font='bold 46px Arial';c.fillText('US OPEN',34,64);c.font='26px Arial';c.fillStyle='#c4dbd0';c.textAlign='right';c.fillText("2026 · MEN'S FINAL",990,60);
+c.font='24px Arial';c.fillStyle='#b9cdc5';c.textAlign='left';c.fillText(matchScore?.headline||'EXHIBITION',34,118,445);c.textAlign='center';for(let j=0;j<5;j++)c.fillText(String(j+1),520+j*73,118);c.fillText('PTS',935,118);c.fillStyle='#395861';c.fillRect(34,137,956,2);c.fillRect(872,146,2,172);
+for(let i=0;i<2;i++){const y=211+i*88,p=matchScore?.players[i];c.fillStyle=i?'#8ad7cf':'#f3ac72';c.fillRect(34,y-39,7,47);c.fillStyle='#f9f2dc';c.textAlign='left';c.font='bold 58px Arial';c.fillText(p?.shortName.toUpperCase()||'PLAYER 0'+(i+1),57,y,425);if(p?.serving){c.fillStyle='#e1e784';c.beginPath();c.arc(468,y-18,7,0,TAU);c.fill();}
+c.textAlign='center';for(let j=0;j<5;j++){const set=p?.sets[j];c.font='bold 58px Arial';c.fillStyle=set?.won?'#ffe098':'#d4e4df';c.fillText(String(set?.games??'–'),520+j*73,y);if(set?.tiebreak!==null&&set?.tiebreak!==undefined){c.font='22px Arial';c.fillText(String(set.tiebreak),544+j*73,y-34);}}
+c.font='bold 62px Arial';c.fillStyle=p?.winner?'#ffe098':'#edf4e2';c.fillText(p?.winner?'W':p?.point??'–',935,y);}
+c.fillStyle='#234952';c.fillRect(0,330,w,90);c.textAlign='center';c.fillStyle='#f5df9e';c.font='bold 29px Arial';c.fillText(matchScore?.footer||'AN IMAGINED FINAL',w/2,366,958);c.fillStyle='#b8cdc3';c.font='22px Arial';c.fillText('ARTHUR ASHE · COURT ANIMATION: EXHIBITION',w/2,402);c.textAlign='left';if(scoreTexture)scoreTexture.needsUpdate=true;
 }
 drawScore();const scoreMat=mat('#ffffff',{map:scoreTexture,emissive:'#ffffff',emissiveMap:scoreTexture,emissiveIntensity:.65,roughness:.45});glowMaterials.push([scoreMat,.65]);
 scoreMat.name='Queens scoreboard';
@@ -225,20 +229,26 @@ consolidateWires(world,roof);consolidateWires(roof);
 
 // Hand-painted articulated players, with wire-strung racquets.
 function player(number,color,skinColor,x,z,dir){
-const g=new T.Group();g.name='Queens player '+number;g.position.set(x,1.36,z);g.rotation.y=dir;stadium.add(g);const jersey=mat(color),skin=mat(skinColor);
+const g=new T.Group();g.name='Queens player '+number;g.userData.queensAnimated=true;g.position.set(x,1.36,z);g.rotation.y=dir;stadium.add(g);const jersey=mat(color),skin=mat(skinColor);
 const torso=mesh(new T.CylinderGeometry(.235,.19,.59,10),jersey,0,1.035,0,g);mesh(new T.CylinderGeometry(.083,.10,.12,8),skin,0,1.37,0,g);mesh(new T.SphereGeometry(.165,12,8),skin,0,1.54,0,g).scale.y=1.09;mesh(new T.SphereGeometry(.049,8,6),skin,0,1.53,.155,g).scale.set(.62,.68,1);
 for(const side of[-1,1]){mesh(new T.SphereGeometry(.047,8,6),skin,side*.153,1.53,0,g).scale.z=.6;mesh(new T.SphereGeometry(.018,6,4),M.black,side*.067,1.579,.145,g);rod([side*.025,1.32,.15],[side*.14,1.27,.16],.023,M.white,g);box(.021,.39,.027,side*.16,1.035,.158,M.white,g);}
 mesh(new T.SphereGeometry(.174,12,8),M.navy,0,1.655,-.015,g).scale.set(1,.43,1);box(.31,.033,.21,0,1.66,.135,M.navy,g,.012);box(.435,.27,.28,0,.68,0,M.navy,g,.035);
-const legs=[];for(const side of[-1,1]){const l=new T.Group();l.position.set(side*.125,.63,0);g.add(l);rod([0,0,0],[side*.035,-.24,.04],.079,skin,l);mesh(new T.SphereGeometry(.080,8,6),skin,side*.035,-.24,.04,l);rod([side*.035,-.24,.04],[side*.045,-.45,.015],.065,skin,l);rod([side*.045,-.4,.018],[side*.045,-.50,.03],.071,M.white,l);box(.19,.115,.33,side*.045,-.548,.10,M.white,l,.025);box(.18,.028,.31,side*.045,-.595,.11,jersey,l);for(let i=0;i<3;i++)rod([side*.045-.06,-.488,.08+i*.045],[side*.045+.06,-.488,.08+i*.045],.009,M.navy,l);legs.push(l);}
+const upper=new T.Group();upper.position.y=.78;g.add(upper);for(const child of g.children.slice())if(child!==upper&&child.position.y>.82){g.remove(child);child.position.y-=.78;upper.add(child);}
+const legs=[];for(const side of[-1,1]){const l=new T.Group();l.position.set(side*.15,.63,0);g.add(l);rod([0,0,0],[0,-.27,0],.079,skin,l);const knee=new T.Group();knee.position.y=-.27;l.add(knee);mesh(new T.SphereGeometry(.080,8,6),skin,0,0,0,knee);rod([0,0,0],[0,-.22,0],.065,skin,knee);rod([0,-.18,0],[0,-.25,0],.071,M.white,knee);const foot=new T.Group();foot.position.y=-.25;knee.add(foot);box(.19,.115,.33,0,-.028,.10,M.white,foot,.025);box(.18,.028,.31,0,-.075,.11,jersey,foot);for(let i=0;i<3;i++)rod([-.06,.032,.08+i*.045],[.06,.032,.08+i*.045],.009,M.navy,foot);legs.push({hip:l,knee,foot,side});}
 const arm=new T.Group();arm.position.set(-.23,1.25,0);g.add(arm);rod([0,0,0],[-.13,-.12,.12],.10,jersey,arm);rod([-.13,-.12,.12],[-.22,-.20,.22],.071,skin,arm);rod([-.22,-.20,.22],[-.25,-.05,.41],.057,skin,arm);rod([-.247,-.085,.363],[-.25,-.05,.413],.068,M.white,arm);mesh(new T.SphereGeometry(.066,8,6),skin,-.25,-.05,.44,arm);
 const racket=new T.Group();racket.name='Queens racket '+number;racket.position.set(-.25,-.05,.43);racket.rotation.x=.22;arm.add(racket);rod([0,0,-.06],[0,0,.17],.032,M.navy,racket);for(let i=0;i<5;i++)rod([-.028,0,i*.035],[.028,0,.016+i*.035],.009,M.white,racket);for(const side of[-1,1])rod([0,0,.16],[side*.135,0,.28],.023,jersey,racket);
 for(const [radius,tube,material]of[[.275,.028,M.white],[.247,.009,jersey]]){const hoop=mesh(new T.TorusGeometry(radius,tube,6,36),material,0,0,.49,racket);hoop.rotation.x=PI/2;hoop.scale.y=1.25;}
 for(let i=-3;i<=3;i++){const n=i*.058,k=Math.sqrt(.246*.246-n*n);wire([[n,0,.49-k*1.25],[n,0,.49+k*1.25]],'#f7f2d7',1,racket);wire([[-k,0,.49+n*1.25],[k,0,.49+n*1.25]],'#f7f2d7',1,racket);}
 const left=new T.Group();left.position.set(.23,1.25,0);g.add(left);rod([0,0,0],[.1,-.15,.10],.10,jersey,left);rod([.1,-.15,.10],[.17,-.33,.20],.066,skin,left);rod([.17,-.33,.20],[.12,-.40,.34],.056,skin,left);rod([.13,-.38,.30],[.12,-.40,.34],.065,M.white,left);mesh(new T.SphereGeometry(.064,8,6),skin,.11,-.41,.38,left);
-racket.updateMatrix();const reach=new T.Vector3(0,0,.49).applyMatrix4(racket.matrix);return {g,arm,left,legs,torso,racket,reach,baseX:x,baseZ:z,sign:z>0?1:-1};
+for(const a of[arm,left]){g.remove(a);a.position.y-=.78;upper.add(a);}
+// Moving contact shadows replace the frozen silhouettes in the cached sun map.
+g.traverse(o=>{if(o.isMesh)o.castShadow=false;});
+const shadow=mesh(new T.CircleGeometry(.46,20),new T.MeshBasicMaterial({color:'#102d41',transparent:true,opacity:.20,depthWrite:false}),x,1.348,z,stadium);shadow.rotation.x=-PI/2;shadow.castShadow=false;
+racket.updateMatrix();const reach=new T.Vector3(0,0,.49).applyMatrix4(racket.matrix);return {g,upper,arm,left,legs,torso,racket,reach,shadow,baseX:x,baseZ:z,sign:z>0?1:-1,id:number==='01'?0:1};
 }
 const p1=player('01','#eaa065','#d6a07d',-2.55,13.20,PI),p2=player('02','#77c7c3','#9d7157',-2.35,-13.15,0);
-const ball=mesh(new T.SphereGeometry(.13,10,8),mat('#e2e968',{emissive:'#d2e02f',emissiveIntensity:.35}),-1.8,1.6,12.4,stadium);ball.name='Queens match ball';const ballShadow=mesh(new T.CircleGeometry(.22,16),new T.MeshBasicMaterial({color:'#152f45',transparent:true,opacity:.28,depthWrite:false}),-1.8,1.347,12.4,stadium);ballShadow.rotation.x=-PI/2;ballShadow.castShadow=false;const trails=[];for(let i=0;i<7;i++){const m=mesh(new T.SphereGeometry(.10-i*.009,6,4),new T.MeshBasicMaterial({color:'#e4e78c',transparent:true,opacity:.28*(1-i/7),depthWrite:false}),0,0,0,stadium);m.visible=false;trails.push(m)}const trailPositions=[];
+const ball=mesh(new T.SphereGeometry(.085,10,8),mat('#e2e968',{emissive:'#d2e02f',emissiveIntensity:.45}),-1.8,1.6,12.4,stadium);ball.name='Queens match ball';ball.castShadow=false;const ballShadow=mesh(new T.CircleGeometry(.15,16),new T.MeshBasicMaterial({color:'#152f45',transparent:true,opacity:.28,depthWrite:false}),-1.8,1.347,12.4,stadium);ballShadow.rotation.x=-PI/2;ballShadow.castShadow=false;const trails=[];for(let i=0;i<3;i++){const m=mesh(new T.SphereGeometry(.057-i*.012,6,4),new T.MeshBasicMaterial({color:'#e4e78c',transparent:true,opacity:.16*(1-i/3),depthWrite:false}),0,0,0,stadium);m.visible=false;m.castShadow=false;trails.push(m);}
+const bounceMark=mesh(new T.RingGeometry(.08,.105,20),new T.MeshBasicMaterial({color:'#e9ebac',transparent:true,opacity:0,depthWrite:false}),0,1.35,0,stadium);bounceMark.rotation.x=-PI/2;bounceMark.castShadow=false;
 const confettiCount=mobile?240:500,confetti=new T.InstancedMesh(new T.PlaneGeometry(.15,.24),new T.MeshStandardMaterial({color:'#ffffff',side:T.DoubleSide,roughness:.55,metalness:.12}),confettiCount);stadium.add(confetti);confetti.visible=false;const confettiData=[];for(let i=0;i<confettiCount;i++){confetti.setColorAt(i,new T.Color(pick(['#d9b35b','#efdaa0','#f0e9d0','#87b9b0','#c7d6c5'])));confettiData.push({x:(rand()-.5)*20,z:(rand()-.5)*30,y:4+rand()*8,vx:(rand()-.5)*2.4,vz:(rand()-.5)*2.4,vy:6+rand()*7,spin:rand()*TAU,s:rand()+.5})}
 // Very sparse, warm airborne dust catches the floodlights.
 const dustN=90,dustPos=new Float32Array(dustN*3);for(let i=0;i<dustN;i++){dustPos[i*3]=(rand()-.5)*80;dustPos[i*3+1]=3+rand()*30;dustPos[i*3+2]=(rand()-.5)*90}const dustG=new T.BufferGeometry();dustG.setAttribute('position',new T.BufferAttribute(dustPos,3));const dust=new T.Points(dustG,new T.PointsMaterial({color:'#f1d7a6',size:.085,transparent:true,opacity:.33,depthWrite:false}));world.add(dust);
@@ -389,44 +399,42 @@ for(let v of vehicles){if(trainsRunning)v.u=(v.u+v.speed*dt/carCurve.getLength()
 for(let h of trainHeadlamps)h.intensity=lerp(0,60,night);for(let r of waterRipples){r.m.material.opacity=(.18+Math.sin(t*.9+r.phase)*.055);let k=1+Math.sin(t*.6+r.phase)*.13;r.m.scale.set(k,k*.55,1)}
 }
 
-const shots=[
-{t:0,p:[-1.8,2.9,12.55]}, {t:.55,p:[-1.8,4.0,12.55]}, {t:.93,p:[-1.8,3.05,12.45]},
-{t:1.7,p:[-2.4,1.47,-7.4]}, {t:2.15,p:[-3.1,2.4,-12.4]},
-{t:3.06,p:[3.4,1.47,7.8]}, {t:3.5,p:[3.9,2.25,12.45]},
-{t:4.46,p:[2.9,1.47,-8.5]}, {t:4.88,p:[3.4,2.23,-12.5]},
-{t:5.85,p:[-3.1,1.47,8.25]}, {t:6.27,p:[-3.6,2.3,12.4]},
-{t:7.26,p:[-3.9,1.47,-9]}, {t:7.72,p:[-4.5,2.38,-12.8]},
-{t:8.74,p:[2.1,1.47,9.35]}, {t:9.15,p:[2.4,2.2,12.4]},
-{t:10.15,p:[4.0,1.47,-7.9]}, {t:10.9,p:[6.6,1.5,-16.2]}
-];
-// The figures arrive before each contact; the racquet face meets that shot's
-// ball position, with a preparation and follow-through on either side.
-const contacts=[shots.filter((s,i)=>i>=2&&s.p[2]>12&&s.p[1]>2),shots.filter(s=>s.p[2]<-12&&s.p[1]>2)];
-const aim=new T.Quaternion(),swing=new T.Quaternion(),rest=new T.Quaternion().setFromEuler(new T.Euler(-.18,.12,0)),up=new T.Vector3(0,1,0),reach=new T.Vector3(),toward=new T.Vector3();
-function posePlayer(p,hits,t){
-const home={t:-.8,p:[p.baseX+p.sign*.75,2.3,p.baseZ-p.sign*.75]},finish={...home,t:13.2};let previous=home,next=finish,nearest=hits[0];
-for(const hit of hits){if(hit.t<t)previous=hit;else if(next===finish)next=hit;if(Math.abs(t-hit.t)<Math.abs(t-nearest.t))nearest=hit;}
-const u=clamp((t-previous.t-.28)/Math.max(.1,next.t-previous.t-.53),0,1),ease=u*u*(3-2*u),moving=4*u*(1-u);
-p.g.position.set(lerp(previous.p[0],next.p[0],ease)-p.sign*.75,1.36,lerp(previous.p[2],next.p[2],ease)+p.sign*.75);
-for(let i=0;i<2;i++)p.legs[i].rotation.x=Math.sin(t*13+i*PI)*.27*moving;
-p.arm.quaternion.copy(rest);const phase=t-nearest.t,weight=1-T.MathUtils.smoothstep(Math.abs(phase),.28,.72);
-if(weight>0){toward.fromArray(nearest.p).sub(p.g.position).applyAxisAngle(up,-p.g.rotation.y).sub(p.arm.position);aim.setFromUnitVectors(reach.copy(p.reach).normalize(),toward.normalize());swing.setFromAxisAngle(up,clamp(phase/.42,-1,1)*.9);aim.premultiply(swing);p.arm.quaternion.slerp(aim,weight);}
-p.left.rotation.set(p===p1&&t<.93?-1.9*Math.sin(t/.93*PI):-.15,0,0);
+// A different rally plan is sampled from time, never from frame count.
+let rallyPlan=queensRally(0);
+const aim=new T.Quaternion(),swing=new T.Quaternion(),inverseUpper=new T.Quaternion(),rest=new T.Quaternion().setFromEuler(new T.Euler(-.18,.12,0)),up=new T.Vector3(0,1,0),reach=new T.Vector3(),toward=new T.Vector3(),offset=new T.Vector3();
+function posePlayer(p,t){
+const motion=queensFootwork(rallyPlan,p.id,t),hit=motion.nearest,phase=motion.phase,weight=1-T.MathUtils.smoothstep(Math.abs(phase),.23,.72);
+const serving=hit.serve&&Math.abs(phase)<1.35,load=serving?Math.sin(clamp((phase+1.2)/1.1,0,1)*PI):0,jump=serving?.15*Math.exp(-Math.pow(phase/.22,2)):0;
+const split=.04*Math.exp(-Math.pow((phase+.5)/.16,2)),crouch=.035+.085*load+split;
+p.g.position.y=1.36-crouch+jump;p.upper.rotation.set(-.07*Math.sin(phase*4)*weight,.54*Math.sin(clamp(phase/.50,-1,1)*PI/2)*weight,.025*Math.sin(motion.step)*motion.moving);
+const dy=motion.p[1]-(p.g.position.y+1.25),horizontal=Math.sqrt(Math.max(.02,p.reach.lengthSq()-dy*dy)),backhand=hit.stroke==='backhand',hand=motion.hand*.84;
+offset.set(p.arm.position.x+hand*horizontal,0,horizontal*Math.sqrt(1-hand*hand)).applyAxisAngle(up,p.g.rotation.y);
+p.g.position.x=motion.p[0]-offset.x;p.g.position.z=motion.p[2]-offset.z;
+for(const leg of p.legs){const step=Math.sin(motion.step+(leg.side>0?PI:0)),z=step*.17*motion.moving,lift=Math.max(0,Math.cos(motion.step+(leg.side>0?PI:0)))*.10*motion.moving,down=.63-(.115+crouch+lift),a=.27,b=.25;
+const knee=Math.acos(clamp((down*down+z*z-a*a-b*b)/(2*a*b),-.98,.999)),hip=Math.atan2(-z,down)-Math.atan2(b*Math.sin(knee),a+b*Math.cos(knee));leg.hip.rotation.x=hip;leg.knee.rotation.x=knee;leg.foot.rotation.x=-hip-knee;leg.hip.position.x=leg.side*(.15+split);}
+p.arm.quaternion.copy(rest);
+if(weight>0){toward.fromArray(hit.p).sub(p.g.position).applyAxisAngle(up,-p.g.rotation.y).sub(p.upper.position).applyQuaternion(inverseUpper.copy(p.upper.quaternion).invert()).sub(p.arm.position);aim.setFromUnitVectors(reach.copy(p.reach).normalize(),toward.normalize());swing.setFromAxisAngle(up,clamp(phase/.4,-1,1)*(backhand?-1:1)*1.02);aim.premultiply(swing);p.arm.quaternion.slerp(aim,weight);}
+p.left.rotation.set(serving?-2.6*Math.sin(clamp((t-.15)/1.5,0,1)*PI):backhand&&weight>.2?-.6*weight:-.17,0,backhand?-.38*weight:.1*weight);
+p.shadow.position.set(p.g.position.x,1.348,p.g.position.z);p.shadow.scale.set(1+jump,.70+jump,1);p.shadow.material.opacity=.21-jump*.4;
 }
-function resetPoint(){matchWon=false;matchStart=time;matchTime=0;lastShot=-1;celebrateAt=-100;confetti.visible=false;trailPositions.length=0;trails.forEach(m=>m.visible=false);posePlayer(p1,contacts[0],0);posePlayer(p2,contacts[1],0);}
-function updateMatch(dt){if(!playing){p1.g.position.y=1.36+(reduced?0:Math.sin(time*1.4)*.018);p2.g.position.y=1.36+(reduced?0:Math.sin(time*1.3+2)*.018);if(!matchWon)ball.position.set(p1.g.position.x+.45,1.75+Math.abs(Math.sin(time*2))*.25,p1.g.position.z-.5);return;}
+function resetPoint(overflow=0){rallyPlan=queensRally(Math.max(0,rally-1));matchWon=false;matchStart=time-overflow;matchTime=overflow;betweenRallies=false;celebrateAt=-100;confetti.visible=false;trails.forEach(m=>m.visible=false);posePlayer(p1,overflow);posePlayer(p2,overflow);ball.position.fromArray(queensBall(rallyPlan,overflow));ball.visible=true;bounceMark.visible=false;}
+function updateMatch(dt){
+if(!playing){if(!matchWon){posePlayer(p1,0);posePlayer(p2,0);ball.position.fromArray(queensBall(rallyPlan,0));ball.visible=true;}return;}
+if(dt===0)return;
 matchTime=time-matchStart;let t=matchTime;
-if(watching&&t>13.6){rally++;resetPoint();t=0;drawScore('rally',rally);}
-let idx=0;for(let i=0;i<shots.length-1;i++)if(t>=shots[i].t)idx=i;idx=Math.min(idx,shots.length-2);const a=shots[idx],b=shots[idx+1],u=clamp((t-a.t)/(b.t-a.t),0,1);ball.position.set(lerp(a.p[0],b.p[0],u),lerp(a.p[1],b.p[1],u)+((b.t-a.t)>.7?Math.sin(u*PI)*1.65:Math.sin(u*PI)*.1),lerp(a.p[2],b.p[2],u));
-if(idx!==lastShot)lastShot=idx;posePlayer(p1,contacts[0],t);posePlayer(p2,contacts[1],t);
-if(t>11.1&&!matchWon&&!betweenRallies){if(watching){betweenRallies=true;drawScore('ready',rally);}else{matchWon=true;celebrateAt=time;confetti.visible=true;drawScore('win');}}
-if(t<1)betweenRallies=false;
-if(matchWon){p1.arm.rotation.set(0,0,-2.5);p1.left.rotation.set(0,0,2.5);p1.g.position.y=1.36+Math.abs(Math.sin(t*5))*.25;trails.forEach(m=>m.visible=false);}
-if(!watching&&t>17.2){playing=false;for(const p of[p1,p2]){p.arm.rotation.set(0,0,0);p.left.rotation.set(0,0,0);p.legs.forEach(l=>l.rotation.x=0);}}
+while(watching&&t>=rallyPlan.duration){const overflow=t-rallyPlan.duration;rally++;resetPoint(overflow);t=overflow;drawScore('rally',rally);}
+ball.position.fromArray(queensBall(rallyPlan,t));ball.visible=t<rallyPlan.end+.5;
+posePlayer(p1,t);posePlayer(p2,t);
+const bounce=rallyPlan.bounces.find(b=>t>=b.t&&t-b.t<.28);bounceMark.visible=!!bounce;
+if(bounce){const age=(t-bounce.t)/.28;bounceMark.position.set(bounce.p[0],1.35,bounce.p[2]);bounceMark.scale.setScalar(1+age*2);bounceMark.material.opacity=(1-age)*.42;}
+trails.forEach((m,i)=>{m.visible=!reduced&&t>1.65&&t<rallyPlan.end;m.position.fromArray(queensBall(rallyPlan,Math.max(0,t-(i+1)*.012)));});
+if(t>rallyPlan.end&&!matchWon&&!betweenRallies){if(watching){betweenRallies=true;drawScore('ready',rally);}else{matchWon=true;celebrateAt=time;confetti.visible=true;drawScore('win');}}
+if(matchWon){const winner=rallyPlan.contacts.at(-1).player?p2:p1;winner.arm.rotation.set(0,0,-2.5);winner.left.rotation.set(0,0,2.5);winner.g.position.y=1.36+Math.abs(Math.sin(t*5))*.16;}
+if(!watching&&t>rallyPlan.end+6.1){playing=false;for(const p of[p1,p2]){p.arm.rotation.set(0,0,0);p.left.rotation.set(0,0,0);}bounceMark.visible=false;}
 }
 
 let time=0,night=0,roofLift=0,roofTarget=0,lastRoofVisible=true;
-let playing=false,watching=false,rally=0,betweenRallies=false,matchStart=0,matchWon=false,celebrateAt=-100,matchTime=0,lastShot=-1;
+let playing=false,watching=false,rally=0,betweenRallies=false,matchStart=0,matchWon=false,celebrateAt=-100,matchTime=0;
 function tick(dt,n,paused){
 const delta=paused?0:dt;time+=delta;night=n;trainsRunning=!paused;
 const ease=1-Math.exp(-dt*5.5);updateRailway(delta,time);
@@ -439,7 +447,7 @@ for(const g of glows)g.m.material.opacity=g.opacity*night*(g.m.parent===roof?opa
 for(const m of pools)m.material.opacity=night;dust.material.opacity=.25*night;
 dt=delta;
 if(!reduced){for(let f of flags){let a=f.g.attributes.position.array;for(let i=0;i<a.length;i+=3){let x=f.original[i];a[i+2]=Math.sin(x*2.1-time*2.5+f.phase)*.18*(x/2.8)+Math.sin(x*4.3-time*3)*.04*(x/2.8);a[i+1]=f.original[i+1]-.1*(x/2.8)+Math.sin(x*2-time*1.8)*.035*x;}f.g.attributes.position.needsUpdate=true;f.g.computeVertexNormals();}for(let i=0;i<dustN;i++){dustPos[i*3]+=.012*dt*Math.sin(time+i);dustPos[i*3+1]+=.015*dt;if(dustPos[i*3+1]>34)dustPos[i*3+1]=3}dustG.attributes.position.needsUpdate=true;}
-updateMatch(dt);ballShadow.position.set(ball.position.x,1.347,ball.position.z);ballShadow.material.opacity=clamp(.4-(ball.position.y-1.4)*.075,.07,.38);if(dt>0){trailPositions.unshift(ball.position.clone());if(trailPositions.length>35)trailPositions.pop();if(playing&&!matchWon&&!betweenRallies)trails.forEach((m,i)=>{m.visible=true;m.position.copy(trailPositions[Math.min(i*2+2,trailPositions.length-1)]);});else trails.forEach(m=>m.visible=false);}
+updateMatch(dt);ballShadow.visible=ball.visible;ballShadow.position.set(ball.position.x,1.347,ball.position.z);ballShadow.material.opacity=clamp(.4-(ball.position.y-1.4)*.075,.07,.38);
 const ct=time-celebrateAt;if(ct<11&&confetti.visible){for(let i=0;i<confettiCount;i++){let a=confettiData[i],age=Math.max(0,ct-(i%7)*.09);const y=a.y+a.vy*(1-Math.exp(-age*.5))*2-age*2.5;dummy.position.set(a.x+a.vx*age+Math.sin(age*2+a.spin)*.5,Math.max(1.43,y),a.z+a.vz*age);dummy.rotation.set(a.spin+age*2.1,a.spin+age*1.2,age*1.7);dummy.scale.setScalar(a.s);dummy.updateMatrix();confetti.setMatrixAt(i,dummy.matrix);}confetti.instanceMatrix.needsUpdate=true;}else confetti.visible=false;
 
 }
@@ -447,8 +455,9 @@ tick(0,0,false);await step('Lighting the little world…');
 const indexed=new Set();scene.traverse(node=>{if(node.isMesh&&!node.userData.queensAnimated&&!indexed.has(node.geometry)){indexed.add(node.geometry);indexQueensGeometry(T,node.geometry);}});
 return {trains,seven,local,stationStop,seats,spectators,roof,tick,
  setRoof:open=>{roofTarget=open?1:0;},
- setWatching(on){if(watching===on)return;watching=on;playing=on;resetPoint();betweenRallies=false;rally=on?1:0;if(on)roofTarget=0;drawScore(on?'rally':'point',rally);},
+ setScore(score){matchScore=score;drawScore();},
+ setWatching(on){if(watching===on)return;watching=on;playing=on;rally=on?1:0;resetPoint();if(on)roofTarget=0;drawScore(on?'rally':'point',rally);},
  play(){if(playing&&!watching)return;watching=false;playing=true;rally=0;betweenRallies=false;resetPoint();drawScore('rally');roofTarget=1;},
- stats:()=>({seats,spectators,playing,watching,rally,matchTime,matchWon,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
+ stats:()=>({seats,spectators,playing,watching,rally,matchTime,matchWon,pointEnds:rallyPlan.end,pointDuration:rallyPlan.duration,server:rallyPlan.server,score:matchScore,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
 };
 }

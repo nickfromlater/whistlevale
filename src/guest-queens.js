@@ -76,10 +76,11 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
  renderer.setClearColor(0,0);renderer.autoClear=false;renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.info.autoReset=false;
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(),started=performance.now();
- let disposed=false,depth=null,model=null,tools=null,matchPause=null;
+ let disposed=false,depth=null,model=null,tools=null,matchPause=null,scores=null;
+ const scoreVisibility=()=>{if(document.hidden)scores?.suspend();};
  const data=embeddedStage().dataset;
  const dispose=()=>{
-  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);tools?.remove();matchPause?.remove();embeddedStage().querySelector('#embedCredit').classList.remove('queens-compact-controls');
+  if(disposed)return;disposed=true;signal.removeEventListener('abort',dispose);document.removeEventListener('visibilitychange',scoreVisibility);scores?.dispose();tools?.remove();matchPause?.remove();embeddedStage().querySelector('#embedCredit').classList.remove('queens-compact-controls');
   queensDisposeScene(scene);if(depth)queensDisposeScene(depth.scene);
   renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();
   data.context=renderer.getContext().isContextLost()?'released':'release-requested';
@@ -127,9 +128,14 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
   roof.onclick=()=>{const open=model.stats().roofTarget<.5;model.setRoof(open);roof.setAttribute('aria-pressed',String(open));roof.textContent=open?'Replace roof':'Lift stadium roof';};
   const play=document.createElement('button');play.id='queensPoint';play.textContent='Play final point';
   play.onclick=()=>{if(embeddedActive?.paused)document.getElementById('embedPause').click();if(paused)togglePause();model.play();setView('overview',false);Object.assign(orbit,{target:queensWorld([-25,3,-16]),distance:innerWidth<700?31:28,pitch:1.03,yaw:.10});};
-  const note=document.createElement('p');note.className='queens-point-note';note.textContent='A miniature final, imagined for this little world.';
+  const note=document.createElement('p');note.className='queens-point-note';
+  const scoreStatus=document.createElement('span');scoreStatus.id='queensScoreStatus';scoreStatus.setAttribute('role','status');scoreStatus.setAttribute('aria-live','polite');
+  const source=document.createElement('a');source.href=QUEENS_FINAL.source;source.target='_blank';source.rel='noopener noreferrer';source.textContent='Match scores: ESPN';
+  note.append(scoreStatus,document.createElement('br'),source,document.createElement('br'),'Court animation is an imagined exhibition.');
   const dock=embeddedStage().querySelector('#embedCredit');
   actions.append(roof,play);controls.append(seatAction,dock.querySelector('.embed-actions'),actions,note);tools.append(heading,controls);dock.classList.add('queens-compact-controls');dock.append(tools);
+  scores=createQueensScoreFeed({signal,onChange:score=>{model.setScore(score);scoreStatus.textContent='Zverev · Shelton. '+score.headline+'. '+score.footer+'.';scoreStatus.setAttribute('aria-label',score.summary);canvas.setAttribute('aria-label','Arthur Ashe miniature. '+score.summary);data.scoreState=score.connection;data.matchState=score.state;}});
+  document.addEventListener('visibilitychange',scoreVisibility);
   let last=0,width=0,height=0,lastNight=-1,lastShadow=-Infinity,reportAt=0,frames=0,cpu=0,wasPlaying=false,wasSeated=false,lastPaused=null;
   return {dispose,views,cinemaView,train,readTrainPose,inspect:()=>model.stats(),frame(state){
    if(disposed)return;const start=performance.now();
@@ -139,7 +145,7 @@ async function createQueensMiniature({project,signal,host,mount,progress}){
    const seated=hobby.cinema&&hobby.shot==='drift';
    if(seated!==wasSeated){wasSeated=seated;model.setWatching(seated);matchPause.hidden=!seated;}
    if(state.paused!==lastPaused){lastPaused=state.paused;const label=state.paused?'Resume match':'Pause match';matchPause.innerHTML=icon(state.paused?'play':'pause')+'<span>'+label+'</span>';matchPause.setAttribute('aria-label',label);matchPause.setAttribute('aria-pressed',String(state.paused));}
-   model.tick(dt,state.night,state.paused);readTrainPose();
+   scores.tick();model.tick(dt,state.night,state.paused);readTrainPose();
    if(Math.abs(state.night-lastNight)>.04&&state.now-lastShadow>180){renderer.shadowMap.needsUpdate=true;lastNight=state.night;lastShadow=state.now;}
    const status=model.stats();if(status.playing!==wasPlaying){wasPlaying=status.playing;play.disabled=wasPlaying;play.textContent=wasPlaying?'The final point…':status.matchWon?'Replay final point':'Play final point';}
    if(roof.getAttribute('aria-pressed')!==String(status.roofTarget>.5)){roof.setAttribute('aria-pressed',String(status.roofTarget>.5));roof.textContent=status.roofTarget>.5?'Replace roof':'Lift stadium roof';}

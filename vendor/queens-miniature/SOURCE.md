@@ -15,8 +15,8 @@ by the room. Its SHA-256 is:
 ```
 
 `model.js` is the explicit host adaptation. The builders, original deterministic
-seed, textures, seat counts, neighbourhood, routes, stock and ball trajectory
-are retained. Presentation changes:
+seed, textures, seat counts, neighbourhood, routes and stock are retained.
+The original fixed ball path is replaced by explicit exhibition choreography. Presentation changes:
 
 - An asynchronous factory yields between eight actual construction stages.
 - The house owns camera, rendering cadence, input, lighting state and audio.
@@ -47,9 +47,17 @@ are retained. Presentation changes:
   club-level view on portrait screens and a court anchor for manual framing.
 - Enlarged both physical scoreboards and their type. Added more detailed
   articulated players, caps, wristbands, shoes and racquets; their footwork and
-  swings now meet each ball contact. A repeating exhibition counts rallies on
-  the board and runs only while the visitor watches from the Stadium seat view.
-  Pause, scheduling and audio remain owned by the house.
+  swings meet each ball contact. Exhibition play runs while the visitor watches
+  from the Stadium seat view. Pause, scheduling and audio remain house-owned.
+- `tennis.js` now supplies twelve varied rallies with alternating servers,
+  tosses, ballistic flight and elastic bounces. Jointed knees, planted shots,
+  recovery steps, torso turns, moving contact shadows, smaller time-sampled
+  trails and landing marks refine the original figures.
+- The host supplies the real 13 September 2026 men's final from ESPN through
+  `src/queens-scores.js`. Five set columns, tiebreaks, available game points and
+  final winner replace the imagined score. Source, freshness, offline status and
+  the distinction between real scores and exhibition motion remain visible.
+  No networking, timers or listeners are added to the guest model.
 
 `three.module.min.js` is the unchanged ES-module build of **Three.js 0.160.1**,
 from `https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.min.js`.
@@ -60,6 +68,12 @@ SHA-256:
 ```
 
 The miniature and its adaptation use `LICENSE`; Three.js retains `THREE-LICENSE`.
-No font binaries, photographs, live match feeds, credentials or audio recordings
-are included. Stadium signage identifies the subject; this is an independent
+No font binaries, photographs, credentials or audio recordings are included.
+Score data is fetched at runtime from ESPN's public ATP scoreboard endpoint,
+[dated 13 September 2026](https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=20260913),
+selecting US Open event `189-2026`, men's final `182677`. The
+[official match preview](https://www.usopen.org/en_US/news/articles/2026-09-12/2026_us_open_mens_final_breakdown.html)
+also identifies Zverev and Shelton. The scheduled test fixture is a minimal
+excerpt of the public feed observed before play; synthetic live/final test cases
+are labelled as fixtures and are never shipped as match results. Stadium signage identifies the subject; this is an independent
 modelmaking interpretation, not an official US Open product.
