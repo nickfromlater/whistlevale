@@ -119,8 +119,14 @@ counts, closed rail curves, station stopping, pause, roof and match choreography
 and pinned source identity. Score-feed QA covers the observed
 scheduled fixture, controlled live/final/tiebreak cases, wrong-match rejection,
 refresh cadence, stale/offline handling, suspension and disposal.
-Guest geometry is 41.07 MiB under its 55 MiB budget;
-the native room remains 192,087 vertices including all walls.
+Guest geometry is 33.45 MiB under its unchanged 55 MiB budget (previously
+41.07 MiB). Identical static geometry shares storage, with exact byte comparisons
+after hashing; animated cloth keeps independent buffers. Construction writes
+directly into sized typed arrays instead of expanding temporary JavaScript
+arrays. Rigid player details batch within each joint, retaining articulated
+motion and every triangle. The complete scene uses 603 renderable objects,
+down from 681, with unchanged seats, audience, textures and lighting quality.
+The native room remains 192,087 vertices including all walls.
 
 Browser screenshots, export files and measured reports belong in ignored
 `evidence/queens-live-match/`. A resized Chromium viewport is not a physical

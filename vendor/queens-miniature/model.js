@@ -2,6 +2,7 @@
  * Adapted from original-model.js for house-owned rendering. MIT licensed.
  * No camera, input listeners, audio, timers, network or animation loop. */
 import {queensRally,queensBall,queensFootwork} from './tennis.js';
+import {shareQueensGeometry} from './render-storage.js';
 export function indexQueensGeometry(T,geometry){
 if(geometry.index)return geometry;
 const attributes=Object.values(geometry.attributes),count=geometry.attributes.position.count;
@@ -210,20 +211,21 @@ flag(-17,45.5,true);flag(17,45.5,false);flag(-41,-32,true);flag(41,-32,false);
 // Flush all repeated parts to GPU instance batches.
 for(let [key,b] of batches){const inst=new T.InstancedMesh(b.geo,b.material,b.arr.length);for(let i=0;i<b.arr.length;i++){const a=b.arr[i];dummy.position.set(...a.pos);dummy.scale.set(...a.scale);dummy.rotation.set(...a.rot);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);if(a.color)inst.setColorAt(i,tmpColor.set(a.color));}inst.castShadow=!key.includes('people')&&!key.includes('seat')&&!key.includes('flock')&&!key.includes('head')&&!key.includes('step');inst.receiveShadow=true;inst.instanceMatrix.needsUpdate=true;if(inst.instanceColor)inst.instanceColor.needsUpdate=true;world.add(inst);}
 // Consolidate static hand-built parts into material batches for fluid mobile orbiting.
-function consolidate(root,skip){root.updateMatrixWorld(true);const groups=new Map(),inv=new T.Matrix4().copy(root.matrixWorld).invert(),nm=new T.Matrix3(),v=new T.Vector3();
-function walk(obj){if(obj===skip||obj.userData.queensAnimated)return;if(obj.isMesh&&!obj.isInstancedMesh&&obj.geometry&&obj.geometry.attributes.position&&!Array.isArray(obj.material)){const key=obj.material.uuid+':'+obj.castShadow+':'+obj.receiveShadow;if(!groups.has(key))groups.set(key,{material:obj.material,cast:obj.castShadow,receive:obj.receiveShadow,items:[]});groups.get(key).items.push(obj);}for(let child of obj.children)walk(child)}walk(root);
-for(let g of groups.values()){if(g.items.length<2)continue;const positions=[],normals=[],uvs=[];for(let obj of g.items){const geo=obj.geometry.index?obj.geometry.toNonIndexed():obj.geometry,p=geo.attributes.position,n=geo.attributes.normal,uv=geo.attributes.uv,mx=new T.Matrix4().multiplyMatrices(inv,obj.matrixWorld);nm.getNormalMatrix(mx);for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(mx);positions.push(v.x,v.y,v.z);if(n)v.fromBufferAttribute(n,i).applyMatrix3(nm).normalize();else v.set(0,1,0);normals.push(v.x,v.y,v.z);uvs.push(uv?uv.getX(i):0,uv?uv.getY(i):0)}obj.removeFromParent();if(obj.geometry.index)geo.dispose();obj.geometry.dispose();}
-const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));geo.computeBoundingSphere();const m=new T.Mesh(geo,g.material);m.castShadow=g.cast;m.receiveShadow=g.receive;root.add(m);}
+function consolidate(root,skip,shallow=false){root.updateMatrixWorld(true);const groups=new Map(),inv=new T.Matrix4().copy(root.matrixWorld).invert(),nm=new T.Matrix3(),v=new T.Vector3();
+function walk(obj){if(obj===skip||obj.userData.queensAnimated&&!(shallow&&obj===root))return;if(obj.isMesh&&!obj.isInstancedMesh&&obj.geometry&&obj.geometry.attributes.position&&!Array.isArray(obj.material)){const key=obj.material.uuid+':'+obj.castShadow+':'+obj.receiveShadow;if(!groups.has(key))groups.set(key,{material:obj.material,cast:obj.castShadow,receive:obj.receiveShadow,items:[]});groups.get(key).items.push(obj);}if(!shallow||obj===root)for(let child of obj.children)walk(child)}walk(root);
+for(let g of groups.values()){if(g.items.length<2)continue;const count=g.items.reduce((n,o)=>n+(o.geometry.index?.count??o.geometry.attributes.position.count),0),positions=new Float32Array(count*3),normals=new Float32Array(count*3),uvs=new Float32Array(count*2);let corner=0;
+for(let obj of g.items){const geo=obj.geometry,p=geo.attributes.position,n=geo.attributes.normal,uv=geo.attributes.uv,index=geo.index,mx=new T.Matrix4().multiplyMatrices(inv,obj.matrixWorld);nm.getNormalMatrix(mx);for(let j=0;j<(index?.count??p.count);j++,corner++){const i=index?index.getX(j):j,k=corner*3;v.fromBufferAttribute(p,i).applyMatrix4(mx);positions[k]=v.x;positions[k+1]=v.y;positions[k+2]=v.z;if(n)v.fromBufferAttribute(n,i).applyMatrix3(nm).normalize();else v.set(0,1,0);normals[k]=v.x;normals[k+1]=v.y;normals[k+2]=v.z;uvs[corner*2]=uv?uv.getX(i):0;uvs[corner*2+1]=uv?uv.getY(i):0;}obj.removeFromParent();geo.dispose();}
+const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setAttribute('normal',new T.BufferAttribute(normals,3));geo.setAttribute('uv',new T.BufferAttribute(uvs,2));geo.computeBoundingSphere();const m=new T.Mesh(geo,g.material);m.castShadow=g.cast;m.receiveShadow=g.receive;root.add(m);}
 }
 consolidate(world,roof);consolidate(roof,null);
-function consolidateWires(root,skip){
+function consolidateWires(root,skip,shallow=false){
 root.updateMatrixWorld(true);const groups=new Map(),inverse=new T.Matrix4().copy(root.matrixWorld).invert(),point=new T.Vector3();
-function collect(obj){if(obj===skip||obj.userData.queensAnimated)return;if(obj.isLine&&!obj.isLineLoop&&obj.geometry?.attributes.position){const m=obj.material,key=[m.color.getHex(),m.opacity,m.transparent,m.depthWrite,m.blending].join(':');if(!groups.has(key))groups.set(key,{material:m,items:[]});groups.get(key).items.push(obj);}for(const child of obj.children)collect(child);}collect(root);
-for(const group of groups.values()){if(group.items.length<2)continue;const points=[];
+function collect(obj){if(obj===skip||obj.userData.queensAnimated&&!(shallow&&obj===root))return;if(obj.isLine&&!obj.isLineLoop&&obj.geometry?.attributes.position){const m=obj.material,key=[m.color.getHex(),m.opacity,m.transparent,m.depthWrite,m.blending].join(':');if(!groups.has(key))groups.set(key,{material:m,items:[]});groups.get(key).items.push(obj);}if(!shallow||obj===root)for(const child of obj.children)collect(child);}collect(root);
+for(const group of groups.values()){if(group.items.length<2)continue;const count=group.items.reduce((n,o)=>{const c=o.geometry.index?.count??o.geometry.attributes.position.count;return n+(o.isLineSegments?Math.floor(c/2):Math.max(0,c-1))*2;},0),points=new Float32Array(count*3);let at=0;
 for(const obj of group.items){const a=obj.geometry.attributes.position,index=obj.geometry.index,count=index?index.count:a.count,matrix=new T.Matrix4().multiplyMatrices(inverse,obj.matrixWorld),stride=obj.isLineSegments?2:1;
-for(let i=0;i<count-1;i+=stride)for(const j of[i,i+1]){point.fromBufferAttribute(a,index?index.getX(j):j).applyMatrix4(matrix);points.push(point.x,point.y,point.z);}
+for(let i=0;i<count-1;i+=stride)for(let j=i;j<=i+1;j++){point.fromBufferAttribute(a,index?index.getX(j):j).applyMatrix4(matrix);points[at++]=point.x;points[at++]=point.y;points[at++]=point.z;}
 obj.removeFromParent();obj.geometry.dispose();if(obj.material!==group.material)obj.material.dispose();}
-const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(points,3));root.add(new T.LineSegments(geometry,group.material));}
+const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(points,3));root.add(new T.LineSegments(geometry,group.material));}
 }
 consolidateWires(world,roof);consolidateWires(roof);
 
@@ -244,6 +246,8 @@ for(const a of[arm,left]){g.remove(a);a.position.y-=.78;upper.add(a);}
 // Moving contact shadows replace the frozen silhouettes in the cached sun map.
 g.traverse(o=>{if(o.isMesh)o.castShadow=false;});
 const shadow=mesh(new T.CircleGeometry(.46,20),new T.MeshBasicMaterial({color:'#102d41',transparent:true,opacity:.20,depthWrite:false}),x,1.348,z,stadium);shadow.rotation.x=-PI/2;shadow.castShadow=false;
+// Merge only rigid siblings. Every articulated joint and racquet anchor stays live.
+const joints=[];g.traverse(o=>{if(o.isGroup)joints.push(o);});for(const joint of joints){consolidate(joint,null,true);consolidateWires(joint,null,true);}
 racket.updateMatrix();const reach=new T.Vector3(0,0,.49).applyMatrix4(racket.matrix);return {g,upper,arm,left,legs,torso,racket,reach,shadow,baseX:x,baseZ:z,sign:z>0?1:-1,id:number==='01'?0:1};
 }
 const p1=player('01','#eaa065','#d6a07d',-2.55,13.20,PI),p2=player('02','#77c7c3','#9d7157',-2.35,-13.15,0);
@@ -453,11 +457,15 @@ const ct=time-celebrateAt;if(ct<11&&confetti.visible){for(let i=0;i<confettiCoun
 }
 tick(0,0,false);await step('Lighting the little world…');
 const indexed=new Set();scene.traverse(node=>{if(node.isMesh&&!node.userData.queensAnimated&&!indexed.has(node.geometry)){indexed.add(node.geometry);indexQueensGeometry(T,node.geometry);}});
+const storage=shareQueensGeometry(scene);
+// These construction collections share the factory's closure with tick().
+// Empty them so they cannot retain replaced buffers or instance descriptions.
+indexed.clear();batches.clear();textureCanvases.length=0;
 return {trains,seven,local,stationStop,seats,spectators,roof,tick,
  setRoof:open=>{roofTarget=open?1:0;},
  setScore(score){matchScore=score;drawScore();},
  setWatching(on){if(watching===on)return;watching=on;playing=on;rally=on?1:0;resetPoint();if(on)roofTarget=0;drawScore(on?'rally':'point',rally);},
  play(){if(playing&&!watching)return;watching=false;playing=true;rally=0;betweenRallies=false;resetPoint();drawScore('rally');roofTarget=1;},
- stats:()=>({seats,spectators,playing,watching,rally,matchTime,matchWon,pointEnds:rallyPlan.end,pointDuration:rallyPlan.duration,server:rallyPlan.server,score:matchScore,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
+ stats:()=>({seats,spectators,storage,playing,watching,rally,matchTime,matchWon,pointEnds:rallyPlan.end,pointDuration:rallyPlan.duration,server:rallyPlan.server,score:matchScore,roofLift,roofTarget,night,stationStop,trains:trains.map(t=>({position:t.u,cars:t.cars.length,hold:t.hold}))})
 };
 }

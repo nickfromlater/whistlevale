@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import * as THREE from '../vendor/queens-miniature/three.module.min.js';
 import {buildQueens,indexQueensGeometry} from '../vendor/queens-miniature/model.js';
+import {shareQueensGeometry} from '../vendor/queens-miniature/render-storage.js';
 import {queensRally,queensBall} from '../vendor/queens-miniature/tennis.js';
 import {communityContext,loadContributionDefinitions,prepareCommunityGeometry,read} from './community-lib.mjs';
 
@@ -64,6 +65,20 @@ ray.far=Infinity;
 const arrays=new Set();let instances=0,meshes=0;
 scene.traverse(o=>{if(!o.geometry)return;meshes++;for(const attr of Object.values(o.geometry.attributes)){arrays.add(attr.array);assert.ok(attr.array.every(Number.isFinite),'finite vertex attributes');}if(o.geometry.index)arrays.add(o.geometry.index.array);if(o.instanceMatrix){arrays.add(o.instanceMatrix.array);instances+=o.count;}if(o.instanceColor)arrays.add(o.instanceColor.array);});
 const bytes=[...arrays].reduce((n,a)=>n+a.byteLength,0);console.log('Model geometry MiB:',bytes/1024/1024);assert.ok(bytes<55*1024*1024,'model GPU geometry stays below 55 MiB');
+// Sharing changes storage alone: exact bytes, layout and draw range must agree.
+// Mutable cloth and particles must retain their own independent buffers.
+const storageScene=new THREE.Scene(),baseGeometry=new THREE.BoxGeometry(1,2,3),copies=[];
+for(let i=0;i<6;i++){const mesh=new THREE.Mesh(baseGeometry.clone(),new THREE.MeshBasicMaterial());copies.push(mesh);storageScene.add(mesh);}
+copies[2].userData.queensAnimated=true;
+copies[3].geometry.attributes.position.array[0]+=.000001;
+copies[4].geometry.setDrawRange(0,3);
+copies[5].geometry.attributes.normal.normalized=true;
+const savedStorage=copies.map(o=>o.geometry),storage=shareQueensGeometry(storageScene);
+assert.equal(storage.shared,1);assert.ok(storage.bytesSaved>0);assert.equal(copies[0].geometry,copies[1].geometry);
+for(let i=2;i<copies.length;i++)assert.equal(copies[i].geometry,savedStorage[i],'different or mutable geometry is never shared');
+copies[2].geometry.attributes.position.array[0]=123;
+assert.notEqual(copies[0].geometry.attributes.position.array[0],123,'cloth updates cannot modify a shared static mesh');
+assert.equal(shareQueensGeometry(storageScene).shared,0,'repeated sharing does not dispose a live canonical buffer');
 // Indexing preserves every Float32 attribute at every original triangle corner.
 const sample=new THREE.BoxGeometry(3,5,7,2,2,2).toNonIndexed(),saved=Object.fromEntries(Object.entries(sample.attributes).map(([key,a])=>[key,a.array.slice()]));indexQueensGeometry(THREE,sample);assert.ok(sample.index);
 for(const [name,a]of Object.entries(sample.attributes))for(let i=0;i<sample.index.count;i++)for(let k=0;k<a.itemSize;k++)assert.ok(Object.is(a.array[sample.index.getX(i)*a.itemSize+k],saved[name][i*a.itemSize+k]),'indexing preserves exact triangle attributes');

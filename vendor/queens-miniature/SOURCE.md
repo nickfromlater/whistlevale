@@ -31,6 +31,12 @@ The original fixed ball path is replaced by explicit exhibition choreography. Pr
   retaining every original segment while reducing draw calls.
 - Exact vertex indexing preserves all Float32 positions, normals and UVs while
   reducing GPU geometry memory. No seat, person, triangle or texture is removed.
+- The reviewed `render-storage.js` adapter shares byte-identical static geometry
+  after a collision-checked comparison, leaving animated cloth independent.
+  Static consolidation writes directly to typed buffers without temporary
+  non-indexed copies. Rigid player details combine only within individual joints;
+  joint transforms and racquet contact anchors remain separate and animated.
+  These are explicit host optimizations; the original snapshot remains unchanged.
 - Guest shadows are limited to 2048 pixels, or 1536 on narrow viewports. A
   separate native depth pass preserves room and furniture occlusion.
 - The roof and imagined final point are driven through an explicit model API.
