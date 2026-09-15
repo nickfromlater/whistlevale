@@ -1,0 +1,96 @@
+diff --git a/index.html b/index.html
+index a9078a5..4ec9ec7 100644
+--- a/index.html
++++ b/index.html
+@@ -140,7 +140,9 @@
+ <script src="src/grandhall-exhibits.js"></script>
+ <script src="src/grandhall-contribute.js"></script>
+ <script src="src/rooms/grandhall.js"></script>
++<script src="src/rooms/safari.js"></script>
+ <script src="src/trains.js"></script>
++<script src="src/trains/safari.js"></script>
+ <script src="src/trains/acela.js"></script>
+ <script src="src/soundscape.js"></script>
+ <script src="src/playlist.js"></script>
+diff --git a/package.json b/package.json
+index 8e3fe6a..493a22b 100644
+--- a/package.json
++++ b/package.json
+@@ -27,12 +27,13 @@
+     "contribute": "node scripts/contribute.mjs",
+     "check:contributions": "node scripts/community-check.mjs",
+     "test:contributions": "node scripts/community-qa.mjs && node scripts/community-scene-qa.mjs && node scripts/meridian-commons-qa.mjs",
+-    "test": "npm run check && npm run test:analytics && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:glazing && npm run test:memory && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:guests && npm run test:hall && npm run test:moonlight && npm run test:map && npm run test:cinema && npm run test:trains && npm run test:hudson && npm run test:queens && npm run build",
++    "test": "npm run check && npm run test:analytics && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:glazing && npm run test:memory && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:guests && npm run test:hall && npm run test:moonlight && npm run test:map && npm run test:cinema && npm run test:trains && npm run test:hudson && npm run test:queens && npm run test:safari && npm run build",
+     "bay": "node scripts/bay.mjs",
+     "grandhall:align": "node scripts/grandhall-align.mjs",
+     "test:moonlight": "node scripts/moonlight-model-qa.mjs && node scripts/moonlight-valley-qa.mjs && node scripts/moonlight-media-qa.mjs && node scripts/moonlight-click-qa.mjs",
+     "test:hall": "node scripts/grandhall-qa.mjs && node scripts/hall-scene-qa.mjs && node scripts/hall-glass-qa.mjs && node scripts/hall-residency-qa.mjs && node scripts/hall-navigation-qa.mjs && node scripts/meridian-observatory-qa.mjs && node scripts/meridian-celestial-qa.mjs && node scripts/night-post-qa.mjs && node scripts/codex-reset-qa.mjs",
+-    "test:queens": "node scripts/queens-scores-qa.mjs && node scripts/queens-qa.mjs"
++    "test:queens": "node scripts/queens-scores-qa.mjs && node scripts/queens-qa.mjs",
++    "test:safari": "node scripts/safari-qa.mjs"
+   },
+   "license": "MIT",
+   "engines": {
+diff --git a/src/hobby.js b/src/hobby.js
+index 4de60fe..ca887b4 100644
+--- a/src/hobby.js
++++ b/src/hobby.js
+@@ -320,6 +320,7 @@ updateUI=function(){
+  if(typeof isShopMapActive==='function'&&isShopMapActive())return;
+  baseHobbyUI();if(!hobby.ready)return;
+  const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name.replace(/^The /,'');$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Switch room. Current room: '+room.name);
++ const collectionButton=$('trainCollectionButton');if(collectionButton)collectionButton.hidden=room.trainCollection===false;
+  const electric=typeof collectionPower==='function'?collectionPower(hobby.room)!=='steam':/electric|railcar/i.test(stock.type||'');
+  $('cabMark').textContent=(electric?'IN THE CAB · ':'ON THE FOOTPLATE · ')+stock.name.toUpperCase()+(stock.number?' No. '+stock.number:'');$('cabMark').classList.toggle('show',viewMode==='cab');
+  const engineTitle=document.querySelector('.engine-title'),label=JSON.stringify([stock.number,stock.name]);
+diff --git a/src/train-cabinet.js b/src/train-cabinet.js
+index 44835f7..531c8ae 100644
+--- a/src/train-cabinet.js
++++ b/src/train-cabinet.js
+@@ -172,7 +172,7 @@ function prepareCabinetPreview(){
+  }));
+ }
+ function openTrainCabinet(opener=$('trainCollectionButton')){
+- if(!hobbyHasTrain())return;
++ if(!hobbyHasTrain()||HOUSE_ROOMS[hobby.room]?.trainCollection===false)return;
+  if(!hobby.ready||hobby.transition||building||shopMap.open||trainCabinet.open)return;
+  trainCabinet.room=hobby.room;trainCabinet.opener=opener;trainCabinet.draft={...collectionChoice(hobby.room)};trainCabinet.filter='all';trainCabinet.full=false;trainCabinet.lift=false;trainCabinet.moving=false;
+  closeQuietControls();$('cabinetStatus').textContent='';trainCabinet.open=true;document.body.classList.add('train-cabinet-open');
+diff --git a/src/trains.js b/src/trains.js
+index e6d699f..9360381 100644
+--- a/src/trains.js
++++ b/src/trains.js
+@@ -391,7 +391,7 @@ function collectionDefault(room){
+  const q=collectionById.get(id);return {id,livery:id==='nightingale'?Math.max(0,['green','blue','claret'].indexOf(livery)):0,cars:room==='valley'?Math.min(6,offsets.length-2):Math.max(1,Math.min(6,stock?.cars??q.cars))};
+ }
+ function collectionChoice(room){return selectedCollection[room]||collectionDefault(room);}
+-function collectionTrainLabel(room){const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
++function collectionTrainLabel(room){if(HOUSE_ROOMS[room]?.trainCollection===false)return {...HOUSE_ROOMS[room].train};const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
+ function collectionPower(room){
+  if(HOUSE_ROOMS[room]?.railway===false)return null;
+  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
+@@ -410,12 +410,13 @@ function restoreCollectionSelections(){
+  try{const embedded=$('embeddedTrainCollection')?.textContent;data=embedded&&embedded.trim()!=='null'?JSON.parse(embedded):JSON.parse(localStorage.getItem(collectionStorageKey)||'null');}catch{return;}
+  if(data?.version!==1||!data.rooms||typeof data.rooms!=='object')return;
+  for(const [room,value]of Object.entries(data.rooms)){
+-  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||!choice)continue;
++  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||HOUSE_ROOMS[room].trainCollection===false||!choice)continue;
+   // Build only the train in the initial room; other saved choices are lazy.
+   try{if(room==='valley')ensureRunningCollection(choice);selectedCollection[room]=choice;}catch{}
+  }
+ }
+ function applyCollectionToScene(scene){
++ if(HOUSE_ROOMS[scene.key]?.trainCollection===false)return;
+  const choice=selectedCollection[scene.key];if(!choice||!scene.trains[0]||scene.trains[0].collectionChoice===choice)return;
+  ensureRunningCollection(choice);const q=collectionById.get(choice.id),train=scene.trains[0];
+  train.collectionChoice=choice;train.cars=choice.cars;train.type=q.power==='electric'?'mountain':q.power;train.stock='collection:'+q.id;
+@@ -423,7 +424,7 @@ function applyCollectionToScene(scene){
+ const collectionGetHouseScene=getHouseScene;
+ getHouseScene=function(key){const scene=collectionGetHouseScene(key);if(scene)applyCollectionToScene(scene);return scene;};
+ function chooseCollectionTrain(room,value){
+- const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false)throw new Error('This train choice is unavailable.');
++ const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||HOUSE_ROOMS[room].trainCollection===false)throw new Error('This train choice is unavailable.');
+  ensureRunningCollection(choice);selectedCollection[room]=choice;
+  if(room!=='valley'&&roomScenes.has(room))applyCollectionToScene(roomScenes.get(room));
+  shadowDirty=true;let saved=true;
