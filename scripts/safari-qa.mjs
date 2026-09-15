@@ -85,13 +85,21 @@ const lodgeReport=state.run(`(()=>{
  assert.ok(b.data.every(Number.isFinite),'finite lodge and furniture');
  let clearance=Infinity,groundClearance=Infinity;
  for(let i=0;i<b.data.length;i+=12*11){const near=safariRailNear(b.data[i],b.data[i+2]);if(near.point&&b.data[i+1]>near.point[1]-.9&&b.data[i+1]<near.point[1]+2.4)clearance=Math.min(clearance,near.distance);}
- assert.ok(clearance>1.35,'lodge roof, decks, furniture and approach clear the monorail: '+clearance);
- for(let x=8;x<40;x+=.8)for(let z=-7;z<13;z+=.8)groundClearance=Math.min(groundClearance,SAFARI_LODGE.floor-.40-safariSurface(x,z));
- assert.ok(groundClearance>.3,'terrace structure is above finished terrain');
+ assert.ok(clearance>1.35,'lodge roof, hide, equipment and approach clear the monorail: '+clearance);
+ for(let x=17.45;x<37.6;x+=.8)for(let z=-5.2;z<3.5;z+=.8)groundClearance=Math.min(groundClearance,SAFARI_LODGE.floor-.40-safariSurface(x,z));
+ assert.ok(groundClearance>.3,'building floor is above finished terrain');
  const test=new Builder();safariAcacia(test,-30,10,5.8,4);assert.ok(test.data.length/12<3500,'new acacias use detailed open crowns without the old sphere budget');
  assert.equal(getHouseScene('safari').safari.lodge,'Kopje House');
  assert.ok(getHouseScene('safari').spots.some(s=>s.name==='Kopje House'));
- assert.ok(getHouseScene('safari').spots.some(s=>s.name==='The sundowner terrace'));
+ assert.ok(getHouseScene('safari').spots.some(s=>s.name==='The expedition approach'));
+ // User removal is a geometry invariant, not just hidden UI or a material change.
+ assert.equal(typeof kopjePool,'undefined');assert.equal(typeof kopjeFireCourt,'undefined');assert.equal(typeof kopjePergola,'undefined');
+ for(let i=9;i<b.data.length;i+=12)assert.ok(b.data[i]!==7&&b.data[i]!==44,'no pool or spillway water remains in lodge geometry');
+ const buildings=new Builder();kopjeMainHall(buildings);kopjeGearWing(buildings);kopjeMessTent(buildings);kopjeStoneSteps(buildings);
+ for(let i=2;i<buildings.data.length;i+=12)assert.ok(buildings.data[i]<8.5,'buildings do not occupy the removed rear leisure deck');
+ assert.ok(safariLodgeClear(16.2,12.05,1),'old basin footprint is returned to planting');
+ assert.ok(safariLodgeClear(33,16,1),'old fire court footprint is returned to planting');
+ assert.ok(!getHouseScene('safari').spots.some(s=>/sundowner/i.test(s.name)),'obsolete leisure viewpoint removed');
  return {lodgeVertices:count,lodgeRailClearance:clearance,lodgeTerrainClearance:groundClearance};
 })()`);
 const report={...sceneReport,...terrainReport,...stockReport,...lodgeReport,treeVertices,minimumTreeClearance:treeClearance};

@@ -25,12 +25,17 @@ try{
  await page.waitForFunction(()=>window.HOBBY_HOUSE?.state.ready&&hobby.room==='safari'&&!hobby.transition);
  report.renderer=await page.evaluate(()=>{const e=gl.getExtension('WEBGL_debug_renderer_info');return e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);});
  await capture('01-complete-landscape',[0,5,-1],138,.32,.60);
- await capture('02-kopje-house',[24,6.6,3],45,.40,.37);
- await capture('03-river-terrace',[19,5.2,8],34,-.67,.32);
- await capture('04-library-lounge',[23,6.8,-.4],14,.06,.12);
- await capture('05-lodge-evening',[24,6.6,3],45,.40,.37,'evening');
- await capture('06-acacia-country',[-25,5,7],36,-.40,.40);
- await page.setViewportSize({width:390,height:844});await capture('07-lodge-phone',[24,6.6,3],82,.40,.40);
+ await capture('02-field-lodge',[24,7,0],44,.40,.32);
+ await capture('03-earth-approach',[23,4.8,6],31,-.68,.27);
+ await capture('04-map-room',[23.8,6.6,-.3],15,.10,.16);
+ await capture('05-lodge-evening',[24,7,0],44,.40,.32,'evening');
+ await capture('06-survey-hide',[34.5,10,-2],18,.65,.28);
+ await capture('07-acacia-country',[-25,5,7],36,-.40,.40);
+ await capture('08-rear-stonework',[24,7,-2],38,2.9,.31);
+ for(const width of[390,320]){
+  await page.setViewportSize({width,height:width===390?844:693});await capture('09-lodge-phone-'+width,[24,7,0],80,.40,.34);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ }
  report.horizontalOverflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
  assert.equal(report.horizontalOverflow,false);assert.deepEqual(errors,[]);report.complete=true;
 }catch(error){report.complete=false;report.failure=String(error.stack||error);throw error;}

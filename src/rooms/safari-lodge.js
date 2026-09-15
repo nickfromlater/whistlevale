@@ -2,26 +2,8 @@
 
 // KOPJE HOUSE. Original safari architecture and habitat details by
 // nickfromlater, with agent assistance. Native, deterministic geometry only.
-// All decking is cut around the pool and fire court, rather than covering it.
+// A compact expedition lodge on fieldstone foundations, without resort amenities.
 const KOPJE={timber:'#614831',teak:'#957447',endgrain:'#755739',linen:'#d7c7a0',stone:'#a79573',dark:'#2d4036',bronze:'#a0834f',reed:'#9c814f'};
-function kopjeDeck(b,x,z,w,d,y=SAFARI_LODGE.floor){
- b.box(x,y-.22,z,w,.34,d,KOPJE.timber,22);
- const count=Math.ceil(w/.27),pitch=w/count;
- for(let i=0;i<count;i++){
-  const xx=x-w/2+(i+.5)*pitch;
-  b.box(xx,y-.025,z,pitch-.015,.06,d-.035,shade(KOPJE.teak,.92+hash(i,Math.round(x*3+z))* .16),22);
-  if(i%3===0)for(const side of[-1,1])b.box(xx,y+.007,z+side*(d/2-.18),.012,.006,.012,'#524c36',41);
- }
- // Edge ledgers and visible paired diagonal braces carry the projecting deck.
- for(const side of[-1,1])b.box(x,y-.36,z+side*(d/2-.20),w,.28,.16,KOPJE.endgrain,22);
- for(let xx=x-w/2+.65;xx<x+w/2;xx+=4.1)for(const zz of[z-d/2+.40,z+d/2-.40]){
-  const ground=safariSurface(xx,zz),top=y-.40;
-  if(top<=ground+.12)continue;
-  b.box(xx,(ground+top)/2,zz,.30,top-ground,.30,KOPJE.timber,22);
-  b.box(xx,ground+.07,zz,.67,.22,.67,'#8e7e5e',4);
-  for(const s of[-1,1])b.beam([xx,Math.max(ground+.15,top-.85),zz],[xx+s*.70,top,zz],.055,KOPJE.teak,22,5);
- }
-}
 function kopjeRoof(b,x,y,z,w,d,rise,variant=0){
  const ridge=w*.25,eave=(a,side)=>[x+a*w/2,y,z+side*d/2],peak=a=>[x+a*ridge,y+rise,z];
  const faces=[
@@ -57,31 +39,6 @@ function kopjeRoof(b,x,y,z,w,d,rise,variant=0){
  b.beam([x-ridge-.05,y+rise+.045,z],[x+ridge+.05,y+rise+.045,z],.145,'#6f5231',23,10);
  for(let xx=x-ridge;xx<=x+ridge;xx+=.29)b.beam([xx,y+rise+.085,z-.13],[xx+.065,y+rise+.16,z+.13],.018,'#bfa16b',22,4);
 }
-// The frame meets the underside of the actual hipped roof. End frames are
-// lower than the ridge, so no king post or rafter pierces the thatch hips.
-function kopjeRoofUnderside(dx,dz,h,rise,rw,rd){
- const v=clamp(Math.min(1-Math.abs(dz)/(rd/2),(rw/2-Math.abs(dx))/(rw*.25)));
- return SAFARI_LODGE.floor+h-.09+rise*v-.32*Math.sin(v*PI);
-}
-function kopjeFrame(b,x,z,w,d,h=3.8,rise=2.4,rw=w*1.3,rd=d*1.32){
- const y=SAFARI_LODGE.floor,top=(xx,zz)=>kopjeRoofUnderside(xx-x,zz-z,h,rise,rw,rd);
- for(const xx of[x-w/2,x,x+w/2])for(const zz of[z-d/2,z+d/2]){
-  const hh=top(xx,zz)-y;
-  b.box(xx,y+.09,zz,.44,.19,.44,'#b6a282',4);b.cylinder(xx,y+hh/2,zz,.13,.09,hh,KOPJE.timber,22,8);
-  for(const side of[-1,1])b.beam([xx,y+hh-.95,zz],[xx+side*.71,y+hh-.10,zz],.06,KOPJE.teak,22,5);
-  b.cylinder(xx,y+.28,zz,.144,.144,.11,KOPJE.bronze,41,8);
- }
- for(const zz of[z-d/2,z+d/2])b.box(x,top(x,zz)-.10,zz,w+.22,.22,.22,KOPJE.timber,22);
- for(const xx of[x-w/2,x,x+w/2]){
-  const tie=top(xx,z-d/2)-.13;
-  b.beam([xx,tie,z-d/2],[xx,tie,z+d/2],.065,KOPJE.teak,22,5);
-  b.beam([xx,tie,z],[xx,top(xx,z)-.06,z],.055,KOPJE.timber,22,5);
-  for(const side of[-1,1])for(let i=0;i<3;i++){
-   const za=z+side*d/2*(1-i/3),zb=z+side*d/2*(1-(i+1)/3);
-   b.beam([xx,top(xx,za)-.05,za],[xx,top(xx,zb)-.05,zb],.075,KOPJE.timber,22,6);
-  }
- }
-}
 function kopjeLantern(b,x,y,z,scale=1){
  b.push(x,y,z,0,0,0,scale,scale,scale);
  b.box(0,.27,0,.20,.38,.20,'#e9c38a',6);
@@ -95,26 +52,6 @@ function kopjePendant(b,x,y,z,r=.55){
  b.cylinder(x,y,z,r,r*.61,.45,'#ac8f5c',23,16);
  for(let i=0;i<14;i++){const a=i*TAU/14;b.beam([x+Math.cos(a)*r,y-.23,z+Math.sin(a)*r],[x+Math.cos(a)*r*.61,y+.23,z+Math.sin(a)*r*.61],.010,'#5c4e32',22,4);}
  b.cylinder(x,y-.237,z,r*.87,r*.87,.018,'#f0cea0',6,16);
-}
-function kopjeRug(b,x,y,z,w,d){
- b.box(x,y,z,w,.025,d,'#baaa7a',23);
- for(const s of[-1,1]){b.box(x,y+.018,z+s*(d/2-.15),w-.15,.008,.17,'#6a7150',23);b.box(x+s*(w/2-.15),y+.018,z,.17,.008,d-.15,'#6a7150',23);}
- for(let i=-2;i<=2;i++)for(let j=-1;j<=1;j++){
-  const xx=x+i*w*.15,zz=z+j*d*.20,rx=w*.06,rz=d*.07;
-  b.quad([xx-rx,y+.024,zz],[xx,y+.024,zz+rz],[xx+rx,y+.024,zz],[xx,y+.024,zz-rz],(i+j)%2?'#836242':'#d9c597',23);
- }
- for(let i=0;i<35;i++)for(const s of[-1,1])b.beam([x-w/2+i*w/34,y,z+s*d/2],[x-w/2+i*w/34+.02,y,z+s*(d/2+.08)],.006,'#d1bb89',23,3);
-}
-function kopjeSofa(b,x,y,z,w=2.6,angle=0){
- b.push(x,y,z,0,angle);
- for(const xx of[-w*.40,w*.40])for(const zz of[-.36,.36])b.box(xx,.13,zz,.095,.26,.095,KOPJE.timber,22);
- b.box(0,.31,0,w,.25,.99,KOPJE.timber,22);
- const n=Math.ceil(w/.83);for(let i=0;i<n;i++){
-  const xx=-w/2+(i+.5)*w/n;b.box(xx,.49,.04,w/n-.036,.17,.84,'#d4c6a5',23);b.box(xx,.83,-.42,w/n-.04,.60,.20,'#c6bb99',23);
-  if(i%2===0){b.push(xx,.83,-.21,0,0,.12);b.box(0,0,0,.38,.38,.14,i%3?'#9c633d':'#687e59',23);b.box(0,0,.073,.28,.05,.014,'#cfb27a',23);b.pop();}
- }
- for(const s of[-1,1]){b.box(s*(w/2-.06),.64,0,.17,.41,.95,KOPJE.teak,22);b.box(s*(w/2-.06),.86,0,.19,.065,.95,'#c4ad80',22);}
- b.pop();
 }
 function kopjeChair(b,x,y,z,angle=0,wide=.65){
  b.push(x,y,z,0,angle);
@@ -144,186 +81,246 @@ function kopjePot(b,x,y,z,r=.34,variant=0){
   b.tri(c,add(q,[-Math.sin(a)*r*.12,0,Math.cos(a)*r*.12]),tip,i%2?'#526e40':'#70844c',8);b.tri(c,tip,add(q,[Math.sin(a)*r*.12,0,-Math.cos(a)*r*.12]),'#385b3e',8);
  }
 }
-function kopjeGlass(b,x,y,z,w,h,angle=0){
- b.push(x,y,z,0,angle);b.quad([-w/2,-h/2,0],[w/2,-h/2,0],[w/2,h/2,0],[-w/2,h/2,0],'#94b4a0',76);
- for(const xx of[-w/2,w/2])b.box(xx,0,0,.038,h,.055,'#564a32',41);
- for(const yy of[-h/2,h/2])b.box(0,yy,0,w,.045,.055,'#564a32',41);b.pop();
+function kopjeMasonry(b,x,y,z,w,h,d,variant=0){
+ b.box(x,y+h/2,z,w,h,d,'#706b55',3);
+ const rows=Math.ceil(h/.40),pitch=h/rows;
+ for(const [axis,sign,length]of[['z',1,w],['z',-1,w],['x',1,d],['x',-1,d]]){
+  const alongX=axis==='z',cols=Math.ceil(length/.69),step=length/cols;
+  for(let row=0;row<rows;row++)for(let i=0;i<=cols;i++){
+   const lo=Math.max(-length/2,-length/2+(i-(row%2)*.5)*step),hi=Math.min(length/2,-length/2+(i+1-(row%2)*.5)*step);
+   if(hi-lo<.05)continue;
+   const mid=(lo+hi)/2,ww=(hi-lo-.027)/2,hh=(pitch-.025)/2,yy=y+(row+.5)*pitch;
+   const c=shade(['#a59776','#958a6d','#b2a381','#8c856c'][(row+i+Math.abs(variant))%4],.91+hash(i+variant,row)*.16);
+   const depth=.022+hash(row+variant,i)*.039,face=alongX?d/2:w/2;
+   const point=(u,v,relief)=>alongX?[x+mid+u,yy+v,z+sign*(face+relief)]:[x+sign*(face+relief),yy+v,z+mid+u];
+   const rim=[[-ww,-hh],[ww,-hh],[ww,hh],[-ww,hh]],core=rim.map(([u,v],j)=>[u*.80+(hash(j+i,row+variant)-.5)*.024,v*.74]);
+   b.quad(...core.map(([u,v])=>point(u,v,depth)),c,3);
+   for(let k=0;k<4;k++){const j=(k+1)%4;b.quad(point(...rim[k],.006),point(...rim[j],.006),point(...core[j],depth),point(...core[k],depth),shade(c,k===2?1.06:.88),3);}
+  }
+ }
 }
-function kopjeScreen(b,x,y,z,w,h,angle=0){
+function kopjeFoundation(b,x,z,w,d){
+ const y=SAFARI_LODGE.floor;
+ const bottom=Math.min(...[-w/2,0,w/2].flatMap(dx=>[-d/2,0,d/2].map(dz=>safariSurface(x+dx,z+dz))))-.16;
+ kopjeMasonry(b,x,bottom,z,w,y-.10-bottom,d,Math.round(x));
+ b.box(x,y-.075,z,w+.14,.15,d+.14,'#a6926d',3);
+ // Interior floor only. There is no projecting leisure deck or rear porch.
+ const n=Math.ceil(w/.34);for(let i=0;i<n;i++)b.box(x-w/2+(i+.5)*w/n,y+.008,z,w/n-.011,.033,d-.14,shade('#816641',.92+hash(i,x)*.16),22);
+}
+function kopjeFieldRoof(b){
+ const x=24,z=-.8,y=SAFARI_LODGE.floor+4.05,w=15.8,d=11.2,rise=3.65;
+ // A steep longitudinal ridge and open triangular gable replace the broad,
+ // resort-like hipped canopy. Every reed course follows the roof slope.
+ for(const side of[-1,1]){
+  const point=(u,v,lift=0)=>[x+side*w/2*(1-v),y+rise*v-.22*Math.sin(v*PI)+lift,z-d/2+u*d];
+  const cols=30,rows=10;
+  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
+   const u=i/cols,uu=(i+1)/cols,v=j/rows,vv=(j+1)/rows,c=shade(['#806441','#927448','#9d7e4c'][j%3],.92+hash(i,j+side)*.14);
+   b.quad(point(u,v),point(uu,v),point(uu,vv),point(u,vv),c,23);
+   b.quad(point(u,v,.04),point(uu,v,.04),point(uu,v+.014,.028),point(u,v+.014,.028),'#b0925f',23);
+  }
+  for(let i=0;i<100;i++)for(let j=0;j<3;j++){
+   const u=(i+.4)/100,v0=j/3+.008,v1=(j+1)/3-.01,p=point(u,v0,.055),q=point(u+.001,v1,.055);
+   b.quad(add(p,[0,0,-.008]),add(p,[0,0,.008]),add(q,[0,0,.008]),add(q,[0,0,-.008]),i%3?'#ae8e58':'#635036',23);
+  }
+  b.quad(point(0,0),point(1,0),point(1,0,-.27),point(0,0,-.27),'#624b2f',23);
+  for(const u of[0,1])for(let j=0;j<20;j++){const a=point(u,j/20),q=point(u,(j+1)/20);b.quad(a,q,add(q,[0,-.21,0]),add(a,[0,-.21,0]),'#795c36',23);}
+  for(const zz of[-4.6,-.8,3.0]){
+   for(let k=0;k<5;k++){const a=k/5,q=(k+1)/5;b.beam([x+side*6.2*(1-a),y+rise*(1-6.2/w*2+6.2/w*2*a)-.34,zz],[x+side*6.2*(1-q),y+rise*(1-6.2/w*2+6.2/w*2*q)-.34,zz],.11,KOPJE.timber,22,7);}
+  }
+ }
+ b.beam([24,y+rise+.02,z-d/2-.05],[24,y+rise+.02,z+d/2+.05],.17,'#60482b',23,10);
+ for(let zz=z-d/2;zz<z+d/2;zz+=.31)b.beam([23.85,y+rise+.08,zz],[24.15,y+rise+.08,zz+.07],.022,'#bda172',22,4);
+}
+function kopjeShutter(b,x,y,z,w=1.25,h=1.55,angle=0){
  b.push(x,y,z,0,angle);
- for(const side of[-1,1])b.box(side*w/2,h/2,0,.065,h,.11,KOPJE.timber,22);
- for(let yy=.08;yy<h;yy+=.15)b.box(0,yy,0,w,.046,.035,'#9b7f4d',22);
- for(let xx=-w/2+.07;xx<w/2;xx+=.19)b.box(xx,h/2,.024,.018,h,.018,'#705b39',22);
- b.pop();
+ b.box(0,0,0,w+.16,h+.19,.17,'#59482f',22);b.box(0,0,.097,w-.07,h-.08,.02,'#263d35',42);
+ for(const side of[-1,1]){
+  b.push(side*w*.69,0,.21,0,side*-.47);b.box(0,0,0,w*.40,h,.11,'#52634a',22);
+  for(let yy=-h/2+.10;yy<h/2;yy+=.16)b.box(0,yy,.065,w*.37,.075,.034,'#75805c',22);
+  for(const yy of[-h*.34,h*.34])b.box(0,yy,.085,w*.42,.039,.036,'#3e4a38',41);
+  b.pop();
+ }
+ b.box(0,0,.126,.038,h-.10,.05,'#b49e70',22);b.box(0,0,.129,w-.08,.036,.05,'#b49e70',22);
+ b.box(0,-h/2-.13,.16,w+.43,.16,.47,'#b2a182',3);b.pop();
+}
+function kopjeCase(b,x,y,z,w=.95,d=.62,h=.57,variant=0){
+ b.box(x,y+h/2,z,w,h,d,variant%2?'#4d6049':'#896c44',22);
+ b.box(x,y+h+.02,z,w+.045,.07,d+.045,variant%2?'#738261':'#9d8050',22);
+ for(const side of[-1,1]){
+  b.box(x+side*w*.32,y+h/2,z+d/2+.014,.045,h+.08,.025,'#363e2e',41);
+  b.box(x+side*w*.32,y+h*.70,z+d/2+.035,.085,.10,.034,'#ad9360',41);
+ }
+ b.box(x,y+h*.51,z+d/2+.035,.22,.066,.044,'#333e2e',41);
+}
+function kopjeMapDesk(b){
+ const y=SAFARI_LODGE.floor,x=23.8,z=.25,w=5.5,d=2.4,top=y+1.00;
+ b.box(x,top,z,w,.14,d,'#ae8b56',22);
+ for(const side of[-1,1]){const xx=x+side*2.05;b.beam([xx-.23,y,z-.83],[xx+.23,top-.08,z+.83],.105,KOPJE.timber,22,6);b.beam([xx+.23,y,z+.83],[xx-.23,top-.08,z-.83],.105,KOPJE.timber,22,6);}
+ b.beam([x-2.05,y+.32,z],[x+2.05,y+.32,z],.07,KOPJE.timber,22,5);
+ b.box(x,top+.085,z,3.9,.018,1.87,'#cbbd92',23);
+ // Contours and the blue river are drawn in geometry, not an unrelated texture.
+ for(let k=0;k<5;k++)for(let i=0;i<26;i++){
+  const a=i*TAU/26,q=(i+1)*TAU/26,r=.18+k*.12;
+  const p=t=>[x+.82+Math.cos(t)*r*(1+.15*Math.sin(t*3)),top+.099,z+.06+Math.sin(t)*r*.60];b.beam(p(a),p(q),.008,'#96885c',0,3);
+ }
+ for(let i=0;i<25;i++){const xx=x-1.8+i*.14,q=xx+.14,p=t=>[t,top+.102,z+.18*Math.sin((t-x)*3.1)-.12];b.beam(p(xx),p(q),.027,'#648b7b',0,4);}
+ b.push(x-1.30,top+.11,z+.68,-PI/2);hudsonText(b,'RIFT SURVEY',0,0,0,.98,'#5a6145');b.pop();
+ for(const [dx,dz]of[[-2.25,.48],[2.20,-.61]]){
+  b.cylinder(x+dx,top+.15,z+dz,.07,.07,.91,'#d8c9a0',23,8,0,PI/2);
+  for(const side of[-1,1])b.cylinder(x+dx+side*.25,top+.15,z+dz,.075,.075,.043,'#6d6950',22,8,0,PI/2);
+ }
+ // Brass compass, notebook, enamel mug and binoculars at the briefing table.
+ b.cylinder(x+1.30,top+.14,z-.63,.16,.16,.067,'#b09a63',41,16);b.cylinder(x+1.30,top+.179,z-.63,.129,.129,.008,'#d3c498',23,16);
+ b.beam([x+1.20,top+.188,z-.65],[x+1.39,top+.188,z-.61],.011,'#4e644c',41,4);
+ kopjeCase(b,x+2.03,top+.08,z+.38,.72,.55,.24,1);
+ for(const dx of[-.15,.15])b.cylinder(x-1.56+dx,top+.19,z-.75,.081,.065,.32,'#3b4d3b',42,10,PI/2);
+ b.box(x-1.56,top+.18,z-.73,.24,.07,.08,'#867952',41);b.cylinder(x-.2,top+.18,z+.67,.075,.083,.16,'#d5ccb0',24,12);
+ for(const side of[-1,1]){
+  const zz=z+side*1.8;b.box(x,y+.48,zz,4.45,.10,.51,'#8e7147',22);
+  for(const xx of[x-1.65,x+1.65])for(const s of[-1,1])b.beam([xx+s*.16,y,zz+s*.13],[xx-s*.16,y+.46,zz-s*.13],.04,KOPJE.timber,22,5);
+ }
+ kopjePendant(b,x,y+4.0,z,.46);
 }
 function kopjeMainHall(b){
  const y=SAFARI_LODGE.floor;
- kopjeFrame(b,24,-.9,12.2,7.6,4.0,3.45,15.9,10);kopjeRoof(b,24,y+4.13,-.9,15.9,10.0,3.45,10);
- // The tall open gable is cross-braced; the rear is sheltered by clear glazing.
- for(const x of[19.8,22.5,25.2,27.9])kopjeGlass(b,x,y+1.85,-4.67,2.52,3.54);
- kopjeGlass(b,17.85,y+1.70,-2.8,3.5,3.20,PI/2);
- b.box(24,y+3.40,3.11,6.2,.61,.17,KOPJE.dark,22);hudsonText(b,'KOPJE HOUSE',24,y+3.39,3.207,5.50,'#d7c08a');
- for(const x of[21.6,26.4])b.beam([x,y+3.73,3.10],[x,y+4.1,3.10],.022,KOPJE.bronze,41,5);
- kopjeRug(b,22.2,y+.025,.28,6.5,4.6);
- kopjeSofa(b,21.9,y+.045,-1.25,3.55);kopjeSofa(b,19.5,y+.045,.30,2.4,PI/2);
- for(const x of[23.4,24.5])kopjeChair(b,x,y+.04,1.52,PI+.13,.77);
- b.push(22.25,y+.52,.35);slab(b,2.1,1.15,.09,0,.25,'#bfa376',22);b.pop();
- for(const xx of[21.45,23.05])for(const zz of[-.05,.75])b.box(xx,y+.27,zz,.05,.51,.05,KOPJE.dark,41);
- for(let i=0;i<3;i++){b.push(21.78+i*.04,y+.58+i*.035,.34,0,.13);b.box(0,0,0,.44,.035,.32,['#586c54','#c4b17e','#7f6044'][i],23);b.pop();}
- kopjePot(b,22.67,y+.58,.46,.10,2);kopjeLantern(b,19.15,y+.04,2.02,.78);
- // Stone fireplace, deep open hearth, chimney, timber storage and a dark flue.
- const fx=28.25,fz=-1.82;
- b.box(fx,y+.12,fz,2.9,.23,1.88,'#a59678',4);
- for(const side of[-1,1])b.box(fx+side*1.04,y+1.15,fz,.60,2.2,1.17,'#8d7c5c',4);
- b.box(fx,y+2.11,fz,2.64,.34,1.21,'#aa9672',4);b.box(fx,y+1.05,fz-.43,1.55,1.7,.22,'#333b30',42);
- b.box(fx,y+4.4,fz,1.74,4.3,.97,'#9e8966',4);b.box(fx,y+6.69,fz,2.03,.19,1.23,'#6b624b',3);
- b.box(fx,y+6.91,fz,1.34,.27,.68,'#313b31',42);b.box(fx,y+7.07,fz,1.75,.08,1.07,'#625c47',41);
- for(let i=0;i<4;i++){b.beam([fx-.5+i*.16,y+.29,fz+.15],[fx+.30+i*.15,y+.34,fz-.20],.078,'#58422a',22,7);b.box(fx-.28+i*.18,y+.365,fz+.15,.16,.015,.14,'#cb7738',6);}
- for(let i=0;i<9;i++)b.cylinder(fx+1.62+(i%3)*.16,y+.15+Math.floor(i/3)*.14,fz+.13,.061,.061,.4,'#927149',22,7,PI/2);
- // A mezzanine reading gallery under the soaring thatch ridge.
- const ly=y+2.48;b.box(24.10,ly,-3.41,7.3,.17,2.03,KOPJE.timber,22);
- for(let i=0;i<28;i++)b.box(20.6+i*.26,ly+.10,-3.41,.244,.047,2.0,'#997848',22);
- safariRailings(b,[[20.47,ly+.14,-2.43],[27.75,ly+.14,-2.43]],.70,'#735936');
- for(const x of[20.55,27.65])b.box(x,y+1.20,-2.51,.13,2.4,.13,KOPJE.timber,22);
- b.box(24.1,ly-.16,-4.39,7.6,.21,.18,KOPJE.timber,22);
- b.box(24.5,ly+.64,-4.14,4.6,1.04,.23,KOPJE.dark,22);
- for(const yy of[ly+.15,ly+.61,ly+1.10])b.box(24.5,yy,-3.96,4.75,.07,.58,KOPJE.teak,22);
- for(let i=0;i<25;i++){const xx=22.29+i*.177,h=.20+hash(i,717)*.15;b.box(xx,ly+.65+h/2,-3.93,.115,h,.23,['#826044','#b6a27b','#54705b','#9d784d'][i%4],23);}
- kopjeChair(b,21.2,ly+.12,-3.3,-.40,.70);kopjeLantern(b,22.06,ly+.15,-3.3,.46);
- // The open eastern stair clears the fireplace, glazing and low veranda roof.
- const stairX=30.3;
- for(let i=0;i<15;i++){const z=2.1-(i+.5)*.305,h=y+(i+1)*2.61/15;b.box(stairX,h-.045,z,1.10,.09,.316,KOPJE.teak,22);}
- for(const side of[-1,1]){b.beam([stairX+side*.45,y,2.23],[stairX+side*.45,ly,-2.43],.08,KOPJE.timber,22,5);safariRailings(b,[[stairX+side*.53,y,2.23],[stairX+side*.53,ly+.12,-2.43]],.69);}
- b.box(29.08,ly,-2.88,3.56,.14,.9,KOPJE.teak,22);
- b.box(30.25,y+1.2,-2.92,.13,2.4,.13,KOPJE.timber,22);
- b.beam([27.65,y+1.3,-2.92],[30.25,ly-.10,-2.92],.08,KOPJE.timber,22,5);
- kopjePendant(b,24,y+3.6,.60,.70);kopjePendant(b,22.6,y+3.3,.25,.40);kopjePendant(b,25.6,y+3.22,.25,.39);
- for(const x of[17.35,30.6])kopjePot(b,x,y,3.50,.46,x);
-}
-function kopjeWings(b){
- const y=SAFARI_LODGE.floor;
- // Dining pavilion: woven screens, a long table and a tiny coffee bar.
- kopjeFrame(b,13.35,-.55,7.2,6.1,3.25,2.50,9.3,8.4);kopjeRoof(b,13.35,y+3.4,-.55,9.3,8.4,2.50,35);
- kopjeScreen(b,9.74,y,-.60,5.5,2.65,PI/2);kopjeScreen(b,13.35,y,-3.59,7.1,2.65);
- b.box(13.1,y+.86,-.05,4.55,.12,1.45,'#b49660',22);
- for(const x of[11.4,14.8]){b.box(x,y+.44,-.05,.18,.85,1.01,KOPJE.timber,22);b.beam([x-.4,y+.25,-.05],[x+.4,y+.70,-.05],.07,KOPJE.endgrain,22,5);}
- for(let i=0;i<4;i++)for(const side of[-1,1]){
-  const x=11.36+i*1.13,z=-.05+side*1.03;kopjeChair(b,x,y,z,side>0?PI:0,.62);
-  b.cylinder(x,y+.933,-.05+side*.44,.19,.19,.015,'#e4d5b1',23,16);b.cylinder(x+.27,y+.979,-.05+side*.52,.042,.042,.086,'#c7d8bc',43,8);
- }
- kopjePot(b,13.18,y+.935,-.05,.14,4);kopjePendant(b,12.2,y+2.90,-.05,.47);kopjePendant(b,14.2,y+2.90,-.05,.47);
- b.box(15.9,y+.55,-2.8,1.13,1.1,1.0,KOPJE.dark,22);b.box(15.9,y+1.12,-2.8,1.24,.10,1.06,'#bba37b',3);
- b.box(15.90,y+1.45,-2.90,.62,.55,.50,'#adb9a0',41);b.box(15.9,y+1.44,-2.625,.48,.22,.04,KOPJE.dark,42);
- for(const dx of[-.16,.16])b.cylinder(15.9+dx,y+1.22,-2.56,.061,.064,.12,'#e5d6b3',24,9);
- // Two shaded suites share a thatched wing, with visible beds and verandas.
- kopjeFrame(b,35.2,-1.5,6.8,7.2,3.05,2.42,8.65,9.3);kopjeRoof(b,35.2,y+3.2,-1.5,8.65,9.3,2.42,50);
- kopjeScreen(b,38.61,y,-1.5,7.1,2.7,PI/2);kopjeScreen(b,35.2,y,-5.11,6.7,2.8);
- b.box(35.2,y+1.38,-1.5,.14,2.76,7.08,'#afa786',23);
+ kopjeFoundation(b,24,-.8,13.1,8.7);kopjeFieldRoof(b);
+ // Rubble rear walls and short piers shelter the hall without glazing it shut.
+ kopjeMasonry(b,24,y,-5.01,13.0,3.05,.43,81);
  for(const side of[-1,1]){
-  const x=35.2+side*1.67;
-  b.box(x,y+.31,-2.0,2.25,.53,2.82,KOPJE.timber,22);b.box(x,y+.64,-1.92,2.20,.23,2.72,'#d8cfb0',23);
-  b.box(x,y+.79,-1.15,2.19,.085,1.10,'#788465',23);b.box(x,y+1.0,-3.38,2.44,1.30,.11,'#997949',22);
-  for(const dx of[-.5,.5])b.box(x+dx,y+.87,-2.94,.81,.20,.54,'#ebe0c4',23);
-  b.box(x+side*1.25,y+.47,-3.0,.45,.65,.54,KOPJE.teak,22);kopjeLantern(b,x+side*1.25,y+.82,-3.0,.40);
-  kopjeGlass(b,x,y+1.40,1.99,3.04,2.7);
-  // Tied-back linen curtains do not blanket the glazing or hide the room.
-  for(const dx of[-1.38,1.38])for(let i=0;i<4;i++)b.box(x+dx+i*.028,y+1.37,2.055,.041,2.62,.052,shade('#d9cbaa',.94+i*.025),23);
-  kopjeChair(b,x-.30,y,3.06,.13,.70);kopjeTable(b,x+.68,y,3.0,.36);
+  const xx=24+side*6.35;kopjeMasonry(b,xx,y,-2.8,.50,2.6,4.4,90+side);
+  kopjeMasonry(b,xx,y,2.77,.60,2.85,1.05,94+side);
  }
- // Connections sit below the principal rooflines and read as airy verandas.
- for(const [x,w]of[[18.0,1.2]]){
-  b.box(x,y+2.95,.2,w,.11,5.0,KOPJE.timber,22);
-  for(let z=-2.1;z<2.7;z+=.29)b.box(x,y+3.035,z,w+.16,.055,.08,'#b79861',22);
+ for(const xx of[17.75,30.25])for(const zz of[-4.5,-.65,3.07]){
+  b.cylinder(xx,y+2.38,zz,.16,.115,4.76,KOPJE.timber,22,9);
+  for(const side of[-1,1])b.beam([xx,y+3.76,zz],[xx+side*.52,y+4.46,zz],.065,KOPJE.teak,22,6);
  }
-}
-function kopjeLounger(b,x,y,z,angle=0){
- b.push(x,y,z,0,angle);
- for(const side of[-1,1]){b.beam([side*.35,.12,-1],[side*.35,.28,1.03],.04,KOPJE.timber,22,5);for(const zz of[-.75,.78])b.box(side*.32,.12,zz,.06,.24,.10,KOPJE.dark,41);}
- for(let i=0;i<18;i++){const zz=-.97+i*.11,yy=zz<-.32?.27+(-.32-zz)*.57:.27;b.box(0,yy,zz,.75,.045,.095,'#ac8955',22);}
- b.box(0,.345,.27,.68,.09,1.30,'#d1c5a1',23);b.push(0,.50,-.64,-.51);b.box(0,0,0,.68,.085,.74,'#d7cbae',23);b.pop();
- b.box(0,.41,.59,.67,.025,.28,'#5d7968',23);b.pop();
-}
-function kopjeParasol(b,x,y,z,r=1.55){
- b.cylinder(x,y+.055,z,.36,.32,.11,'#8f8467',3,14);b.cylinder(x,y+1.46,z,.034,.029,2.92,KOPJE.teak,22,9);
- const tip=[x,y+3.1,z];
- for(let i=0;i<12;i++){
-  const a=i*TAU/12,q=(i+1)*TAU/12,edge=t=>[x+Math.cos(t)*r,y+2.49,z+Math.sin(t)*r],mid=t=>[x+Math.cos(t)*r*.52,y+2.73,z+Math.sin(t)*r*.52];
-  b.tri(tip,mid(a),mid(q),'#d4bd8c',23);b.quad(mid(a),edge(a),edge(q),mid(q),i%2?'#d7c299':'#e1d0aa',23);
-  b.beam(tip,edge(a),.014,'#9d8254',22,4);b.beam(edge(a),edge(q),.020,'#af9566',23,5);
+ for(const zz of[-4.5,-.65,3.07]){
+  b.beam([17.75,y+4.63,zz],[30.25,y+4.63,zz],.115,KOPJE.timber,22,6);
+  b.beam([24,y+4.63,zz],[24,y+7.34,zz],.09,KOPJE.timber,22,6);
+  for(const side of[-1,1])b.beam([24,y+4.72,zz],[24+side*2.9,y+5.9,zz],.075,KOPJE.teak,22,6);
  }
- b.cylinder(x,y+3.17,z,.06,.03,.13,KOPJE.bronze,41,8);
+ // The entry remains open. Canvas storm curtains are rolled up and tied back.
+ b.box(24,y+3.5,3.10,6.2,.60,.15,'#334c3d',22);hudsonText(b,'KOPJE FIELD LODGE',24,y+3.5,3.19,5.62,'#d5c195');
+ for(const xx of[19.45,28.55]){
+  b.cylinder(xx,y+3.53,3.07,.115,.115,2.40,'#aea17a',23,10,0,PI/2);
+  for(const s of[-1,1])b.box(xx+s*.73,y+3.52,3.18,.047,.22,.03,'#655b3a',22);
+ }
+ kopjeMapDesk(b);
+ // Field library and radio desk replace the glass-backed mezzanine lounge.
+ b.box(23.8,y+1.20,-4.61,5.8,2.36,.42,'#3b4a34',22);
+ for(const yy of[.15,.69,1.27,1.85,2.39])b.box(23.8,y+yy,-4.35,5.95,.09,.78,KOPJE.teak,22);
+ for(let row=0;row<3;row++)for(let i=0;i<22;i++){
+  const xx=21.08+i*.25,h=.24+hash(i,row+98)*.14;b.box(xx,y+.77+row*.58+h/2,-4.25,.14,h,.36,['#746849','#ada17b','#56634b','#97704d'][i%4],23);
+ }
+ b.box(28.48,y+.96,-3.58,2.1,.13,1.13,'#997c4e',22);
+ for(const xx of[27.70,29.25])b.box(xx,y+.46,-3.58,.13,.91,.84,KOPJE.timber,22);
+ b.box(28.43,y+1.31,-3.72,1.07,.53,.62,'#485b43',41);b.box(28.35,y+1.41,-3.40,.52,.13,.02,'#9da479',6);
+ for(const xx of[28.12,28.69])b.cylinder(xx,y+1.20,-3.39,.052,.052,.046,'#bba375',41,12,PI/2);
+ for(let i=0;i<6;i++)b.box(28.81,y+1.17+i*.056,-3.397,.17,.018,.015,'#28362b',42);
+ b.beam([28.87,y+1.52,-3.72],[28.93,y+2.22,-3.72],.008,'#b1ad8d',41,5);
+ kopjeChair(b,28.5,y,-2.48,PI,.68);kopjeLantern(b,27.6,y+1.05,-3.57,.48);
+ // A compact dark stone hearth is part of the west wall, with a real chimney.
+ kopjeMasonry(b,19.1,y,-3.0,1.8,2.4,1.15,4);b.box(19.1,y+1.0,-2.406,1.08,1.25,.028,'#28342a',42);
+ kopjeMasonry(b,19.1,y+2.4,-3.0,1.24,4.0,.96,31);b.box(19.1,y+6.50,-3.0,1.51,.20,1.22,'#6b634e',3);
+ for(let i=0;i<4;i++)b.beam([18.73+i*.17,y+.40,-2.39],[19.23+i*.13,y+.49,-2.37],.046,'#59432a',22,6);
+ for(const xx of[18.32,29.64])kopjeLantern(b,xx,y+.12,3.18,.72);
 }
-function kopjePool(b){
- const y=SAFARI_LODGE.floor,px=16.22,pz=12.05,w=12.2,d=5.7,water=y-.19;
- // The structural basin is below the actual opening in the timber terrace.
- b.box(px,y-.68,pz,w,.66,d,'#618276',3);
+function kopjeGearWing(b){
+ const y=SAFARI_LODGE.floor,cx=34.25,cz=-1.45;
+ kopjeFoundation(b,cx,cz,6.75,7.45);
+ kopjeMasonry(b,cx,y,-5.05,6.65,3.05,.45,13);
+ // Split the masonry around a real opening; the shutters do not hide a wall.
+ kopjeMasonry(b,37.35,y,cz,.50,1.0,7.45,14);
+ kopjeMasonry(b,37.35,y+2.6,cz,.50,.45,7.45,14);
+ for(const zz of[-3.7375,.8375])kopjeMasonry(b,37.35,y+1.0,zz,.50,1.6,2.875,14);
+ kopjeShutter(b,37.635,y+1.8,cz,1.55,1.55,PI/2);
+ kopjeMasonry(b,31.15,y,cz,.42,3.05,7.45,15);
+ // Front wall pieces form a broad equipment doorway and shuttered aperture.
+ kopjeMasonry(b,31.86,y,2.1,1.48,3.05,.45,16);kopjeMasonry(b,36.5,y,2.1,1.7,3.05,.45,17);
+ b.box(34.15,y+2.77,2.1,3.42,.33,.59,'#5a482e',22);
  for(const side of[-1,1]){
-  b.box(px,water-.32,pz+side*d/2,w+.20,.68,.20,'#6d9381',3);
-  b.box(px+side*w/2,water-.32,pz,.20,.68,d,'#6d9381',3);
-  b.box(px,y-.032,pz+side*(d/2+.12),w+.67,.14,.40,'#c9b58d',3);
-  b.box(px+side*(w/2+.12),y-.032,pz,.40,.14,d+.24,'#c9b58d',3);
+  b.push(34.15+side*1.60,y+1.35,2.15,0,side*.75);
+  for(let i=0;i<5;i++)b.box((i-2)*.21,0,0,.197,2.62,.11,'#576749',22);
+  for(const yy of[-.87,.85])b.box(0,yy,.076,1.12,.11,.058,'#8a744a',22);
+  b.beam([-.47,-1.1,.081],[.47,1.1,.081],.045,'#8a744a',22,4);b.pop();
  }
- for(let i=0;i<24;i++)for(let j=0;j<10;j++){
-  const x=px-w/2+.12+i*(w-.24)/24,z=pz-d/2+.12+j*(d-.24)/10,xx=x+(w-.24)/24,zz=z+(d-.24)/10;
-  b.quad([x,water,z],[x,water,zz],[xx,water,zz],[xx,water,z],j%3?'#498e83':'#569c8c',7);
+ // A working observation hide, not another guest-suite pavilion.
+ const top=y+5.9,towerX=34.45,towerZ=-2.2;
+ for(const xx of[towerX-1.45,towerX+1.45])for(const zz of[towerZ-1.60,towerZ+1.60]){
+  b.box(xx,y+2.95,zz,.18,5.9,.18,'#4f4730',22);
+  b.box(xx,top+.57,zz,.17,1.25,.17,KOPJE.timber,22);
  }
- // The long river-facing edge spills into a lower stone catch channel.
- const xx=px-w/2-.04;
- for(let i=0;i<26;i++){
-  const z=pz-d/2+.1+i*(d-.2)/26,q=z+(d-.2)/26;
-  b.quad([xx,water+.01,z],[xx-.04,water-.88,z],[xx-.04,water-.88,q],[xx,water+.01,q],i%4?'#6eaa96':'#b5d6bb',44);
+ b.box(towerX,top,towerZ,3.22,.22,3.65,KOPJE.teak,22);
+ for(const zz of[towerZ-1.67,towerZ+1.67]){
+  for(let j=0;j<5;j++)b.box(towerX,top+.20+j*.16,zz,3.18,.145,.10,j%2?'#897349':'#746344',22);
+  b.box(towerX,top+1.42,zz,3.20,.11,.12,'#9f8656',22);
+  for(const xx of[towerX-.78,towerX+.78])b.box(xx,top+1.13,zz,.068,.52,.09,KOPJE.timber,22);
  }
- b.box(xx-.20,water-.97,pz,.73,.18,d+.36,'#6b8270',3);b.box(xx-.26,water-.85,pz,.41,.05,d+.16,'#416f61',7);
- // Two broad steps and a brass handrail occupy the shallow eastern end.
- for(let i=0;i<3;i++)b.box(px+w/2-.29-i*.34,water-.08-i*.14,pz+1.54,.38,.19,1.08,'#afc0a1',3);
- for(const z of[pz+1.11,pz+1.98]){
-  b.beam([px+w/2+.48,y,z],[px+w/2+.48,y+.62,z],.023,KOPJE.bronze,41,7);
-  b.beam([px+w/2+.48,y+.62,z],[px+w/2-.35,y+.55,z],.023,KOPJE.bronze,41,7);
+ for(const xx of[towerX-1.55,towerX+1.55])for(let j=0;j<5;j++)b.box(xx,top+.20+j*.16,towerZ,.10,.145,3.42,'#7d6e49',22);
+ for(const xx of[towerX-1.44,towerX+1.44])for(const zz of[towerZ-1.60,towerZ+1.60])b.box(xx,top+1.13,zz,.13,2.02,.13,KOPJE.timber,22);
+ kopjeRoof(b,towerX,top+2.1,towerZ,4.48,4.86,1.53,73);
+ // Lean-to iron roof runs up to the hide. Individually modeled corrugations.
+ for(let i=0;i<37;i++){
+  const xx=30.80+i*.195,z0=2.80,z1=-5.5,yy=y+3.06;
+  if(xx>32.64&&xx<36.23){
+   b.quad([xx,yy,2.8],[xx+.193,yy,2.8],[xx+.193,yy+.43,-.31],[xx,yy+.43,-.31],'#6d7560',41);
+  }else b.quad([xx,yy,2.8],[xx+.193,yy,2.8],[xx+.193,yy+.92,-5.5],[xx,yy+.92,-5.5],'#6d7560',41);
+  const stop=xx>32.64&&xx<36.23?-.31:-5.5;b.beam([xx+.065,yy+.029,z0],[xx+.065,yy+.029+(z0-stop)*.111,stop],.018,'#8c8b6a',41,5);
  }
- for(const [x,z,a]of[[12.2,7.7,PI/2],[15,7.7,PI/2],[19.1,7.7,PI/2],[22,7.7,PI/2]])kopjeLounger(b,x,y+.01,z,a);
- kopjeParasol(b,13.25,y,6.73,1.48);kopjeParasol(b,20.35,y,6.70,1.55);
- for(const x of[16.8,24.0])kopjeTable(b,x,y,7.65,.38);
+ for(const xx of[32.5,33.24])b.beam([xx,y,-2.0],[xx,top,-2.0],.040,KOPJE.timber,22,6);
+ for(let i=0;i<23;i++)b.beam([32.5,y+.20+i*.245,-2.0],[33.24,y+.20+i*.245,-2.0],.027,'#b09a64',22,5);
+ // Tripod optics and an aerial make the hide read as a surveying station.
+ for(let i=0;i<3;i++){const a=i*TAU/3;b.beam([towerX+.85+Math.cos(a)*.37,top+.14,towerZ+.63+Math.sin(a)*.37],[towerX+.85,top+1.11,towerZ+.63],.022,'#9a8152',41,5);}
+ b.cylinder(towerX+.85,top+1.25,towerZ+.63,.075,.10,.64,'#364e3c',42,12,PI/2);
+ b.beam([36.1,y+4.4,-3.68],[36.1,y+10.08,-3.68],.032,'#a4946b',41,6);
+ for(const yy of[y+9.3,y+9.76])b.beam([35.68,yy,-3.68],[36.52,yy,-3.68],.012,'#b0a681',41,4);
+ for(let i=0;i<5;i++)kopjeCase(b,32.3+(i%2)*1.25,y+Math.floor(i/2)*.65,.3,1.05,.71,.57,i);
+ b.box(36.42,y+1.24,-1.9,1.13,2.48,.24,'#6e6244',22);
+ for(let i=0;i<4;i++){const xx=36.06+i*.24;b.beam([xx,y+.24,-1.75],[xx+.08,y+2.16,-1.75],.026,'#a38a5b',22,6);b.box(xx,y+1.61,-1.70,.16,.21,.06,'#516448',23);}
+ b.box(34.30,y+2.49,2.46,2.8,.33,.068,'#3b503c',22);hudsonText(b,'FIELD STORES',34.30,y+2.49,2.505,2.53,'#d5c095');
 }
-function kopjeFireCourt(b){
- const y=SAFARI_LODGE.floor,cx=33.0,cz=16.0,r=4.2,inner=1.75,segments=72;
- const point=(a,r,yy)=>[cx+Math.cos(a)*r,yy,cz+Math.sin(a)*r];
- // The north chord meets the rectangular terrace, so there is no coplanar
- // overlap. Clipping is only against the authored terrace line, not the view.
- const clippedQuad=points=>{
-  const out=[];for(let i=0;i<points.length;i++){const a=points[i],q=points[(i+1)%points.length],inside=a[2]>=13,next=q[2]>=13;if(inside)out.push(a);if(inside!==next)out.push(lerpV(a,q,(13-a[2])/(q[2]-a[2])));}
-  for(let i=1;i+1<out.length;i++)b.tri(out[0],out[i],out[i+1],KOPJE.teak,22);
- };
- for(let i=0;i<segments;i++){
-  const a=i*TAU/segments,q=(i+1)*TAU/segments;
-  clippedQuad([point(a,inner,y),point(a,r,y),point(q,r,y),point(q,inner,y)]);
-  b.quad(point(a,inner,y),point(q,inner,y),point(q,inner,y-.61),point(a,inner,y-.61),'#87765b',4);
-  if(Math.sin((a+q)/2)>-.68)b.quad(point(a,r,y),point(a,r,y-.29),point(q,r,y-.29),point(q,r,y),KOPJE.timber,22);
-  b.tri([cx,y-.6,cz],point(q,inner,y-.6),point(a,inner,y-.6),'#b7a57c',3);
+function kopjeMessTent(b){
+ const x=12.25,z=-.6,base=safariSurface(x,z)+.20;
+ // A khaki canvas mess fly beside the stone lodge, on the earth. No deck.
+ const ridge=base+3.7,eave=base+2.55,w=6.1,d=7.2;
+ b.box(x,base-.15,z,5.96,.30,6.92,'#a08e66',3);
+ for(const zz of[z-d/2,z+d/2]){
+  b.cylinder(x,base+1.85,zz,.075,.055,3.7,'#806641',22,8);
+  for(const s of[-1,1])b.beam([x,base+3.66,zz],[x+s*w*.49,base+2.44,zz],.053,KOPJE.timber,22,6);
  }
- // Curved upholstered benches wrap the stone fire bowl, with an entrance gap.
- for(let i=0;i<11;i++){
-  const a=.10+i*TAU/13,xx=cx+Math.cos(a)*2.67,zz=cz+Math.sin(a)*2.67;
-  if(zz<14.0)continue;
-  b.push(xx,y,zz,0,-a-PI/2);kopjeSofa(b,0,0,0,1.23);b.pop();
+ for(const s of[-1,1]){
+  const point=(u,v)=>[x+s*w/2*v,ridge-(ridge-eave)*v-.20*Math.sin(v*PI)-.16*Math.sin(u*PI)*v,z-d/2+u*d];
+  for(let i=0;i<18;i++)for(let j=0;j<8;j++)b.quad(point(i/18,j/8),point((i+1)/18,j/8),point((i+1)/18,(j+1)/8),point(i/18,(j+1)/8),(i%6===0)?'#a49466':'#b8aa7d',23);
+  for(const zz of[z-d/2,z+d/2]){
+   const xx=x+s*w/2,g=safariSurface(xx,zz);b.cylinder(xx,(g+eave)/2,zz,.043,.037,eave-g,'#6e5b38',22,7);
+   const peg=[xx+s*.72,safariSurface(xx+s*.72,zz+.55)+.05,zz+.55];b.beam([xx,eave,zz],peg,.014,'#cbbb8c',23,4);b.beam(add(peg,[0,-.13,0]),add(peg,[0,.20,0]),.030,'#6b5a3c',22,5);
+  }
  }
- b.cylinder(cx,y-.33,cz,.91,.97,.44,'#72674e',3,28);b.cylinder(cx,y-.08,cz,.89,.89,.05,'#354036',42,28);
- for(let i=0;i<6;i++){const a=i*2.399;b.beam([cx+Math.cos(a)*.61,y-.02,cz+Math.sin(a)*.61],[cx-Math.cos(a)*.35,y+.08,cz-Math.sin(a)*.35],.064,'#59432c',22,6);b.sphere(cx+Math.cos(a)*.29,y+.065,cz+Math.sin(a)*.29,.12,.035,.09,'#bf7435',6,6,3);}
- const rail=[];for(let i=0;i<=23;i++){const a=-.05+i*(PI+.10)/23;rail.push(point(a,r-.06,y));}safariRailings(b,rail,.74,'#5b6249');
- for(let i=0;i<7;i++){const a=i*PI/6,xx=cx+Math.cos(a)*(r-.09),zz=cz+Math.sin(a)*(r-.09),base=safariSurface(xx,zz);b.box(xx,(base+y-.28)/2,zz,.24,y-.28-base,.24,KOPJE.timber,22);if(i%2===0)kopjeLantern(b,xx,y+.75,zz,.53);}
+ b.box(x,base+.86,z,4.38,.10,1.36,'#8f7349',22);
+ for(const xx of[x-1.6,x+1.6])b.box(xx,base+.43,z,.15,.86,.93,KOPJE.timber,22);
+ for(const s of[-1,1]){b.box(x,base+.44,z+s*1.08,4.23,.10,.38,'#8d7348',22);for(const xx of[x-1.6,x+1.6])b.box(xx,base+.22,z+s*1.08,.15,.44,.34,KOPJE.timber,22);}
+ for(let i=0;i<4;i++)for(const s of[-1,1])b.cylinder(x-1.45+i*.97,base+.973,z+s*.44,.065,.075,.13,'#d4c7a4',24,10);
+ kopjeLantern(b,x,base+.91,z,.57);
+ // Water barrels, a wash stand and expedition trunks are practical, not resort furniture.
+ for(const [xx,zz]of[[9.60,3.57],[10.44,3.57]]){
+  const yy=safariSurface(xx,zz);b.cylinder(xx,yy+.56,zz,.36,.34,1.1,'#606d4a',41,14);
+  for(const dy of[.18,.53,.94])b.cylinder(xx,yy+dy,zz,.374,.374,.047,'#3e4b36',41,14);
+  b.cylinder(xx,yy+1.14,zz,.36,.36,.056,'#8a8962',41,14);
+ }
+ kopjeCase(b,14.2,safariSurface(14.2,4.6)+.05,4.6,1.3,.86,.68,1);
+ kopjeCase(b,12.7,safariSurface(12.7,4.2)+.05,4.2,1.1,.72,.55,0);
 }
-function kopjePergola(b){
- const y=SAFARI_LODGE.floor,x=30.8,z=9.8;
- for(const xx of[x-3.5,x+3.5])for(const zz of[z-2.15,z+2.15]){b.box(xx,y+1.52,zz,.13,3.04,.13,KOPJE.timber,22);b.box(xx,y+.13,zz,.23,.25,.23,'#a48a5d',4);}
- for(const zz of[z-2.2,z+2.2])b.box(x,y+3.07,zz,7.4,.18,.18,KOPJE.teak,22);
- for(let xx=x-3.5;xx<=x+3.5;xx+=.31)b.box(xx,y+3.22,z,.085,.14,4.8,'#947347',22);
- for(const xx of[x-1.85,x+1.85]){
-  kopjeTable(b,xx,y,z,.81);for(const side of[-1,1])kopjeChair(b,xx,y,z+side*1.13,side>0?PI:0,.72);
-  kopjePendant(b,xx,y+2.48,z,.42);
+function kopjeStoneSteps(b){
+ const x=24,z0=3.74,z1=7.8,top=SAFARI_LODGE.floor+.025,width=3.9;
+ const bottom=Math.max(...[-width/2,0,width/2].map(dx=>safariSurface(x+dx,z1)))+.045,n=Math.max(2,Math.ceil((top-bottom)/.17));
+ for(let i=0;i<n;i++){
+  const z=mix(z0,z1,(i+.5)/n),yy=mix(top,bottom,(i+1)/n),ground=Math.min(...[-width/2,0,width/2].map(dx=>safariSurface(x+dx,z)))-.08;
+  b.box(x,(ground+yy)/2,z,width,yy-ground,(z1-z0)/n+.012,'#9c8f6f',3);
+  for(let j=0;j<7;j++)b.box(x-width/2+(j+.5)*width/7,yy+.012,z,width/7-.019,.035,(z1-z0)/n-.014,j%2?'#b6a47f':'#a39372',3);
  }
- // A light trailing vine follows the pergola, with visible hanging tendrils.
- for(let i=0;i<20;i++){
-  const xx=x-3.5+i*.36,zz=z-2.16;b.sphere(xx,y+3.24,zz,.35,.17,.29,i%2?'#4a673b':'#647c47',8,6,3,true);
-  if(i%3===0){b.beam([xx,y+3.24,zz],[xx+.11,y+2.66,zz+.03],.010,'#6a6840',22,4);b.sphere(xx+.10,y+2.83,zz+.03,.12,.23,.09,'#738550',8,5,3,true);}
+ for(const s of[-1,1]){
+  const xx=x+s*2.4,g=safariSurface(xx,5.1);kopjeMasonry(b,xx,g-.1,5.1,.84,1.45,.91,s+3);kopjeLantern(b,xx,g+1.37,5.1,.65);
  }
 }
 function kopjeSteps(b,a,q,width=1.8){
@@ -358,27 +355,22 @@ function kopjeArrival(b){
  for(const walk of SAFARI_WALKS)housePath(b,walk,1.08,safariSurface,'#b8a173');
  // Short, supported landings meet the bridge, not its railing or a cliff.
  const left=[-7.1,safariLandingHeight(-7.1,20,.9)+.12,20];kopjeSteps(b,[x0,by,20],left,1.74);
- const bottom=[12.2,safariLandingHeight(12.2,19.0,.82)+.10,19.0];
- kopjeSteps(b,[12.2,y,16.16],bottom,1.62);
- housePath(b,[[x1,20],[11.5,20.1],[12.2,19]],1.35,safariSurface,'#bba475');
  // A quiet entrance gate and engraved trail marker, below the station railway.
  for(const x of[-6.9,-4.6]){const yy=safariSurface(x,22.0);b.cylinder(x,yy+.85,22,.08,.063,1.70,KOPJE.timber,22,8);}
  const signY=safariSurface(-5.75,22)+1.68;b.box(-5.75,signY,22.0,2.66,.41,.09,KOPJE.dark,22);hudsonText(b,'KOPJE HOUSE',-5.75,signY,22.057,2.4,'#d7c295');
  for(const [x,z]of[[-10.8,25],[-35,20],[-21,1],[-12.8,14],[12.5,19.7]]){kopjeLantern(b,x,safariSurface(x,z)+.05,z,.62);}
 }
 function safariLodge(b){
- const y=SAFARI_LODGE.floor;
- kopjeDeck(b,24,-.5,33,14);kopjeDeck(b,24,7.80,33,2.60);
- kopjeDeck(b,8.77,12.06,2.54,5.92);kopjeDeck(b,31.47,11.0,18.06,3.80);
- kopjeDeck(b,18.02,15.62,21.04,1.32);
- // Basin piers and a broad stone stem wall connect the central court to earth.
- for(const x of[11,21.5])for(const z of[10,14]){const g=safariSurface(x,z);b.box(x,(g+y-.7)/2,z,.52,y-.7-g,.52,'#8a7959',4);}
- kopjeMainHall(b);kopjeWings(b);kopjePool(b);kopjePergola(b);kopjeFireCourt(b);kopjeArrival(b);
- safariRailings(b,[[7.58,y,-7.45],[7.58,y,16.20],[11.28,y,16.20]],.78,'#56604a');
- safariRailings(b,[[13.14,y,16.20],[28.48,y,16.20]],.78,'#56604a');
- safariRailings(b,[[40.42,y,-7.45],[40.42,y,12.9],[37.22,y,12.9]],.78,'#56604a');
- for(const [x,z,r]of[[8.1,4.4,.50],[16.9,4.6,.38],[30.6,5.3,.45],[39.6,6.1,.47],[26.0,15.6,.32]])kopjePot(b,x,y,z,r,x);
- for(const [x,z]of[[7.6,-6],[7.6,5.4],[7.6,15.7],[25.8,16.2],[40.4,4.5],[40.4,12.3]])kopjeLantern(b,x,y+.79,z,.58);
+ kopjeMainHall(b);kopjeGearWing(b);kopjeMessTent(b);kopjeStoneSteps(b);kopjeArrival(b);
+ // The old pool and rear porch footprint is earth again, crossed by a narrow
+ // footpath. A field noticeboard gives the approach a purpose, not a terrace.
+ const x=18.6,z=9.0,y=safariSurface(x,z);
+ for(const xx of[x-1.18,x+1.18])b.cylinder(xx,y+1.0,z,.073,.058,2.05,KOPJE.timber,22,7);
+ b.box(x,y+1.6,z,2.8,1.3,.14,'#3b513d',22);
+ b.box(x,y+1.6,z+.079,2.42,.96,.018,'#bbae80',23);
+ for(let i=0;i<5;i++)b.beam([x-.92,y+1.91-i*.14,z+.094],[x+.28+(i%2)*.55,y+1.91-i*.14,z+.094],.011,'#596849',0,4);
+ b.push(x,y+2.21,z+.03,-.10);b.box(0,0,0,3.10,.10,.68,'#655237',22);b.pop();
+ kopjeLantern(b,18.0,y+.10,9.65,.60);
 }
 
 function safariPalm(b,x,z,h=6,variant=0){

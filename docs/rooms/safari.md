@@ -26,29 +26,30 @@ consuming the house's shared random stream. Trees occupy gentle planting shelves
 not sheer cliff faces, and are excluded by their whole
 canopy envelope, not just their trunk centers.
 
-## Kopje House and the landscape revision
+## Kopje Field Lodge
 
-The lodge is a fully furnished native building, not a facade or imported asset.
-Its three thatched pavilions contain an open lounge, stone fireplace, mezzanine
-library and real stair, a dining room and coffee bar, and two glazed guest suites.
-Teak verandas lead to a planted dining pergola, an infinity pool with a working
-water finish, woven loungers and parasols, and a sunken circular fire court.
-Structural piers and braces bear on the finished terrain. The pool and fire court
-are cut out of the deck geometry, rather than hidden under a solid slab.
-A supported pedestrian suspension bridge joins the lodge approach to the Acacia
-Gate paths. No animals have been added.
+The lodge is an expedition base, not a resort. The pool, spillway, rear leisure
+deck, parasols, loungers, pergola and sunken fire court have been removed from
+the geometry. Their footprint is planted earth again, crossed by one narrow
+approach from the suspension bridge to broad stone entrance steps.
 
-The land now uses broken, terraced escarpments, richer soil and grass coloration,
-riverine scrub, grass clumps and grounded geological outcrops. Acacias use tapered
-branch forks and ragged leaf crowns rather than stacked spheres. A baobab and
-river palms create different silhouettes. Planting excludes the lodge, paths and
-railway by complete footprint. Geometry still fits the original 650,000-vertex
-room ceiling; it was optimized rather than raising that limit.
+A steep thatched gable and exposed timber trusses cover the main hall. Rough,
+individually relieved fieldstone foundations and walls replace the continuous
+raised deck. Inside are a large reserve-map briefing table, contour lines and a
+river drawn in geometry, binoculars, rolled maps, a compass, enamel mugs, a field
+library, radio desk and compact stone hearth. A canvas mess fly and supply trunks
+sit alongside the lodge. The stone equipment wing has a shuttered opening and a
+raised timber surveying hide with optics and an aerial.
 
-The principal new source is `src/rooms/safari-lodge.js`. Its helpers are loaded
-with the room but only build geometry on actual scene construction. Nothing is
-rebuilt in the animation loop. `Views → Places → Kopje House` and `The sundowner
-terrace` are authored close views.
+The lodge remains native, deterministic geometry. Existing caption, viewpoint,
+lighting, planting-exclusion and arrival-path metadata now describe the field
+lodge. Use **Views → Places → Kopje House** or **The expedition approach**.
+The monorail route, stock and no-animals scope are unchanged.
+
+The rework adds regression proofs that the removed pool builders and water
+materials are absent, buildings stop before the former leisure terrace, and the
+old pool/fire-court footprints are available for planting. Existing clearance,
+finite geometry, cache, motion and unchanged upper vertex budgets still apply.
 
 ## Railway and Solstice
 

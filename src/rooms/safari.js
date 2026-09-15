@@ -4,8 +4,8 @@
 // nickfromlater, with agent assistance. Proposal #39; no animal geometry.
 // Everything is native, deterministic, and baked outside the frame loop.
 const SAFARI={width:112,depth:80,step:.7,water:-2.05,bed:-3.75,beamWidth:.56,beamDepth:.72};
-const SAFARI_LODGE={x:24,z:1,floor:4.45,bounds:[7.5,-8.5,40.5,20.5]};
-const SAFARI_WALKS=[[[-28,35],[-36,24],[-37,16],[-32,8],[-29,0],[-20,1],[-14,10],[-11,17],[-6,20]],[[-10,31.3],[-12,26],[-10,23],[-6,20]]];
+const SAFARI_LODGE={x:24,z:1,floor:4.45,bounds:[8,-7.3,39,8.5]};
+const SAFARI_WALKS=[[[-28,35],[-36,24],[-37,16],[-32,8],[-29,0],[-20,1],[-14,10],[-11,17],[-6,20]],[[-10,31.3],[-12,26],[-10,23],[-6,20]],[[10.3,20],[12,18.1],[16.5,12.6],[21.2,9.1],[24,7.8]]];
 function safariLodgeClear(x,z,r=0){const a=SAFARI_LODGE.bounds;return x+r<a[0]||x-r>a[2]||z+r<a[1]||z-r>a[3];}
 function safariWalkDistance(x,z){let distance=Infinity;for(const walk of SAFARI_WALKS)for(let i=1;i<walk.length;i++){const a=walk[i-1],q=walk[i],dx=q[0]-a[0],dz=q[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz));distance=Math.min(distance,Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t));}return distance;}
 const SAFARI_PALETTE={ivory:'#ead7aa',sand:'#cfb277',grass:'#b4ac61',ochre:'#b77847',rock:'#a96942',shadow:'#73533c',jade:'#345e50',leaf:'#6f8149',brass:'#be9655',wood:'#785637',dark:'#293e35'};
@@ -172,6 +172,7 @@ const SAFARI_TREES=(()=>{
  for(const [cx,cz,n]of[[-29,4,7], [22,4,6],[-38,-30,6],[34,20,5],[20,-12,4],[-18,20,4],[-30,13,11],[-19,13,8],[-41,0,7],[-20,-7,7],[-44,-30,5],[39,-18,5]])for(let i=0;i<n;i++){
   const a=i*2.399+cx,r=3+Math.sqrt(i)*2.2;addTree(cx+Math.cos(a)*r,cz+Math.sin(a)*r*.7,3.7+hash(i,cx)*2.1,100+cx*3+i);
  }
+ for(const [x,z,h,v]of[[15.8,10.0,5.4,901],[30.8,13.3,6.1,902],[21.2,19,5.0,903],[37.1,17.5,4.2,904]])addTree(x,z,h,v);
  return trees;
 })();
 function safariNaturalDetails(b){
@@ -410,26 +411,26 @@ function safariRoom(scene,b){
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];
  scene.height=(x,z)=>Math.abs(x)<=56&&Math.abs(z)<=40?Math.max(SAFARI.water,safariSurface(x,z)):FLOOR;
  scene.canPlace=()=>false;
- scene.safari={revision:2,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
+ scene.safari={revision:3,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
  scene.spots=[
   {name:'The Rift Observatory',target:[0,5,-1],distance:138,phoneDistance:330,pitch:.60,yaw:.32,detail:'A savanna in miniature. Kopje House opens onto the river, broken escarpments rise behind the railway, and acacia trails lead to the lodge.'},
   {name:'Acacia Gate',target:[-27,7.8,29],distance:32,phoneDistance:62,pitch:.37,yaw:.20,detail:'Linen canopies, timber platforms, and a cream-and-jade panoramic train. The stairs descend to a red-earth walking terrace.'},
   {name:'Across the river',target:[safariRiverX(28),2.5,28],distance:37,phoneDistance:67,pitch:.35,yaw:.30,detail:'Two slender concrete arches carry the single guide beam. The river stays open beneath the railway.'},
   {name:'Acacia country',target:[-28,5.8,6],distance:36,phoneDistance:65,pitch:.35,yaw:-.30,detail:'Flat-topped crowns, branching trunks and long shadows. The train slips behind the trees without cutting through their canopies.'},
   {name:'Rift Lookout',target:[15,11.8,-28],distance:37,phoneDistance:68,pitch:.39,yaw:2.84,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
-  {name:'Kopje House',target:[24,7,1],distance:34,phoneDistance:63,pitch:.34,yaw:.38,detail:'A vaulted thatch-roofed lodge above the river. Open lounges, a library loft, a dining pavilion and an infinity pool are connected by teak verandas.'},
+  {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. No pool or rear leisure deck.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
-  {name:'The sundowner terrace',target:[25,4.8,12],distance:24,phoneDistance:44,pitch:.38,yaw:.64,detail:'A pool overlooking the river, woven loungers, parasols and a sunken fire circle. Little lanterns come on after sunset.'}
+  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'An earth path reaches broad stone steps between lanterns. The former leisure terrace has returned to grasses, acacias and riverbank scrub.'}
  ];
 }
 registerHouseRoom('safari',{
  name:'The Rift Observatory',layout:'The Rift Skyway',tag:'THE LONGER WAY HOME',
- description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a timber-and-thatch safari lodge with open lounges, an infinity pool and a sundowner terrace, then follow Solstice around the rift.',
+ description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a rugged stone-and-thatch expedition lodge with a map room, canvas mess fly and observation hide, then follow Solstice around the rift.',
  color:'#c1a26b',ambient:'forest',target:[0,4,-1],distance:149,phoneDistance:342,pitch:.60,yaw:.32,
  trainCollection:false,train:{name:'Solstice',number:'01',service:'The Rift Skyway',type:'panoramic electric monorail',power:'electric'},
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari landscape, monorail, and expedition gallery; built with agent assistance.'}],
  map:{plot:'west-4',scale:.40,footprint:[158,130],focus:[0,4,-1]},
  lights:[[-41,26.75,-46],[41,26.75,-46],[-41,26.75,46],[41,26.75,46],[-36,12,-61],[36,12,-61]],
- layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[24,7.8,1],[14,6.8,0],[35,6.8,-2],[32.5,4.9,15.8]],
+ layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[23.8,8.2,.25],[12.25,4.0,-.6],[34.45,11.2,-2.2],[24,4.6,5.1]],
  build:safariRoom,shell:safariShell
 });
