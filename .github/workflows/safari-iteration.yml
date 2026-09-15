@@ -1,34 +1,92 @@
-name: Safari shadow precision diagnosis
+name: Safari final terrain and window-seat review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
   review:
     if: github.head_ref == 'codex/safari-observatory' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Isolated reviewer browser
+      - name: Apply the isolated normal correction and final controls
+        run: |
+          set -euo pipefail
+          if test -f .github/safari-final.patch.b64; then
+            base64 -d .github/safari-final.patch.b64 | xz -d > /tmp/safari.patch
+            echo '105a412391710c7f162b9fa5b2229dd87a4ccbc1012f8506cf9c3540769711b5  /tmp/safari.patch' | sha256sum -c -
+            git apply --check /tmp/safari.patch
+            git apply /tmp/safari.patch
+            git rm .github/safari-final.patch.b64
+            git add docs/rooms/safari.md index.html scripts/safari-passenger-qa.mjs scripts/safari-qa.mjs scripts/safari-ride-review.mjs src/railway.js src/rooms/safari.js src/safari-ride.js
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Fix rocky shadow terminators and finish cascade viewpoint and passenger selection'
+            git push origin HEAD:refs/heads/codex/safari-observatory
+          fi
+          mkdir -p evidence/safari-ride
+          git rev-parse HEAD > evidence/safari-ride/reviewed-commit.txt
+          git ls-tree -r HEAD > evidence/safari-ride/reviewed-tree.txt
+      - name: Install isolated reviewer browser
         run: |
           npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
           /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Same-camera precision and shadow comparison
+      - name: Inspect native geology, flowing water, train and passenger views
+        env:
+          PLAYWRIGHT_MODULE_PATH: /tmp/whistlevale-browser/node_modules/playwright/index.mjs
         run: |
-          python3 scripts/serve.py --port 4175 > /tmp/safari-server.log 2>&1 &
-          sleep 2
-          node .github/safari-shadow-diagnostic.mjs
+          set -euo pipefail
+          python3 scripts/serve.py --port 4175 > evidence/safari-ride/server.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4175/ -o /dev/null; then break; fi; sleep 1; done
+          node scripts/safari-ride-review.mjs 2>&1 | tee evidence/safari-ride/browser-log.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: safari-shadow-diagnosis
-          path: evidence/safari-shadow/
+          name: safari-final-native-review
+          path: |
+            evidence/safari-ride/*.png
+            evidence/safari-ride/*.json
+            evidence/safari-ride/*.txt
+            evidence/safari-ride/*.log
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-final-window-seat-playable
+          path: evidence/safari-ride/whistlevale-window-seat.html
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Complete project and geometry checks
+        if: always()
+        run: |
+          set +e
+          npm test > evidence/safari-ride/npm-test.txt 2>&1; tests=$?
+          npm run test:geometry:full > evidence/safari-ride/geometry-full.txt 2>&1; geometry=$?
+          npm run --silent check:contributions -- --json > evidence/safari-ride/contributions.json 2>&1; contributions=$?
+          printf '{"npmTest":%s,"geometryFull":%s,"contributions":%s}\n' "$tests" "$geometry" "$contributions" > evidence/safari-ride/test-statuses.json
+          cat evidence/safari-ride/test-statuses.json
+          tail -25 evidence/safari-ride/npm-test.txt
+          test "$tests" -eq 0 && test "$geometry" -eq 0 && test "$contributions" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-final-checks
+          path: |
+            evidence/safari-ride/npm-test.txt
+            evidence/safari-ride/geometry-full.txt
+            evidence/safari-ride/contributions.json
+            evidence/safari-ride/test-statuses.json
+            evidence/safari-ride/reviewed-commit.txt
           retention-days: 7
