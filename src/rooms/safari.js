@@ -39,9 +39,10 @@ function safariBank(x,z){return Math.abs(x-safariRiverX(z))-safariRiverWidth(z);
 function safariRawHeight(x,z){
  const bank=safariBank(x,z),roll=.68+.66*Math.sin(x*.079+z*.031)+.34*Math.cos(z*.145-x*.038)+.12*Math.sin(x*.37+z*.23);
  const mesa=(cx,cz,rx,rz,h)=>{
-  const xx=(x-cx)/rx,zz=(z-cz)/rz,angle=Math.atan2(zz,xx);
+  const xx=(x-cx+(z-cz)*.18)/rx,zz=(z-cz)/rz,angle=Math.atan2(zz,xx);
   const r=Math.pow(Math.abs(xx)**3+Math.abs(zz)**3,1/3)+.046*Math.sin(angle*5+1.4)+.026*Math.sin(angle*11)+.018*Math.sin(x*.92+z*.31);
-  return h*(.16*(1-smooth(.93,1.25,r))+.27*(1-smooth(.65,.92,r))+.32*(1-smooth(.39,.65,r))+.25*(1-smooth(.19,.39,r)));
+  // Broad, offset caprock and a steep broken wall, not concentric cones.
+  return h*(.13*(1-smooth(.92,1.25,r))+.22*(1-smooth(.74,.96,r))+.65*(1-smooth(.50,.72,r)));
  };
  const ridge=mesa(21,-21.5,18.5,13.6,19.0)+mesa(-35,-24.5,13.4,11.2,12.4);
  const shoulder=1.7*Math.exp(-((x+30)**2/290+(z-12)**2/54))+1.15*Math.exp(-((x-38)**2/140+(z-23)**2/42));
@@ -151,7 +152,7 @@ function safariAcacia(b,x,z,h=5.8,variant=0){
  for(let i=0;i<5;i++){
   const angle=a+i*2.399,r=h*(i?(.25+hash(i,variant)*.15):.07),xx=lean[0]+Math.cos(angle)*r,zz=lean[1]+Math.sin(angle)*r,yy=h*(.78+hash(i,variant+51)*.12),fork=[lean[0]+Math.cos(angle)*r*.48,h*.64,lean[1]+Math.sin(angle)*r*.48];
   safariBranch(b,trunk[2],fork,h*.024,h*.014,bark,6);safariBranch(b,fork,[xx,yy,zz],h*.014,h*.005,bark,5);
-  for(let k=0;k<2;k++){
+  for(let k=0;k<(i===4?1:2);k++){
    const az=angle+k*2.64,dx=Math.cos(az)*h*.10,dz=Math.sin(az)*h*.10,cy=yy+(k?.03:-.02)*h;
    safariBranch(b,[xx,yy-h*.08,zz],[xx+dx,cy,zz+dz],h*.007,h*.002,bark,4);
    safariCrown(b,xx+dx,cy,zz+dz,h*(.18+hash(i,k+variant)*.055),variant*19+i*3+k);
@@ -198,7 +199,7 @@ function safariNaturalDetails(b){
 // A narrow spring leaves a rocky seep, breaks over the escarpment, and
 // follows the finished ground into the river. Material 44 is the native,
 // time-driven flowing-water finish; it needs no new shader or frame geometry.
-const SAFARI_SPRING=[[10,-14.8],[10.2,-14],[10.7,-13],[11,-12],[10.2,-11],[9,-9.2],[6,-7.8],[3,-6.3],[-2,-5.1]];
+const SAFARI_SPRING=[[10,-14.8],[10,-14],[10,-13],[10,-12],[10.2,-11],[9,-9.2],[6,-7.8],[3,-6.3],[-2,-5.1]];
 function safariSpring(b){
  const points=[];
  for(let i=0;i+1<SAFARI_SPRING.length;i++){
