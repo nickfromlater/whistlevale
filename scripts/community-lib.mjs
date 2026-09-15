@@ -8,7 +8,7 @@ export const read=file=>readFile(path.join(root,file),'utf8');
 export async function communityContext(){
  const noop=()=>{},gradient={addColorStop:noop},drawing=new Proxy({measureText:text=>({width:String(text).length*7}),createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(o,k)=>o[k]||noop,set:(o,k,v)=>(o[k]=v,true)});
  const element=()=>({textContent:'null',style:{setProperty:noop},classList:{add:noop,remove:noop,toggle:noop},setAttribute:noop,addEventListener:noop,getContext:()=>drawing});
- const context=vm.createContext({console,document:{getElementById:element,createElement:element,addEventListener:noop,querySelectorAll:()=>[]},matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:900,devicePixelRatio:1,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop});
+ const context=vm.createContext({console,atob,Image:class{},document:{getElementById:element,createElement:element,addEventListener:noop,querySelectorAll:()=>[]},matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:900,devicePixelRatio:1,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop});
  context.window=context;context.addEventListener=noop;
  const run=code=>vm.runInContext(code,context,{timeout:10000});
  run(await read('src/community-core.js'));run(await read('src/mesh-memory.js'));run(await read('src/railway.js'));
@@ -52,7 +52,7 @@ export async function loadContributionDefinitions({context,run},catalogue,{readS
  await loadReviewedHallSources({run},{loaded,readSource});
 }
 export function prepareCommunityGeometry({context,run}){
- const noop=()=>{};context.communityGL=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});
+ const noop=()=>{};context.communityGL=new Proxy({getParameter:()=>8192,createVertexArray:()=>({}),createBuffer:()=>({}),createTexture:()=>({})},{get:(o,k)=>k in o?o[k]:noop});
  context.communityUpload=data=>{
   if(data.length%36||data.some(n=>!Number.isFinite(n)))throw new Error('A contribution scene contains invalid geometry.');
   return {count:data.length/12};

@@ -98,9 +98,9 @@ function worker(mode,output){
  const drawing=new Proxy({measureText:text=>({width:String(text).length*7}),createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(o,k)=>k in o?o[k]:noop,set:(o,k,v)=>(o[k]=v,true)});
  const element=()=>({width:0,height:0,style:{setProperty:noop},classList:{add:noop,remove:noop,toggle:noop},getContext:()=>drawing,addEventListener:noop});
  const document={getElementById:()=>element(),createElement:()=>element(),addEventListener:noop,querySelectorAll:()=>[]};
- const glStub=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});
+ const glStub=new Proxy({getParameter:()=>8192,createVertexArray:()=>({}),createBuffer:()=>({}),createTexture:()=>({})},{get:(o,k)=>k in o?o[k]:noop});
  let group='setup',serial=0;const meshes=[],timings={};
- const context=vm.createContext({assert,console,document,matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:1000,devicePixelRatio:2,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop,glStub,
+ const context=vm.createContext({assert,console,atob,Image:class{},document,matchMedia:()=>({matches:false}),innerWidth:1440,innerHeight:1000,devicePixelRatio:2,setTimeout:noop,clearTimeout:noop,requestAnimationFrame:noop,glStub,
   profileGeometryStage(name,fn){const start=performance.now();try{return fn();}finally{timings[name]=Math.round(((timings[name]||0)+performance.now()-start)*10)/10;}},
   record(data){
    assert.equal(data.length%36,0,group+' has whole triangles');

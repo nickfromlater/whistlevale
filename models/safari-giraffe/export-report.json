@@ -1,0 +1,35 @@
+{
+  "triangles": 17439,
+  "bones": 18,
+  "parts": 1,
+  "vertices": 52317,
+  "uniqueVertices": 16289,
+  "textureSize": [
+    2048,
+    2048
+  ],
+  "authoringTextureSize": [
+    4096,
+    4096
+  ],
+  "textureBytes": 1219532,
+  "sourceBytes": 3592197,
+  "sha256": "6896ca232e70e093418e0fe788343f1e1313fddbc3dd6e6c797739654e0b1eae",
+  "blendSHA256": "fcfd4675eb75383c924f8d767f5924ae9bf7abab8fa5af4fa6a1032ca7027f31",
+  "blenderVersion": "5.1.1",
+  "walkFrames": 25,
+  "bounds": [
+    [
+      -1.149684,
+      2.60113
+    ],
+    [
+      0.004934,
+      5.596743
+    ],
+    [
+      -0.729283,
+      0.554759
+    ]
+  ]
+}

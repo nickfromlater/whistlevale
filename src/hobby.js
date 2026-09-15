@@ -125,7 +125,7 @@ function renderRoomPlaces(){
  for(const [i,spot]of places.entries()){
   const button=document.createElement('button');button.textContent=spot.name;button.onclick=()=>{
    if(hobby.room==='valley'){if(hobby.cinema)leaveCinema(false);focusHouseWork(spot.contribution,spot.placement);return;}
-   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
+   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=(innerWidth<700?spot.phonePitch:undefined)??spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=(innerWidth<700?spot.phoneYaw:undefined)??spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
    for(const b of container.querySelectorAll('button'))b.classList.toggle('chosen',b===button);updateUI();
   };container.append(button);
   if(hobby.room==='valley'&&spot.contribution==='moonlight-drive-in'){
@@ -261,7 +261,7 @@ function bindCinemaCamera(){
 
 updateSimulation=function(dt){
  baseHobbySimulation(dt);
- if(hobby.room!=='valley'&&hobby.scene&&!paused)for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;
+ if(hobby.room!=='valley'&&hobby.scene&&!paused){for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;if(hobby.scene.wildlife)safariUpdateWildlife(hobby.scene,dt);}
 };
 
 function cinemaCamera(dt){

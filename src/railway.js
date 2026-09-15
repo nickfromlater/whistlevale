@@ -85,15 +85,23 @@ class Builder{
 const canvas=$('world');let gl,mainProgram,shadowProgram,postProgram,particleProgram,staticMesh,groundMesh,waterMesh,atlasTexture,whiteTexture,sceneFbo,sceneTex,sceneDepth,shadowFbo,shadowTex,shadowSize=3072,shadowCacheFbo,shadowCacheTex,shadowDirty=true,screenW=0,screenH=0;
 const I=ident();let VP=ident(),lightVP=ident(),cameraPos=[38,44,62],cameraTarget=[0,1,0],sunDir=norm([-48,74,-25]);let clock=0,night=.62,targetNight=.62,viewMode='room',reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let houseMoonlight=null,moonlightObjectList=null,moonlightObjectCount=-1,moonlightObjects=[];
+// Material 90 is the Blender-authored wildlife skin. Other meshes keep their
+// original vertex path; their VAOs do not need joint attributes or uniforms.
+const WILDLIFE_SKIN_GLSL=`
+layout(location=5)in vec4 aJoints;layout(location=6)in vec4 aWeights;
+uniform mat4 uWildlifeBones[24];
+mat4 wildlifeSkin(){return aWeights.x*uWildlifeBones[int(aJoints.x)]+aWeights.y*uWildlifeBones[int(aJoints.y)]+aWeights.z*uWildlifeBones[int(aJoints.z)]+aWeights.w*uWildlifeBones[int(aJoints.w)];}
+`;
 const VS=`#version 300 es
 precision highp float;
 layout(location=0)in vec3 aPosition;layout(location=1)in vec3 aNormal;layout(location=2)in vec3 aColor;layout(location=3)in float aMat;layout(location=4)in vec2 aUV;
+${WILDLIFE_SKIN_GLSL}
 uniform mat4 uModel,uVP,uLightVP;uniform float uTime;out vec3 vPos,vNormal,vColor;out float vMat;out vec2 vUV;out vec4 vShadow;
-void main(){vec4 p=uModel*vec4(aPosition,1.);if(abs(aMat-8.)<.1){p.x+=sin(uTime*.9+p.x*.71+p.z*.28)*.021; p.z+=sin(uTime*.67+p.z*.55)*.012;}if(abs(aMat-15.)<.1)p.xyz+=normalize(mat3(uModel)*aNormal)*.007;if(abs(aMat-32.)<.1)p.xyz+=normalize(mat3(uModel)*aNormal)*.035;vPos=p.xyz;vNormal=normalize(mat3(uModel)*aNormal);vColor=aColor;vMat=aMat;vUV=aUV;vShadow=uLightVP*p;gl_Position=uVP*p;}`;
+void main(){mat4 skin=abs(aMat-90.)<.1?wildlifeSkin():mat4(1.);vec3 normal=mat3(skin)*aNormal;vec4 p=uModel*skin*vec4(aPosition,1.);if(abs(aMat-8.)<.1){p.x+=sin(uTime*.9+p.x*.71+p.z*.28)*.021; p.z+=sin(uTime*.67+p.z*.55)*.012;}if(abs(aMat-15.)<.1)p.xyz+=normalize(mat3(uModel)*aNormal)*.007;if(abs(aMat-32.)<.1)p.xyz+=normalize(mat3(uModel)*aNormal)*.035;vPos=p.xyz;vNormal=normalize(mat3(uModel)*normal);vColor=aColor;vMat=aMat;vUV=aUV;vShadow=uLightVP*p;gl_Position=uVP*p;}`;
 const FS=`#version 300 es
 precision highp float;
 in vec3 vPos,vNormal,vColor;in float vMat;in vec2 vUV;in vec4 vShadow;
-uniform sampler2D uShadow,uAtlas,uRoomAtlas,uMoonlightFilm,uMoonlightNameplate;
+uniform sampler2D uShadow,uAtlas,uRoomAtlas,uMoonlightFilm,uMoonlightNameplate,uWildlifeCoat;
 uniform float uMoonlightReady;
 uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6];
 uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
@@ -236,6 +244,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==44.){float streak=sin(p.x*33.+p.y*5.+uTime*5.5)*.06+sin(p.z*42.-uTime*4.)*.04;base*=.89+streak;em=.12;rough=.22;}
  if(m==9.){base*=.77+.37*noise(p*26.);rough=.96;}
  if(m==10.){em=mix(.38,3.0,dusk);rough=.3;}
+ if(m==90.){base=texture(uWildlifeCoat,vUV).rgb*vColor;rough=.88;}
  if(m==15.){base=texture(uAtlas,vUV).rgb;rough=.79;}
  if(m==85.){base=texture(uMoonlightNameplate,vUV).rgb;rough=.65;em=.06+.15*uNight;}
  if(m==20.){base*=.955+.06*noise(p*1.4);rough=.95;}
@@ -293,7 +302,9 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  lit=mix(lit,uInvalid>.5?vec3(.48,.12,.06):vec3(.12,.42,.22),uPreview*.25);float dist=length(uEye-p);vec3 fog=mix(vec3(.07,.077,.062),mix(vec3(.018,.027,.044),vec3(.011,.019,.033),deepNight),dusk);float fogF=1.-exp(-dist*dist*.0000010);lit=mix(lit,fog,clamp(fogF,0.,.25));frag=vec4(lit,1.);
 }`;
 const SHVS=`#version 300 es
-precision highp float;layout(location=0)in vec3 aPosition;uniform mat4 uModel,uVP;void main(){gl_Position=uVP*uModel*vec4(aPosition,1.);}`;
+precision highp float;layout(location=0)in vec3 aPosition;layout(location=3)in float aMat;
+${WILDLIFE_SKIN_GLSL}
+uniform mat4 uModel,uVP;void main(){mat4 skin=abs(aMat-90.)<.1?wildlifeSkin():mat4(1.);gl_Position=uVP*uModel*skin*vec4(aPosition,1.);}`;
 const SHFS=`#version 300 es
 precision highp float;void main(){}`;
 const FULLVS=`#version 300 es
@@ -1195,7 +1206,7 @@ function appendInstance(dst,src,m){
   a.push(m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],(m[0]*nx+m[4]*ny+m[8]*nz)/s,(m[1]*nx+m[5]*ny+m[9]*nz)/s,(m[2]*nx+m[6]*ny+m[10]*nz)/s,src[i+6],src[i+7],src[i+8],src[i+9],src[i+10],src[i+11]);
  }
 }
-function disposeMesh(m){if(m){if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);gl.deleteVertexArray(m.vao);gl.deleteBuffer(m.buf);}}
+function disposeMesh(m){if(m&&!m.disposed){m.disposed=true;if(m.skinBuffer)gl.deleteBuffer(m.skinBuffer);if(m.skinTexture)gl.deleteTexture(m.skinTexture);if(m.glass)disposeMesh(m.glass);if(m.ibo)gl.deleteBuffer(m.ibo);if(m.vao)gl.deleteVertexArray(m.vao);if(m.buf)gl.deleteBuffer(m.buf);}}
 function rebuildScenery(exclude=null){
  if(exclude&&!sceneryMesh?.glass){shadowDirty=true;return;}
  const b=new Builder();sceneryRanges.clear();stationMarkerCache=null;

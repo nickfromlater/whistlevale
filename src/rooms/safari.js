@@ -1,8 +1,8 @@
 'use strict';
 
 // THE RIFT OBSERVATORY. Original landscape, railway and architecture by
-// nickfromlater, with agent assistance. Proposal #39; no animal geometry.
-// Everything is native, deterministic, and baked outside the frame loop.
+// nickfromlater, with agent assistance. Proposal #39; Blender-authored wildlife added in the western clearing.
+// Landscape is native and baked; shared animal meshes use live articulation.
 const SAFARI={width:112,depth:80,step:.7,water:-2.05,bed:-3.75,beamWidth:.56,beamDepth:.72};
 const SAFARI_LODGE={x:24,z:1,floor:4.45,bounds:[8,-7.3,39,8.5]};
 const SAFARI_WALKS=[[[-28,35],[-36,24],[-37,16],[-32,8],[-29,0],[-20,1],[-14,10],[-11,17],[-6,20]],[[-10,31.3],[-12,26],[-10,23],[-6,20]],[[10.3,20],[12,18.1],[16.5,12.6],[21.2,9.1],[24,7.8]]];
@@ -190,6 +190,11 @@ function safariAcacia(b,x,z,h=5.8,variant=0){
 const SAFARI_TREES=(()=>{
  const trees=[];
  const addTree=(x,z,h,v)=>{
+  if(x>-33&&x< -18&&z> -11&&z< -1)return; // Zebra grazing lawn.
+  if(x>12&&x<23&&z>18&&z<25)return; // Elephant's open grassland.
+  if(x>-32&&x< -17&&z>11&&z<24)return; // Open giraffe habitat and its low observation view.
+  // Keep the low portrait observation corridor clear of overhanging crowns.
+  if(x>-24&&x< -8&&z>16&&z<29&&Math.abs(z-(15+(x+24)*.65))<2.2+h*.48)return;
   const near=safariRailNear(x,z),foot=h*.17,levels=[-foot,0,foot].flatMap(dx=>[-foot,0,foot].map(dz=>safariSurface(x+dx,z+dz)));
   if(Math.abs(x)+h*.86>55||Math.abs(z)+h*.86>39||safariBank(x,z)<4.3||near.distance<h*.86+1.2||Math.max(...levels)-Math.min(...levels)>1.1||!safariLodgeClear(x,z,h*.76)||safariWalkDistance(x,z)<1.4||Math.hypot(x+24,z-10.2)<5.8)return;
   if(trees.some(t=>Math.hypot(x-t.x,z-t.z)<1.6))return;
@@ -204,6 +209,19 @@ const SAFARI_TREES=(()=>{
 })();
 function safariNaturalDetails(b){
  for(const t of SAFARI_TREES)safariAcacia(b,t.x,t.z,t.h,t.variant);
+ // Sparse browse acacias leave the low observation corridor open. Their leaf
+ // undersides are shared with the wildlife's feeding targets, including a
+ // genuinely calf-height sapling rather than an unreachable adult canopy.
+ for(const [index,[x,z,scale]]of SAFARI_GIRAFFE_HABITAT.entries()){
+  const target=safariBrowseTarget(x,z,scale),base=[target[0]-.45*scale,safariSurface(target[0]-.45*scale,target[2]+.95),target[2]+.95];
+  const fork=[base[0]+.12,base[1]+(target[1]-base[1])*.66,base[2]-.1];
+  safariBranch(b,base,fork,.10*scale,.045*scale);
+  safariBranch(b,fork,add(target,[0,.08,0]),.045*scale,.015*scale);
+  safariCrown(b,target[0],target[1]+.035,target[2],.62*scale,930+index);
+  const high=add(target,[-.38*scale,.52*scale,.55*scale]);
+  safariBranch(b,fork,high,.04*scale,.012*scale);safariCrown(b,...high,.78*scale,940+index);
+ }
+
  // Bands of small wind-combed tufts articulate the ground without noisy dots.
  for(let i=0;i<2400;i++){
   const group=Math.floor(i/10),x=-51+hash(group,501)*102+(hash(i,509)-.5)*4.5,z=-35+hash(group,502)*70+(hash(i,510)-.5)*3.5,y=safariSurface(x,z),bank=safariBank(x,z);
@@ -427,6 +445,67 @@ function safariWallRelief(b,x,y,z,w,h){
  }
  b.box(x,y-h*.41,z+.87,w*.76,.028,.016,'#d9bb81',41);
 }
+// The surrounding room is an expedition archive at house scale. Wall-mounted
+// work travels with its wall mesh so the house map keeps the normal cutaway.
+function safariArchive(b,x,y,z,variant=0){
+ b.push(x,y,z);
+ const wood='#795735',edge='#b99761',paper='#d1bf91',ink='#53644b';
+ b.box(0,6.5,0,17,13,2.9,wood,22);b.box(0,7.1,1.50,15.8,11.2,.08,'#3d4937',22);
+ for(const yy of[.3,4.8,9.1,13.1])b.box(0,yy,1.85,17.7,.35,4.0,edge,22);
+ for(const xx of[-8.3,0,8.3])b.box(xx,6.6,1.8,.30,13.4,3.6,wood,22);
+ for(let row=0;row<2;row++)for(let i=0;i<18;i++){
+  const xx=-7.6+i*.86;if(Math.abs(xx)<.4)continue;
+  const h=2.3+hash(i,row+variant)*.95,c=['#77774f','#aa8a5c','#52684b','#b9ab79','#8b6845'][(i+row+variant)%5];
+  b.box(xx,5.04+row*4.3+h/2,2.02,.57,h,1.83,c,23);
+  for(const dy of[.30,h-.32])b.box(xx,5.04+row*4.3+dy,2.953,.48,.045,.021,'#c6b17c',41);
+  b.box(xx,5.04+row*4.3+h*.59,2.961,.32,.65,.025,'#d2bc87',23);
+ }
+ for(const xx of[-5.5,5.5]){
+  b.box(xx,2.28,2.08,4.7,3.3,1.8,'#8d8059',22);
+  for(const yy of[1.40,2.50,3.60]){b.box(xx,yy,3.01,4.35,.82,.14,'#a69a71',22);b.box(xx,yy,3.10,1.16,.30,.025,paper,23);b.box(xx,yy-.17,3.17,.44,.08,.12,'#80673e',41);}
+ }
+ b.box(0,14.05,1.4,18.3,1.22,3.3,wood,22);hudsonText(b,variant?'FIELD JOURNALS':'THE RESERVE ARCHIVE',0,14.06,3.08,16.6,'#e4cb92');
+ b.pop();
+}
+function safariSpecimenPlate(b,x,y,z,variant=0){
+ b.push(x,y,z);
+ b.box(0,0,0,15,19,.55,'#765733',22);b.box(0,0,.31,13.7,17.6,.13,'#d8cba5',23);
+ b.box(0,-6.8,.41,11.8,.035,.018,'#a59a71',0);
+ hudsonText(b,variant?'ACACIA / 02':'SAVANNA / 01',0,-7.55,.43,11.8,'#5a644d');
+ if(variant){
+  for(let i=0;i<7;i++){
+   const yy=-4.8+i*1.40,side=i%2?1:-1;b.beam([0,yy,.49],[side*3.8,yy+1.65,.49],.035,'#7a7951',0,6);
+   for(let k=0;k<7;k++)for(const s of[-1,1]){
+    const xx=side*(.6+k*.45),cy=yy+.26+k*.195;b.sphere(xx,cy+s*.29,.52,.12,.33,.027,k%2?'#7c8754':'#647a50',0,8,5);
+   }
+  }b.beam([0,-5.7,.49],[0,5.8,.49],.055,'#7a7951',0,6);
+ }else{
+  for(let layer=0;layer<4;layer++)for(let i=0;i<20;i++){
+   const xx=-5.8+i*.58,yy=-4.7+layer*1.64,top=q=>yy+.70*Math.sin(q*.52+layer)+.35*Math.cos(q*1.2);
+   b.quad([xx,yy-1,.49+layer*.015],[xx+.59,yy-1,.49+layer*.015],[xx+.59,top(xx+.59),.49+layer*.015],[xx,top(xx),.49+layer*.015],['#b59664','#9d9564','#85906b','#586f54'][layer],0);
+  }
+  b.cylinder(3.8,5.4,.48,1.25,1.25,.028,'#c99f50',0,24,PI/2);
+ }
+ for(const yy of[-5.7,5.7])for(const xx of[-5.9,5.9])b.box(xx,yy,.48,.31,.69,.016,'#e6dbb7',23);
+ b.pop();
+}
+function safariGalleryDesk(b){
+ // An open folio, brass survey instrument and field cases beside the north
+ // window give the room a lived-in work surface without crowding the aisle.
+ b.push(-55,FLOOR,-54,0,-.10);
+ b.box(0,7,0,23,.65,8,'#947044',22);
+ for(const x of[-9,9])for(const z of[-2.7,2.7])b.box(x,3.35,z,.55,6.7,.55,'#654d32',22);
+ for(const side of[-1,1]){
+  b.push(side*3,7.39,0,0,0,-side*.035);b.box(0,0,0,5.8,.16,4.3,'#d5c299',23);
+  for(let i=0;i<7;i++)b.box(0,.092,-1.48+i*.44,4.2-(i%3)*.6,.015,.033,'#8f916c',0);b.pop();
+ }
+ b.cylinder(7.5,7.7,.8,1.15,1.15,.42,'#b59a5f',41,24);b.cylinder(7.5,7.92,.8,.98,.98,.025,'#d9c79b',23,24);
+ b.beam([6.9,7.96,.35],[8.1,7.96,1.25],.05,'#586b50',41,5);
+ kopjeLantern(b,-8,7.35,-1.2,2.7);
+ for(const side of[-1,1])kopjeCase(b,side*5,.12,0,6,4,3.2,side===1?1:0);
+ b.pop();
+}
+
 function safariShell(b){
  const walls=[],P=SAFARI_PALETTE;
  b.box(0,FLOOR-.24,0,158,.48,130,'#87633f',21);
@@ -451,11 +530,17 @@ function safariShell(b){
    const title='house-'+Object.keys(HOUSE_ROOMS).indexOf('safari');
    if(roomLabels[title])roomFrame(w,title,0,28.4,2.1,33,8.15);
    for(const x of[-36,36])safariSconce(w,x,12,1.1);
+   safariArchive(w,48,FLOOR+.1,2.0,0);
+   w.box(0,-10.6,2.1,29,2.1,.38,'#775735',22);hudsonText(w,'FIELD NOTES FROM THE RIFT',0,-10.6,2.32,27,'#d8c394');
   }else if(which!=='front'){
-   for(const x of[-34,22])safariWallRelief(w,x,12,1.0,34,24);
-   for(const x of[-57,-6,50])safariSconce(w,x,9,1.1);
-   w.box(0,-20,3.9,94,7.5,7.2,'#807452',22);w.box(0,-15.9,4,96,.7,7.8,'#b7a071',22);
-   for(let x=-38;x<43;x+=13)w.box(x,-15.3,4.2,11.9,.58,6.0,'#b9b68c',23);
+   if(which==='left'){safariSpecimenPlate(w,-26.4,11,1.0,0);safariSpecimenPlate(w,-2.4,11,1.0,1);safariWallRelief(w,25,12,1.0,32,24);}
+   else{ safariWallRelief(w,-34,12,1.0,34,24);safariSpecimenPlate(w,21.6,11,1.0,1);safariSpecimenPlate(w,45.6,11,1.0,0);}
+   for(const x of[-62.4,-14.4,33.6])safariSconce(w,x,9,1.1);
+   const benchRuns=which==='right'?[[-47,-18],[2,47]]:[[-47,47]];
+   for(const [a,q]of benchRuns){w.box((a+q)/2,-20,3.9,q-a,7.5,7.2,'#807452',22);w.box((a+q)/2,-15.9,4,q-a,.7,7.8,'#b7a071',22);}
+   for(let x=-38;x<43;x+=13){if(which==='right'&&x>-24&&x<8)continue;w.box(x,-15.3,4.2,11.9,.58,6.0,'#b9b68c',23);}
+   for(const x of[-38,40]){kopjeCase(w,x,-14.97,4.1,5.6,3.4,2.4,x<0?1:0);kopjeLantern(w,x+3.3,-14.97,4.1,1.7);}
+   if(which==='right')safariArchive(w,-8,FLOOR+.1,2.5,1);
   }else{
    for(const side of[-1,1]){w.box(side*7,-3,1.1,13,40,.85,P.wood,22);w.box(side*7,1,1.58,10.8,27,.20,'#a6ad89',43);w.cylinder(side*2,-6,2.05,.22,.22,3,'#be9e63',41,10);safariSconce(w,side*22,8,1.0);}
    for(const side of[-1,1])w.beam([side*72,29,9],[0,40,9],.48,'#866744',22,6);
@@ -464,6 +549,8 @@ function safariShell(b){
   }
   w.pop();walls.push({which,mesh:w.mesh()});
  }
+ safariGalleryDesk(b);
+ for(const [x,z]of[[-68,44],[68,44],[68,-48]])kopjePot(b,x,FLOOR+.08,z,2.5,Math.round(x));
  // Glulam roof ribs stay at the room's perimeter, clear of the miniature view.
  for(const z of[-55]){
   for(const s of[-1,1])b.beam([s*72,29,z],[0,40,z],.48,'#866744',22,6);
@@ -482,7 +569,8 @@ function safariRoom(scene,b){
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];
  scene.height=(x,z)=>Math.abs(x)<=56&&Math.abs(z)<=40?Math.max(SAFARI.water,safariSurface(x,z)):FLOOR;
  scene.canPlace=()=>false;
- scene.safari={revision:4,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
+ safariCreateWildlife(scene);
+ scene.safari={revision:5,giraffes:3,zebras:2,elephants:1,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
  scene.spots=[
   {name:'The Rift Observatory',target:[0,5,-1],distance:138,phoneDistance:330,pitch:.60,yaw:.32,detail:'A savanna in miniature. Kopje House opens onto the river, broken escarpments rise behind the railway, and acacia trails lead to the lodge.'},
   {name:'Acacia Gate',target:[-27,7.8,29],distance:32,phoneDistance:62,pitch:.37,yaw:.20,detail:'Linen canopies, timber platforms, and a cream-and-jade panoramic train. The stairs descend to a red-earth walking terrace.'},
@@ -492,7 +580,11 @@ function safariRoom(scene,b){
   {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. The footpath ends at lantern-lit stone steps.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
   {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'A narrow earth path winds through grass and acacias to broad stone steps. Field notes, provisions and warm lanterns mark the return to camp.'},
-  {name:'The spring cascade',target:[13,6,-13],distance:26,phoneDistance:48,pitch:.42,yaw:-.48,detail:'Water cuts through a stepped bedrock channel, falling over pale rock lips into shaded pools before joining the river.'}
+  {name:'The spring cascade',target:[13,6,-13],distance:26,phoneDistance:48,pitch:.42,yaw:-.48,detail:'Water cuts through a stepped bedrock channel, falling over pale rock lips into shaded pools before joining the river.'},
+  {name:'The zebra lawn',target:[-25,1.9,-6.2],distance:12.8,phoneDistance:23.5,phoneYaw:.95,pitch:.18,yaw:.28,detail:'Two plains zebras take short, measured walks across the western lawn, then bow their necks to graze. Watch for independent ear flicks and tail swishes.'},
+  {name:'The elephant trail',target:[17.5,2.2,21.7],distance:13.5,phoneDistance:25,pitch:.18,yaw:-1.57,detail:'An African elephant ambles across the open grass. Its broad ears fan slowly, the trunk curls through the grass, and four heavy feet follow the ground.'},
+  {name:'The expedition archive',target:[-55,-16,-54],distance:22,phoneDistance:30,pitch:.30,yaw:-1.35,detail:'An open field folio, a brass compass and a warm lantern sit beneath the window. Botanical plates, reserve journals and labelled specimen drawers fill the timber-lined room.'},
+  {name:'The giraffe family',target:[-25.2,3.0,14.4],distance:13.2,phoneDistance:24.5,phonePitch:.12,phoneYaw:1.05,pitch:.12,yaw:-.15,detail:'Two adults and a calf roam the acacia clearing. Watch their measured steps, turning heads, flicking ears and swaying tails.'}
  ];
 }
 registerHouseRoom('safari',{
@@ -500,7 +592,7 @@ registerHouseRoom('safari',{
  description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a rugged stone-and-thatch expedition lodge with a map room, canvas mess fly and observation hide, then follow Solstice around the rift.',
  color:'#c1a26b',ambient:'forest',target:[0,4,-1],distance:149,phoneDistance:342,pitch:.60,yaw:.32,
  trainCollection:false,train:{name:'Solstice',number:'01',service:'The Rift Skyway',type:'panoramic electric monorail',power:'electric'},
- credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari landscape, monorail, and expedition gallery; built with agent assistance.'}],
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari, monorail and expedition gallery; Blender-rigged giraffes and native animated zebras and elephant, with agent assistance.'}],
  map:{plot:'west-4',scale:.40,footprint:[158,130],focus:[0,4,-1]},
  lights:[[-41,26.75,-46],[41,26.75,-46],[-41,26.75,46],[41,26.75,46],[-36,12,-61],[36,12,-61]],
  layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[23.8,8.2,.25],[12.25,4.0,-.6],[34.45,11.2,-2.2],[24,4.6,5.1]],

@@ -2,13 +2,15 @@
 
 Original safari miniature, Solstice monorail, and expedition gallery by
 `nickfromlater`, built with agent assistance. Requested scope: proposal #39.
-No animals or imported scenery are included.
+The later giraffe addition uses a Pixal3D-generated surface, cleaned and rigged
+in Blender, for the family in the western clearing. Its source and process are
+credited in the [model guide](../../models/safari-giraffe/README.md).
 
 ## Visit
 
 Start the normal preview with `npm run dev`, then open `/?room=safari`.
 The live house map discovers this native room at **west-4**.
-Use **Views → Places** for the nine authored compositions, or choose
+Use **Views → Places** for the thirteen authored compositions, or choose
 train-follow, cab, cutaway, and cinema through the existing house controls.
 
 ## Landscape and architecture
@@ -44,13 +46,39 @@ raised timber surveying hide with optics and an aerial.
 The lodge remains native, deterministic geometry. Existing caption, viewpoint,
 lighting, planting-exclusion and arrival-path metadata now describe the field
 lodge. Use **Views → Places → Kopje House** or **The expedition approach**.
-The monorail route and no-animals scope are preserved; the observation stock
-is now rebuilt for the passenger-window experience described below.
+The monorail route is preserved; the observation stock is rebuilt for the
+passenger-window experience described below.
 
 The rework adds regression proofs that the removed pool builders and water
 materials are absent, buildings stop before the former leisure terrace, and the
 old pool/fire-court footprints are available for planting. Existing clearance,
 finite geometry, cache, motion and unchanged upper vertex budgets still apply.
+
+## The giraffe family
+
+Choose **Views → Places → The giraffe family**. Two adults and a calf follow
+walking routes through the western acacia clearing, pausing independently to
+browse real leaf crowns. A low sapling gives the calf reachable foliage. Their necks, heads, ears, tails,
+upper legs, lower legs and hooves deform through the saved Blender armature. Distance-matched steps and smoothly released foot plants avoid a slow-motion
+shuffle and abrupt toe-off. The hoof targets sample the emitted terrain. Pause stops wildlife
+alongside the railway; reduced motion holds the family still.
+
+The [editable Blender source and export recipe](../../models/safari-giraffe/README.md)
+include the packed generated coat, weighted skin and editable walking timeline.
+One indexed skin and coat texture are shared by the herd, with the same bone
+poses in the color, moving-shadow and live-map passes. Room replacement and
+failed uploads release those resources.
+The generated model and credit travel in playable HTML. Blender is only needed
+for authoring; the website and ordinary checks remain dependency-free.
+
+### Music
+
+**Acacia Express**, the optional two-minute ElevenLabs instrumental, accompanies
+automatic safari cinema by day and night. To hear it while observing the family,
+choose **More → Sound & music → The record shelf → Acacia Express**. Its warm
+marimba, woodwind and railway-pulse prompt, checksum and mastering record are in
+[`scripts/safari-music.json`](../../scripts/safari-music.json). The local master
+stays outside Git; source-only editions retain the normal house-score fallback.
 
 ## Railway and Solstice
 
@@ -112,6 +140,14 @@ The separately corrected driver view remains available.
 ## Source and checks
 
 - `src/rooms/safari.js`: landscape, guideway, stations, room shell and registration.
+- `models/safari-giraffe/`: editable Blender source, authoring and export recipes.
+- `src/scenery/safari-giraffe-model.js`: generated articulated model data.
+- `src/rooms/safari-wildlife.js`: shared meshes, terrain-aware poses and roaming.
+- `scripts/safari-companions-qa.mjs`: native animal surface contact, clearances,
+  behavior cycles, shared rendering and resource cleanup.
+- `scripts/safari-behavior-qa.mjs`: giraffe feeding contact, cadence and hoof continuity.
+- `scripts/safari-giraffe-qa.mjs`: source/export hashes, grounding, clearances,
+  animation, shared rendering and resource cleanup.
 - `src/trains/safari.js`: original monorail stock, motion and stock-cache adapter.
 - `src/safari-ride.js` and `.css`: passenger camera, controls and input lifecycle.
 - `scripts/safari-passenger-qa.mjs`: shared pose/glass and lifecycle contracts.
@@ -145,3 +181,29 @@ hatching to smoothed normals lighting geometrically back-facing cliff facets,
 not depth-sampler precision. This keeps the sharply cut shelves legible without
 disabling their shadows or applying a large detached-shadow bias. The source
 remains native to the house renderer; other materials keep their existing normals.
+
+## The grazing lawn and expedition archive
+
+Two native, articulated plains zebras inhabit the western lawn at approximately
+`(-27, -5)` and `(-23, -7)`. The **zebra lawn** view frames their independent
+32-second walk/graze cycles. The whole neck bows from its shoulder and carries
+the head into the grass; ears and tails remain independently articulated.
+An African elephant inhabits the open southeastern lawn around `(17.5, 21.7)`,
+framed by **The elephant trail**. Its 44-second cycle combines a measured amble
+with foraging, six articulated trunk sections, fanning ears and a swaying tail.
+All four feet sample the existing terrain and use two-segment leg articulation.
+The original giraffe family and its textured skin are unchanged.
+
+These additional animals are original native geometry, authored in
+`src/rooms/safari-wildlife.js`; no downloaded assets or additional generated
+recordings are used. Shared immutable parts belong to `scene.wildlife.parts`;
+individual poses belong to `scene.wildlife.companions`. Room, map and shadow
+passes consume the same transforms. The existing wildlife clock controls pause
+and reduced motion, and the room's mesh ownership controls disposal.
+
+The house-scale expedition archive adds botanical study plates, warm timber
+bookcases, specimen drawers, field cases and an open survey folio with a brass
+compass and lantern. Wall-mounted displays belong to their wall's cutaway mesh.
+**The expedition archive** looks across the northwestern work desk from the
+western aisle, outside the miniature table footprint. These are room
+furnishings, separate from the miniature Kopje House lodge.

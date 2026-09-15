@@ -9,6 +9,7 @@ __pycache__
 
 .git
 design
+.dream-loop
 AGENTS.local.md
 .claude
 .github

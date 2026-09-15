@@ -82,3 +82,24 @@ Keep that source deployment available until production carries the recording.
 After verifying its exact immutable file on production, remove the temporary
 `origin` override so later builds use the main preservation collection. Never
 add a master to the manifest before its reviewed source actually serves it.
+
+## Safari score
+
+**Acacia Express** (`safari-acacia-express.mp3`) is a two-minute instrumental
+created with ElevenLabs `music_v2` at nickfromlater's request: a rolling railway
+pulse, warm marimba, plucked strings and airy woodwinds. The
+[master metadata](../../scripts/safari-music.json) records its full prompt,
+processing, checksum and measured loudness (-23.42 LUFS, -9.42 dBTP).
+
+With the local master present, automatic cinema selects it in the Rift
+Observatory by day and night. Choose **Sound & music → The record shelf → Acacia Express** to pin it
+while watching the giraffes outside cinema. Existing mute, music level, pinned
+choices and missing-recording fallbacks remain in effect. Builds and portable
+exports embed the available recording through the normal asset resolver.
+
+This master is local and has not been published. It is intentionally absent
+from `hosted-audio.json`: add its exact checksum and verified immutable source
+only after the recording has been published through an authorized release.
+Source-only checkouts continue to use the available house score. The MP3 stays
+outside Git and is governed by the ElevenLabs Music Terms, not the source MIT
+license. Generation never runs at app startup or during a build.

@@ -8,10 +8,11 @@ const sceneReport=state.run(`(()=>{
  const startSeed=seed,scene=getHouseScene('safari');
  assert.equal(seed,startSeed,'room build preserves the shared random stream');
  assert.equal(getHouseScene('safari'),scene,'room geometry is cached');
- assert.equal(scene.walls.length,4);assert.equal(scene.spots.length,9);assert.equal(scene.trains.length,1);
+ assert.equal(scene.walls.length,4);assert.equal(scene.spots.length,13);for(const name of ['The zebra lawn','The elephant trail','The expedition archive'])assert.ok(scene.spots.some(s=>s.name===name),'new wildlife and archive viewpoints');assert.equal(scene.trains.length,1);
  assert.ok(scene.mesh.count>250000&&scene.mesh.count<650000,'fixed room vertex budget');
  assert.ok(scene.spots.every(s=>s.phoneDistance>s.distance&&s.target.every(Number.isFinite)));
- assert.equal(scene.actors.length,0);assert.equal(scene.population,0,'the landscape contains no people or animals');
+ assert.equal(scene.actors.length,0);assert.equal(scene.population,0,'no human visitors are placed in the habitat');
+ assert.equal(scene.wildlife.herd.length,3,'two adult giraffes and a calf');
  assert.equal(HOUSE_ROOMS.safari.map.plot,'west-4');assert.equal(HOUSE_ROOMS.safari.trainCollection,false);
  assert.ok(validateCredits(HOUSE_ROOMS.safari.credits).some(c=>c.handle==='nickfromlater'));
  assert.equal(collectionTrainLabel('safari').name,'Solstice');assert.equal(collectionPower('safari'),'electric');
