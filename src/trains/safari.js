@@ -125,11 +125,17 @@ function safariBogieFrame(b){
  for(const side of[-1,1]){
   b.box(side*.446,.00,0,.13,.77,.71,P.rubber,42);
   b.box(side*.44,-.365,0,.16,.10,.79,P.jade,40);
-  // A tapered underbody fairing wraps the U frame instead of hanging below it.
-  b.quad([side*.60,-.31,-.45],[side*.60,-.31,.45],[side*.635,.35,.49],[side*.635,.35,-.49],P.jade,40);
-  for(const z of[-.49,.49])b.quad([side*.40,-.31,z*.85],[side*.60,-.31,z*.92],[side*.635,.35,z],[side*.40,.35,z],P.jade,40);
-  b.box(side*.642,.16,0,.016,.021,.63,P.bronze,41);
-  for(const z of[-.24,-.12,0,.12,.24])b.quad([side*.651,-.001,z-.009],[side*.651,-.001,z+.009],[side*.651,.071,z+.009],[side*.651,.071,z-.009],'#607660',42);
+  // A rounded ivory equipment capsule wraps the guide truck. The bottom
+  // corners turn inward rather than reading as rectangular hanging panels.
+  const profile=[[-.47,.35],[.47,.35],[.47,-.14],[.40,-.27],[.25,-.32],[-.25,-.32],[-.40,-.27],[-.47,-.14]];
+  const outer=([z,y])=>[side*(.617+.024*(y+.32)/.67),y,z];
+  for(let i=0;i<profile.length;i++){
+   const a=outer(profile[i]),q=outer(profile[(i+1)%profile.length]),mid=[side*.628,.05,0];
+   b.tri(mid,a,q,P.ivory,40);
+   b.quad(a,[side*.41,a[1],a[2]], [side*.41,q[1],q[2]],q,P.jade,40);
+  }
+  b.box(side*.646,.16,0,.008,.021,.60,P.bronze,41);
+  for(const z of[-.24,-.12,0,.12,.24])b.quad([side*.646,-.061,z-.009],[side*.646,-.061,z+.009],[side*.646,.061,z+.009],[side*.646,.061,z-.009],'#607660',42);
   b.cylinder(side*.40,.411,0,.052,.052,.19,P.bronze,41,8);
  }
  b.box(0,.457,0,.99,.14,.68,P.rubber,42);b.cylinder(0,.558,0,.18,.18,.063,'#959881',41,12);

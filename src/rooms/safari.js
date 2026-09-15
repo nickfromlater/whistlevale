@@ -54,7 +54,7 @@ function safariRockDistance(x,z,outline){
 }
 // A real cut in the rock feeds the cascade. Third coordinates are the
 // authored downhill bed elevations, independent of later mesh tessellation.
-const SAFARI_WATERCOURSE=[[18.3,-19.3,14.2],[17.6,-18.5,12.35],[16.6,-17.6,10.65],[15.8,-16.7,8.30],[15.2,-16,5.90],[14,-14.8,3.62],[13.2,-13,1.90],[11.3,-10.7,.87],[8.5,-9,.51],[5.6,-7.8,-.04],[2.8,-6.4,-1.10],[-2,-5.1,-2.25]];
+const SAFARI_WATERCOURSE=[[18.3,-19.3,14.2],[17.6,-18.7,14.03],[17.0,-18.1,10.65],[16.2,-17.5,10.48],[15.5,-16.7,6.32],[14.7,-16.1,6.15],[14,-14.8,3.62],[13.2,-13,1.90],[11.3,-10.7,.87],[8.5,-9,.51],[5.6,-7.8,-.04],[2.8,-6.4,-1.10],[-2,-5.1,-2.25]];
 function safariChannel(x,z){
  let nearest={distance:Infinity,height:0,t:0,index:0};
  for(let i=1;i<SAFARI_WATERCOURSE.length;i++){
@@ -105,7 +105,7 @@ function safariSurface(x,z){
 }
 function safariGroundColor(x,y,z,n){
  const bank=safariBank(x,z),patch=.5+.24*Math.sin(x*.115+Math.sin(z*.13)*2.1)+.16*Math.cos(z*.18+x*.034);
- let c=lerpV(col('#777749'),col('#bba376'),clamp(patch));
+ let c=lerpV(col('#68794e'),col('#af986c'),clamp(patch));
  const earth=smooth(.43,.82,.5+.5*Math.sin(x*.082-z*.12+Math.sin(x*.17)));
  c=lerpV(c,col('#ad8660'),earth*.47);
  c=lerpV(c,col('#61754c'),(1-smooth(2.4,8.5,bank))*.68);
@@ -234,23 +234,23 @@ function safariSpring(b){
   for(let k=0;k<n;k++){const t=k/n,p=[mix(a[0],q[0],t),mix(a[1],q[1],t)];if(points.length)travel+=Math.hypot(p[0]-points.at(-1).x,p[1]-points.at(-1).z);points.push({x:p[0],z:p[1],distance:travel});}
  }
  const last=SAFARI_WATERCOURSE.at(-1);points.push({x:last[0],z:last[1],distance:travel+.18});
- const width=i=>{const p=points[i],slope=Math.abs(safariSurface(p.x,p.z)-safariSurface(points[Math.min(i+1,points.length-1)].x,points[Math.min(i+1,points.length-1)].z));return (.23+.13*(1-smooth(.03,.36,slope)))*smooth(0,.6,p.distance);};
+ const width=i=>{const p=points[i],slope=Math.abs(safariSurface(p.x,p.z)-safariSurface(points[Math.min(i+1,points.length-1)].x,points[Math.min(i+1,points.length-1)].z));return (.22+.26*(1-smooth(.025,.25,slope)))*smooth(0,.6,p.distance);};
  const at=(i,u,extra=0)=>{
   const p=points[i],a=points[Math.max(0,i-1)],q=points[Math.min(points.length-1,i+1)],length=Math.hypot(q.x-a.x,q.z-a.z)||1;
   const x=p.x+(q.z-a.z)/length*u*(width(i)+extra),z=p.z-(q.x-a.x)/length*u*(width(i)+extra);
   return [x,Math.max(SAFARI.water+.010,safariSurface(x,z)+.09),z];
  };
  for(let i=0;i+1<points.length;i++){
-  const slope=Math.abs(at(i,0)[1]-at(i+1,0)[1]),color=lerpV(col('#427a6c'),col('#a3c2af'),smooth(.12,.45,slope)*.62);
+  const slope=Math.abs(at(i,0)[1]-at(i+1,0)[1]),color=lerpV(col('#427a6c'),col('#a3c2af'),smooth(.10,.39,slope)*.87);
   for(const side of[-1,1])b.quad(at(i,side,.27),at(i+1,side,.27),at(i+1,side,.10),at(i,side,.10),'#716f50',86);
   for(let lane=0;lane<4;lane++){
    const u=-1+lane*.5,v=u+.5,a=at(i,u),q=at(i+1,u),r=at(i+1,v),t=at(i,v);
    b.quad(a,q,r,t,color,87,null,[[u,points[i].distance],[u,points[i+1].distance],[v,points[i+1].distance],[v,points[i].distance]]);
   }
-  if(slope>.34&&i%3===0){const a=at(i,-.34),q=at(i+1,-.12),r=at(i+1,.32),t=at(i,.28);for(const p of[a,q,r,t])p[1]+=.016;b.quad(a,q,r,t,'#d4ddc3',87);}
+  if(slope>.30&&i%4===0){const a=at(i,-.34),q=at(i+1,-.12),r=at(i+1,.32),t=at(i,.28);for(const p of[a,q,r,t])p[1]+=.016;b.quad(a,q,r,t,'#d4ddc3',87);}
  }
  // Shattered rock lips, not a rectangular sheet at the top of a painted strip.
- for(const [x,z,r,v]of[[19.0,-19.5,.95,714],[17.5,-19.8,.75,715],[16.0,-17.8,.7,716],[15.8,-15.5,.8,717],[12.7,-13.9,.7,718]])safariRock(b,x,z,r,v);
+ for(const [x,z,w,d,h,v]of[[19.0,-19.4,1.15,.72,.35,714],[17.8,-19.9,1.20,.78,.22,715],[16.9,-17.0,.80,.42,.20,716],[15.7,-15.8,.76,.44,.21,717],[12.7,-13.9,.78,.52,.20,718]])safariGeologicalBlock(b,x,z,w,d,h,.62,v);
 }
 // Split, offset blocks establish broken cliff silhouettes and talus. Their
 // foundations sample the complete footprint, and the running envelope is clear.
@@ -279,12 +279,31 @@ function safariGeology(b){
   for(let k=0;k<3;k++){const root=lerpV(p,q,.25+k*.23),dir=a+(k%2?1:-1)*.85,tip=add(root,[Math.cos(dir)*.74,.32+k*.12,Math.sin(dir)*.74]);safariBranch(b,root,tip,.055,.006,'#b9ad8e',5);}
  }
 }
+function safariScrub(b){
+ // Low groups, not evenly distributed dots: exposed soil is still visible
+ // between sage foliage, seed heads and succulent leaves on the rocky shelves.
+ for(const [cx,cz,count]of[[-38,22,8],[-20,23,7],[-43,-12,8],[40,17,6],[15,22,7],[38,-9,7],[-20,0,5]])for(let i=0;i<count;i++){
+  const angle=i*2.399+cx,r=1+Math.sqrt(i)*.75,x=cx+Math.cos(angle)*r,z=cz+Math.sin(angle)*r*.7;
+  if(safariRailNear(x,z).distance<2.3||safariBank(x,z)<3||!safariLodgeClear(x,z,1)||safariWalkDistance(x,z)<1.2)continue;
+  const y=safariSurface(x,z),slope=Math.abs(safariSurface(x+.45,z)-safariSurface(x-.45,z))+Math.abs(safariSurface(x,z+.45)-safariSurface(x,z-.45));if(slope>.7)continue;
+  for(let j=0;j<3;j++){
+   const a=angle+j*2.1,dx=Math.cos(a)*.24,dz=Math.sin(a)*.24,yy=safariSurface(x+dx,z+dz),h=.23+hash(i,j)*.20;
+   b.sphere(x+dx,yy+h*.48,z+dz,.32,h,.30,j%2?'#6e8050':'#879060',8,6,3,true);
+  }
+  if(i%3===0)for(let j=0;j<7;j++){
+   const a=j*TAU/7,tip=[x+Math.cos(a)*.62,y+.55,z+Math.sin(a)*.62];
+   b.tri([x-.06,y+.06,z],add(tip,[-Math.sin(a)*.055,0,Math.cos(a)*.055]),[x+Math.cos(a)*.83,y+.32,z+Math.sin(a)*.83],'#718969',8);
+   b.tri([x+.06,y+.06,z],[x+Math.cos(a)*.83,y+.32,z+Math.sin(a)*.83],add(tip,[Math.sin(a)*.055,0,-Math.cos(a)*.055]),'#94a078',8);
+  }
+ }
+}
+
 function safariBeam(b){
  const edge=SAFARI_ROUTE,point=(a,side,dy)=>add(add(a.p,mul(norm([a.f[2],0,-a.f[0]]),side)),[0,dy,0]);
  for(let d=0;d<edge.length;d+=.48){const a=edge.at(d),q=edge.at(Math.min(edge.length,d+.48));
-  b.quad(point(a,-.28,0),point(q,-.28,0),point(q,.28,0),point(a,.28,0),'#d9c9a3',3);
-  for(const s of[-1,1]){b.quad(point(a,s*.28,0),point(a,s*.28,-.72),point(q,s*.28,-.72),point(q,s*.28,0),s>0?'#bba880':'#9f906f',3);b.quad(point(a,s*.286,-.19),point(q,s*.286,-.19),point(q,s*.286,-.25),point(a,s*.286,-.25),'#bfab80',41);}
-  b.quad(point(a,-.28,-.72),point(a,.28,-.72),point(q,.28,-.72),point(q,-.28,-.72),'#8f8268',3);
+  b.quad(point(a,-.28,0),point(q,-.28,0),point(q,.28,0),point(a,.28,0),'#d9c9a3',89);
+  for(const s of[-1,1]){b.quad(point(a,s*.28,0),point(a,s*.28,-.72),point(q,s*.28,-.72),point(q,s*.28,0),s>0?'#bba880':'#9f906f',89);b.quad(point(a,s*.286,-.19),point(q,s*.286,-.19),point(q,s*.286,-.25),point(a,s*.286,-.25),'#bfab80',41);}
+  b.quad(point(a,-.28,-.72),point(a,.28,-.72),point(q,.28,-.72),point(q,-.28,-.72),'#8f8268',89);
  }
  ribbon(b,edge,.22,0,.012,'#a9a793',41,0,edge.length,.5);
  const river=safariRiverX(28);
@@ -292,10 +311,10 @@ function safariBeam(b){
   if(Math.abs(z-28)<.1&&Math.abs(x-river)<9.0)continue;
   const ground=safariSurface(x,z),h=y-.75-ground;
   b.matrix(basis([x,ground,z],norm([a.f[0],0,a.f[2]])));
-  b.box(0,.12,0,1.24,.40,1.5,'#ac9974',3);b.box(0,.36,0,.91,.12,1.13,'#d1bd95',3);
-  b.cylinder(0,(h+.37)/2,0,.32,.22,Math.max(.1,h-.37),'#c6b18a',3,8);
-  b.box(0,h-.015,0,1.09,.19,1.30,'#decba5',3);
-  for(const s of[-1,1])b.beam([0,Math.max(.45,h-1.55),0],[s*.45,h-.1,0],.10,'#b49d76',3,5);
+  b.box(0,.12,0,1.24,.40,1.5,'#ac9974',89);b.box(0,.36,0,.91,.12,1.13,'#d1bd95',89);
+  b.cylinder(0,(h+.37)/2,0,.32,.22,Math.max(.1,h-.37),'#c6b18a',89,8);
+  b.box(0,h-.015,0,1.09,.19,1.30,'#decba5',89);
+  for(const s of[-1,1])b.beam([0,Math.max(.45,h-1.55),0],[s*.45,h-.1,0],.10,'#b49d76',89,5);
   // Restrained inspection band, service light and plate on every other pier.
   if(Math.floor(d/6.8)%2===0){b.box(0,h-.31,.675,.28,.11,.055,'#ead29f',6);b.box(.327,.9,0,.025,.27,.28,'#77775b',41);}
   b.pop();
@@ -309,11 +328,11 @@ function safariRiverBridge(b,x){
  // Twin under-deck concrete arches keep the view from the train unobstructed.
  for(const side of[-1,1]){
   const zz=z+side*.70,arch=t=>[x-span+2*span*t,footY+(top-footY)*Math.sin(PI*t),zz];
-  for(let i=0;i<40;i++)b.beam(arch(i/40),arch((i+1)/40),.19,'#d1b98b',3,6);
-  for(let i=0;i<=10;i++){const t=i/10,a=arch(t);b.beam(a,[a[0],deckY,zz],.085,'#beaa7f',3,5);if(i%2===0)b.beam([a[0],deckY,z-.76],[a[0],deckY,z+.76],.11,'#d5bf91',3,5);}
+  for(let i=0;i<40;i++)b.beam(arch(i/40),arch((i+1)/40),.19,'#d1b98b',89,6);
+  for(let i=0;i<=10;i++){const t=i/10,a=arch(t);b.beam(a,[a[0],deckY,zz],.085,'#beaa7f',89,5);if(i%2===0)b.beam([a[0],deckY,z-.76],[a[0],deckY,z+.76],.11,'#d5bf91',89,5);}
  }
- for(const s of[-1,1]){const xx=x+s*span,ground=safariSurface(xx,z);b.box(xx,(ground+footY+.1)/2,z,1.25,footY+.1-ground,2.4,'#ac9168',3);b.box(xx,footY+.12,z,1.6,.22,2.65,'#ddc698',3);}
- for(const zz of[z-.70,z+.70])b.beam([x-span,deckY,zz],[x+span,deckY,zz],.11,'#b49c70',3,5);
+ for(const s of[-1,1]){const xx=x+s*span,ground=safariSurface(xx,z);b.box(xx,(ground+footY+.1)/2,z,1.25,footY+.1-ground,2.4,'#ac9168',89);b.box(xx,footY+.12,z,1.6,.22,2.65,'#ddc698',89);}
+ for(const zz of[z-.70,z+.70])b.beam([x-span,deckY,zz],[x+span,deckY,zz],.11,'#b49c70',89,5);
 }
 function safariRailings(b,points,h=.70,color='#7f6c49'){
  for(let i=0;i+1<points.length;i++){
@@ -457,7 +476,7 @@ function safariShell(b){
  return walls;
 }
 function safariRoom(scene,b){
- safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);safariGeology(b);safariHabitatDetails(b);safariLodge(b);
+ safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);safariGeology(b);safariScrub(b);safariHabitatDetails(b);safariLodge(b);
  safariStation(b,{x:-28,z:28,rail:6.8,name:'ACACIA GATE'});
  safariStation(b,{x:16,z:-28,rail:11.2,name:'RIFT LOOKOUT',flip:true});
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];

@@ -3,6 +3,7 @@
 // Passenger view belongs to a real carriage, not an overlay or a second scene.
 // Only the local look angles ease. Camera translation uses the exact transform
 // used by the visible stock, including the existing wheel-to-beam height.
+const safariRideMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const safariRide={mounted:false,side:1,yaw:.17,pitch:-.035,lookYaw:.17,lookPitch:-.035,zoom:1,opener:null,saved:null,pointers:new Map(),pinch:null};
 function safariPassengerAvailable(){return hobby.room==='safari'&&hobby.scene?.trains[0]?.stock==='safari'&&!building;}
 function safariPassengerActive(){return safariPassengerAvailable()&&!hobby.cinema&&!shopMap.open&&(viewMode==='window-left'||viewMode==='window-right');}
@@ -45,8 +46,8 @@ updateCamera=function(dt){
   }
   safariRideCamera(dt);return;
  }
- const ease=reduceMotion?1:1-Math.exp(-Math.max(0,dt)*16);
- safariRide.lookYaw=mix(safariRide.lookYaw,safariRide.yaw,ease);safariRide.lookPitch=mix(safariRide.lookPitch,safariRide.pitch,ease);
+ const immediate=reduceMotion||safariRideMotion.matches,ease=1-Math.exp(-Math.max(0,dt)*16);
+ safariRide.lookYaw=immediate?safariRide.yaw:mix(safariRide.lookYaw,safariRide.yaw,ease);safariRide.lookPitch=immediate?safariRide.pitch:mix(safariRide.lookPitch,safariRide.pitch,ease);
  const pose=safariPassengerPose(hobby.scene.trains[0],safariRide.side,safariRide.lookYaw,safariRide.lookPitch);
  cameraPos=pose.position;cameraTarget=pose.target;cameraNear=.018;
  const fov=(screenW<screenH?1.72:1.45)*safariRide.zoom;

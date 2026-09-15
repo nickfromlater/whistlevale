@@ -1,7 +1,8 @@
 // Native Safari visual + passenger integration review; Playwright stays outside
 // the application. Run with scripts/serve.py --port 4175 already listening.
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const modulePath=process.env.PLAYWRIGHT_MODULE_PATH;
 if(!modulePath)throw new Error('Supply reviewer-owned PLAYWRIGHT_MODULE_PATH.');
@@ -40,7 +41,8 @@ try{
  await page.evaluate(()=>{cutaway=true;shadowDirty=true;});await image('07-carriage-interior');
  await page.evaluate(()=>{cutaway=false;shadowDirty=true;});
  await seat('08-river-window','right',43,true);
- await seat('09-lodge-window','left',80,true);
+ await seat('09-lodge-window','right',88,true);
+ await seat('09-left-window','left',43);
  await seat('10-ridge-window','right',138);
  await page.evaluate(()=>{setView('cab',false);});await image('11-driver-view');
  await page.evaluate(()=>setMood('evening',{immediate:true,persist:false}));await seat('12-window-lamplight','right',43);
@@ -79,6 +81,28 @@ try{
  const moved=await page.evaluate(()=>{window.__reviewFreeze();return{frame,distance:hobby.scene.trains[0].distance,active:safariPassengerActive()};});
  assert.ok(moved.frame>baseline.frame&&moved.distance>baseline.distance&&moved.active);await page.evaluate(()=>{paused=true;});
  report.checks.push({nativeMovingPassengerFrames:moved.frame-baseline.frame,nativeTravel:moved.distance-baseline.distance});
+ // Reduced motion removes look easing without moving the eye off its carriage.
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.evaluate(()=>{safariRide.yaw=.45;updateCamera(.001);});
+ assert.ok(await page.evaluate(()=>safariRideMotion.matches&&safariRide.lookYaw===safariRide.yaw));
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ // Cinema and ordinary camera gestures still own their respective lifecycle.
+ await page.evaluate(()=>HOBBY_HOUSE.cinema());assert.equal(await page.evaluate(()=>safariPassengerActive()),false);await image('17-cinema-preserved');
+ await page.evaluate(()=>{HOBBY_HOUSE.leaveCinema();setView('overview',false);});
+ const yawBefore=await page.evaluate(()=>orbit.yaw);await page.mouse.move(620,400);await page.mouse.down();await page.mouse.move(720,420,{steps:3});await page.mouse.up();assert.notEqual(await page.evaluate(()=>orbit.yaw),yawBefore);
+ report.checks.push('Reduced motion, cinema transition and ordinary orbit restoration');
+ // Export while seated. The packed HTML must restore clean controls, load all
+ // native sources, and offer the same moving-car window mode offline.
+ await page.evaluate(()=>setView('window-right',false));
+ const downloadPromise=page.waitForEvent('download',{timeout:120000});await page.evaluate(()=>exportPlayable());
+ const download=await downloadPromise,exportPath=resolve(output,'whistlevale-window-seat.html');await download.saveAs(exportPath);
+ const html=await readFile(exportPath,'utf8');assert.ok(html.includes('function safariPassengerPose'));assert.ok(html.includes('safariSeatControls'));assert.ok(html.includes('.passenger-seat'));assert.ok(html.includes('Original safari landscape, monorail'));
+ const exported=await context.newPage();exported.on('pageerror',e=>errors.push('Export: '+e.message));
+ await exported.goto(pathToFileURL(exportPath).href,{waitUntil:'load',timeout:120000});
+ await exported.waitForFunction(()=>window.HOBBY_HOUSE?.state.ready&&!hobby.transition,{},{timeout:120000});
+ const packed=await exported.evaluate(()=>{activateHouseRoom('safari');paused=true;hobby.scene.trains[0].distance=43;setView('window-right',false);resize();updateCamera(20);updateUI();render();updateEditorOverlay();gl.finish();return{active:safariPassengerActive(),error:gl.getError(),png:canvas.toDataURL('image/png'),visible:!$('safariSeatControls').hidden};});
+ assert.ok(packed.active&&packed.visible);assert.equal(packed.error,0);await writeFile(output+'/18-exported-window.png',Buffer.from(packed.png.split(',')[1],'base64'));
+ report.checks.push({playableExport:true,exportBytes:Buffer.byteLength(html),localFileWindowSeat:true});await exported.close();
  assert.deepEqual(errors,[]);assert.deepEqual(consoleErrors,[]);report.complete=true;
 }catch(error){report.complete=false;report.failure=String(error.stack||error);console.error(report.failure);process.exitCode=1;}
 finally{await writeFile(`${output}/review.json`,JSON.stringify(report,null,2));await browser.close();}

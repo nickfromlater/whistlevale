@@ -99,7 +99,23 @@ uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6];
 uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
 float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
-float shadow(vec3 n){vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;float bias=max(.00024,.00064*(1.-dot(n,uSun)));float s=0.;vec2 texel=1./vec2(textureSize(uShadow,0));for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){float w=(x==0?2.:1.)*(y==0?2.:1.);s+=w*(p.z-bias<texture(uShadow,p.xy+vec2(x,y)*texel*1.05).r?1.:0.);}return s/16.;}
+float shadow(vec3 n){
+ vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;
+ float bias=max(.00024,.00064*(1.-dot(n,uSun))),s=0.;vec2 size=vec2(textureSize(uShadow,0)),texel=1./size;
+ // Only the new Safari surfaces use receiver-plane correction. Comparing
+ // sloped rock against a neighbor texel's uncorrected depth made diagonal
+ // self-shadow hatching across the cliff faces and the long concrete beam.
+ float material=floor(vMat+.5);bool receiver=material>=86.&&material<=89.;
+ vec3 dx=dFdx(p),dy=dFdy(p);float determinant=dx.x*dy.y-dx.y*dy.x;
+ vec2 gradient=abs(determinant)>1e-12?vec2(dy.y*dx.z-dx.y*dy.z,dx.x*dy.z-dy.x*dx.z)/determinant:vec2(0.);
+ for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){
+  float w=(x==0?2.:1.)*(y==0?2.:1.);vec2 uv=p.xy+vec2(x,y)*texel*1.05;
+  vec2 center=(floor(uv*size)+.5)*texel;
+  float depth=p.z+(receiver?clamp(dot(gradient,center-p.xy),-.004,.004):0.);
+  s+=w*(depth-bias<texture(uShadow,uv).r?1.:0.);
+ }
+ return s/16.;
+}
 // MERIDIAN_ATMOSPHERE_BEGIN: identical linear-light effect functions in both renderers.
 float meridianHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float meridianNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(meridianHash(i),meridianHash(i+vec2(1,0)),f.x),mix(meridianHash(i+vec2(0,1)),meridianHash(i+vec2(1,1)),f.x),f.y);}
@@ -193,9 +209,10 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   float aa=clamp(fwidth(bedding),.002,.22),seam=1.-smoothstep(.012-aa,.045+aa,abs(fract(bedding+.5)-.5));
   float strata=.5+.5*sin(bedding*6.28318);
   base*=.87+.16*noise(p*.68)+.08*strata;
-  base*=1.-seam*.27*(1.-smoothstep(.70,.98,abs(n.y)));
+  base*=1.-seam*.17*(1.-smoothstep(.70,.98,abs(n.y)));
   base*=mix(.93+.14*grain,1.,smoothstep(.3,1.1,length(fwidth(p*3.1))));rough=.98;
  }
+ if(m==89.){base*=.94+.08*noise(p*1.3);rough=.83;}
  if(m==88.){
   float coarse=noise(p*.8),fine=noise(p*5.);
   base*=.91+.14*coarse;base*=mix(.95+.1*fine,1.,smoothstep(.25,1.,length(fwidth(p*5.))));rough=.98;

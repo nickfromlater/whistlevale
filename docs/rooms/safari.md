@@ -44,7 +44,8 @@ raised timber surveying hide with optics and an aerial.
 The lodge remains native, deterministic geometry. Existing caption, viewpoint,
 lighting, planting-exclusion and arrival-path metadata now describe the field
 lodge. Use **Views → Places → Kopje House** or **The expedition approach**.
-The monorail route, stock and no-animals scope are unchanged.
+The monorail route and no-animals scope are preserved; the observation stock
+is now rebuilt for the passenger-window experience described below.
 
 The rework adds regression proofs that the removed pool builders and water
 materials are absent, buildings stop before the former leisure terrace, and the
@@ -69,10 +70,52 @@ The room sets `trainCollection: false` and supplies its own train label.
 Conventional cabinet trains cannot be selected or restored onto the beam.
 Switching to a conventional railway restores the cabinet controls.
 
+## Sculpted rift and observation cars
+
+The escarpments use explicitly authored asymmetric polygon footprints and
+separate bedding levels, rather than radial hills. Fracture gullies, narrow
+shelves, crest slabs, fallen rock, dry washes, scrub colonies and ragged acacia
+crowns give the landscape large, medium and small-scale detail. The spring bed
+is cut into the same terrain field. Narrow falls alternate with wider ledges;
+local flow coordinates replace the earlier world-space striped ribbon.
+
+Safari-only surface materials 86–89 provide rock, flowing water, ground and
+concrete. Their receiver-plane shadow comparison accounts for sloping surfaces
+inside the shadow-map filter, avoiding diagonal self-shadow hatching. Other
+materials retain the original shadow comparison. No shader dependencies or
+image textures have been added.
+
+Solstice now has a continuous chamfered ivory/green body, bronze window reveals,
+rounded clear apertures, transparent roof skylights, upholstered observation
+seats, timber floors, window tables, and compact rounded guide-truck fairings.
+The actual transparent-glass pass is used, not painted opaque glass. The camera
+and car body share `safariCarMatrix`, including the native running-height offset.
+
+## Window seat
+
+Choose **Train → Take a window seat** or **Views → Window seat**. The camera
+sits inside the second carriage at passenger eye height. The visible window
+frame, roof, seats and passing scenery are the same 3D geometry seen outside.
+Select either side with **Left window / Right window**. Drag to look around;
+pinch or scroll adjusts field of view without moving the eye through the wall.
+The recenter button and Home key reset the view. Arrow keys look around, and
+Escape or **Leave seat** restores the previous camera and keyboard focus.
+
+Only local look angles are smoothed. World-space translation follows the exact
+moving-car transform, so corners and the route seam cannot cause camera lag
+through the carriage. Reduced-motion preferences disable look easing. Pointer
+capture is released on cancellation, blur, tab hiding and exit. Map entry and
+room changes clean up the seat controls. Sound, pause and throttle remain under
+the user's control. Roof cutaway does not remove the passenger's enclosing roof.
+The separately corrected driver view remains available.
+
 ## Source and checks
 
 - `src/rooms/safari.js`: landscape, guideway, stations, room shell and registration.
 - `src/trains/safari.js`: original monorail stock, motion and stock-cache adapter.
+- `src/safari-ride.js` and `.css`: passenger camera, controls and input lifecycle.
+- `scripts/safari-passenger-qa.mjs`: shared pose/glass and lifecycle contracts.
+- `scripts/safari-ride-review.mjs`: native passenger, touch-fixture and export review.
 - `scripts/safari-qa.mjs`: deterministic geometry, emitted-surface interpolation,
   continuous track, terrain/tree clearances, tyre contact, incompatible-stock
   rejection, cache disposal, credits and live-map registration.
@@ -90,3 +133,8 @@ dependency and is not shipped in the public build.
 
 Responsive desktop captures are not physical-phone performance or touch tests.
 See PR #40 for the exact reviewed revision, measurements, and remaining checks.
+
+The additional passenger review is `node scripts/safari-ride-review.mjs`, using
+the same external Playwright variable and preview server. Its evidence is kept
+in `evidence/safari-ride/`. A software-rendered browser is not a frame-rate
+measurement or a physical-phone gesture test.
