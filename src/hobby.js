@@ -152,7 +152,7 @@ function syncRoomControls(){
  $('railControls').setAttribute('aria-label',railway?'Railway controls':'Landscape controls');
  $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
  for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
- for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=!railway&&!['room','overview','tour'].includes(button.dataset.camera);
+ for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=button.hasAttribute('data-passenger-only')?hobby.room!=='safari':!railway&&!['room','overview','tour'].includes(button.dataset.camera);
  const names=(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
  for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
 }

@@ -186,6 +186,27 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==1.||m==11.){rough=.3;metal=.72;}
  if(m==2.){float w=noise(vec3(p.x*.75,p.y*12.,p.z*8.));base*=.87+.21*w;rough=.55;}
  if(m==3.){float textureN=noise(p*4.5);base*=.87+.18*textureN;rough=.97;}
+ // Safari stone: broad sediment beds and derivative-filtered mineral seams.
+ // Fine world-space noise fades when subpixel; no stripes baked onto water.
+ if(m==86.){
+  float grain=noise(p*3.1),bedding=p.y*.82+noise(vec3(p.x*.23,0.,p.z*.23))*.35;
+  float aa=clamp(fwidth(bedding),.002,.22),seam=1.-smoothstep(.012-aa,.045+aa,abs(fract(bedding+.5)-.5));
+  float strata=.5+.5*sin(bedding*6.28318);
+  base*=.87+.16*noise(p*.68)+.08*strata;
+  base*=1.-seam*.27*(1.-smoothstep(.70,.98,abs(n.y)));
+  base*=mix(.93+.14*grain,1.,smoothstep(.3,1.1,length(fwidth(p*3.1))));rough=.98;
+ }
+ if(m==88.){
+  float coarse=noise(p*.8),fine=noise(p*5.);
+  base*=.91+.14*coarse;base*=mix(.95+.1*fine,1.,smoothstep(.25,1.,length(fwidth(p*5.))));rough=.98;
+ }
+ // Cascade UVs are transverse distance and unwrapped downhill length.
+ if(m==87.){
+  float flow=noise(vec3(vUV.x*15.,vUV.y*4.-uTime*1.8,3.2));
+  float silk=pow(max(0.,sin(vUV.x*44.+flow*2.)),9.);
+  float edge=smoothstep(.63,1.,abs(vUV.x));
+  base=mix(base,vec3(.77,.85,.73),(silk*.16+edge*.11)*smoothstep(.10,.5,flow));rough=.26;
+ }
  if(m==4.){float row=floor(p.y*4.2);vec2 brick=vec2(fract((abs(n.z)>.7?p.x:p.z)*2.2+mod(row,2.)*.5),fract(p.y*4.2));float mortar=1.-smoothstep(.018,.048,min(brick.x,brick.y));base*=mix(.9+.1*noise(p*8.),.70,mortar*.65);rough=.92;}
  if(m==5.){float r=fract(p.y*8.);base*=.86+.14*smoothstep(.02,.13,r);rough=.74;}
  if(m==6.){base=mix(base,vec3(1.,.68,.34),dusk*.94);em=dusk*1.25;rough=.19;metal=.24;}
@@ -486,7 +507,7 @@ function render(){if(typeof embeddedFrameUpdate==='function')embeddedFrameUpdate
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
  gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasNativeTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
- if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
+ if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building||viewMode==='window-left'||viewMode==='window-right'?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
 // Movie decoding is limited to a nearby, front-facing screen. Map views keep
 // the static picture, and object transforms follow edits instead of a fixed site.
 function drawMoonlightHouseAir(){

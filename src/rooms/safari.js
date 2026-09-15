@@ -34,26 +34,60 @@ function safariRailNear(x,z){
 function safariRiverX(z){return -2.6+5.6*Math.sin(z*.078)+2.1*Math.sin(z*.17+.4);}
 function safariRiverWidth(z){return 2.25+1.1*Math.exp(-(((z-7)/10)**2))+.28*Math.sin(z*.23);}
 function safariBank(x,z){return Math.abs(x-safariRiverX(z))-safariRiverWidth(z);}
-// Broad river terraces and broken, stepped escarpments replace the original
-// radial mounds. The same authored relief drives the model and every placement.
+// Authored geological footprints. The banks and cliff benches are cut from
+// the same field as the emitted mesh; there are no floating decorative hills.
+const SAFARI_ESCARPMENTS=[
+ {outline:[[8,-28],[13,-36],[27,-38],[40,-33],[48,-25],[44,-15],[38,-10],[29,-12],[23,-9],[16,-12],[12,-18]],beds:[2.3,3.5,4.8,3.7,2.3]},
+ {outline:[[-50,-29],[-43,-37],[-29,-36],[-22,-30],[-21,-23],[-28,-18],[-35,-20],[-42,-16],[-48,-22]],beds:[1.6,2.5,3.9,2.4,1.6]}
+];
+function safariSegment(x,z,a,q){
+ const dx=q[0]-a[0],dz=q[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz));
+ return {distance:Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz),t};
+}
+function safariRockDistance(x,z,outline){
+ let inside=false,d=Infinity;
+ for(let i=0,j=outline.length-1;i<outline.length;j=i++){
+  const a=outline[i],q=outline[j];d=Math.min(d,safariSegment(x,z,a,q).distance);
+  if((a[1]>z)!==(q[1]>z)&&x<(q[0]-a[0])*(z-a[1])/(q[1]-a[1])+a[0])inside=!inside;
+ }
+ return (inside?1:-1)*d;
+}
+// A real cut in the rock feeds the cascade. Third coordinates are the
+// authored downhill bed elevations, independent of later mesh tessellation.
+const SAFARI_WATERCOURSE=[[18.3,-19.3,14.2],[17.6,-18.5,12.35],[16.6,-17.6,10.65],[15.8,-16.7,8.30],[15.2,-16,5.90],[14,-14.8,3.62],[13.2,-13,1.90],[11.3,-10.7,.87],[8.5,-9,.51],[5.6,-7.8,-.04],[2.8,-6.4,-1.10],[-2,-5.1,-2.25]];
+function safariChannel(x,z){
+ let nearest={distance:Infinity,height:0,t:0,index:0};
+ for(let i=1;i<SAFARI_WATERCOURSE.length;i++){
+  const a=SAFARI_WATERCOURSE[i-1],q=SAFARI_WATERCOURSE[i],hit=safariSegment(x,z,a,q);
+  if(hit.distance<nearest.distance)nearest={...hit,height:mix(a[2],q[2],hit.t),index:i-1};
+ }
+ return nearest;
+}
 function safariRawHeight(x,z){
- const bank=safariBank(x,z),roll=.68+.66*Math.sin(x*.079+z*.031)+.34*Math.cos(z*.145-x*.038)+.12*Math.sin(x*.37+z*.23);
- const mesa=(cx,cz,rx,rz,h)=>{
-  const xx=(x-cx+(z-cz)*.18)/rx,zz=(z-cz)/rz,angle=Math.atan2(zz,xx);
-  const r=Math.pow(Math.abs(xx)**3+Math.abs(zz)**3,1/3)+.046*Math.sin(angle*5+1.4)+.026*Math.sin(angle*11)+.018*Math.sin(x*.92+z*.31);
-  // Broad, offset caprock and a steep broken wall, not concentric cones.
-  return h*(.13*(1-smooth(.92,1.25,r))+.22*(1-smooth(.74,.96,r))+.65*(1-smooth(.50,.72,r)));
- };
- const ridge=mesa(21,-21.5,18.5,13.6,19.0)+mesa(-35,-24.5,13.4,11.2,12.4);
- const shoulder=1.7*Math.exp(-((x+30)**2/290+(z-12)**2/54))+1.15*Math.exp(-((x-38)**2/140+(z-23)**2/42));
- // A sheltered sandy shelf meets the river before the higher rocky escarpment.
- let h=mix(SAFARI.bed,roll+ridge+shoulder,smooth(-.22,5.7,bank));
- const lodgePad=(1-smooth(17.2,20.5,Math.abs(x-24)))*(1-smooth(12.2,15.5,Math.abs(z-3)))*smooth(1.8,4.3,bank);
+ const bank=safariBank(x,z),roll=.65+.46*Math.sin(x*.093+z*.042)+.26*Math.cos(z*.19-x*.034)+.14*(noise(x*.28,z*.28)-.5);
+ let ridge=0;
+ for(const formation of SAFARI_ESCARPMENTS){
+  // Offset bedding planes, broad shelves, and abrupt joints give the profiles
+  // angular steps instead of the continuous derivative of a radial mound.
+  const d=safariRockDistance(x,z,formation.outline)+.20*Math.sin(x*.74+z*.39)+.12*Math.sin(z*1.05-x*.31),h=formation.beds;
+  ridge+=h[0]*smooth(-5.0,-1.0,d)+h[1]*smooth(-.8,.35,d)+h[2]*smooth(1.5,2.5,d)+h[3]*smooth(3.8,4.7,d)+h[4]*smooth(6.3,7.15,d);
+ }
+ const gully=(a,q,w,depth)=>depth*(1-smooth(w*.2,w,safariSegment(x,z,a,q).distance));
+ ridge=Math.max(0,ridge-gully([29,-23],[32,-9],1.45,3.1)-gully([19,-27],[12,-16],1.35,2.8)-gully([-39,-29],[-32,-17],1.2,2.6));
+ const shoulder=1.5*Math.exp(-((x+34)**2/225+(z-13)**2/67))+1.25*Math.exp(-((x-39)**2/95+(z-22)**2/62));
+ let natural=roll+ridge+shoulder;
+ // Shallow dry washes empty toward the river, rather than random surface noise.
+ const wash=(1-smooth(.4,1.4,safariSegment(x,z,[-41,5],[-13,10]).distance))*smooth(3,7,bank);
+ natural-=.32*wash;
+ let h=mix(SAFARI.bed,natural,smooth(-.25,x<safariRiverX(z)?5.4:6.0,bank));
+ const lodgePad=(1-smooth(17.2,20.5,Math.abs(x-24)))*(1-smooth(11.4,14,Math.abs(z-3)))*smooth(1.8,4.3,bank);
  h=mix(h,2.05+.80*(1-smooth(-8,17,z)),lodgePad);
- // Existing station terraces are retained, with a genuine high-level landing.
+ // Keep the reviewed station platforms, stair landings and lodge foundations.
  h=mix(h,8.1,(1-smooth(11,14,Math.abs(x-16)))*(1-smooth(3.9,6,Math.abs(z+32))));
  h=mix(h,8.1,(1-smooth(3.2,5,Math.abs(x-3.2)))*(1-smooth(1.5,3.2,Math.abs(z+31.15))));
  h=mix(h,1.15,(1-smooth(11,15,Math.abs(x+27)))*(1-smooth(2,4.5,Math.abs(z-35.5))));
+ const channel=safariChannel(x,z);
+ if(channel.distance<1.28)h=mix(h,channel.height,1-smooth(.40,1.28,channel.distance));
  const rail=safariRailNear(x,z);
  if(rail.point&&rail.distance<3.2)h=mix(h,Math.min(h,rail.point[1]-1.18),1-smooth(1.05,3.2,rail.distance));
  return h;
@@ -70,18 +104,14 @@ function safariSurface(x,z){
  return u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);
 }
 function safariGroundColor(x,y,z,n){
- const bank=safariBank(x,z),patch=.5+.25*Math.sin(x*.115+Math.sin(z*.13)*2.1)+.18*Math.cos(z*.18+x*.034);
- let c=lerpV(col('#717347'),col('#aa955b'),clamp(patch));
+ const bank=safariBank(x,z),patch=.5+.24*Math.sin(x*.115+Math.sin(z*.13)*2.1)+.16*Math.cos(z*.18+x*.034);
+ let c=lerpV(col('#777749'),col('#bba376'),clamp(patch));
  const earth=smooth(.43,.82,.5+.5*Math.sin(x*.082-z*.12+Math.sin(x*.17)));
- c=lerpV(c,col('#b38c61'),earth*.52);
- c=lerpV(c,col('#546c43'),(1-smooth(2.4,8.5,bank))*.75);
- // Broad sediment beds and narrow mineral seams are confined to the rock.
- const layer=.5+.5*Math.sin(y*2.35+.19*Math.sin(x*.4)+.2*Math.sin(z*.36));
- let rock=lerpV(col('#765840'),col('#b69266'),smooth(.16,.88,layer));
- rock=lerpV(rock,col('#d2b38b'),smooth(.93,.995,layer)*.3);
- c=lerpV(c,rock,smooth(.10,.35,1-n[1]));
- c=lerpV(c,col('#9f875b'),smooth(12,20,y)*.22);
- return y<SAFARI.water+.45?lerpV(col('#49685b'),col('#a8976b'),smooth(SAFARI.bed,SAFARI.water+.45,y)):c;
+ c=lerpV(c,col('#ad8660'),earth*.47);
+ c=lerpV(c,col('#61754c'),(1-smooth(2.4,8.5,bank))*.68);
+ const rock=lerpV(col('#89725d'),col('#b6a17f'),.42+.19*Math.sin(x*.13+z*.08));
+ c=lerpV(c,rock,smooth(.08,.30,1-n[1]));
+ return y<SAFARI.water+.55?lerpV(col('#596f5e'),col('#c0ad82'),smooth(SAFARI.bed,SAFARI.water+.55,y)):c;
 }
 function safariTerrain(b){
  const g=SAFARI_GRID,vertices=[],normals=[],colors=[];
@@ -99,7 +129,8 @@ function safariTerrain(b){
  };
  for(let j=0;j<g.nz;j++)for(let i=0;i<g.nx;i++){
   const a=j*(g.nx+1)+i;
-  for(const ids of[[a,a+g.nx+1,a+1],[a+1,a+g.nx+1,a+g.nx+2]]){for(const k of ids)b.vertex(vertices[k],normals[k],colors[k],3);waterTriangle(ids.map(k=>vertices[k]));}
+  for(const ids of[[a,a+g.nx+1,a+1],[a+1,a+g.nx+1,a+g.nx+2]]){const face=norm(cross(sub(vertices[ids[1]],vertices[ids[0]]),sub(vertices[ids[2]],vertices[ids[0]]))),rock=face[1]<.81;
+   for(const k of ids)b.vertex(vertices[k],rock?norm(lerpV(normals[k],face,.27)):normals[k],colors[k],rock?86:88);waterTriangle(ids.map(k=>vertices[k]));}
  }
  // Exposed geological sections meet the walnut case instead of green curtains.
  for(const side of[-1,1])for(const alongX of[true,false]){
@@ -107,7 +138,7 @@ function safariTerrain(b){
   for(let i=0;i<count;i++){
    const t=-half+i*step,q=t+step,a=alongX?[t,side*40]:[side*56,t],d=alongX?[q,side*40]:[side*56,q];
    const ya=safariSurface(...a),yq=safariSurface(...d);
-   for(let k=0;k<5;k++){const lo=k/5,hi=(k+1)/5;b.quad([a[0],mix(-4.62,ya,lo),a[1]],[d[0],mix(-4.62,yq,lo),d[1]],[d[0],mix(-4.62,yq,hi),d[1]],[a[0],mix(-4.62,ya,hi),a[1]],['#6e503b','#8a6346','#af8358','#ba9566','#c2a675'][k],3);}
+   for(let k=0;k<5;k++){const lo=k/5,hi=(k+1)/5;b.quad([a[0],mix(-4.62,ya,lo),a[1]],[d[0],mix(-4.62,yq,lo),d[1]],[d[0],mix(-4.62,yq,hi),d[1]],[a[0],mix(-4.62,ya,hi),a[1]],['#6e503b','#8a6346','#af8358','#ba9566','#c2a675'][k],86);}
   }
  }
 }
@@ -115,9 +146,9 @@ function safariRock(b,x,z,r=1,variant=0){
  const y=safariSurface(x,z),n=8,heights=[0,.19,.52,.82,1],radii=[.90,1,.89,.71,.28],turn=hash(variant,81)*TAU;
  const point=(k,level)=>{const a=turn+k*TAU/n,scale=radii[level]*(.86+hash(k%n,variant+16)*.23);return[x+Math.cos(a)*r*scale,y-.12+heights[level]*r*.74,z+Math.sin(a)*r*scale*.76];};
  for(let j=0;j<4;j++)for(let i=0;i<n;i++){
-  const c=shade(['#a07850','#b99464','#c5a475','#d3b581'][j],.88+hash(i,variant)*.18);b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),c,3);
+  const c=shade(['#a07850','#b99464','#c5a475','#d3b581'][j],.88+hash(i,variant)*.18);b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),c,86);
  }
- for(let i=0;i<n;i++)b.tri([x,y-.12+r*.74,z],point(i,4),point(i+1,4),'#d0b480',3);
+ for(let i=0;i<n;i++)b.tri([x,y-.12+r*.74,z],point(i,4),point(i+1,4),'#c6b293',86);
 }
 // Tapered, crooked branches have a real fork structure. Flat, torn-edged
 // leaf crowns leave air between branch tips instead of stacking green spheres.
@@ -127,19 +158,15 @@ function safariBranch(b,a,q,r0,r1,color='#594a32',segments=7){
  for(let i=0;i<segments;i++)b.quad(ring(a,r0,i),ring(a,r0,i+1),ring(q,r1,i+1),ring(q,r1,i),shade(color,.82+.20*Math.sin(i+1)**2),22);
 }
 function safariCrown(b,x,y,z,r,variant){
- const n=10,point=(i,level)=>{
-  const a=i*TAU/n,sc=(.82+hash(i%n,variant)*.25)*(level===0?.35:level===1?1:.72),h=level===0?-.13:level===1?0:.19;
-  return[x+Math.cos(a)*r*sc,y+r*(h+hash(i%n,variant+70)*.085),z+Math.sin(a)*r*sc*.78];
- };
- for(let i=0;i<n;i++){
-  b.quad(point(i,0),point(i+1,0),point(i+1,1),point(i,1),'#304e34',8);
-  b.quad(point(i,1),point(i+1,1),point(i+1,2),point(i,2),['#4c632f','#61743a','#778548'][i%3],8);
-  b.tri(point(i,2),point(i+1,2),[x,y+r*.27,z],i%3?'#657b3e':'#89934f',8);
-  // Leaflets escape the crown edge and break up its silhouette at close range.
-  const p=point(i,1),a=i*TAU/n,tip=add(p,[Math.cos(a)*r*.19,r*.08,Math.sin(a)*r*.19]);
-  for(let j=0;j<3;j++){
-   const c=lerpV(p,tip,(j+1)/3),dx=Math.cos(a+PI/2)*r*.11,dz=Math.sin(a+PI/2)*r*.11;
-   b.tri([c[0]-dx,c[1],c[2]-dz],add(c,[Math.cos(a)*r*.08,r*.06,Math.sin(a)*r*.08]),[c[0]+dx,c[1],c[2]+dz],j%2?'#788b45':'#5b7338',8);
+ for(let lobe=0;lobe<6;lobe++){
+  const angle=lobe*2.399+variant*.37,reach=lobe===0?0:r*(.37+hash(lobe,variant)*.14),xx=x+Math.cos(angle)*reach,zz=z+Math.sin(angle)*reach*.80;
+  const yy=y+r*(.05+hash(lobe,variant+51)*.16),size=r*(.44+hash(lobe,variant+13)*.10),n=6;
+  const pt=(i,level)=>{const a=i*TAU/n+angle,rr=size*(.82+hash(i,variant+lobe*7)*.25);return [xx+Math.cos(a)*rr,yy+size*(level?-.14:.04+hash(i,variant)*.16),zz+Math.sin(a)*rr*.80];};
+  for(let i=0;i<n;i++){
+   const color=['#5d753d','#718747','#869451','#647d42'][(lobe+i)%4];
+   b.tri([xx,yy+size*.32,zz],pt(i,0),pt(i+1,0),color,8);
+   b.tri(pt(i,0),[xx,yy-size*.16,zz],pt(i+1,0),'#3f5a34',8);
+   if(i%2===0){const q=pt(i,0),a=angle+i*TAU/n;b.tri(q,add(q,[Math.cos(a)*size*.27,.06*r,Math.sin(a)*size*.27]),add(q,[-Math.sin(a)*size*.20,.025*r,Math.cos(a)*size*.20]),color,8);}
   }
  }
 }
@@ -179,7 +206,7 @@ function safariNaturalDetails(b){
  for(const t of SAFARI_TREES)safariAcacia(b,t.x,t.z,t.h,t.variant);
  // Bands of small wind-combed tufts articulate the ground without noisy dots.
  for(let i=0;i<2400;i++){
-  const x=-54+hash(i,501)*108,z=-38+hash(i,502)*76,y=safariSurface(x,z),bank=safariBank(x,z);
+  const group=Math.floor(i/10),x=-51+hash(group,501)*102+(hash(i,509)-.5)*4.5,z=-35+hash(group,502)*70+(hash(i,510)-.5)*3.5,y=safariSurface(x,z),bank=safariBank(x,z);
   if(bank<2||safariRailNear(x,z).distance<1.4||!safariLodgeClear(x,z,.45)||safariWalkDistance(x,z)<.75||Math.abs(x+26)<15&&z>29||Math.abs(x-16)<12&&z< -28)continue;
   const slope=Math.abs(safariSurface(x+.25,z)-safariSurface(x-.25,z))+Math.abs(safariSurface(x,z+.25)-safariSurface(x,z-.25));if(slope>.33)continue;
   const h=.20+hash(i,503)*.45,color=i%4?'#c3b96c':'#ded091';
@@ -197,34 +224,59 @@ function safariNaturalDetails(b){
  // Low pale sandbars and stones sit at the actual wet-bank contour.
  for(let i=0;i<72;i++){const z=-38+hash(i,632)*76,x=safariRiverX(z)+(i%2?1:-1)*(safariRiverWidth(z)+1.7+hash(i,633)),y=safariSurface(x,z);if(y>SAFARI.water+.1&&safariRailNear(x,z).distance>1.5)b.sphere(x,y+.07,z,.17+hash(i,634)*.24,.13,.21,'#c6b282',4,7,4,true);}
 }
-// A narrow spring leaves a rocky seep, breaks over the escarpment, and
-// follows the finished ground into the river. Material 44 is the native,
-// time-driven flowing-water finish; it needs no new shader or frame geometry.
-const SAFARI_SPRING=[[10,-14.8],[10,-14],[10,-13],[10,-12],[10.2,-11],[9,-9.2],[6,-7.8],[3,-6.3],[-2,-5.1]];
+// Narrow, rock-bound water follows the cut bed with variable banks. White
+// water occurs only on drops, not as five permanent lines on a green ribbon.
+const SAFARI_SPRING=SAFARI_WATERCOURSE.map(p=>p.slice(0,2));
 function safariSpring(b){
- const points=[];
- for(let i=0;i+1<SAFARI_SPRING.length;i++){
-  const a=SAFARI_SPRING[i],q=SAFARI_SPRING[i+1],n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.16);
-  for(let j=0;j<n;j++)points.push([mix(a[0],q[0],j/n),mix(a[1],q[1],j/n)]);
+ const points=[];let travel=0;
+ for(let i=1;i<SAFARI_WATERCOURSE.length;i++){
+  const a=SAFARI_WATERCOURSE[i-1],q=SAFARI_WATERCOURSE[i],n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.18);
+  for(let k=0;k<n;k++){const t=k/n,p=[mix(a[0],q[0],t),mix(a[1],q[1],t)];if(points.length)travel+=Math.hypot(p[0]-points.at(-1).x,p[1]-points.at(-1).z);points.push({x:p[0],z:p[1],distance:travel});}
  }
- points.push(SAFARI_SPRING.at(-1));
- const at=(i,side,lift=0)=>{const p=points[i],a=points[Math.max(0,i-1)],q=points[Math.min(points.length-1,i+1)],length=Math.hypot(q[0]-a[0],q[1]-a[1])||1,x=p[0]+(q[1]-a[1])/length*side,z=p[1]-(q[0]-a[0])/length*side;return[x,Math.max(SAFARI.water,safariSurface(x,z))+.048+lift,z];};
+ const last=SAFARI_WATERCOURSE.at(-1);points.push({x:last[0],z:last[1],distance:travel+.18});
+ const width=i=>{const p=points[i],slope=Math.abs(safariSurface(p.x,p.z)-safariSurface(points[Math.min(i+1,points.length-1)].x,points[Math.min(i+1,points.length-1)].z));return (.23+.13*(1-smooth(.03,.36,slope)))*smooth(0,.6,p.distance);};
+ const at=(i,u,extra=0)=>{
+  const p=points[i],a=points[Math.max(0,i-1)],q=points[Math.min(points.length-1,i+1)],length=Math.hypot(q.x-a.x,q.z-a.z)||1;
+  const x=p.x+(q.z-a.z)/length*u*(width(i)+extra),z=p.z-(q.x-a.x)/length*u*(width(i)+extra);
+  return [x,Math.max(SAFARI.water+.010,safariSurface(x,z)+.09),z];
+ };
  for(let i=0;i+1<points.length;i++){
-  const t=i/(points.length-1),width=.29+.20*Math.sin(t*PI)+.11*Math.sin(t*PI*5)**2;
-  b.quad(at(i,-width-.12),at(i+1,-width-.12),at(i+1,width+.12),at(i,width+.12),'#546e54',3);
-  b.quad(at(i,-width,.025),at(i+1,-width,.025),at(i+1,width,.025),at(i,width,.025),'#6ca492',44);
-  for(let k=0;k<5;k++){
-   const side=(k-2)*width*.33+.035*Math.sin(i*.18+k),thin=(k===2?.043:.016)*(1+.5*Math.sin(i*.29+k));
-   b.quad(at(i,side-thin,.040),at(i+1,side-thin,.040),at(i+1,side+thin,.040),at(i,side+thin,.040),k===2?'#d7e1ba':'#abcbb2',44);
+  const slope=Math.abs(at(i,0)[1]-at(i+1,0)[1]),color=lerpV(col('#427a6c'),col('#a3c2af'),smooth(.12,.45,slope)*.62);
+  for(const side of[-1,1])b.quad(at(i,side,.27),at(i+1,side,.27),at(i+1,side,.10),at(i,side,.10),'#716f50',86);
+  for(let lane=0;lane<4;lane++){
+   const u=-1+lane*.5,v=u+.5,a=at(i,u),q=at(i+1,u),r=at(i+1,v),t=at(i,v);
+   b.quad(a,q,r,t,color,87,null,[[u,points[i].distance],[u,points[i+1].distance],[v,points[i+1].distance],[v,points[i].distance]]);
   }
+  if(slope>.34&&i%3===0){const a=at(i,-.34),q=at(i+1,-.12),r=at(i+1,.32),t=at(i,.28);for(const p of[a,q,r,t])p[1]+=.016;b.quad(a,q,r,t,'#d4ddc3',87);}
  }
- // The rock mouth explains the source; wetted ledges and ferns frame the fall.
- for(const side of[-1,1]){
-  safariRock(b,10+side*.70,-14.88,.83,720+side);
-  for(const z of[-12.4,-10.6]){
-   const x=10.4+side*.87,y=safariSurface(x,z);b.sphere(x,y+.11,z,.42,.20,.34,'#71806b',3,9,5,true);
-   for(let k=0;k<5;k++){const angle=k*TAU/5,xx=x+Math.cos(angle)*.35,zz=z+Math.sin(angle)*.35,base=safariSurface(xx,zz);b.tri([xx-.07,base,zz],[xx+.13,base+.62,zz+.11],[xx+.08,base,zz],'#62824b',8);}
-  }
+ // Shattered rock lips, not a rectangular sheet at the top of a painted strip.
+ for(const [x,z,r,v]of[[19.0,-19.5,.95,714],[17.5,-19.8,.75,715],[16.0,-17.8,.7,716],[15.8,-15.5,.8,717],[12.7,-13.9,.7,718]])safariRock(b,x,z,r,v);
+}
+// Split, offset blocks establish broken cliff silhouettes and talus. Their
+// foundations sample the complete footprint, and the running envelope is clear.
+function safariGeologicalBlock(b,x,z,w,d,h,angle,variant){
+ const outline=[[-.5,-.32],[-.33,-.5],[.33,-.5],[.5,-.31],[.5,.31],[.33,.5],[-.33,.5],[-.5,.32]],c=Math.cos(angle),s=Math.sin(angle);
+ const ground=outline.map(([a,q])=>safariSurface(x+a*w*c+q*d*s,z-a*w*s+q*d*c));
+ const base=Math.min(...ground)-.23,top=Math.max(...ground)+h;
+ const point=(i,j)=>{const [a,q]=outline[i%8],t=j/3,scale=[.95,1.03,.87,.76][j],dx=(hash(variant,j)-.5)*w*.15;return [x+(a*w*scale+dx)*c+q*d*scale*s,mix(base,top,t)+.06*h*Math.sin(i*3+variant)*t,z-(a*w*scale+dx)*s+q*d*scale*c];};
+ for(let j=0;j<3;j++)for(let i=0;i<8;i++)b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),['#85715b','#a68e70','#b6a184'][(j+variant)%3],86);
+ for(let i=1;i<7;i++)b.tri(point(0,3),point(i,3),point(i+1,3),'#c0ad8e',86);
+}
+function safariGeology(b){
+ const clear=(x,z,r)=>Math.abs(x)+r<55&&Math.abs(z)+r<39&&safariRailNear(x,z).distance>r+1.8&&safariLodgeClear(x,z,r)&&safariChannel(x,z).distance>r+.70&&safariBank(x,z)>2.9;
+ // Crest slabs and fallen blocks are composed around the exposed beds.
+ for(const [cx,cz,n,scale]of[[27,-22,18,1.8],[37,-20,13,1.4],[-35,-25,18,1.5],[-40,-14,10,1.0],[39,-11,8,.85]])for(let i=0;i<n;i++){
+  const angle=i*2.399+cx,r=1+Math.sqrt(i)*1.16,x=cx+Math.cos(angle)*r,z=cz+Math.sin(angle)*r*.71,w=scale*(.7+hash(i,cx)*1.1),d=w*(.60+hash(i,cz)*.5);
+  if(!clear(x,z,Math.max(w,d)*.7))continue;
+  const slope=Math.abs(safariSurface(x+.5,z)-safariSurface(x-.5,z))+Math.abs(safariSurface(x,z+.5)-safariSurface(x,z-.5));
+  if(slope>2.9)continue;safariGeologicalBlock(b,x,z,w,d,.28+hash(i,117)*.78,angle,i);
+ }
+ // Bleached fallen limbs and exposed roots interrupt the grassy clearings.
+ for(const [x,z,a,length]of[[-38,19,.5,2.6],[-21,-2,1.1,2.4],[34,21,-.7,2.9],[-18,20,-.8,2.3],[41,10,.8,2.1]]){
+  if(!clear(x,z,length*.6)||safariWalkDistance(x,z)<1.1)continue;
+  const p=[x,safariSurface(x,z)+.12,z],q=[x+Math.cos(a)*length,safariSurface(x+Math.cos(a)*length,z+Math.sin(a)*length)+.13,z+Math.sin(a)*length];
+  safariBranch(b,p,q,.16,.065,'#ada081',6);
+  for(let k=0;k<3;k++){const root=lerpV(p,q,.25+k*.23),dir=a+(k%2?1:-1)*.85,tip=add(root,[Math.cos(dir)*.74,.32+k*.12,Math.sin(dir)*.74]);safariBranch(b,root,tip,.055,.006,'#b9ad8e',5);}
  }
 }
 function safariBeam(b){
@@ -405,7 +457,7 @@ function safariShell(b){
  return walls;
 }
 function safariRoom(scene,b){
- safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);safariHabitatDetails(b);safariLodge(b);
+ safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);safariGeology(b);safariHabitatDetails(b);safariLodge(b);
  safariStation(b,{x:-28,z:28,rail:6.8,name:'ACACIA GATE'});
  safariStation(b,{x:16,z:-28,rail:11.2,name:'RIFT LOOKOUT',flip:true});
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];
