@@ -1,0 +1,41 @@
+--- a/src/rooms/safari.js
++++ b/src/rooms/safari.js
+@@ -238,6 +238,7 @@
+  for(const side of[-1,1])b.beam([x-w/2,y+2.73,z+side*d/2],[x+w/2,y+2.73,z+side*d/2],.035,'#a18350',22,6);
+  b.beam([x-w/2,y+2.4,z+d*.34],[x+w/2,y+2.4,z+d*.34],.060,'#8b704a',22,6);
+ }
++const SAFARI_RIDGE_PATH=[[.5,-31.15],[2,-31.8],[4,-32]];
+ function safariLandingHeight(x,z,halfWidth=.9){return Math.max(...[-halfWidth,0,halfWidth].map(dz=>safariSurface(x,z+dz)))+.05;}
+ function safariStation(b,{x,z,rail,name,flip=false}){
+  const side=flip?-1:1,y=rail+.64,cz=z+side*3.15,w=20,d=4.6;
+@@ -266,7 +267,7 @@
+   const x0=x-10,x1=x-15.5,zz=cz,ground=safariLandingHeight(x1,zz,.85),n=24;
+   for(let i=0;i<n;i++){const px=mix(x0,x1,(i+.5)/n),yy=mix(y,ground,(i+1)/n);b.box(px,yy-.065,zz,.24,.13,1.65,'#bca378',22);}
+   for(const side of[-1,1]){b.beam([x0,y-.20,zz+side*.62],[x1,ground-.08,zz+side*.62],.09,'#82734d',41,5);safariRailings(b,[[x0,y,zz+side*.80],[x1,ground,zz+side*.80]],.72);}
+-  housePath(b,[[x1,zz],[2,-34.1],[7,-35.2]],.7,safariSurface,'#c9b385');
++  housePath(b,SAFARI_RIDGE_PATH,.7,safariSurface,'#c9b385');
+  }
+ }
+ function safariLookout(b){
+--- a/scripts/safari-qa.mjs
++++ b/scripts/safari-qa.mjs
+@@ -40,6 +40,8 @@
+   const bottom=safariLandingHeight(x1,z,half);assert.ok((top-bottom)/Math.abs(x1-x0)<.85,name+' stair gradient');
+   for(let i=0;i<n;i++){const x=mix(x0,x1,(i+.5)/n),y=mix(top,bottom,(i+1)/n);for(const side of[-half,0,half])assert.ok(y-safariSurface(x,z+side)>0,name+' tread is not buried');}
+  }
++ const path=new Builder();housePath(path,SAFARI_RIDGE_PATH,.7,safariSurface,'#c9b385');
++ const heights=path.data.filter((_,i)=>i%12===1);assert.ok(Math.max(...heights)-Math.min(...heights)<.12,'ridge footpath stays on its planting shelf');
+  // A forward rolling load tyre moves backward at its contact patch.
+  const r=SAFARI_STOCK.loadRadius,p0=[0,-r,0],p1=transform(p0,rx(.001/r));assert.ok(p1[2]<p0[2],'correct load tyre rolling direction');
+  // Check the exact emitted terrain triangle interpolation at both halves.
+--- a/scripts/safari-visual-review.mjs
++++ b/scripts/safari-visual-review.mjs
+@@ -23,7 +23,7 @@
+ const report={renderer:null,capture:'native WebGL readback, paused animation between captures',hardwarePerformanceVerified:false,views:[],checks:[],uiCaptureErrors:[],errors,consoleErrors};
+ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
+ page.setDefaultTimeout(90000);
+-async function settle(target=page){await target.evaluate(()=>{resize();updateCamera(20);updateUI();render();gl.finish();});}
++async function settle(target=page){await target.evaluate(()=>{resize();updateCamera(20);updateUI();render();updateEditorOverlay();gl.finish();});}
+ async function snap(name,{ui=false,target=page}={}){
+  console.log('Capture:',name);await settle(target);
+  const result=await target.evaluate(()=>({png:canvas.toDataURL('image/png'),width:canvas.width,height:canvas.height,error:gl.getError()}));
