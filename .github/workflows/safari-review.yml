@@ -28,10 +28,10 @@ jobs:
             git apply --check .github/safari-core.patch
             git apply .github/safari-core.patch
             git rm .github/safari-core.patch
-            git add index.html package.json src/hobby.js src/trains.js src/train-cabinet.js src/rooms/safari.js src/trains/safari.js scripts/safari-qa.mjs scripts/safari-visual-review.mjs
+            git add index.html package.json src/hobby.js src/trains.js src/train-cabinet.js src/train-cabinet.css src/rooms/safari.js src/trains/safari.js scripts/safari-qa.mjs scripts/safari-visual-review.mjs
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'Polish safari station clearances and Solstice body details'
+            git commit -m 'Polish safari compositions, native materials, spring and mobile controls'
             git push origin HEAD:refs/heads/codex/safari-observatory
           fi
           mkdir -p evidence/safari
