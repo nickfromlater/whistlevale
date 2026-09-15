@@ -1,0 +1,138 @@
+diff --git a/src/rooms/safari.js b/src/rooms/safari.js
+--- a/src/rooms/safari.js
++++ b/src/rooms/safari.js
+@@ -37,7 +37,9 @@
+  const erosion=(.19*Math.sin(x*.9+Math.sin(z*.6))+.11*Math.sin(z*1.15+x*.22))*smooth(2.8,9,ridge);
+  let h=mix(SAFARI.bed,roll+ridge+erosion,smooth(-.20,5.3,bank));
+  // A high geological shelf carries the ridge station and its terrace.
+- h=mix(h,8.1,(1-smooth(6.5,10.5,Math.abs(x-16)))*(1-smooth(2.8,5.1,Math.abs(z+32))));
++ h=mix(h,8.1,(1-smooth(11,14,Math.abs(x-16)))*(1-smooth(3.9,6,Math.abs(z+32))));
++ // The stair landing occupies a small shoulder of that same geological shelf.
++ h=mix(h,8.1,(1-smooth(3.2,5,Math.abs(x-3.2)))*(1-smooth(1.5,3.2,Math.abs(z+31.15))));
+  // The approach remains a useful walking terrace rather than a hillside.
+  h=mix(h,1.15,(1-smooth(11,15,Math.abs(x+27)))*(1-smooth(2,4.5,Math.abs(z-35.5))));
+  const rail=safariRailNear(x,z);
+@@ -201,6 +203,7 @@
+  for(const side of[-1,1])b.beam([x-w/2,y+2.73,z+side*d/2],[x+w/2,y+2.73,z+side*d/2],.035,'#a18350',22,6);
+  b.beam([x-w/2,y+2.4,z+d*.34],[x+w/2,y+2.4,z+d*.34],.060,'#8b704a',22,6);
+ }
++function safariLandingHeight(x,z,halfWidth=.9){return Math.max(...[-halfWidth,0,halfWidth].map(dz=>safariSurface(x,z+dz)))+.05;}
+ function safariStation(b,{x,z,rail,name,flip=false}){
+  const side=flip?-1:1,y=rail+.64,cz=z+side*3.15,w=20,d=4.6;
+  for(const dx of[-8.8,-3,3,8.8])for(const dz of[-1.8,1.8]){
+@@ -212,7 +215,7 @@
+  for(let i=0;i<40;i++)b.box(x-w/2+.2+i*.50,y+.076,z+side*1.02,.20,.016,.06,'#b89953',41);
+  safariCanopy(b,x+.8,y,cz,16.7,4.5);
+  safariRailings(b,[[x-10,y,cz+side*2.22],[x+10,y,cz+side*2.22]]);
+- safariRailings(b,[[x-10,y,z+side*1.08],[x-10,y,cz+side*2.22]]);
++ const closedEnd=x+(flip?10:-10);safariRailings(b,[[closedEnd,y,z+side*1.08],[closedEnd,y,cz+side*2.22]]);
+  for(const xx of[x-5.2,x+2.8]){bench(b,xx,y+.075,cz+side*.5,flip?PI:0);houseLamp(b,xx,y+.07,cz+side*1.5,1.8);}
+  b.push(x,y+2.06,cz+side*1.67,0,flip?PI:0);b.box(0,0,0,7.9,.67,.12,SAFARI_PALETTE.jade,40);hudsonText(b,name,0,-.035,.071,7.4,SAFARI_PALETTE.ivory);b.pop();
+  // The information kiosk has a shallow pitched cap and recessed field map.
+@@ -220,15 +223,15 @@
+  for(let i=0;i<5;i++)b.beam([-.28,1.27-i*.1,.248],[.12+(i%2)*.17,1.27-i*.1,.248],.009,'#73856a',0,4);
+  b.box(0,1.53,0,1.04,.11,.54,'#9c8153',22);b.pop();
+  if(!flip){
+-  const x0=x+10,x1=x+18,zz=cz+.15,base=safariSurface(x1,zz),n=32,run=(x1-x0)/n;
++  const x0=x+10,x1=x+18,zz=cz+.15,base=safariLandingHeight(x1,zz,1.08),n=32,run=(x1-x0)/n;
+   for(let i=0;i<n;i++){const xx=x0+(i+.5)*run,yy=mix(y,base,(i+1)/n);b.box(xx,yy-.055,zz,run+.01,.11,1.85,'#c5ad7c',22);}
+   for(const s of[-1,1]){b.beam([x0,y-.20,zz+s*.70],[x1,base-.07,zz+s*.70],.11,'#796548',41,5);safariRailings(b,[[x0,y,zz+s*.88],[x1,base,zz+s*.88]],.73);}
+   b.box(x1,base-.05,zz,1.1,.14,2.15,'#bcac81',4);housePath(b,[[x1,zz],[x1-.9,36],[x1-5,38]],.95,safariSurface,'#d2be8b');
+  }else{
+-  const x0=x-10,x1=x-15.5,zz=cz,ground=safariSurface(x1,zz),n=24;
++  const x0=x-10,x1=x-15.5,zz=cz,ground=safariLandingHeight(x1,zz,.85),n=24;
+   for(let i=0;i<n;i++){const px=mix(x0,x1,(i+.5)/n),yy=mix(y,ground,(i+1)/n);b.box(px,yy-.065,zz,.24,.13,1.65,'#bca378',22);}
+   for(const side of[-1,1]){b.beam([x0,y-.20,zz+side*.62],[x1,ground-.08,zz+side*.62],.09,'#82734d',41,5);safariRailings(b,[[x0,y,zz+side*.80],[x1,ground,zz+side*.80]],.72);}
+-  housePath(b,[[x1,zz],[x1-1,-35],[x1+3,-37]],.7,safariSurface,'#c9b385');
++  housePath(b,[[x1,zz],[2,-34.1],[7,-35.2]],.7,safariSurface,'#c9b385');
+  }
+ }
+ function safariLookout(b){
+@@ -333,7 +336,7 @@
+   {name:'Rift Lookout',target:[15,12,-28],distance:40,phoneDistance:73,pitch:.42,yaw:-.38,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
+   {name:'The river ribbon',target:[0,-.3,3],distance:41,phoneDistance:76,pitch:.62,yaw:.58,detail:'Green water, pale banks, reeds and exposed geological layers. Every shoreline follows the actual terrain.'},
+   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
+-  {name:'A seat above the valley',target:[30,6,-8],distance:27,phoneDistance:47,pitch:.33,yaw:.63,detail:'A timber observation deck looks into the rift. Two little scopes and an orientation table reward a closer look.'}
++  {name:'A seat above the valley',target:[30,5.6,-8],distance:27,phoneDistance:47,pitch:.33,yaw:.63,detail:'A timber observation deck looks into the rift. Two little scopes and an orientation table reward a closer look.'}
+  ];
+ }
+ registerHouseRoom('safari',{
+diff --git a/src/trains/safari.js b/src/trains/safari.js
+--- a/src/trains/safari.js
++++ b/src/trains/safari.js
+@@ -16,8 +16,12 @@
+   for(const z of[-1.83,-.96,-.09,.78,1.63])b.beam([-.47,1.984,z],[.47,1.984,z],.012,trim,41,6);
+   for(const x of[-.55,.55])b.beam([x,1.94,-1.98],[x,1.94,cab?1.62:1.98],.018,cream,40,6);
+   if(cab){
+-   const p=(a,z,r)=>[Math.cos(a)*.68*r,1.79+Math.sin(a)*.255*r,z];
+-   for(let i=0;i<16;i++){const a=i*PI/16,q=(i+1)*PI/16;b.quad(p(a,1.75,1),p(a,2.20,.52),p(q,2.20,.52),p(q,1.75,1),cream,40);}
++   const p=(a,z,r,y)=>[Math.cos(a)*.68*r,y+Math.sin(a)*.255*r,z];
++   for(let i=0;i<16;i++){
++    const a=i*PI/16,q=(i+1)*PI/16;
++    b.quad(p(a,1.75,1,1.79),p(a,2.23,.46,1.49),p(q,2.23,.46,1.49),p(q,1.75,1,1.79),cream,40);
++    b.tri([0,1.49,2.23],p(q,2.23,.46,1.49),p(a,2.23,.46,1.49),cream,40);
++   }
+   }
+   return;
+  }
+@@ -110,7 +114,7 @@
+   if(!open&&!(i===0&&viewMode==='cab'&&p===mainProgram))draw(cab?stock.motorRoof:stock.trailerRoof,body,p);
+   for(const offset of[-SAFARI_STOCK.bogieSpread,SAFARI_STOCK.bogieSpread]){
+    const bogie=circuitMatrix(train.edge,d+offset);draw(stock.bogie,bogie,p);
+-   for(const zz of[-.24,.24])draw(stock.loadWheel,mm(bogie,mm(trans(0,.14,zz),rx(travel/SAFARI_STOCK.loadRadius))),p);
++   for(const zz of[-.24,.24])draw(stock.loadWheel,mm(bogie,mm(trans(0,.14,zz),rx(-travel/SAFARI_STOCK.loadRadius))),p);
+    for(const side of[-1,1])for(const zz of[-.27,.27])draw(stock.guideWheel,mm(bogie,mm(trans(side*.406,-.27,zz),ry(side*travel/SAFARI_STOCK.guideRadius))),p);
+   }
+  }
+diff --git a/scripts/safari-qa.mjs b/scripts/safari-qa.mjs
+--- a/scripts/safari-qa.mjs
++++ b/scripts/safari-qa.mjs
+@@ -15,7 +15,8 @@
+  assert.equal(collectionTrainLabel('safari').name,'Solstice');assert.equal(collectionPower('safari'),'electric');
+  assert.throws(()=>chooseCollectionTrain('safari',{id:'tern',livery:0,cars:2}),/unavailable/);
+  selectedCollection.safari={id:'tern',livery:0,cars:2};applyCollectionToScene(scene);
+- assert.equal(scene.trains[0].stock,'safari','persisted ordinary stock cannot enter the monorail');delete selectedCollection.safari;
++ assert.equal(scene.trains[0].stock,'safari','persisted ordinary stock cannot enter the monorail');
++ assert.equal(collectionPower('safari'),'electric','incompatible saved stock cannot change the monorail audio identity');delete selectedCollection.safari;
+  const edge=SAFARI_ROUTE,a=edge.at(0),q=edge.at(edge.length);
+  assert.ok(len(sub(a.p,q.p))<1e-8,'closed rail position');assert.ok(dot(a.f,q.f)>.9999,'closed rail tangent');
+  let grade=0,clearance=Infinity;
+@@ -24,6 +25,18 @@
+   assert.ok(Math.abs(p.p[0])<53&&Math.abs(p.p[2])<35,'route stays on the board');
+  }
+  assert.ok(grade<.11,'maximum grade is bounded: '+grade);assert.ok(clearance>.20,'finished terrain clears beam and car envelope: '+clearance);
++ // Platforms and their complete stair widths stay above finished terrain.
++ const stationClearances={};
++ for(const [name,x0,x1,z0,z1,y]of[['gate',-38,-18,28.85,33.45,7.44],['ridge',6,26,-33.45,-28.85,11.84]]){
++  let min=Infinity;for(let x=x0;x<=x1;x+=.23)for(let z=z0;z<=z1;z+=.23)min=Math.min(min,y-safariSurface(x,z));
++  assert.ok(min>.40,name+' platform clears terrain: '+min);stationClearances[name]=min;
++ }
++ for(const [name,x0,x1,z,top,n,half]of[['gate',-18,-10,31.3,7.44,32,1.08],['ridge',6,.5,-31.15,11.84,24,.85]]){
++  const bottom=safariLandingHeight(x1,z,half);assert.ok((top-bottom)/Math.abs(x1-x0)<.85,name+' stair gradient');
++  for(let i=0;i<n;i++){const x=mix(x0,x1,(i+.5)/n),y=mix(top,bottom,(i+1)/n);for(const side of[-half,0,half])assert.ok(y-safariSurface(x,z+side)>0,name+' tread is not buried');}
++ }
++ // A forward rolling load tyre moves backward at its contact patch.
++ const r=SAFARI_STOCK.loadRadius,p0=[0,-r,0],p1=transform(p0,rx(.001/r));assert.ok(p1[2]<p0[2],'correct load tyre rolling direction');
+  // Check the exact emitted terrain triangle interpolation at both halves.
+  const g=SAFARI_GRID;
+  for(let i=0;i<110;i++){const ix=i*31%g.nx,iz=i*19%g.nz,x=-56+ix*g.dx,z=-40+iz*g.dz;
+@@ -44,7 +57,7 @@
+  assert.ok(Math.abs(.406-SAFARI_STOCK.guideRadius-(SAFARI.beamWidth/2+.006))<1e-10,'guide tyres meet the side strips');
+  const disposed=[],oldDispose=disposeMesh;disposeMesh=mesh=>disposed.push(mesh);try{buildCollectionStock();}finally{disposeMesh=oldDispose;}
+  for(const mesh of Object.values(stock))assert.ok(disposed.includes(mesh),'rebuild releases every monorail mesh');
+- return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),stockVertices:vertices,trees:SAFARI_TREES.length,treeVertices,routeLength:edge.length,maxGrade:grade,minimumTerrainClearance:clearance,minimumTreeClearance:treeClearance};
++ return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),stockVertices:vertices,trees:SAFARI_TREES.length,treeVertices,routeLength:edge.length,stationClearances,maxGrade:grade,minimumTerrainClearance:clearance,minimumTreeClearance:treeClearance};
+ })()`);
+ state.run(await read('src/shop-house.js'));
+ state.run(`assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.row,3);assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.column,0);assert.ok(!SHOP_HOUSE_LAYOUT.plots.some(p=>p.id==='west-4'));`);
+diff --git a/src/trains.js b/src/trains.js
+--- a/src/trains.js
++++ b/src/trains.js
+@@ -394,6 +394,7 @@
+ function collectionTrainLabel(room){if(HOUSE_ROOMS[room]?.trainCollection===false)return {...HOUSE_ROOMS[room].train};const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
+ function collectionPower(room){
+  if(HOUSE_ROOMS[room]?.railway===false)return null;
++ if(HOUSE_ROOMS[room]?.trainCollection===false)return HOUSE_ROOMS[room].train?.power||null;
+  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
+  return room==='valley'||roomScenes.get(room)?.trains[0]?.type==='steam'?'steam':'electric';
+ }
