@@ -1,0 +1,77 @@
+--- a/src/rooms/safari-lodge.js
++++ b/src/rooms/safari-lodge.js
+@@ -50,26 +50,36 @@
+   }
+   // Thick thatched eaves and exposed rafters make the roof bear on the frame.
+   for(let i=0;i<columns;i++)b.quad(point(i/columns,0),point((i+1)/columns,0),point((i+1)/columns,0,-.22),point(i/columns,0,-.22),'#6e5333',23);
+-  for(let i=0;i<=Math.ceil(columns/5);i++){
+-   const u=i/Math.ceil(columns/5);b.beam(point(u,0,-.23),point(u,1,-.22),.065,KOPJE.timber,22,6);
++  for(let i=0;i<=Math.ceil(columns/10);i++){
++   const u=i/Math.ceil(columns/10);for(let j=0;j<2;j++)b.beam(point(u,j/2,-.25),point(u,(j+1)/2,-.25),.055,KOPJE.timber,22,6);
+   }
+  }
+  b.beam([x-ridge-.05,y+rise+.045,z],[x+ridge+.05,y+rise+.045,z],.145,'#6f5231',23,10);
+  for(let xx=x-ridge;xx<=x+ridge;xx+=.29)b.beam([xx,y+rise+.085,z-.13],[xx+.065,y+rise+.16,z+.13],.018,'#bfa16b',22,4);
+ }
+-function kopjeFrame(b,x,z,w,d,h=3.8,rise=2.4){
+- const y=SAFARI_LODGE.floor;
++// The frame meets the underside of the actual hipped roof. End frames are
++// lower than the ridge, so no king post or rafter pierces the thatch hips.
++function kopjeRoofUnderside(dx,dz,h,rise,rw,rd){
++ const v=clamp(Math.min(1-Math.abs(dz)/(rd/2),(rw/2-Math.abs(dx))/(rw*.25)));
++ return SAFARI_LODGE.floor+h-.09+rise*v-.32*Math.sin(v*PI);
++}
++function kopjeFrame(b,x,z,w,d,h=3.8,rise=2.4,rw=w*1.3,rd=d*1.32){
++ const y=SAFARI_LODGE.floor,top=(xx,zz)=>kopjeRoofUnderside(xx-x,zz-z,h,rise,rw,rd);
+  for(const xx of[x-w/2,x,x+w/2])for(const zz of[z-d/2,z+d/2]){
+-  b.box(xx,y+.09,zz,.44,.19,.44,'#b6a282',4);b.cylinder(xx,y+h/2,zz,.13,.09,h,KOPJE.timber,22,8);
+-  for(const side of[-1,1])b.beam([xx,y+h-.95,zz],[xx+side*.71,y+h-.10,zz],.06,KOPJE.teak,22,5);
++  const hh=top(xx,zz)-y;
++  b.box(xx,y+.09,zz,.44,.19,.44,'#b6a282',4);b.cylinder(xx,y+hh/2,zz,.13,.09,hh,KOPJE.timber,22,8);
++  for(const side of[-1,1])b.beam([xx,y+hh-.95,zz],[xx+side*.71,y+hh-.10,zz],.06,KOPJE.teak,22,5);
+   b.cylinder(xx,y+.28,zz,.144,.144,.11,KOPJE.bronze,41,8);
+  }
+- for(const zz of[z-d/2,z+d/2])b.box(x,y+h,zz,w+.22,.22,.22,KOPJE.timber,22);
+- for(const xx of[x-w/2,x+w/2])b.box(xx,y+h,z,.22,.22,d+.22,KOPJE.timber,22);
++ for(const zz of[z-d/2,z+d/2])b.box(x,top(x,zz)-.10,zz,w+.22,.22,.22,KOPJE.timber,22);
+  for(const xx of[x-w/2,x,x+w/2]){
+-  b.beam([xx,y+h,z-d/2],[xx,y+h+rise,z],.11,KOPJE.timber,22,6);
+-  b.beam([xx,y+h,z+d/2],[xx,y+h+rise,z],.11,KOPJE.timber,22,6);
+-  b.beam([xx,y+h+.07,z-d/2],[xx,y+h+.07,z+d/2],.065,KOPJE.teak,22,5);
++  const tie=top(xx,z-d/2)-.13;
++  b.beam([xx,tie,z-d/2],[xx,tie,z+d/2],.065,KOPJE.teak,22,5);
++  b.beam([xx,tie,z],[xx,top(xx,z)-.06,z],.055,KOPJE.timber,22,5);
++  for(const side of[-1,1])for(let i=0;i<3;i++){
++   const za=z+side*d/2*(1-i/3),zb=z+side*d/2*(1-(i+1)/3);
++   b.beam([xx,top(xx,za)-.05,za],[xx,top(xx,zb)-.05,zb],.075,KOPJE.timber,22,6);
++  }
+  }
+ }
+ function kopjeLantern(b,x,y,z,scale=1){
+@@ -148,7 +158,7 @@
+ }
+ function kopjeMainHall(b){
+  const y=SAFARI_LODGE.floor;
+- kopjeFrame(b,24,-.9,12.2,7.6,4.0,3.36);kopjeRoof(b,24,y+4.13,-.9,15.9,10.0,3.45,10);
++ kopjeFrame(b,24,-.9,12.2,7.6,4.0,3.45,15.9,10);kopjeRoof(b,24,y+4.13,-.9,15.9,10.0,3.45,10);
+  // The tall open gable is cross-braced; the rear is sheltered by clear glazing.
+  for(const x of[19.8,22.5,25.2,27.9])kopjeGlass(b,x,y+1.85,-4.67,2.52,3.54);
+  for(const x of[17.85,30.15])kopjeGlass(b,x,y+1.70,-2.8,3.5,3.20,PI/2);
+@@ -190,7 +200,7 @@
+ function kopjeWings(b){
+  const y=SAFARI_LODGE.floor;
+  // Dining pavilion: woven screens, a long table and a tiny coffee bar.
+- kopjeFrame(b,13.35,-.55,7.2,6.1,3.25,2.43);kopjeRoof(b,13.35,y+3.4,-.55,9.3,8.4,2.50,35);
++ kopjeFrame(b,13.35,-.55,7.2,6.1,3.25,2.50,9.3,8.4);kopjeRoof(b,13.35,y+3.4,-.55,9.3,8.4,2.50,35);
+  kopjeScreen(b,9.74,y,-.60,5.5,2.65,PI/2);kopjeScreen(b,13.35,y,-3.59,7.1,2.65);
+  b.box(13.1,y+.86,-.05,4.55,.12,1.45,'#b49660',22);
+  for(const x of[11.4,14.8]){b.box(x,y+.44,-.05,.18,.85,1.01,KOPJE.timber,22);b.beam([x-.4,y+.25,-.05],[x+.4,y+.70,-.05],.07,KOPJE.endgrain,22,5);}
+@@ -203,7 +213,7 @@
+  b.box(15.90,y+1.45,-2.90,.62,.55,.50,'#adb9a0',41);b.box(15.9,y+1.44,-2.625,.48,.22,.04,KOPJE.dark,42);
+  for(const dx of[-.16,.16])b.cylinder(15.9+dx,y+1.22,-2.56,.061,.064,.12,'#e5d6b3',24,9);
+  // Two shaded suites share a thatched wing, with visible beds and verandas.
+- kopjeFrame(b,35.2,-1.5,6.8,7.2,3.05,2.35);kopjeRoof(b,35.2,y+3.2,-1.5,8.65,9.3,2.42,50);
++ kopjeFrame(b,35.2,-1.5,6.8,7.2,3.05,2.42,8.65,9.3);kopjeRoof(b,35.2,y+3.2,-1.5,8.65,9.3,2.42,50);
+  kopjeScreen(b,38.61,y,-1.5,7.1,2.7,PI/2);kopjeScreen(b,35.2,y,-5.11,6.7,2.8);
+  b.box(35.2,y+1.38,-1.5,.14,2.76,7.08,'#afa786',23);
+  for(const side of[-1,1]){
