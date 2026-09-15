@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import {communityContext,loadCommunity,loadContributionDefinitions,prepareCommunityGeometry,read} from './community-lib.mjs';
 const state=await communityContext();state.context.assert=assert;
 await loadContributionDefinitions(state,await loadCommunity());prepareCommunityGeometry(state);
-const report=state.run(`(()=>{
+// Independent checks keep the existing bounded VM timeout. Do not make one
+// large scene build plus all clearance proofs share a single execution window.
+const sceneReport=state.run(`(()=>{
  const startSeed=seed,scene=getHouseScene('safari');
  assert.equal(seed,startSeed,'room build preserves the shared random stream');
  assert.equal(getHouseScene('safari'),scene,'room geometry is cached');
@@ -17,6 +19,9 @@ const report=state.run(`(()=>{
  selectedCollection.safari={id:'tern',livery:0,cars:2};applyCollectionToScene(scene);
  assert.equal(scene.trains[0].stock,'safari','persisted ordinary stock cannot enter the monorail');
  assert.equal(collectionPower('safari'),'electric','incompatible saved stock cannot change the monorail audio identity');delete selectedCollection.safari;
+ return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),trees:SAFARI_TREES.length};
+})()`);
+const terrainReport=state.run(`(()=>{
  const edge=SAFARI_ROUTE,a=edge.at(0),q=edge.at(edge.length);
  assert.ok(len(sub(a.p,q.p))<1e-8,'closed rail position');assert.ok(dot(a.f,q.f)>.9999,'closed rail tangent');
  let grade=0,clearance=Infinity;
@@ -49,11 +54,19 @@ const report=state.run(`(()=>{
   const [x,z]=SAFARI_SPRING[i];assert.ok(safariRailNear(x,z).distance>3,'spring stays clear of the monorail');
   if(i){const [px,pz]=SAFARI_SPRING[i-1];assert.ok(safariSurface(x,z)<=safariSurface(px,pz)+.06,'spring runs downhill');}
  }
- let treeClearance=Infinity,treeVertices=0;
- for(const t of SAFARI_TREES){const b=new Builder();safariAcacia(b,t.x,t.z,t.h,t.variant);treeVertices+=b.data.length/12;
-  for(let i=0;i<b.data.length;i+=12){const x=b.data[i],z=b.data[i+2];assert.ok(Math.abs(x)<56&&Math.abs(z)<40,'acacia stays on the board');treeClearance=Math.min(treeClearance,safariRailNear(x,z).distance);}
- }
- assert.ok(treeClearance>1,'finished crowns and roots clear the railway: '+treeClearance);
+ return {routeLength:edge.length,stationClearances,maxGrade:grade,minimumTerrainClearance:clearance};
+})()`);
+let treeClearance=Infinity,treeVertices=0;
+for(let index=0;index<sceneReport.trees;index++){
+ const tree=state.run(`(()=>{
+  const t=SAFARI_TREES[${index}],b=new Builder();safariAcacia(b,t.x,t.z,t.h,t.variant);let clearance=Infinity;
+  for(let i=0;i<b.data.length;i+=12){const x=b.data[i],z=b.data[i+2];assert.ok(Math.abs(x)<56&&Math.abs(z)<40,'acacia stays on the board');clearance=Math.min(clearance,safariRailNear(x,z).distance);}
+  return {vertices:b.data.length/12,clearance};
+ })()`);
+ treeClearance=Math.min(treeClearance,tree.clearance);treeVertices+=tree.vertices;
+}
+assert.ok(treeClearance>1,'finished crowns and roots clear the railway: '+treeClearance);
+const stockReport=state.run(`(()=>{
  const builds=[];for(let i=0;i<2;i++){const b=new Builder();safariCarHull(b,false,true);builds.push(b.data);}
  assert.deepEqual(builds[0],builds[1],'deterministic vehicle geometry');
  buildCollectionStock();const stock=collectionStock.get('safari');assert.equal(Object.keys(stock).length,7);
@@ -62,8 +75,9 @@ const report=state.run(`(()=>{
  assert.ok(Math.abs(.406-SAFARI_STOCK.guideRadius-(SAFARI.beamWidth/2+.006))<1e-10,'guide tyres meet the side strips');
  const disposed=[],oldDispose=disposeMesh;disposeMesh=mesh=>disposed.push(mesh);try{buildCollectionStock();}finally{disposeMesh=oldDispose;}
  for(const mesh of Object.values(stock))assert.ok(disposed.includes(mesh),'rebuild releases every monorail mesh');
- return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),stockVertices:vertices,trees:SAFARI_TREES.length,treeVertices,routeLength:edge.length,stationClearances,maxGrade:grade,minimumTerrainClearance:clearance,minimumTreeClearance:treeClearance};
+ return {stockVertices:vertices};
 })()`);
+const report={...sceneReport,...terrainReport,...stockReport,treeVertices,minimumTreeClearance:treeClearance};
 state.run(await read('src/shop-house.js'));
 state.run(`assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.row,3);assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.column,0);assert.ok(!SHOP_HOUSE_LAYOUT.plots.some(p=>p.id==='west-4'));`);
 assert.match(await read('src/train-cabinet.css'),/\.train-collection-link\[hidden\]\{display:none!important\}/);

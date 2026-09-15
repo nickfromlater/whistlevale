@@ -59,8 +59,13 @@ try{
   await page.evaluate(()=>{openQuietPanel('trainPanel',document.getElementById('trainBtn'));});await snap(`17-phone-${width}-controls`,{ui:true});
   assert.equal(await page.locator('#trainCollectionButton').isVisible(),false,'cabinet choices hidden for the incompatible beamway');
   assert.ok((await page.locator('.engine-title').innerText()).includes('Solstice'));await page.evaluate(()=>closeQuietControls());
-  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'no horizontal phone overflow');
-  report.checks.push({width,horizontalOverflow:overflow});
+  const layout=await page.evaluate(()=>({
+   viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
+   overflow:[...document.querySelectorAll('body *')].map(el=>{const r=el.getBoundingClientRect(),style=getComputedStyle(el);return{id:el.id,tag:el.tagName,className:el.className?.baseVal??el.className,left:r.left,right:r.right,width:r.width,visibility:style.visibility,display:style.display,opacity:style.opacity,position:style.position,text:(el.innerText||'').slice(0,100)};}).filter(r=>r.width>0&&(r.left<-.5||r.right>innerWidth+.5))
+  }));
+  report.checks.push({width,horizontalOverflow:layout.documentWidth>width,layout});
+  console.log('Phone layout:',JSON.stringify({width,...layout}));
+  await writeFile(`${output}/browser-review.json`,JSON.stringify(report,null,2));
  }
  await page.setViewportSize({width:1280,height:900});await page.evaluate(()=>{setMood('day',{immediate:true,persist:false});});
  await page.evaluate(()=>openHouseMap());await page.waitForFunction(()=>shopMap.open&&!shopMap.loading,{},{timeout:120000});
@@ -82,6 +87,7 @@ try{
  await exported.waitForFunction(()=>window.HOBBY_HOUSE?.state.ready&&!hobby.transition,{},{timeout:120000});
  await exported.evaluate(()=>{activateHouseRoom('safari');paused=true;setMood('day',{immediate:true,persist:false});});
  await snap('20-exported-safari',{target:exported,ui:true});report.checks.push({exportPlayback:true});
- assert.deepEqual(errors,[],'no uncaught native application errors');assert.deepEqual(report.uiCaptureErrors,[],'browser UI captures complete');report.complete=true;
+ assert.deepEqual(errors,[],'no uncaught native application errors');assert.deepEqual(report.uiCaptureErrors,[],'browser UI captures complete');
+ assert.ok(report.checks.filter(check=>check.width).every(check=>!check.horizontalOverflow),'no horizontal phone overflow');report.complete=true;
 }catch(error){report.complete=false;report.failure=String(error.stack||error);throw error;}
 finally{await writeFile(`${output}/browser-review.json`,JSON.stringify(report,null,2));await browser.close();}
