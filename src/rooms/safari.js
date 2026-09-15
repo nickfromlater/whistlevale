@@ -4,6 +4,10 @@
 // nickfromlater, with agent assistance. Proposal #39; no animal geometry.
 // Everything is native, deterministic, and baked outside the frame loop.
 const SAFARI={width:112,depth:80,step:.7,water:-2.05,bed:-3.75,beamWidth:.56,beamDepth:.72};
+const SAFARI_LODGE={x:24,z:1,floor:4.45,bounds:[7.5,-8.5,40.5,20.5]};
+const SAFARI_WALKS=[[[-28,35],[-36,24],[-37,16],[-32,8],[-29,0],[-20,1],[-14,10],[-11,17],[-6,20]],[[-10,31.3],[-12,26],[-10,23],[-6,20]]];
+function safariLodgeClear(x,z,r=0){const a=SAFARI_LODGE.bounds;return x+r<a[0]||x-r>a[2]||z+r<a[1]||z-r>a[3];}
+function safariWalkDistance(x,z){let distance=Infinity;for(const walk of SAFARI_WALKS)for(let i=1;i<walk.length;i++){const a=walk[i-1],q=walk[i],dx=q[0]-a[0],dz=q[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz));distance=Math.min(distance,Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t));}return distance;}
 const SAFARI_PALETTE={ivory:'#ead7aa',sand:'#cfb277',grass:'#b4ac61',ochre:'#b77847',rock:'#a96942',shadow:'#73533c',jade:'#345e50',leaf:'#6f8149',brass:'#be9655',wood:'#785637',dark:'#293e35'};
 const SAFARI_ROUTE=(()=>{
  const p=(x,y,z)=>[x,y,z],line=(a,b)=>[a,lerpV(a,b,1/3),lerpV(a,b,2/3),b];
@@ -30,17 +34,24 @@ function safariRailNear(x,z){
 function safariRiverX(z){return -2.6+5.6*Math.sin(z*.078)+2.1*Math.sin(z*.17+.4);}
 function safariRiverWidth(z){return 2.25+1.1*Math.exp(-(((z-7)/10)**2))+.28*Math.sin(z*.23);}
 function safariBank(x,z){return Math.abs(x-safariRiverX(z))-safariRiverWidth(z);}
+// Broad river terraces and broken, stepped escarpments replace the original
+// radial mounds. The same authored relief drives the model and every placement.
 function safariRawHeight(x,z){
- const bank=safariBank(x,z),roll=.85+.43*Math.sin(x*.095+z*.041)+.25*Math.cos(z*.13-x*.026);
- const mesa=(cx,cz,rx,rz,h)=>{const r=Math.hypot((x-cx)/rx,(z-cz)/rz);return h*(1-smooth(.56,1.16,r))*(.96+.04*Math.sin(x*.65+z*.21));};
- const ridge=mesa(17,-24,22,15,14.8)+mesa(-35,-24,13,13,9.6)+mesa(36,5,11,15,4.4);
- const erosion=(.19*Math.sin(x*.9+Math.sin(z*.6))+.11*Math.sin(z*1.15+x*.22))*smooth(2.8,9,ridge);
- let h=mix(SAFARI.bed,roll+ridge+erosion,smooth(-.20,5.3,bank));
- // A high geological shelf carries the ridge station and its terrace.
+ const bank=safariBank(x,z),roll=.68+.66*Math.sin(x*.079+z*.031)+.34*Math.cos(z*.145-x*.038)+.12*Math.sin(x*.37+z*.23);
+ const mesa=(cx,cz,rx,rz,h)=>{
+  const xx=(x-cx)/rx,zz=(z-cz)/rz,angle=Math.atan2(zz,xx);
+  const r=Math.pow(Math.abs(xx)**3+Math.abs(zz)**3,1/3)+.046*Math.sin(angle*5+1.4)+.026*Math.sin(angle*11)+.018*Math.sin(x*.92+z*.31);
+  return h*(.16*(1-smooth(.93,1.25,r))+.27*(1-smooth(.65,.92,r))+.32*(1-smooth(.39,.65,r))+.25*(1-smooth(.19,.39,r)));
+ };
+ const ridge=mesa(21,-21.5,18.5,13.6,19.0)+mesa(-35,-24.5,13.4,11.2,12.4);
+ const shoulder=1.7*Math.exp(-((x+30)**2/290+(z-12)**2/54))+1.15*Math.exp(-((x-38)**2/140+(z-23)**2/42));
+ // A sheltered sandy shelf meets the river before the higher rocky escarpment.
+ let h=mix(SAFARI.bed,roll+ridge+shoulder,smooth(-.22,5.7,bank));
+ const lodgePad=(1-smooth(17.2,20.5,Math.abs(x-24)))*(1-smooth(12.2,15.5,Math.abs(z-3)))*smooth(1.8,4.3,bank);
+ h=mix(h,2.05+.80*(1-smooth(-8,17,z)),lodgePad);
+ // Existing station terraces are retained, with a genuine high-level landing.
  h=mix(h,8.1,(1-smooth(11,14,Math.abs(x-16)))*(1-smooth(3.9,6,Math.abs(z+32))));
- // The stair landing occupies a small shoulder of that same geological shelf.
  h=mix(h,8.1,(1-smooth(3.2,5,Math.abs(x-3.2)))*(1-smooth(1.5,3.2,Math.abs(z+31.15))));
- // The approach remains a useful walking terrace rather than a hillside.
  h=mix(h,1.15,(1-smooth(11,15,Math.abs(x+27)))*(1-smooth(2,4.5,Math.abs(z-35.5))));
  const rail=safariRailNear(x,z);
  if(rail.point&&rail.distance<3.2)h=mix(h,Math.min(h,rail.point[1]-1.18),1-smooth(1.05,3.2,rail.distance));
@@ -49,20 +60,27 @@ function safariRawHeight(x,z){
 // Exact interpolation of the two emitted triangles, not a second analytic hill.
 const SAFARI_GRID={nx:Math.ceil(SAFARI.width/SAFARI.step),nz:Math.ceil(SAFARI.depth/SAFARI.step)};
 SAFARI_GRID.dx=SAFARI.width/SAFARI_GRID.nx;SAFARI_GRID.dz=SAFARI.depth/SAFARI_GRID.nz;
+// Lazy double-precision samples are shared by grounded details, not GPU meshes.
+const SAFARI_HEIGHT_CACHE=new Map();
+function safariGridHeight(ix,iz){const key=iz*(SAFARI_GRID.nx+1)+ix;if(!SAFARI_HEIGHT_CACHE.has(key))SAFARI_HEIGHT_CACHE.set(key,safariRawHeight(-56+ix*SAFARI_GRID.dx,-40+iz*SAFARI_GRID.dz));return SAFARI_HEIGHT_CACHE.get(key);}
 function safariSurface(x,z){
  const g=SAFARI_GRID,ix=clamp(Math.floor((x+56)/g.dx),0,g.nx-1),iz=clamp(Math.floor((z+40)/g.dz),0,g.nz-1),x0=-56+ix*g.dx,z0=-40+iz*g.dz;
- const u=clamp((x-x0)/g.dx),v=clamp((z-z0)/g.dz),a=safariRawHeight(x0,z0),r=safariRawHeight(x0+g.dx,z0),f=safariRawHeight(x0,z0+g.dz),q=safariRawHeight(x0+g.dx,z0+g.dz);
+ const u=clamp((x-x0)/g.dx),v=clamp((z-z0)/g.dz),a=safariGridHeight(ix,iz),r=safariGridHeight(ix+1,iz),f=safariGridHeight(ix,iz+1),q=safariGridHeight(ix+1,iz+1);
  return u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);
 }
 function safariGroundColor(x,y,z,n){
- const bank=safariBank(x,z),mottle=.47+.22*Math.sin(x*.21+z*.11)*Math.cos(z*.20)+.14*noise(x*.30,z*.30);
- let c=lerpV(col('#8f995d'),col('#c9ad73'),mottle);
- c=lerpV(c,col('#879553'),(1-smooth(1.5,8,bank))*.72);
- const strata=.5+.5*Math.sin(y*3.2+.28*Math.sin(x*.4)+.25*Math.sin(z*.6));
- const rock=lerpV(col('#946443'),col('#d5a878'),strata*.74);
- c=lerpV(c,rock,smooth(.12,.47,1-n[1]));
- if(y>10)c=lerpV(c,col('#d6b988'),smooth(10,17,y)*.28);
- return y<SAFARI.water+.38?lerpV(col('#57756a'),col('#9b9771'),smooth(SAFARI.bed,SAFARI.water+.38,y)):c;
+ const bank=safariBank(x,z),patch=.5+.25*Math.sin(x*.115+Math.sin(z*.13)*2.1)+.18*Math.cos(z*.18+x*.034);
+ let c=lerpV(col('#717347'),col('#aa955b'),clamp(patch));
+ const earth=smooth(.43,.82,.5+.5*Math.sin(x*.082-z*.12+Math.sin(x*.17)));
+ c=lerpV(c,col('#b38c61'),earth*.52);
+ c=lerpV(c,col('#546c43'),(1-smooth(2.4,8.5,bank))*.75);
+ // Broad sediment beds and narrow mineral seams are confined to the rock.
+ const layer=.5+.5*Math.sin(y*2.35+.19*Math.sin(x*.4)+.2*Math.sin(z*.36));
+ let rock=lerpV(col('#765840'),col('#b69266'),smooth(.16,.88,layer));
+ rock=lerpV(rock,col('#d2b38b'),smooth(.93,.995,layer)*.3);
+ c=lerpV(c,rock,smooth(.10,.35,1-n[1]));
+ c=lerpV(c,col('#9f875b'),smooth(12,20,y)*.22);
+ return y<SAFARI.water+.45?lerpV(col('#49685b'),col('#a8976b'),smooth(SAFARI.bed,SAFARI.water+.45,y)):c;
 }
 function safariTerrain(b){
  const g=SAFARI_GRID,vertices=[],normals=[],colors=[];
@@ -100,18 +118,43 @@ function safariRock(b,x,z,r=1,variant=0){
  }
  for(let i=0;i<n;i++)b.tri([x,y-.12+r*.74,z],point(i,4),point(i+1,4),'#d0b480',3);
 }
+// Tapered, crooked branches have a real fork structure. Flat, torn-edged
+// leaf crowns leave air between branch tips instead of stacking green spheres.
+function safariBranch(b,a,q,r0,r1,color='#594a32',segments=7){
+ const f=norm(sub(q,a)),right=norm(cross(Math.abs(f[1])>.93?[1,0,0]:[0,1,0],f)),up=norm(cross(f,right));
+ const ring=(p,r,i)=>add(p,add(mul(right,Math.cos(i*TAU/segments)*r),mul(up,Math.sin(i*TAU/segments)*r)));
+ for(let i=0;i<segments;i++)b.quad(ring(a,r0,i),ring(a,r0,i+1),ring(q,r1,i+1),ring(q,r1,i),shade(color,.82+.20*Math.sin(i+1)**2),22);
+}
+function safariCrown(b,x,y,z,r,variant){
+ const n=10,point=(i,level)=>{
+  const a=i*TAU/n,sc=(.82+hash(i%n,variant)*.25)*(level===0?.35:level===1?1:.72),h=level===0?-.13:level===1?0:.19;
+  return[x+Math.cos(a)*r*sc,y+r*(h+hash(i%n,variant+70)*.085),z+Math.sin(a)*r*sc*.78];
+ };
+ for(let i=0;i<n;i++){
+  b.quad(point(i,0),point(i+1,0),point(i+1,1),point(i,1),'#304e34',8);
+  b.quad(point(i,1),point(i+1,1),point(i+1,2),point(i,2),['#4c632f','#61743a','#778548'][i%3],8);
+  b.tri(point(i,2),point(i+1,2),[x,y+r*.27,z],i%3?'#657b3e':'#89934f',8);
+  // Leaflets escape the crown edge and break up its silhouette at close range.
+  const p=point(i,1),a=i*TAU/n,tip=add(p,[Math.cos(a)*r*.19,r*.08,Math.sin(a)*r*.19]);
+  for(let j=0;j<3;j++){
+   const c=lerpV(p,tip,(j+1)/3),dx=Math.cos(a+PI/2)*r*.11,dz=Math.sin(a+PI/2)*r*.11;
+   b.tri([c[0]-dx,c[1],c[2]-dz],add(c,[Math.cos(a)*r*.08,r*.06,Math.sin(a)*r*.08]),[c[0]+dx,c[1],c[2]+dz],j%2?'#788b45':'#5b7338',8);
+  }
+ }
+}
 function safariAcacia(b,x,z,h=5.8,variant=0){
- const y=safariSurface(x,z),a=hash(variant,17)*TAU,lean=[Math.cos(a)*h*.075,Math.sin(a)*h*.075],bark='#725637';
- b.push(x,y,z);b.beam([0,-.08,0],[lean[0],h*.37,lean[1]],h*.040,bark,22,7);
- for(let i=0;i<3;i++){const t=a+i*TAU/3,dx=Math.cos(t)*h*.17,dz=Math.sin(t)*h*.17;b.beam([0,.12,0],[dx,safariSurface(x+dx,z+dz)-y+.018,dz],h*.021,bark,22,5);}
+ const y=safariSurface(x,z),a=hash(variant,17)*TAU,bark='#625037',lean=[Math.cos(a)*h*.07,Math.sin(a)*h*.07];
+ b.push(x,y,z);
+ const trunk=[[0,-.05,0],[-lean[0]*.4,h*.16,lean[1]*.6],[lean[0]*.6,h*.36,lean[1]],[lean[0],h*.49,lean[1]*.65]];
+ for(let i=1;i<trunk.length;i++)safariBranch(b,trunk[i-1],trunk[i],h*(.047-i*.007),h*(.04-i*.007),bark,8);
+ for(let i=0;i<5;i++){const t=a+i*TAU/5,dx=Math.cos(t)*h*.16,dz=Math.sin(t)*h*.16;safariBranch(b,[0,.12,0],[dx,safariSurface(x+dx,z+dz)-y+.022,dz],h*.023,h*.003,bark,5);}
  for(let i=0;i<5;i++){
-  const angle=a+i*2.399,r=h*(i?(.24+hash(i,variant)*.13):.06),xx=lean[0]+Math.cos(angle)*r,zz=lean[1]+Math.sin(angle)*r,yy=h*(.74+hash(i,variant+51)*.17);
-  const fork=[lean[0]+Math.cos(angle)*r*.43,h*.60,lean[1]+Math.sin(angle)*r*.43];
-  b.beam([lean[0],h*.30,lean[1]],fork,h*.026,bark,22,6);b.beam(fork,[xx,yy,zz],h*.018,bark,22,5);
-  for(let k=0;k<3;k++){
-   const az=angle+k*2.08,dx=Math.cos(az)*h*.115,dz=Math.sin(az)*h*.115;b.beam([xx,yy-.1,zz],[xx+dx,yy+.07,zz+dz],h*.009,bark,22,4);
-   b.sphere(xx+dx,yy+h*.025,zz+dz,h*(.22+hash(k+i,variant)*.07),h*.080,h*.235,['#426238','#5d753d','#7a8946'][(i+k)%3],8,9,4,true);
-   b.sphere(xx+dx*.8,yy+h*.076,zz+dz*.8,h*.19,h*.040,h*.16,'#87924a',8,7,3,true);
+  const angle=a+i*2.399,r=h*(i?(.25+hash(i,variant)*.15):.07),xx=lean[0]+Math.cos(angle)*r,zz=lean[1]+Math.sin(angle)*r,yy=h*(.78+hash(i,variant+51)*.12),fork=[lean[0]+Math.cos(angle)*r*.48,h*.64,lean[1]+Math.sin(angle)*r*.48];
+  safariBranch(b,trunk[2],fork,h*.024,h*.014,bark,6);safariBranch(b,fork,[xx,yy,zz],h*.014,h*.005,bark,5);
+  for(let k=0;k<2;k++){
+   const az=angle+k*2.64,dx=Math.cos(az)*h*.10,dz=Math.sin(az)*h*.10,cy=yy+(k?.03:-.02)*h;
+   safariBranch(b,[xx,yy-h*.08,zz],[xx+dx,cy,zz+dz],h*.007,h*.002,bark,4);
+   safariCrown(b,xx+dx,cy,zz+dz,h*(.18+hash(i,k+variant)*.055),variant*19+i*3+k);
   }
  }
  b.pop();
@@ -120,12 +163,12 @@ const SAFARI_TREES=(()=>{
  const trees=[];
  const addTree=(x,z,h,v)=>{
   const near=safariRailNear(x,z),foot=h*.17,levels=[-foot,0,foot].flatMap(dx=>[-foot,0,foot].map(dz=>safariSurface(x+dx,z+dz)));
-  if(Math.abs(x)+h*.86>55||Math.abs(z)+h*.86>39||safariBank(x,z)<4.3||near.distance<h*.86+1.2||Math.max(...levels)-Math.min(...levels)>1.1)return;
+  if(Math.abs(x)+h*.86>55||Math.abs(z)+h*.86>39||safariBank(x,z)<4.3||near.distance<h*.86+1.2||Math.max(...levels)-Math.min(...levels)>1.1||!safariLodgeClear(x,z,h*.76)||safariWalkDistance(x,z)<1.4||Math.hypot(x+24,z-10.2)<5.8)return;
   if(trees.some(t=>Math.hypot(x-t.x,z-t.z)<1.6))return;
   trees.push({x,z,h,variant:v});
  };
  for(const [x,z,h,v]of[[-17,11,8.2,1],[-29,2,7.6,2],[26,13,7.0,3],[32,-18,6.5,4],[-41,13,6.0,5],[14,0,7.3,6],[-19,-5,5.2,7]])addTree(x,z,h,v);
- for(const [cx,cz,n]of[[-29,4,7], [22,4,6],[-38,-30,6],[34,20,5],[20,-12,4],[-18,20,4],[-30,13,5],[15,12,5],[-40,0,3],[26,20,3]])for(let i=0;i<n;i++){
+ for(const [cx,cz,n]of[[-29,4,7], [22,4,6],[-38,-30,6],[34,20,5],[20,-12,4],[-18,20,4],[-30,13,11],[-19,13,8],[-41,0,7],[-20,-7,7],[-44,-30,5],[39,-18,5]])for(let i=0;i<n;i++){
   const a=i*2.399+cx,r=3+Math.sqrt(i)*2.2;addTree(cx+Math.cos(a)*r,cz+Math.sin(a)*r*.7,3.7+hash(i,cx)*2.1,100+cx*3+i);
  }
  return trees;
@@ -135,14 +178,14 @@ function safariNaturalDetails(b){
  // Bands of small wind-combed tufts articulate the ground without noisy dots.
  for(let i=0;i<2400;i++){
   const x=-54+hash(i,501)*108,z=-38+hash(i,502)*76,y=safariSurface(x,z),bank=safariBank(x,z);
-  if(bank<2||safariRailNear(x,z).distance<1.4||Math.abs(x+26)<15&&z>29||Math.abs(x-16)<12&&z< -28)continue;
+  if(bank<2||safariRailNear(x,z).distance<1.4||!safariLodgeClear(x,z,.45)||safariWalkDistance(x,z)<.75||Math.abs(x+26)<15&&z>29||Math.abs(x-16)<12&&z< -28)continue;
   const slope=Math.abs(safariSurface(x+.25,z)-safariSurface(x-.25,z))+Math.abs(safariSurface(x,z+.25)-safariSurface(x,z-.25));if(slope>.33)continue;
   const h=.20+hash(i,503)*.45,color=i%4?'#c3b96c':'#ded091';
   for(let k=0;k<3;k++){const dx=(k-1)*.09,zz=z+(k%2)*.07,base=safariSurface(x+dx,zz);b.tri([x+dx-.035,base,zz],[x+dx+.20,base+h*(.65+k*.13),zz+.09],[x+dx+.045,base,zz],color,8);}
  }
  for(const [cx,cz,count]of[[35,3,16],[-35,-22,15],[18,-14,12],[-42,23,8],[29,23,9]])for(let i=0;i<count;i++){
   const a=i*2.399,r=.6+Math.sqrt(i)*1.3,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r*.75,size=.35+hash(i,cx)*1.3;
-  if(safariRailNear(x,z).distance<2.0+size||safariBank(x,z)<2.5||Math.abs(safariSurface(x+.6,z)-safariSurface(x-.6,z))+Math.abs(safariSurface(x,z+.6)-safariSurface(x,z-.6))>1.05)continue;safariRock(b,x,z,size,i+cx);
+  if(safariRailNear(x,z).distance<2.0+size||safariBank(x,z)<2.5||!safariLodgeClear(x,z,size)||safariWalkDistance(x,z)<1+size||Math.abs(safariSurface(x+.6,z)-safariSurface(x-.6,z))+Math.abs(safariSurface(x,z+.6)-safariSurface(x,z-.6))>1.05)continue;safariRock(b,x,z,size,i+cx);
  }
  for(let i=0;i<130;i++){
   const z=-38+hash(i,607)*76,side=i%2?1:-1,x=safariRiverX(z)+side*(safariRiverWidth(z)+.50+hash(i,608)*.68),y=safariSurface(x,z);
@@ -360,32 +403,32 @@ function safariShell(b){
  return walls;
 }
 function safariRoom(scene,b){
- safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);
+ safariTable(b);safariTerrain(b);safariBeam(b);safariNaturalDetails(b);safariSpring(b);safariHabitatDetails(b);safariLodge(b);
  safariStation(b,{x:-28,z:28,rail:6.8,name:'ACACIA GATE'});
- safariStation(b,{x:16,z:-28,rail:11.2,name:'RIFT LOOKOUT',flip:true});safariLookout(b);
+ safariStation(b,{x:16,z:-28,rail:11.2,name:'RIFT LOOKOUT',flip:true});
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];
  scene.height=(x,z)=>Math.abs(x)<=56&&Math.abs(z)<=40?Math.max(SAFARI.water,safariSurface(x,z)):FLOOR;
  scene.canPlace=()=>false;
- scene.safari={revision:1,trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
+ scene.safari={revision:2,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
  scene.spots=[
-  {name:'The Rift Observatory',target:[0,4,-1],distance:138,phoneDistance:330,pitch:.60,yaw:.32,detail:'A golden landscape, a winding river, and a monorail taking the longer way home. An original safari miniature, before the animals arrive.'},
+  {name:'The Rift Observatory',target:[0,5,-1],distance:138,phoneDistance:330,pitch:.60,yaw:.32,detail:'A savanna in miniature. Kopje House opens onto the river, broken escarpments rise behind the railway, and acacia trails lead to the lodge.'},
   {name:'Acacia Gate',target:[-27,7.8,29],distance:32,phoneDistance:62,pitch:.37,yaw:.20,detail:'Linen canopies, timber platforms, and a cream-and-jade panoramic train. The stairs descend to a red-earth walking terrace.'},
   {name:'Across the river',target:[safariRiverX(28),2.5,28],distance:37,phoneDistance:67,pitch:.35,yaw:.30,detail:'Two slender concrete arches carry the single guide beam. The river stays open beneath the railway.'},
-  {name:'Acacia country',target:[-24,4.8,5],distance:38,phoneDistance:68,pitch:.35,yaw:-.30,detail:'Flat-topped crowns, branching trunks and long shadows. The train slips behind the trees without cutting through their canopies.'},
+  {name:'Acacia country',target:[-28,5.8,6],distance:36,phoneDistance:65,pitch:.35,yaw:-.30,detail:'Flat-topped crowns, branching trunks and long shadows. The train slips behind the trees without cutting through their canopies.'},
   {name:'Rift Lookout',target:[15,11.8,-28],distance:37,phoneDistance:68,pitch:.39,yaw:2.84,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
-  {name:'The spring cascade',target:[8,6,-10],distance:32,phoneDistance:60,pitch:.40,yaw:-.37,detail:'A silver ribbon emerges from a rocky seep, cascades over the escarpment, and follows the finished ground into the green river.'},
+  {name:'Kopje House',target:[24,7,1],distance:34,phoneDistance:63,pitch:.34,yaw:.38,detail:'A vaulted thatch-roofed lodge above the river. Open lounges, a library loft, a dining pavilion and an infinity pool are connected by teak verandas.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
-  {name:'A seat above the valley',target:[30,5.6,-8],distance:27,phoneDistance:47,pitch:.33,yaw:.63,detail:'A timber observation deck looks into the rift. Two little scopes and an orientation table reward a closer look.'}
+  {name:'The sundowner terrace',target:[25,4.8,12],distance:24,phoneDistance:44,pitch:.38,yaw:.64,detail:'A pool overlooking the river, woven loungers, parasols and a sunken fire circle. Little lanterns come on after sunset.'}
  ];
 }
 registerHouseRoom('safari',{
  name:'The Rift Observatory',layout:'The Rift Skyway',tag:'THE LONGER WAY HOME',
- description:'An amber safari landscape in an expedition gallery. Acacia crowns, a green river and sculpted escarpments surround a purpose-built panoramic monorail.',
+ description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a timber-and-thatch safari lodge with open lounges, an infinity pool and a sundowner terrace, then follow Solstice around the rift.',
  color:'#c1a26b',ambient:'forest',target:[0,4,-1],distance:149,phoneDistance:342,pitch:.60,yaw:.32,
  trainCollection:false,train:{name:'Solstice',number:'01',service:'The Rift Skyway',type:'panoramic electric monorail',power:'electric'},
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari landscape, monorail, and expedition gallery; built with agent assistance.'}],
  map:{plot:'west-4',scale:.40,footprint:[158,130],focus:[0,4,-1]},
  lights:[[-41,26.75,-46],[41,26.75,-46],[-41,26.75,46],[41,26.75,46],[-36,12,-61],[36,12,-61]],
- layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[0,-10000,0],[0,-10000,0],[0,-10000,0],[0,-10000,0]],
+ layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[24,7.8,1],[14,6.8,0],[35,6.8,-2],[32.5,4.9,15.8]],
  build:safariRoom,shell:safariShell
 });

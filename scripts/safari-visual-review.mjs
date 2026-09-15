@@ -41,7 +41,7 @@ try{
  await snap('01-gallery-day',{ui:true});await spot(0);await snap('02-landscape-day');
  await spot(2);await snap('03-river-bridge');await spot(1,20);await snap('04-acacia-gate',{ui:true});
  await spot(3);await snap('05-acacia-country');await spot(4,139);await snap('06-rift-lookout');
- await spot(5);await snap('07-spring-cascade');await spot(6,81);await snap('08-east-sweep');await spot(7);await snap('09-observation-deck');
+ await spot(5);await snap('07-kopje-house',{ui:true});await spot(6,81);await snap('08-east-sweep');await spot(7);await snap('09-sundowner-terrace');
  await page.evaluate(()=>{hobby.scene.trains[0].distance=43;viewMode='engine';hobby.spot=-1;shadowDirty=true;});await snap('10-solstice');
  await page.evaluate(()=>{cutaway=true;shadowDirty=true;});await snap('11-solstice-cutaway');
  await page.evaluate(()=>{cutaway=false;setView('cab',false);shadowDirty=true;});await snap('12-cab');
@@ -76,7 +76,7 @@ try{
  assert.equal(await page.locator('#trainCollectionButton').isVisible(),true,'ordinary train selection returns in a conventional railway');
  await page.evaluate(()=>{activateHouseRoom('safari');HOBBY_HOUSE.cinema();});await snap('19-cinema');
  await page.evaluate(()=>{HOBBY_HOUSE.leaveCinema();setView('room',false);});
- report.profile=await page.evaluate(()=>JSON.parse(document.getElementById('performanceReport').textContent));
+ report.profile=await page.evaluate(()=>document.getElementById('performanceReport').textContent);
  // Exercise the real house packer and its local-file playback, not source alone.
  const downloadPromise=page.waitForEvent('download',{timeout:120000});await page.evaluate(()=>exportPlayable());
  const download=await downloadPromise;const exportedPath=`${output}/whistlevale-safari-review.html`;await download.saveAs(exportedPath);

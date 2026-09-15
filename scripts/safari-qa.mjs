@@ -79,7 +79,22 @@ const stockReport=state.run(`(()=>{
  for(const mesh of Object.values(stock))assert.ok(disposed.includes(mesh),'rebuild releases every monorail mesh');
  return {stockVertices:vertices};
 })()`);
-const report={...sceneReport,...terrainReport,...stockReport,treeVertices,minimumTreeClearance:treeClearance};
+const lodgeReport=state.run(`(()=>{
+ const b=new Builder();safariLodge(b);const count=b.data.length/12;
+ assert.ok(count>150000&&count<225000,'lodge retains its detailed but bounded authored geometry');
+ assert.ok(b.data.every(Number.isFinite),'finite lodge and furniture');
+ let clearance=Infinity,groundClearance=Infinity;
+ for(let i=0;i<b.data.length;i+=12*11){const near=safariRailNear(b.data[i],b.data[i+2]);if(near.point&&b.data[i+1]>near.point[1]-.9&&b.data[i+1]<near.point[1]+2.4)clearance=Math.min(clearance,near.distance);}
+ assert.ok(clearance>1.35,'lodge roof, decks, furniture and approach clear the monorail: '+clearance);
+ for(let x=8;x<40;x+=.8)for(let z=-7;z<13;z+=.8)groundClearance=Math.min(groundClearance,SAFARI_LODGE.floor-.40-safariSurface(x,z));
+ assert.ok(groundClearance>.3,'terrace structure is above finished terrain');
+ const test=new Builder();safariAcacia(test,-30,10,5.8,4);assert.ok(test.data.length/12<3500,'new acacias use detailed open crowns without the old sphere budget');
+ assert.equal(getHouseScene('safari').safari.lodge,'Kopje House');
+ assert.ok(getHouseScene('safari').spots.some(s=>s.name==='Kopje House'));
+ assert.ok(getHouseScene('safari').spots.some(s=>s.name==='The sundowner terrace'));
+ return {lodgeVertices:count,lodgeRailClearance:clearance,lodgeTerrainClearance:groundClearance};
+})()`);
+const report={...sceneReport,...terrainReport,...stockReport,...lodgeReport,treeVertices,minimumTreeClearance:treeClearance};
 state.run(await read('src/shop-house.js'));
 state.run(`assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.row,3);assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.column,0);assert.ok(!SHOP_HOUSE_LAYOUT.plots.some(p=>p.id==='west-4'));`);
 assert.match(await read('src/train-cabinet.css'),/\.train-collection-link\[hidden\]\{display:none!important\}/);
