@@ -418,9 +418,9 @@ function safariRoom(scene,b){
   {name:'Across the river',target:[safariRiverX(28),2.5,28],distance:37,phoneDistance:67,pitch:.35,yaw:.30,detail:'Two slender concrete arches carry the single guide beam. The river stays open beneath the railway.'},
   {name:'Acacia country',target:[-28,5.8,6],distance:36,phoneDistance:65,pitch:.35,yaw:-.30,detail:'Flat-topped crowns, branching trunks and long shadows. The train slips behind the trees without cutting through their canopies.'},
   {name:'Rift Lookout',target:[15,11.8,-28],distance:37,phoneDistance:68,pitch:.39,yaw:2.84,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
-  {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. No pool or rear leisure deck.'},
+  {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. The footpath ends at lantern-lit stone steps.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
-  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'An earth path reaches broad stone steps between lanterns. The former leisure terrace has returned to grasses, acacias and riverbank scrub.'}
+  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'A narrow earth path winds through grass and acacias to broad stone steps. Field notes, provisions and warm lanterns mark the return to camp.'}
  ];
 }
 registerHouseRoom('safari',{

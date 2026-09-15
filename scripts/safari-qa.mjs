@@ -100,6 +100,14 @@ const lodgeReport=state.run(`(()=>{
  assert.ok(safariLodgeClear(16.2,12.05,1),'old basin footprint is returned to planting');
  assert.ok(safariLodgeClear(33,16,1),'old fire court footprint is returned to planting');
  assert.ok(!getHouseScene('safari').spots.some(s=>/sundowner/i.test(s.name)),'obsolete leisure viewpoint removed');
+ for(const x of[17.75,30.25])assert.ok(SAFARI_LODGE.floor+4.515<kopjeFieldRoofY(x)-.10,'column and tie ends remain beneath the thatch');
+ const hide=new Builder();kopjeGearWing(hide);const floorY=SAFARI_LODGE.floor+5.9+.11;
+ const inside=(p,a,b,c)=>{const cross=(u,v,w)=>(v[0]-u[0])*(w[1]-u[1])-(v[1]-u[1])*(w[0]-u[0]);const v=[cross(a,b,p),cross(b,c,p),cross(c,a,p)];return v.every(x=>x>=-1e-8)||v.every(x=>x<=1e-8);};
+ for(let i=0;i<hide.data.length;i+=36){
+  const yy=[hide.data[i+1],hide.data[i+13],hide.data[i+25]];
+  if(yy.every(y=>Math.abs(y-floorY)<1e-7))assert.ok(!inside([33.29,-2.1],[hide.data[i],hide.data[i+2]],[hide.data[i+12],hide.data[i+14]],[hide.data[i+24],hide.data[i+26]]),'ladder arrives through a real floor opening');
+ }
+
  return {lodgeVertices:count,lodgeRailClearance:clearance,lodgeTerrainClearance:groundClearance};
 })()`);
 const report={...sceneReport,...terrainReport,...stockReport,...lodgeReport,treeVertices,minimumTreeClearance:treeClearance};
