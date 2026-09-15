@@ -44,6 +44,11 @@ const report=state.run(`(()=>{
    assert.ok(Math.abs(safariSurface(x+u*g.dx,z+v*g.dz)-expected)<1e-9,'finished triangle sampler');}
  }
  for(let z=-39;z<40;z+=.5)assert.ok(safariSurface(safariRiverX(z),z)<SAFARI.water,'continuous submerged river bed');
+ for(const t of SAFARI_TREES){const foot=t.h*.17,levels=[-foot,0,foot].flatMap(dx=>[-foot,0,foot].map(dz=>safariSurface(t.x+dx,t.z+dz)));assert.ok(Math.max(...levels)-Math.min(...levels)<=1.1,'acacia roots occupy a geological shelf, not a sheer face');}
+ for(let i=0;i<SAFARI_SPRING.length;i++){
+  const [x,z]=SAFARI_SPRING[i];assert.ok(safariRailNear(x,z).distance>3,'spring stays clear of the monorail');
+  if(i){const [px,pz]=SAFARI_SPRING[i-1];assert.ok(safariSurface(x,z)<=safariSurface(px,pz)+.06,'spring runs downhill');}
+ }
  let treeClearance=Infinity,treeVertices=0;
  for(const t of SAFARI_TREES){const b=new Builder();safariAcacia(b,t.x,t.z,t.h,t.variant);treeVertices+=b.data.length/12;
   for(let i=0;i<b.data.length;i+=12){const x=b.data[i],z=b.data[i+2];assert.ok(Math.abs(x)<56&&Math.abs(z)<40,'acacia stays on the board');treeClearance=Math.min(treeClearance,safariRailNear(x,z).distance);}
@@ -61,4 +66,5 @@ const report=state.run(`(()=>{
 })()`);
 state.run(await read('src/shop-house.js'));
 state.run(`assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.row,3);assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.column,0);assert.ok(!SHOP_HOUSE_LAYOUT.plots.some(p=>p.id==='west-4'));`);
+assert.match(await read('src/train-cabinet.css'),/\.train-collection-link\[hidden\]\{display:none!important\}/);
 console.log(JSON.stringify(report,null,2));console.log('Safari room, terrain, beam clearance, stock isolation and disposal verified.');

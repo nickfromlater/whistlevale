@@ -83,6 +83,12 @@ function safariBogieFrame(b){
   b.box(side*.45,-.045,0,.15,.84,.73,'#455347',42);
   b.box(side*.45,-.45,0,.21,.13,.91,'#385044',42);
   b.cylinder(side*.45,.445,0,.058,.058,.14,'#a7946d',41,8);
+  // An enamel fairing encloses the guide mechanism, leaving the inner face and
+  // tyres exposed. The silhouette reads as a beamway vehicle, not long legs.
+  b.box(side*.56,-.015,0,.16,.73,.87,'#cfc39e',40);
+  b.box(side*.568,.342,0,.19,.10,.94,'#e4d6b5',40);
+  b.box(side*.566,-.37,0,.17,.055,.88,'#365d50',40);
+  for(const z of[-.23,-.11,.01,.13,.25])b.box(side*.646,-.08,z,.010,.17,.037,'#576452',42);
  }
  b.box(0,.47,0,1.05,.13,.73,'#4a5d4f',42);b.cylinder(0,.568,0,.20,.20,.070,'#a4a38c',41,14);
 }

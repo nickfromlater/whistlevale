@@ -41,7 +41,7 @@ try{
  await snap('01-gallery-day',{ui:true});await spot(0);await snap('02-landscape-day');
  await spot(2);await snap('03-river-bridge');await spot(1,20);await snap('04-acacia-gate',{ui:true});
  await spot(3);await snap('05-acacia-country');await spot(4,139);await snap('06-rift-lookout');
- await spot(5);await snap('07-river');await spot(6,81);await snap('08-east-sweep');await spot(7);await snap('09-observation-deck');
+ await spot(5);await snap('07-spring-cascade');await spot(6,81);await snap('08-east-sweep');await spot(7);await snap('09-observation-deck');
  await page.evaluate(()=>{hobby.scene.trains[0].distance=43;viewMode='engine';hobby.spot=-1;shadowDirty=true;});await snap('10-solstice');
  await page.evaluate(()=>{cutaway=true;shadowDirty=true;});await snap('11-solstice-cutaway');
  await page.evaluate(()=>{cutaway=false;setView('cab',false);shadowDirty=true;});await snap('12-cab');
