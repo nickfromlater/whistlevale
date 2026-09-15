@@ -1,0 +1,152 @@
+diff --git a/scripts/safari-qa.mjs b/scripts/safari-qa.mjs
+index cb1e3b7..9f8f85b 100644
+--- a/scripts/safari-qa.mjs
++++ b/scripts/safari-qa.mjs
+@@ -100,6 +100,14 @@ const lodgeReport=state.run(`(()=>{
+  assert.ok(safariLodgeClear(16.2,12.05,1),'old basin footprint is returned to planting');
+  assert.ok(safariLodgeClear(33,16,1),'old fire court footprint is returned to planting');
+  assert.ok(!getHouseScene('safari').spots.some(s=>/sundowner/i.test(s.name)),'obsolete leisure viewpoint removed');
++ for(const x of[17.75,30.25])assert.ok(SAFARI_LODGE.floor+4.515<kopjeFieldRoofY(x)-.10,'column and tie ends remain beneath the thatch');
++ const hide=new Builder();kopjeGearWing(hide);const floorY=SAFARI_LODGE.floor+5.9+.11;
++ const inside=(p,a,b,c)=>{const cross=(u,v,w)=>(v[0]-u[0])*(w[1]-u[1])-(v[1]-u[1])*(w[0]-u[0]);const v=[cross(a,b,p),cross(b,c,p),cross(c,a,p)];return v.every(x=>x>=-1e-8)||v.every(x=>x<=1e-8);};
++ for(let i=0;i<hide.data.length;i+=36){
++  const yy=[hide.data[i+1],hide.data[i+13],hide.data[i+25]];
++  if(yy.every(y=>Math.abs(y-floorY)<1e-7))assert.ok(!inside([33.29,-2.1],[hide.data[i],hide.data[i+2]],[hide.data[i+12],hide.data[i+14]],[hide.data[i+24],hide.data[i+26]]),'ladder arrives through a real floor opening');
++ }
++
+  return {lodgeVertices:count,lodgeRailClearance:clearance,lodgeTerrainClearance:groundClearance};
+ })()`);
+ const report={...sceneReport,...terrainReport,...stockReport,...lodgeReport,treeVertices,minimumTreeClearance:treeClearance};
+diff --git a/src/rooms/safari-lodge.js b/src/rooms/safari-lodge.js
+index 0fcd360..878d43e 100644
+--- a/src/rooms/safari-lodge.js
++++ b/src/rooms/safari-lodge.js
+@@ -87,7 +87,8 @@ function kopjeMasonry(b,x,y,z,w,h,d,variant=0){
+  for(const [axis,sign,length]of[['z',1,w],['z',-1,w],['x',1,d],['x',-1,d]]){
+   const alongX=axis==='z',cols=Math.ceil(length/.69),step=length/cols;
+   for(let row=0;row<rows;row++)for(let i=0;i<=cols;i++){
+-   const lo=Math.max(-length/2,-length/2+(i-(row%2)*.5)*step),hi=Math.min(length/2,-length/2+(i+1-(row%2)*.5)*step);
++   const edge=k=>-length/2+(k-(row%2)*.5)*step+(k>0&&k<cols?(hash(k+variant,row)-.5)*step*.45:0);
++   const lo=Math.max(-length/2,edge(i)),hi=Math.min(length/2,edge(i+1));
+    if(hi-lo<.05)continue;
+    const mid=(lo+hi)/2,ww=(hi-lo-.027)/2,hh=(pitch-.025)/2,yy=y+(row+.5)*pitch;
+    const c=shade(['#a59776','#958a6d','#b2a381','#8c856c'][(row+i+Math.abs(variant))%4],.91+hash(i+variant,row)*.16);
+@@ -107,12 +108,13 @@ function kopjeFoundation(b,x,z,w,d){
+  // Interior floor only. There is no projecting leisure deck or rear porch.
+  const n=Math.ceil(w/.34);for(let i=0;i<n;i++)b.box(x-w/2+(i+.5)*w/n,y+.008,z,w/n-.011,.033,d-.14,shade('#816641',.92+hash(i,x)*.16),22);
+ }
++function kopjeFieldRoofY(x){const v=1-Math.abs(x-24)/7.9;return SAFARI_LODGE.floor+4.05+3.65*v-.22*Math.sin(v*PI);}
+ function kopjeFieldRoof(b){
+  const x=24,z=-.8,y=SAFARI_LODGE.floor+4.05,w=15.8,d=11.2,rise=3.65;
+  // A steep longitudinal ridge and open triangular gable replace the broad,
+  // resort-like hipped canopy. Every reed course follows the roof slope.
+  for(const side of[-1,1]){
+-  const point=(u,v,lift=0)=>[x+side*w/2*(1-v),y+rise*v-.22*Math.sin(v*PI)+lift,z-d/2+u*d];
++  const point=(u,v,lift=0)=>[x+side*w/2*(1-v),kopjeFieldRoofY(x+side*w/2*(1-v))+lift,z-d/2+u*d];
+   const cols=30,rows=10;
+   for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
+    const u=i/cols,uu=(i+1)/cols,v=j/rows,vv=(j+1)/rows,c=shade(['#806441','#927448','#9d7e4c'][j%3],.92+hash(i,j+side)*.14);
+@@ -180,7 +182,7 @@ function kopjeMapDesk(b){
+   const zz=z+side*1.8;b.box(x,y+.48,zz,4.45,.10,.51,'#8e7147',22);
+   for(const xx of[x-1.65,x+1.65])for(const s of[-1,1])b.beam([xx+s*.16,y,zz+s*.13],[xx-s*.16,y+.46,zz-s*.13],.04,KOPJE.timber,22,5);
+  }
+- kopjePendant(b,x,y+4.0,z,.46);
++ kopjePendant(b,x,y+4.0,z,.46);b.beam([x,y+5.25,z],[x,y+7.34,z],.016,KOPJE.dark,41,5);
+ }
+ function kopjeMainHall(b){
+  const y=SAFARI_LODGE.floor;
+@@ -192,16 +194,17 @@ function kopjeMainHall(b){
+   kopjeMasonry(b,xx,y,2.77,.60,2.85,1.05,94+side);
+  }
+  for(const xx of[17.75,30.25])for(const zz of[-4.5,-.65,3.07]){
+-  b.cylinder(xx,y+2.38,zz,.16,.115,4.76,KOPJE.timber,22,9);
+-  for(const side of[-1,1])b.beam([xx,y+3.76,zz],[xx+side*.52,y+4.46,zz],.065,KOPJE.teak,22,6);
++  b.cylinder(xx,y+2.245,zz,.16,.115,4.49,KOPJE.timber,22,9);
++  for(const side of[-1,1])b.beam([xx,y+3.61,zz],[xx+side*.52,y+4.24,zz],.065,KOPJE.teak,22,6);
+  }
+  for(const zz of[-4.5,-.65,3.07]){
+-  b.beam([17.75,y+4.63,zz],[30.25,y+4.63,zz],.115,KOPJE.timber,22,6);
+-  b.beam([24,y+4.63,zz],[24,y+7.34,zz],.09,KOPJE.timber,22,6);
++  b.beam([17.75,y+4.40,zz],[30.25,y+4.40,zz],.115,KOPJE.timber,22,6);
++  b.beam([24,y+4.40,zz],[24,y+7.34,zz],.09,KOPJE.timber,22,6);
+   for(const side of[-1,1])b.beam([24,y+4.72,zz],[24+side*2.9,y+5.9,zz],.075,KOPJE.teak,22,6);
+  }
+  // The entry remains open. Canvas storm curtains are rolled up and tied back.
+- b.box(24,y+3.5,3.10,6.2,.60,.15,'#334c3d',22);hudsonText(b,'KOPJE FIELD LODGE',24,y+3.5,3.19,5.62,'#d5c195');
++ b.box(24,y+3.92,3.10,5.90,.48,.15,'#334c3d',22);hudsonText(b,'KOPJE FIELD LODGE',24,y+3.92,3.19,5.20,'#d5c195');
++ for(const xx of[22,26])b.beam([xx,y+4.17,3.10],[xx,y+4.40,3.10],.018,KOPJE.bronze,41,5);
+  for(const xx of[19.45,28.55]){
+   b.cylinder(xx,y+3.53,3.07,.115,.115,2.40,'#aea17a',23,10,0,PI/2);
+   for(const s of[-1,1])b.box(xx+s*.73,y+3.52,3.18,.047,.22,.03,'#655b3a',22);
+@@ -221,9 +224,11 @@ function kopjeMainHall(b){
+  b.beam([28.87,y+1.52,-3.72],[28.93,y+2.22,-3.72],.008,'#b1ad8d',41,5);
+  kopjeChair(b,28.5,y,-2.48,PI,.68);kopjeLantern(b,27.6,y+1.05,-3.57,.48);
+  // A compact dark stone hearth is part of the west wall, with a real chimney.
+- kopjeMasonry(b,19.1,y,-3.0,1.8,2.4,1.15,4);b.box(19.1,y+1.0,-2.406,1.08,1.25,.028,'#28342a',42);
++ kopjeMasonry(b,19.1,y,-3.0,1.8,.24,1.15,4);
++ for(const xx of[18.35,19.85])kopjeMasonry(b,xx,y+.24,-3.0,.30,1.44,1.15,4);
++ kopjeMasonry(b,19.1,y+1.68,-3.0,1.8,.72,1.15,4);b.box(19.1,y+.95,-3.49,1.18,1.42,.12,'#28342a',42);
+  kopjeMasonry(b,19.1,y+2.4,-3.0,1.24,4.0,.96,31);b.box(19.1,y+6.50,-3.0,1.51,.20,1.22,'#6b634e',3);
+- for(let i=0;i<4;i++)b.beam([18.73+i*.17,y+.40,-2.39],[19.23+i*.13,y+.49,-2.37],.046,'#59432a',22,6);
++ for(let i=0;i<4;i++)b.beam([18.73+i*.17,y+.40,-2.73],[19.23+i*.13,y+.49,-2.63],.046,'#59432a',22,6);
+  for(const xx of[18.32,29.64])kopjeLantern(b,xx,y+.12,3.18,.72);
+ }
+ function kopjeGearWing(b){
+@@ -251,7 +256,12 @@ function kopjeGearWing(b){
+   b.box(xx,y+2.95,zz,.18,5.9,.18,'#4f4730',22);
+   b.box(xx,top+.57,zz,.17,1.25,.17,KOPJE.timber,22);
+  }
+- b.box(towerX,top,towerZ,3.22,.22,3.65,KOPJE.teak,22);
++ // The ladder terminates in an actual hatch, not through a solid floor.
++ b.box(34.90,top,towerZ,2.32,.22,3.65,KOPJE.teak,22);
++ b.box(33.29,top,-3.3375,.90,.22,1.375,KOPJE.teak,22);
++ b.box(33.29,top,-.9875,.90,.22,1.225,KOPJE.teak,22);
++ for(const xx of[32.65,36.24])b.box(xx,y+4.48,-2.2,.12,2.66,3.86,'#796b4a',22);
++ for(const zz of[-4.09,-.31])for(let i=0;i<15;i++)b.box(34.445,y+3.20+i*.177,zz,3.60,.164,.11,'#80714d',22);
+  for(const zz of[towerZ-1.67,towerZ+1.67]){
+   for(let j=0;j<5;j++)b.box(towerX,top+.20+j*.16,zz,3.18,.145,.10,j%2?'#897349':'#746344',22);
+   b.box(towerX,top+1.42,zz,3.20,.11,.12,'#9f8656',22);
+@@ -262,14 +272,15 @@ function kopjeGearWing(b){
+  kopjeRoof(b,towerX,top+2.1,towerZ,4.48,4.86,1.53,73);
+  // Lean-to iron roof runs up to the hide. Individually modeled corrugations.
+  for(let i=0;i<37;i++){
+-  const xx=30.80+i*.195,z0=2.80,z1=-5.5,yy=y+3.06;
++  const xx=30.80+i*.195,z0=2.80,yy=y+3.06;
+   if(xx>32.64&&xx<36.23){
+    b.quad([xx,yy,2.8],[xx+.193,yy,2.8],[xx+.193,yy+.43,-.31],[xx,yy+.43,-.31],'#6d7560',41);
++   b.quad([xx,yy+.765,-4.09],[xx+.193,yy+.765,-4.09],[xx+.193,yy+.92,-5.5],[xx,yy+.92,-5.5],'#6d7560',41);
+   }else b.quad([xx,yy,2.8],[xx+.193,yy,2.8],[xx+.193,yy+.92,-5.5],[xx,yy+.92,-5.5],'#6d7560',41);
+   const stop=xx>32.64&&xx<36.23?-.31:-5.5;b.beam([xx+.065,yy+.029,z0],[xx+.065,yy+.029+(z0-stop)*.111,stop],.018,'#8c8b6a',41,5);
+  }
+- for(const xx of[32.5,33.24])b.beam([xx,y,-2.0],[xx,top,-2.0],.040,KOPJE.timber,22,6);
+- for(let i=0;i<23;i++)b.beam([32.5,y+.20+i*.245,-2.0],[33.24,y+.20+i*.245,-2.0],.027,'#b09a64',22,5);
++ for(const xx of[32.98,33.59])b.beam([xx,y,-2.0],[xx,top+.65,-2.0],.040,KOPJE.timber,22,6);
++ for(let i=0;i<26;i++)b.beam([32.98,y+.20+i*.245,-2.0],[33.59,y+.20+i*.245,-2.0],.027,'#b09a64',22,5);
+  // Tripod optics and an aerial make the hide read as a surveying station.
+  for(let i=0;i<3;i++){const a=i*TAU/3;b.beam([towerX+.85+Math.cos(a)*.37,top+.14,towerZ+.63+Math.sin(a)*.37],[towerX+.85,top+1.11,towerZ+.63],.022,'#9a8152',41,5);}
+  b.cylinder(towerX+.85,top+1.25,towerZ+.63,.075,.10,.64,'#364e3c',42,12,PI/2);
+@@ -312,7 +323,7 @@ function kopjeMessTent(b){
+  kopjeCase(b,12.7,safariSurface(12.7,4.2)+.05,4.2,1.1,.72,.55,0);
+ }
+ function kopjeStoneSteps(b){
+- const x=24,z0=3.74,z1=7.8,top=SAFARI_LODGE.floor+.025,width=3.9;
++ const x=24,z0=3.53,z1=7.8,top=SAFARI_LODGE.floor+.025,width=3.9;
+  const bottom=Math.max(...[-width/2,0,width/2].map(dx=>safariSurface(x+dx,z1)))+.045,n=Math.max(2,Math.ceil((top-bottom)/.17));
+  for(let i=0;i<n;i++){
+   const z=mix(z0,z1,(i+.5)/n),yy=mix(top,bottom,(i+1)/n),ground=Math.min(...[-width/2,0,width/2].map(dx=>safariSurface(x+dx,z)))-.08;
+diff --git a/src/rooms/safari.js b/src/rooms/safari.js
+index 3c890f9..f23825c 100644
+--- a/src/rooms/safari.js
++++ b/src/rooms/safari.js
+@@ -418,9 +418,9 @@ function safariRoom(scene,b){
+   {name:'Across the river',target:[safariRiverX(28),2.5,28],distance:37,phoneDistance:67,pitch:.35,yaw:.30,detail:'Two slender concrete arches carry the single guide beam. The river stays open beneath the railway.'},
+   {name:'Acacia country',target:[-28,5.8,6],distance:36,phoneDistance:65,pitch:.35,yaw:-.30,detail:'Flat-topped crowns, branching trunks and long shadows. The train slips behind the trees without cutting through their canopies.'},
+   {name:'Rift Lookout',target:[15,11.8,-28],distance:37,phoneDistance:68,pitch:.39,yaw:2.84,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
+-  {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. No pool or rear leisure deck.'},
++  {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. The footpath ends at lantern-lit stone steps.'},
+   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
+-  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'An earth path reaches broad stone steps between lanterns. The former leisure terrace has returned to grasses, acacias and riverbank scrub.'}
++  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'A narrow earth path winds through grass and acacias to broad stone steps. Field notes, provisions and warm lanterns mark the return to camp.'}
+  ];
+ }
+ registerHouseRoom('safari',{

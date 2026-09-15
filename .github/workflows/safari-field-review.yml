@@ -21,16 +21,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Integrate the user-requested field lodge on the feature branch only
+      - name: Integrate the locally verified structural refinement
         run: |
           set -euo pipefail
-          if test -f .github/safari-field-update.py; then
-            python3 .github/safari-field-update.py
-            git rm .github/safari-field-functions.js .github/safari-field-update.py
-            git add src/rooms/safari.js src/rooms/safari-lodge.js scripts/safari-qa.mjs scripts/safari-lodge-visual.mjs scripts/safari-visual-review.mjs docs/rooms/safari.md
+          if test -f .github/safari-field-refine.patch; then
+            git apply --check .github/safari-field-refine.patch
+            git apply .github/safari-field-refine.patch
+            git rm .github/safari-field-refine.patch
+            git add src/rooms/safari.js src/rooms/safari-lodge.js scripts/safari-qa.mjs
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'Remove pool and rear porch; rebuild Kopje as a safari field lodge'
+            git commit -m 'Fit field lodge roof, stonework and observation access'
             git push origin HEAD:refs/heads/codex/safari-observatory
           fi
           mkdir -p evidence/safari-field
