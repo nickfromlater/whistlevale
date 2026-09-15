@@ -172,7 +172,7 @@ function prepareCabinetPreview(){
  }));
 }
 function openTrainCabinet(opener=$('trainCollectionButton')){
- if(!hobbyHasTrain())return;
+ if(!hobbyHasTrain()||HOUSE_ROOMS[hobby.room]?.trainCollection===false)return;
  if(!hobby.ready||hobby.transition||building||shopMap.open||trainCabinet.open)return;
  trainCabinet.room=hobby.room;trainCabinet.opener=opener;trainCabinet.draft={...collectionChoice(hobby.room)};trainCabinet.filter='all';trainCabinet.full=false;trainCabinet.lift=false;trainCabinet.moving=false;
  closeQuietControls();$('cabinetStatus').textContent='';trainCabinet.open=true;document.body.classList.add('train-cabinet-open');

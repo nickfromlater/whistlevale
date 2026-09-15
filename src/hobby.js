@@ -320,6 +320,7 @@ updateUI=function(){
  if(typeof isShopMapActive==='function'&&isShopMapActive())return;
  baseHobbyUI();if(!hobby.ready)return;
  const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name.replace(/^The /,'');$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Switch room. Current room: '+room.name);
+ const collectionButton=$('trainCollectionButton');if(collectionButton)collectionButton.hidden=room.trainCollection===false;
  const electric=typeof collectionPower==='function'?collectionPower(hobby.room)!=='steam':/electric|railcar/i.test(stock.type||'');
  $('cabMark').textContent=(electric?'IN THE CAB · ':'ON THE FOOTPLATE · ')+stock.name.toUpperCase()+(stock.number?' No. '+stock.number:'');$('cabMark').classList.toggle('show',viewMode==='cab');
  const engineTitle=document.querySelector('.engine-title'),label=JSON.stringify([stock.number,stock.name]);

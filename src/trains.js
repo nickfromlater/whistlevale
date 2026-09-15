@@ -391,7 +391,7 @@ function collectionDefault(room){
  const q=collectionById.get(id);return {id,livery:id==='nightingale'?Math.max(0,['green','blue','claret'].indexOf(livery)):0,cars:room==='valley'?Math.min(6,offsets.length-2):Math.max(1,Math.min(6,stock?.cars??q.cars))};
 }
 function collectionChoice(room){return selectedCollection[room]||collectionDefault(room);}
-function collectionTrainLabel(room){const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
+function collectionTrainLabel(room){if(HOUSE_ROOMS[room]?.trainCollection===false)return {...HOUSE_ROOMS[room].train};const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
 function collectionPower(room){
  if(HOUSE_ROOMS[room]?.railway===false)return null;
  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
@@ -410,12 +410,13 @@ function restoreCollectionSelections(){
  try{const embedded=$('embeddedTrainCollection')?.textContent;data=embedded&&embedded.trim()!=='null'?JSON.parse(embedded):JSON.parse(localStorage.getItem(collectionStorageKey)||'null');}catch{return;}
  if(data?.version!==1||!data.rooms||typeof data.rooms!=='object')return;
  for(const [room,value]of Object.entries(data.rooms)){
-  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||!choice)continue;
+  const choice=validateCollectionChoice(value);if(!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||HOUSE_ROOMS[room].trainCollection===false||!choice)continue;
   // Build only the train in the initial room; other saved choices are lazy.
   try{if(room==='valley')ensureRunningCollection(choice);selectedCollection[room]=choice;}catch{}
  }
 }
 function applyCollectionToScene(scene){
+ if(HOUSE_ROOMS[scene.key]?.trainCollection===false)return;
  const choice=selectedCollection[scene.key];if(!choice||!scene.trains[0]||scene.trains[0].collectionChoice===choice)return;
  ensureRunningCollection(choice);const q=collectionById.get(choice.id),train=scene.trains[0];
  train.collectionChoice=choice;train.cars=choice.cars;train.type=q.power==='electric'?'mountain':q.power;train.stock='collection:'+q.id;
@@ -423,7 +424,7 @@ function applyCollectionToScene(scene){
 const collectionGetHouseScene=getHouseScene;
 getHouseScene=function(key){const scene=collectionGetHouseScene(key);if(scene)applyCollectionToScene(scene);return scene;};
 function chooseCollectionTrain(room,value){
- const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false)throw new Error('This train choice is unavailable.');
+ const choice=validateCollectionChoice(value);if(!choice||!Object.hasOwn(HOUSE_ROOMS,room)||HOUSE_ROOMS[room].railway===false||HOUSE_ROOMS[room].trainCollection===false)throw new Error('This train choice is unavailable.');
  ensureRunningCollection(choice);selectedCollection[room]=choice;
  if(room!=='valley'&&roomScenes.has(room))applyCollectionToScene(roomScenes.get(room));
  shadowDirty=true;let saved=true;
