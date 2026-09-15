@@ -10,8 +10,13 @@ prepareCommunityGeometry(state);
 const receipt=JSON.parse(await read('models/safari-giraffe/export-report.json'));
 assert.equal(createHash('sha256').update(await read('src/scenery/safari-giraffe-model.js')).digest('hex'),receipt.sha256,'generated skin matches receipt');
 assert.equal(createHash('sha256').update(await readFile(new URL('../models/safari-giraffe/safari-giraffe.blend',import.meta.url))).digest('hex'),receipt.blendSHA256,'editable source matches receipt');
-const report=state.run(`(()=>{
+// Each generator step runs inside its own ordinary 10-second VM call. Keep
+// scene construction, skin validation and bounded simulation batches separate
+// so a slower CI runner receives the same complete coverage without a larger
+// timeout or fewer samples.
+state.run(`const giraffeQA=(function*(){
  const source=SAFARI_GIRAFFE_MODEL,scene=getHouseScene('safari'),life=scene.wildlife;
+ yield; // Scene construction owns this VM call.
  assert.equal(source.format,'whistlevale-skinned-v1');assert.equal(life.herd.length,3);assert.equal(life.parts.filter(p=>p.name==='skin').length,1);
  assert.ok(source.bones.length<=24&&source.bones.length>=14,'articulated rig fits both shader palettes');
  source.bones.forEach((b,i)=>{assert.ok(b.parent===null||b.parent<i);assert.equal(b.rest.length,7);assert.equal(b.inverseBind.length,16);assert.ok([...b.rest,...b.inverseBind].every(Number.isFinite));});
@@ -24,6 +29,7 @@ const report=state.run(`(()=>{
  }
  assert.ok(source.walk.stride>0);assert.ok(source.walk.frames.length>=12);
  for(const frame of source.walk.frames){assert.equal(frame.length,source.bones.length);assert.ok(frame.every(b=>b.length===7&&b.every(Number.isFinite)));}
+ yield; // Skin weights and authored frames have all been checked.
  const pose=()=>JSON.stringify(life.herd.map(a=>[[...a.models],Array.from(a.bones)]));
  const initial=pose();safariUpdateWildlife(scene,1);assert.notEqual(pose(),initial,'weighted pose changes');
  reduceMotion=true;safariUpdateWildlife(scene,0);const still=pose(),time=life.time;
@@ -42,7 +48,9 @@ const report=state.run(`(()=>{
  });
  const railSamples=[];for(let d=0;d<SAFARI_ROUTE.length;d+=.5)railSamples.push(SAFARI_ROUTE.at(d).p);
  let minHoofGap=Infinity,maxHoofGap=-Infinity,minRail=Infinity,minBank=Infinity,minWalk=Infinity,moved=0,worst=null;
+ yield; // Pose/render checks and weighted sole extraction are complete.
  for(let step=0;step<1040;step++){
+  if(step&&step%32===0)yield; // Eight simulated seconds per VM call.
   safariUpdateWildlife(scene,.25);if(step%16)continue;
   for(const animal of life.herd){
    assert.ok(animal.bones.every(Number.isFinite));const root=animal.models.get('skin');
@@ -58,7 +66,10 @@ const report=state.run(`(()=>{
  }
  assert.ok(moved>6,'family traverses complete roaming circuit');
  return{sceneVertices:scene.mesh.count,sharedVertices:indices.length,indexedVertices:source.vertices,bones:source.bones.length,sharedBufferBytes:life.parts[0].mesh.bytes,drawCallsPerPass:3,sampledSeconds:260,worst,minHoofGap,maxHoofGap,minRail,minBank,minWalk};
-})()`);
+})();`);
+let result;
+do{result=state.run('giraffeQA.next()');}while(!result.done);
+const report=result.value;
 console.log(JSON.stringify(report,null,2));
 assert.ok(report.minHoofGap>-.08,'hooves do not sink deeply into terrain');
 assert.ok(report.maxHoofGap<.23,'walking hooves stay within lift allowance');
