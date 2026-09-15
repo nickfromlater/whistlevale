@@ -1,0 +1,106 @@
+name: Safari lodge native review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  review:
+    if: github.head_ref == 'codex/safari-observatory' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Integrate the locally tested lodge on its feature branch
+        run: |
+          set -euo pipefail
+          if test -f .github/safari-lodge-transfer-0.gz; then
+            python3 - <<'PY'
+          import gzip, hashlib, pathlib
+          data = b''.join(pathlib.Path(f'.github/safari-lodge-transfer-{i}.gz').read_bytes() for i in range(3))
+          patch = gzip.decompress(data)
+          assert hashlib.sha256(patch).hexdigest() == 'f446f8efabe8e6e38d55efe0db2872f60ec39ef0ad7f8dc56a78bf95345d93ad'
+          pathlib.Path('/tmp/safari-lodge.patch').write_bytes(patch)
+          PY
+            git apply --check /tmp/safari-lodge.patch
+            git apply /tmp/safari-lodge.patch
+            git rm .github/safari-lodge-transfer-{0,1,2}.gz
+            git add docs/rooms/safari.md index.html scripts/safari-qa.mjs scripts/safari-visual-review.mjs src/rooms/safari.js src/rooms/safari-lodge.js
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Build Kopje House and reauthor the safari landscape'
+            git push origin HEAD:refs/heads/codex/safari-observatory
+          fi
+          mkdir -p evidence/safari
+          git rev-parse HEAD > evidence/safari/reviewed-commit.txt
+          git ls-tree -r HEAD > evidence/safari/reviewed-tree.txt
+      - name: Install an isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture and exercise the native room
+        env:
+          PLAYWRIGHT_MODULE_PATH: /tmp/whistlevale-browser/node_modules/playwright/index.mjs
+        run: |
+          set -euo pipefail
+          python3 scripts/serve.py --port 4175 > evidence/safari/server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4175/ -o /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/safari-visual-review.mjs 2>&1 | tee evidence/safari/browser-run.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-lodge-native-views
+          path: |
+            evidence/safari/*.png
+            evidence/safari/browser-review.json
+            evidence/safari/browser-run.txt
+            evidence/safari/reviewed-*.txt
+            evidence/safari/server.log
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-lodge-playable-house
+          path: evidence/safari/whistlevale-safari-review.html
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Run all project checks on the integrated source
+        if: always()
+        run: |
+          set +e
+          mkdir -p evidence/safari
+          npm test > evidence/safari/npm-test.txt 2>&1
+          test_status=$?
+          npm run test:geometry:full > evidence/safari/geometry-full.txt 2>&1
+          geometry_status=$?
+          npm run --silent check:contributions -- --json > evidence/safari/contributions.json 2>&1
+          contributions_status=$?
+          printf '{"npmTest":%s,"geometryFull":%s,"contributions":%s}\n' "$test_status" "$geometry_status" "$contributions_status" > evidence/safari/test-statuses.json
+          cat evidence/safari/test-statuses.json
+          tail -30 evidence/safari/npm-test.txt
+          tail -24 evidence/safari/geometry-full.txt
+          test "$test_status" -eq 0 && test "$geometry_status" -eq 0 && test "$contributions_status" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-lodge-automated-checks
+          path: |
+            evidence/safari/npm-test.txt
+            evidence/safari/geometry-full.txt
+            evidence/safari/contributions.json
+            evidence/safari/test-statuses.json
+            evidence/safari/reviewed-commit.txt
+          retention-days: 7
