@@ -429,6 +429,13 @@ function safariTable(b){
  b.box(0,-5.42,42.61,30,.80,.10,'#ad905a',41);hudsonText(b,'THE RIFT OBSERVATORY',0,-5.44,42.675,27.5,'#f1ddb0');
  for(const x of[-14.6,14.6])b.sphere(x,-5.42,42.7,.08,.08,.025,'#dfca94',41,6,4);b.pop();
 }
+// Matte printed plaques stand clear of the wall battens. The face is separated
+// from its backing and uses receiver-plane shadows to avoid stippled self-shadow.
+function safariPlaque(b,key,x,y,z,w,h){
+ b.push(x,y,z);b.box(0,0,0,w+.8,h+.8,.55,'#322e24',22);
+ b.box(0,0,.3,w+.23,h+.23,.07,'#b79960',42);
+ roomSign(b,key,0,0,.46,w-.32,h-.32,0,91);b.pop();
+}
 function safariSconce(b,x,y,z){
  b.box(x,y,z,.8,4.6,.42,'#b89a64',41);b.beam([x,y-.5,z],[x,y-.5,z+1.6],.13,'#8a6b43',41,8);
  b.box(x,y+.55,z+1.65,1.17,2.2,1.17,'#e4ca90',6);
@@ -528,7 +535,7 @@ function safariShell(b){
     w.box(x,-3.7,2,24,.6,3.0,'#96764e',22);
    }
    const title='house-'+Object.keys(HOUSE_ROOMS).indexOf('safari');
-   if(roomLabels[title])roomFrame(w,title,0,28.4,2.1,33,8.15);
+   if(roomLabels[title])safariPlaque(w,title,0,28.4,2.3,33,8.15);
    for(const x of[-36,36])safariSconce(w,x,12,1.1);
    safariArchive(w,48,FLOOR+.1,2.0,0);
    w.box(0,-10.6,2.1,29,2.1,.38,'#775735',22);hudsonText(w,'FIELD NOTES FROM THE RIFT',0,-10.6,2.32,27,'#d8c394');
@@ -545,7 +552,7 @@ function safariShell(b){
    for(const side of[-1,1]){w.box(side*7,-3,1.1,13,40,.85,P.wood,22);w.box(side*7,1,1.58,10.8,27,.20,'#a6ad89',43);w.cylinder(side*2,-6,2.05,.22,.22,3,'#be9e63',41,10);safariSconce(w,side*22,8,1.0);}
    for(const side of[-1,1])w.beam([side*72,29,9],[0,40,9],.48,'#866744',22,6);
    w.beam([-72,28,9],[72,28,9],.25,'#8d714a',22,4);
-   const plaque='house-'+Object.keys(HOUSE_ROOMS).indexOf('safari');if(roomLabels[plaque])roomFrame(w,plaque,0,23.5,1.3,44,10.8);
+   const plaque='house-'+Object.keys(HOUSE_ROOMS).indexOf('safari');if(roomLabels[plaque])safariPlaque(w,plaque,0,23.5,2.3,44,10.8);
   }
   w.pop();walls.push({which,mesh:w.mesh()});
  }

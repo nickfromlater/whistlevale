@@ -113,7 +113,7 @@ float shadow(vec3 n){
  // Only the new Safari surfaces use receiver-plane correction. Each PCF
  // neighbor is compared against its own position on the receiver's plane.
  // Geometric rock normals below separately prevent shadow terminators.
- float material=floor(vMat+.5);bool receiver=material>=86.&&material<=89.;
+ float material=floor(vMat+.5);bool receiver=(material>=86.&&material<=89.)||material==91.;
  vec3 dx=dFdx(p),dy=dFdy(p);float determinant=dx.x*dy.y-dx.y*dy.x;
  vec2 gradient=abs(determinant)>1e-12?vec2(dy.y*dx.z-dx.y*dy.z,dx.x*dy.z-dy.x*dx.z)/determinant:vec2(0.);
  for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){
@@ -256,7 +256,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==23.){base*=.96+.05*noise(p*14.);rough=.8;}
  if(m==24.){base*=.91+.15*noise(p*6.);rough=.42;}
  if(m==25.){em=3.0*uRoomLevel+.025;rough=.32;}
- if(m==32.||m==33.){base=texture(uRoomAtlas,vUV).rgb;rough=.83;}
+ if(m==32.||m==33.||m==91.){base=texture(uRoomAtlas,vUV).rgb;rough=m==91.?1.:.83;}
  if(m==40.){rough=.22;metal=.35;base*=.975+.025*noise(p*35.);}
  if(m==41.){rough=.17;metal=.92;}
  if(m==42.){rough=.65;metal=.16;}
@@ -276,7 +276,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  vec3 albedo=pow(max(base,vec3(0)),vec3(2.2));float ao=1.;
  if(p.y< -9.){float under=(1.-smoothstep(49.,60.,abs(p.x)))*(1.-smoothstep(30.,40.,abs(p.z)));ao*=1.-under*.57*(1.-smoothstep(-24.,-8.,p.y));}
  vec3 lit=albedo*(ambient*(.44+.62*hemi)*ao+lightColor*nl*sh);
- float spec=pow(max(dot(n,h),0.),mix(10.,145.,1.-rough))*mix(.045,.67,metal);lit+=lightColor*spec*sh*mix(vec3(1),albedo,.48*metal);
+ float spec=m==91.?0.:pow(max(dot(n,h),0.),mix(10.,145.,1.-rough))*mix(.045,.67,metal);lit+=lightColor*spec*sh*mix(vec3(1),albedo,.48*metal);
  lit+=albedo*ambient*.13*(1.-hemi)*ao;lit+=albedo*vec3(.10,.082,.055)*max(n.z,0.)*ao*mix(1.,.18,dusk);
  if(m==8.||m==24.)lit+=albedo*lightColor*max(dot(-n,l),0.)*.16*sh;
  // Warm practical lights keep their own dimmer, independent of the sun. The
@@ -286,7 +286,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   float blocker=1.;if(i<2&&p.y< -5.)blocker=1.-.74*(1.-smoothstep(50.,57.,abs(p.x)))*(1.-smoothstep(33.,38.,abs(p.z)));
   float strength=i<2?1.40:1.02;vec3 warm=vec3(1.,.65,.31)*fall*strength*uRoomLevel*blocker;
   lit+=albedo*warm*(diff+.08)*ao;
-  vec3 rh=normalize(ll+v);lit+=warm*pow(max(dot(n,rh),0.),mix(12.,140.,1.-rough))*mix(.025,.22,metal);
+  vec3 rh=normalize(ll+v);if(m!=91.)lit+=warm*pow(max(dot(n,rh),0.),mix(12.,140.,1.-rough))*mix(.025,.22,metal);
  }
  if(dusk>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*.65);lit+=albedo*vec3(1.,.66,.31)*max(dot(n,normalize(lp)),.08)*dusk*fall*3.;}}
  vec3 toHead=uHead-p;float hd=length(toHead);float cone=pow(max(dot(-normalize(toHead),uForward),0.),18.);lit+=albedo*vec3(1.,.69,.32)*cone*max(dot(n,normalize(toHead)),.1)*(dusk*.9+.08)*4./(1.+hd*hd*.15);
