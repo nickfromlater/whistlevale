@@ -2,13 +2,15 @@
 
 Original safari miniature, Solstice monorail, and expedition gallery by
 `nickfromlater`, built with agent assistance. Requested scope: proposal #39.
-No animals or imported scenery are included.
+The later giraffe addition uses a Pixal3D-generated surface, cleaned and rigged
+in Blender, for the family in the western clearing. Its source and process are
+credited in the [model guide](../../models/safari-giraffe/README.md).
 
 ## Visit
 
 Start the normal preview with `npm run dev`, then open `/?room=safari`.
 The live house map discovers this native room at **west-4**.
-Use **Views → Places** for the eight authored compositions, or choose
+Use **Views → Places** for the nine authored compositions, or choose
 train-follow, cab, cutaway, and cinema through the existing house controls.
 
 ## Landscape and architecture
@@ -44,13 +46,28 @@ raised timber surveying hide with optics and an aerial.
 The lodge remains native, deterministic geometry. Existing caption, viewpoint,
 lighting, planting-exclusion and arrival-path metadata now describe the field
 lodge. Use **Views → Places → Kopje House** or **The expedition approach**.
-The monorail route and no-animals scope are preserved; the observation stock
-is now rebuilt for the passenger-window experience described below.
+The monorail route is preserved; the observation stock is rebuilt for the
+passenger-window experience described below.
 
 The rework adds regression proofs that the removed pool builders and water
 materials are absent, buildings stop before the former leisure terrace, and the
 old pool/fire-court footprints are available for planting. Existing clearance,
 finite geometry, cache, motion and unchanged upper vertex budgets still apply.
+
+## The giraffe family
+
+Choose **Views → Places → The giraffe family**. Two adults and a calf follow
+slow routes in the western acacia clearing. Their necks, heads, ears, tails,
+upper legs, lower legs and hooves deform through the saved Blender armature. The hoof targets sample the emitted terrain. Pause stops wildlife
+alongside the railway; reduced motion holds the family still.
+
+The [editable Blender source and export recipe](../../models/safari-giraffe/README.md)
+include the packed generated coat, weighted skin and editable walking timeline.
+One indexed skin and coat texture are shared by the herd, with the same bone
+poses in the color, moving-shadow and live-map passes. Room replacement and
+failed uploads release those resources.
+The generated model and credit travel in playable HTML. Blender is only needed
+for authoring; the website and ordinary checks remain dependency-free.
 
 ## Railway and Solstice
 
@@ -112,6 +129,11 @@ The separately corrected driver view remains available.
 ## Source and checks
 
 - `src/rooms/safari.js`: landscape, guideway, stations, room shell and registration.
+- `models/safari-giraffe/`: editable Blender source, authoring and export recipes.
+- `src/scenery/safari-giraffe-model.js`: generated articulated model data.
+- `src/rooms/safari-wildlife.js`: shared meshes, terrain-aware poses and roaming.
+- `scripts/safari-giraffe-qa.mjs`: source/export hashes, grounding, clearances,
+  animation, shared rendering and resource cleanup.
 - `src/trains/safari.js`: original monorail stock, motion and stock-cache adapter.
 - `src/safari-ride.js` and `.css`: passenger camera, controls and input lifecycle.
 - `scripts/safari-passenger-qa.mjs`: shared pose/glass and lifecycle contracts.

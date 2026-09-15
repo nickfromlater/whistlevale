@@ -1,8 +1,8 @@
 'use strict';
 
 // THE RIFT OBSERVATORY. Original landscape, railway and architecture by
-// nickfromlater, with agent assistance. Proposal #39; no animal geometry.
-// Everything is native, deterministic, and baked outside the frame loop.
+// nickfromlater, with agent assistance. Proposal #39; Blender-authored wildlife added in the western clearing.
+// Landscape is native and baked; shared animal meshes use live articulation.
 const SAFARI={width:112,depth:80,step:.7,water:-2.05,bed:-3.75,beamWidth:.56,beamDepth:.72};
 const SAFARI_LODGE={x:24,z:1,floor:4.45,bounds:[8,-7.3,39,8.5]};
 const SAFARI_WALKS=[[[-28,35],[-36,24],[-37,16],[-32,8],[-29,0],[-20,1],[-14,10],[-11,17],[-6,20]],[[-10,31.3],[-12,26],[-10,23],[-6,20]],[[10.3,20],[12,18.1],[16.5,12.6],[21.2,9.1],[24,7.8]]];
@@ -190,6 +190,9 @@ function safariAcacia(b,x,z,h=5.8,variant=0){
 const SAFARI_TREES=(()=>{
  const trees=[];
  const addTree=(x,z,h,v)=>{
+  if(x>-32&&x< -17&&z>11&&z<24)return; // Open giraffe habitat and its low observation view.
+  // Keep the low portrait observation corridor clear of overhanging crowns.
+  if(x>-24&&x< -8&&z>16&&z<29&&Math.abs(z-(15+(x+24)*.65))<2.2+h*.48)return;
   const near=safariRailNear(x,z),foot=h*.17,levels=[-foot,0,foot].flatMap(dx=>[-foot,0,foot].map(dz=>safariSurface(x+dx,z+dz)));
   if(Math.abs(x)+h*.86>55||Math.abs(z)+h*.86>39||safariBank(x,z)<4.3||near.distance<h*.86+1.2||Math.max(...levels)-Math.min(...levels)>1.1||!safariLodgeClear(x,z,h*.76)||safariWalkDistance(x,z)<1.4||Math.hypot(x+24,z-10.2)<5.8)return;
   if(trees.some(t=>Math.hypot(x-t.x,z-t.z)<1.6))return;
@@ -482,7 +485,8 @@ function safariRoom(scene,b){
  scene.routes=[SAFARI_ROUTE];scene.trains=[{edge:SAFARI_ROUTE,distance:44,speed:1.10,type:'mountain',stock:'safari',cars:3}];
  scene.height=(x,z)=>Math.abs(x)<=56&&Math.abs(z)<=40?Math.max(SAFARI.water,safariSurface(x,z)):FLOOR;
  scene.canPlace=()=>false;
- scene.safari={revision:3,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
+ safariCreateWildlife(scene);
+ scene.safari={revision:4,giraffes:3,lodge:'Kopje House',trees:SAFARI_TREES.length,trackSystem:'straddle-beam',beamWidth:SAFARI.beamWidth,beamDepth:SAFARI.beamDepth};
  scene.spots=[
   {name:'The Rift Observatory',target:[0,5,-1],distance:138,phoneDistance:330,pitch:.60,yaw:.32,detail:'A savanna in miniature. Kopje House opens onto the river, broken escarpments rise behind the railway, and acacia trails lead to the lodge.'},
   {name:'Acacia Gate',target:[-27,7.8,29],distance:32,phoneDistance:62,pitch:.37,yaw:.20,detail:'Linen canopies, timber platforms, and a cream-and-jade panoramic train. The stairs descend to a red-earth walking terrace.'},
@@ -491,7 +495,8 @@ function safariRoom(scene,b){
   {name:'Rift Lookout',target:[15,11.8,-28],distance:37,phoneDistance:68,pitch:.39,yaw:2.84,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
   {name:'Kopje House',target:[24,7,-.8],distance:36,phoneDistance:65,pitch:.29,yaw:.43,detail:'A stone-and-thatch expedition lodge. Briefings around a reserve map, a field library and radio, a canvas mess fly and a timber observation hide. The footpath ends at lantern-lit stone steps.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
-  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'A narrow earth path winds through grass and acacias to broad stone steps. Field notes, provisions and warm lanterns mark the return to camp.'}
+  {name:'The expedition approach',target:[23,5.6,4],distance:26,phoneDistance:48,pitch:.30,yaw:-.58,detail:'A narrow earth path winds through grass and acacias to broad stone steps. Field notes, provisions and warm lanterns mark the return to camp.'},
+  {name:'The giraffe family',target:[-25.2,3.0,14.4],distance:13.2,phoneDistance:24.5,phonePitch:.12,phoneYaw:1.05,pitch:.12,yaw:-.15,detail:'Two adults and a calf roam the acacia clearing. Watch their measured steps, turning heads, flicking ears and swaying tails.'}
  ];
 }
 registerHouseRoom('safari',{
@@ -499,7 +504,7 @@ registerHouseRoom('safari',{
  description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a rugged stone-and-thatch expedition lodge with a map room, canvas mess fly and observation hide, then follow Solstice around the rift.',
  color:'#c1a26b',ambient:'forest',target:[0,4,-1],distance:149,phoneDistance:342,pitch:.60,yaw:.32,
  trainCollection:false,train:{name:'Solstice',number:'01',service:'The Rift Skyway',type:'panoramic electric monorail',power:'electric'},
- credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari landscape, monorail, and expedition gallery; built with agent assistance.'}],
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari landscape, monorail, expedition gallery and Blender-authored animated giraffes; built with agent assistance.'}],
  map:{plot:'west-4',scale:.40,footprint:[158,130],focus:[0,4,-1]},
  lights:[[-41,26.75,-46],[41,26.75,-46],[-41,26.75,46],[41,26.75,46],[-36,12,-61],[36,12,-61]],
  layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[23.8,8.2,.25],[12.25,4.0,-.6],[34.45,11.2,-2.2],[24,4.6,5.1]],

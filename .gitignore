@@ -10,6 +10,7 @@ __pycache__/
 *.log
 evidence/
 design/
+.dream-loop/
 AGENTS.local.md
 CLAUDE.local.md
 alder-valley-grand-division(1).html
