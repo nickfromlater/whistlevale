@@ -1,5 +1,6 @@
 /* An optional collector's cabinet. The railway's quiet default UI stays small. */
 .train-collection-link{display:flex;align-items:center;gap:13px;width:100%;padding:13px 12px;border:1px solid #c5ae7752;border-radius:13px;background:linear-gradient(120deg,#d4bd8720,#d4bd8707);color:#eee4c9;text-align:left}
+.train-collection-link[hidden]{display:none!important}
 .train-collection-link:hover{background:#d4bd8725;border-color:#c5ae778c}
 .train-collection-link>span:nth-child(2){flex:1}.train-collection-link strong{display:block;font-size:14px;font-weight:400}.train-collection-link small{display:block;color:#bac2ab;font-size:11px;margin-top:5px}
 .train-collection-link>svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5}
