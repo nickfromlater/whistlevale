@@ -12,7 +12,7 @@ assert.equal(createHash('sha256').update(await read('src/scenery/safari-giraffe-
 assert.equal(createHash('sha256').update(await readFile(new URL('../models/safari-giraffe/safari-giraffe.blend',import.meta.url))).digest('hex'),receipt.blendSHA256,'editable source matches receipt');
 const report=state.run(`(()=>{
  const source=SAFARI_GIRAFFE_MODEL,scene=getHouseScene('safari'),life=scene.wildlife;
- assert.equal(source.format,'whistlevale-skinned-v1');assert.equal(life.herd.length,3);assert.equal(life.parts.length,1);
+ assert.equal(source.format,'whistlevale-skinned-v1');assert.equal(life.herd.length,3);assert.equal(life.parts.filter(p=>p.name==='skin').length,1);
  assert.ok(source.bones.length<=24&&source.bones.length>=14,'articulated rig fits both shader palettes');
  source.bones.forEach((b,i)=>{assert.ok(b.parent===null||b.parent<i);assert.equal(b.rest.length,7);assert.equal(b.inverseBind.length,16);assert.ok([...b.rest,...b.inverseBind].every(Number.isFinite));});
  const vertices=safariSkinDecode(source.vertexData,Float32Array),indices=safariSkinDecode(source.indexData,Uint32Array);
@@ -31,7 +31,7 @@ const report=state.run(`(()=>{
  const oldDraw=draw,seen=[],oldUniform=gl.uniformMatrix4fv,oldLocation=gl.getUniformLocation;let palette;
  const color={u:{}},shadow={u:{}};mainProgram=color;
  gl.getUniformLocation=(p,name)=>name;gl.uniformMatrix4fv=(name,transpose,m)=>{if(name==='uWildlifeBones[0]')palette=Array.from(m);};
- draw=(mesh,model)=>seen.push({mesh,model,palette});
+ draw=(mesh,model)=>{if(mesh===life.parts[0].mesh)seen.push({mesh,model,palette});};
  try{safariDrawWildlife(scene,color);safariDrawWildlife(scene,shadow);}finally{draw=oldDraw;gl.uniformMatrix4fv=oldUniform;gl.getUniformLocation=oldLocation;}
  assert.equal(seen.length,6);assert.equal(life.time,time,'draw passes do not advance motion');
  for(let i=0;i<3;i++){assert.equal(seen[i].mesh,seen[i+3].mesh);assert.equal(seen[i].model,seen[i+3].model);assert.deepEqual(seen[i].palette,seen[i+3].palette,'shadow and color upload identical bones');assert.equal(seen[i].palette.length,source.bones.length*16);}

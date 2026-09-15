@@ -95,7 +95,7 @@ sandbox.addEventListener=()=>{};sandbox.localStorage={getItem(){return null;},se
 sandbox.hobby={room:'valley',cinema:false,scene:null};sandbox.night=0;sandbox.paused=false;sandbox.window.HOUSE_EMBEDDED_AUDIO={};
 vm.runInContext(await readFile(new URL('../src/playlist.js',import.meta.url),'utf8'),context);
 sandbox.window.HOUSE_AUDIO_AVAILABLE=vm.runInContext('[...AUDIO_ASSETS]',context);
-assert.equal(vm.runInContext('AUDIO_ASSETS.length',context),18,'portable export retains the full soundtrack registry including Yamaai');
+assert.equal(vm.runInContext('AUDIO_ASSETS.length',context),19,'portable export retains the full soundtrack registry including Yamaai and Safari');
 const downloaded=[];sandbox.fetch=async url=>{downloaded.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};};
 const playlistContext=new Context(),mixer=new HouseSoundscape(playlistContext);await mixer.load();
 assert.equal(downloaded.length,7,'initial load is six room effects and the selected piece');assert.equal(mixer.buffers.size,7);
@@ -140,6 +140,14 @@ vm.runInContext('playlistChoice="auto"',context);
 for(const lighting of [0,1]){sandbox.night=lighting;assert.equal(vm.runInContext('playlistWanted()',context),'yamaai-between-mountains');}
 vm.runInContext('playlistChoice="workbench-sunday"',context);
 assert.equal(vm.runInContext('playlistWanted()',context),'workbench-sunday');
+// The safari score follows its room by day and night; pinning still wins.
+sandbox.hobby.room='safari';
+vm.runInContext('playlistChoice="auto"',context);
+for(const lighting of [0,1]){sandbox.night=lighting;assert.equal(vm.runInContext('playlistWanted()',context),'safari-acacia-express');}
+sandbox.hobby.cinema=false;assert.equal(vm.runInContext('playlistAudible()',context),false,'automatic safari score waits for cinema');
+vm.runInContext('playlistChoice="workbench-sunday"',context);
+assert.equal(vm.runInContext('playlistWanted()',context),'workbench-sunday');assert.equal(vm.runInContext('playlistAudible()',context),true,'pinned record stays available outside cinema');
+sandbox.hobby={room:'yamaai',cinema:true,scene:{trains:[]}};
 // A direct guest-room visit never starts the spoken house greeting.
 const greetingRequests=downloaded.length;
 await vm.runInContext('playArrival()',context);assert.equal(downloaded.length,greetingRequests);

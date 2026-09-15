@@ -90,7 +90,11 @@ Blender; delivery uses a shared embedded 2048px JPEG with mipmaps.
 Material 90 enables skinning in both native color and shadow shaders. Other
 materials retain their existing path. Three animals share the immutable skin;
 only their root transforms and small bone palettes change each frame. Runtime
-leg solving adapts the authored stride to the actual terrain. Simulation owns
+leg solving adapts the authored stride to the actual terrain. A later motion
+pass replaced the 130-second miniature orbit with a 32-second walking and
+browsing cycle. Stance corrections ramp smoothly in and out; dropping a foot
+anchor abruptly had produced visible toe-off jumps. Actual deformed muzzle
+positions are checked against the leaf targets, including the calf-height crown. Simulation owns
 the clock so extra shadow/map drawing cannot advance animation.
 
 ## 6. Verify the result

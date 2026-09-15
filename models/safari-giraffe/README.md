@@ -16,8 +16,11 @@ tail and four upper/lower/hoof chains. This is a weighted deforming mesh.
 The walk uses solved foot paths with a planted stance and short recovery.
 
 The game shares one indexed mesh and a 2048px coat between two adults and a calf.
-It interpolates the authored walk, adds subtle head/ear/tail motion, offsets rest
-intervals, and adjusts each leg to the rendered terrain. Color, shadow and live
+It interpolates the authored walk at a distance-matched cadence, keeps stance
+hooves planted through turns with smooth release, and adjusts each leg to the
+rendered terrain. Independently phased 32-second routes include eight-second
+settle/browse/depart intervals at actual leaf crowns; the calf has a reachable
+sapling. Head, neck, ears and tail add quiet secondary movement. Color, shadow and live
 map passes consume the same bone palette. Pause and reduced motion freeze the
 family; room disposal releases the shared buffers and texture.
 
