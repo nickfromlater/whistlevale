@@ -394,6 +394,7 @@ function collectionChoice(room){return selectedCollection[room]||collectionDefau
 function collectionTrainLabel(room){if(HOUSE_ROOMS[room]?.trainCollection===false)return {...HOUSE_ROOMS[room].train};const choice=collectionChoice(room),q=collectionById.get(choice.id);return {...q,type:q.power==='steam'?q.arrangement+' steam':q.service.toLowerCase()};}
 function collectionPower(room){
  if(HOUSE_ROOMS[room]?.railway===false)return null;
+ if(HOUSE_ROOMS[room]?.trainCollection===false)return HOUSE_ROOMS[room].train?.power||null;
  if(selectedCollection[room])return collectionById.get(selectedCollection[room].id).power;
  return room==='valley'||roomScenes.get(room)?.trains[0]?.type==='steam'?'steam':'electric';
 }

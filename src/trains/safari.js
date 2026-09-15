@@ -16,8 +16,12 @@ function safariCarHull(b,roof=false,cab=false){
   for(const z of[-1.83,-.96,-.09,.78,1.63])b.beam([-.47,1.984,z],[.47,1.984,z],.012,trim,41,6);
   for(const x of[-.55,.55])b.beam([x,1.94,-1.98],[x,1.94,cab?1.62:1.98],.018,cream,40,6);
   if(cab){
-   const p=(a,z,r)=>[Math.cos(a)*.68*r,1.79+Math.sin(a)*.255*r,z];
-   for(let i=0;i<16;i++){const a=i*PI/16,q=(i+1)*PI/16;b.quad(p(a,1.75,1),p(a,2.20,.52),p(q,2.20,.52),p(q,1.75,1),cream,40);}
+   const p=(a,z,r,y)=>[Math.cos(a)*.68*r,y+Math.sin(a)*.255*r,z];
+   for(let i=0;i<16;i++){
+    const a=i*PI/16,q=(i+1)*PI/16;
+    b.quad(p(a,1.75,1,1.79),p(a,2.23,.46,1.49),p(q,2.23,.46,1.49),p(q,1.75,1,1.79),cream,40);
+    b.tri([0,1.49,2.23],p(q,2.23,.46,1.49),p(a,2.23,.46,1.49),cream,40);
+   }
   }
   return;
  }
@@ -110,7 +114,7 @@ function safariDrawFormation(scene,train,p){
   if(!open&&!(i===0&&viewMode==='cab'&&p===mainProgram))draw(cab?stock.motorRoof:stock.trailerRoof,body,p);
   for(const offset of[-SAFARI_STOCK.bogieSpread,SAFARI_STOCK.bogieSpread]){
    const bogie=circuitMatrix(train.edge,d+offset);draw(stock.bogie,bogie,p);
-   for(const zz of[-.24,.24])draw(stock.loadWheel,mm(bogie,mm(trans(0,.14,zz),rx(travel/SAFARI_STOCK.loadRadius))),p);
+   for(const zz of[-.24,.24])draw(stock.loadWheel,mm(bogie,mm(trans(0,.14,zz),rx(-travel/SAFARI_STOCK.loadRadius))),p);
    for(const side of[-1,1])for(const zz of[-.27,.27])draw(stock.guideWheel,mm(bogie,mm(trans(side*.406,-.27,zz),ry(side*travel/SAFARI_STOCK.guideRadius))),p);
   }
  }

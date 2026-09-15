@@ -15,7 +15,8 @@ const report=state.run(`(()=>{
  assert.equal(collectionTrainLabel('safari').name,'Solstice');assert.equal(collectionPower('safari'),'electric');
  assert.throws(()=>chooseCollectionTrain('safari',{id:'tern',livery:0,cars:2}),/unavailable/);
  selectedCollection.safari={id:'tern',livery:0,cars:2};applyCollectionToScene(scene);
- assert.equal(scene.trains[0].stock,'safari','persisted ordinary stock cannot enter the monorail');delete selectedCollection.safari;
+ assert.equal(scene.trains[0].stock,'safari','persisted ordinary stock cannot enter the monorail');
+ assert.equal(collectionPower('safari'),'electric','incompatible saved stock cannot change the monorail audio identity');delete selectedCollection.safari;
  const edge=SAFARI_ROUTE,a=edge.at(0),q=edge.at(edge.length);
  assert.ok(len(sub(a.p,q.p))<1e-8,'closed rail position');assert.ok(dot(a.f,q.f)>.9999,'closed rail tangent');
  let grade=0,clearance=Infinity;
@@ -24,6 +25,18 @@ const report=state.run(`(()=>{
   assert.ok(Math.abs(p.p[0])<53&&Math.abs(p.p[2])<35,'route stays on the board');
  }
  assert.ok(grade<.11,'maximum grade is bounded: '+grade);assert.ok(clearance>.20,'finished terrain clears beam and car envelope: '+clearance);
+ // Platforms and their complete stair widths stay above finished terrain.
+ const stationClearances={};
+ for(const [name,x0,x1,z0,z1,y]of[['gate',-38,-18,28.85,33.45,7.44],['ridge',6,26,-33.45,-28.85,11.84]]){
+  let min=Infinity;for(let x=x0;x<=x1;x+=.23)for(let z=z0;z<=z1;z+=.23)min=Math.min(min,y-safariSurface(x,z));
+  assert.ok(min>.40,name+' platform clears terrain: '+min);stationClearances[name]=min;
+ }
+ for(const [name,x0,x1,z,top,n,half]of[['gate',-18,-10,31.3,7.44,32,1.08],['ridge',6,.5,-31.15,11.84,24,.85]]){
+  const bottom=safariLandingHeight(x1,z,half);assert.ok((top-bottom)/Math.abs(x1-x0)<.85,name+' stair gradient');
+  for(let i=0;i<n;i++){const x=mix(x0,x1,(i+.5)/n),y=mix(top,bottom,(i+1)/n);for(const side of[-half,0,half])assert.ok(y-safariSurface(x,z+side)>0,name+' tread is not buried');}
+ }
+ // A forward rolling load tyre moves backward at its contact patch.
+ const r=SAFARI_STOCK.loadRadius,p0=[0,-r,0],p1=transform(p0,rx(.001/r));assert.ok(p1[2]<p0[2],'correct load tyre rolling direction');
  // Check the exact emitted terrain triangle interpolation at both halves.
  const g=SAFARI_GRID;
  for(let i=0;i<110;i++){const ix=i*31%g.nx,iz=i*19%g.nz,x=-56+ix*g.dx,z=-40+iz*g.dz;
@@ -44,7 +57,7 @@ const report=state.run(`(()=>{
  assert.ok(Math.abs(.406-SAFARI_STOCK.guideRadius-(SAFARI.beamWidth/2+.006))<1e-10,'guide tyres meet the side strips');
  const disposed=[],oldDispose=disposeMesh;disposeMesh=mesh=>disposed.push(mesh);try{buildCollectionStock();}finally{disposeMesh=oldDispose;}
  for(const mesh of Object.values(stock))assert.ok(disposed.includes(mesh),'rebuild releases every monorail mesh');
- return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),stockVertices:vertices,trees:SAFARI_TREES.length,treeVertices,routeLength:edge.length,maxGrade:grade,minimumTerrainClearance:clearance,minimumTreeClearance:treeClearance};
+ return {room:'safari',sceneVertices:scene.mesh.count,wallVertices:scene.walls.map(w=>w.mesh.count),stockVertices:vertices,trees:SAFARI_TREES.length,treeVertices,routeLength:edge.length,stationClearances,maxGrade:grade,minimumTerrainClearance:clearance,minimumTreeClearance:treeClearance};
 })()`);
 state.run(await read('src/shop-house.js'));
 state.run(`assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.row,3);assert.equal(SHOP_HOUSE_LAYOUT.byKey.safari.column,0);assert.ok(!SHOP_HOUSE_LAYOUT.plots.some(p=>p.id==='west-4'));`);

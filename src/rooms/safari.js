@@ -37,7 +37,9 @@ function safariRawHeight(x,z){
  const erosion=(.19*Math.sin(x*.9+Math.sin(z*.6))+.11*Math.sin(z*1.15+x*.22))*smooth(2.8,9,ridge);
  let h=mix(SAFARI.bed,roll+ridge+erosion,smooth(-.20,5.3,bank));
  // A high geological shelf carries the ridge station and its terrace.
- h=mix(h,8.1,(1-smooth(6.5,10.5,Math.abs(x-16)))*(1-smooth(2.8,5.1,Math.abs(z+32))));
+ h=mix(h,8.1,(1-smooth(11,14,Math.abs(x-16)))*(1-smooth(3.9,6,Math.abs(z+32))));
+ // The stair landing occupies a small shoulder of that same geological shelf.
+ h=mix(h,8.1,(1-smooth(3.2,5,Math.abs(x-3.2)))*(1-smooth(1.5,3.2,Math.abs(z+31.15))));
  // The approach remains a useful walking terrace rather than a hillside.
  h=mix(h,1.15,(1-smooth(11,15,Math.abs(x+27)))*(1-smooth(2,4.5,Math.abs(z-35.5))));
  const rail=safariRailNear(x,z);
@@ -201,6 +203,7 @@ function safariCanopy(b,x,y,z,w=16,d=4.5){
  for(const side of[-1,1])b.beam([x-w/2,y+2.73,z+side*d/2],[x+w/2,y+2.73,z+side*d/2],.035,'#a18350',22,6);
  b.beam([x-w/2,y+2.4,z+d*.34],[x+w/2,y+2.4,z+d*.34],.060,'#8b704a',22,6);
 }
+function safariLandingHeight(x,z,halfWidth=.9){return Math.max(...[-halfWidth,0,halfWidth].map(dz=>safariSurface(x,z+dz)))+.05;}
 function safariStation(b,{x,z,rail,name,flip=false}){
  const side=flip?-1:1,y=rail+.64,cz=z+side*3.15,w=20,d=4.6;
  for(const dx of[-8.8,-3,3,8.8])for(const dz of[-1.8,1.8]){
@@ -212,7 +215,7 @@ function safariStation(b,{x,z,rail,name,flip=false}){
  for(let i=0;i<40;i++)b.box(x-w/2+.2+i*.50,y+.076,z+side*1.02,.20,.016,.06,'#b89953',41);
  safariCanopy(b,x+.8,y,cz,16.7,4.5);
  safariRailings(b,[[x-10,y,cz+side*2.22],[x+10,y,cz+side*2.22]]);
- safariRailings(b,[[x-10,y,z+side*1.08],[x-10,y,cz+side*2.22]]);
+ const closedEnd=x+(flip?10:-10);safariRailings(b,[[closedEnd,y,z+side*1.08],[closedEnd,y,cz+side*2.22]]);
  for(const xx of[x-5.2,x+2.8]){bench(b,xx,y+.075,cz+side*.5,flip?PI:0);houseLamp(b,xx,y+.07,cz+side*1.5,1.8);}
  b.push(x,y+2.06,cz+side*1.67,0,flip?PI:0);b.box(0,0,0,7.9,.67,.12,SAFARI_PALETTE.jade,40);hudsonText(b,name,0,-.035,.071,7.4,SAFARI_PALETTE.ivory);b.pop();
  // The information kiosk has a shallow pitched cap and recessed field map.
@@ -220,15 +223,15 @@ function safariStation(b,{x,z,rail,name,flip=false}){
  for(let i=0;i<5;i++)b.beam([-.28,1.27-i*.1,.248],[.12+(i%2)*.17,1.27-i*.1,.248],.009,'#73856a',0,4);
  b.box(0,1.53,0,1.04,.11,.54,'#9c8153',22);b.pop();
  if(!flip){
-  const x0=x+10,x1=x+18,zz=cz+.15,base=safariSurface(x1,zz),n=32,run=(x1-x0)/n;
+  const x0=x+10,x1=x+18,zz=cz+.15,base=safariLandingHeight(x1,zz,1.08),n=32,run=(x1-x0)/n;
   for(let i=0;i<n;i++){const xx=x0+(i+.5)*run,yy=mix(y,base,(i+1)/n);b.box(xx,yy-.055,zz,run+.01,.11,1.85,'#c5ad7c',22);}
   for(const s of[-1,1]){b.beam([x0,y-.20,zz+s*.70],[x1,base-.07,zz+s*.70],.11,'#796548',41,5);safariRailings(b,[[x0,y,zz+s*.88],[x1,base,zz+s*.88]],.73);}
   b.box(x1,base-.05,zz,1.1,.14,2.15,'#bcac81',4);housePath(b,[[x1,zz],[x1-.9,36],[x1-5,38]],.95,safariSurface,'#d2be8b');
  }else{
-  const x0=x-10,x1=x-15.5,zz=cz,ground=safariSurface(x1,zz),n=24;
+  const x0=x-10,x1=x-15.5,zz=cz,ground=safariLandingHeight(x1,zz,.85),n=24;
   for(let i=0;i<n;i++){const px=mix(x0,x1,(i+.5)/n),yy=mix(y,ground,(i+1)/n);b.box(px,yy-.065,zz,.24,.13,1.65,'#bca378',22);}
   for(const side of[-1,1]){b.beam([x0,y-.20,zz+side*.62],[x1,ground-.08,zz+side*.62],.09,'#82734d',41,5);safariRailings(b,[[x0,y,zz+side*.80],[x1,ground,zz+side*.80]],.72);}
-  housePath(b,[[x1,zz],[x1-1,-35],[x1+3,-37]],.7,safariSurface,'#c9b385');
+  housePath(b,[[x1,zz],[2,-34.1],[7,-35.2]],.7,safariSurface,'#c9b385');
  }
 }
 function safariLookout(b){
@@ -333,7 +336,7 @@ function safariRoom(scene,b){
   {name:'Rift Lookout',target:[15,12,-28],distance:40,phoneDistance:73,pitch:.42,yaw:-.38,detail:'An elevated timber terrace follows a shelf in the escarpment. The line bends around the rock, leaving the panoramic windows open to the view.'},
   {name:'The river ribbon',target:[0,-.3,3],distance:41,phoneDistance:76,pitch:.62,yaw:.58,detail:'Green water, pale banks, reeds and exposed geological layers. Every shoreline follows the actual terrain.'},
   {name:'The eastern sweep',target:[42,9,4],distance:40,phoneDistance:72,pitch:.38,yaw:.85,detail:'The monorail climbs on tapered piers, with visible bearings, guide strips and expansion joints.'},
-  {name:'A seat above the valley',target:[30,6,-8],distance:27,phoneDistance:47,pitch:.33,yaw:.63,detail:'A timber observation deck looks into the rift. Two little scopes and an orientation table reward a closer look.'}
+  {name:'A seat above the valley',target:[30,5.6,-8],distance:27,phoneDistance:47,pitch:.33,yaw:.63,detail:'A timber observation deck looks into the rift. Two little scopes and an orientation table reward a closer look.'}
  ];
 }
 registerHouseRoom('safari',{
