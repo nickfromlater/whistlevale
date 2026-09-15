@@ -238,6 +238,7 @@ function safariCanopy(b,x,y,z,w=16,d=4.5){
  for(const side of[-1,1])b.beam([x-w/2,y+2.73,z+side*d/2],[x+w/2,y+2.73,z+side*d/2],.035,'#a18350',22,6);
  b.beam([x-w/2,y+2.4,z+d*.34],[x+w/2,y+2.4,z+d*.34],.060,'#8b704a',22,6);
 }
+const SAFARI_RIDGE_PATH=[[.5,-31.15],[2,-31.8],[4,-32]];
 function safariLandingHeight(x,z,halfWidth=.9){return Math.max(...[-halfWidth,0,halfWidth].map(dz=>safariSurface(x,z+dz)))+.05;}
 function safariStation(b,{x,z,rail,name,flip=false}){
  const side=flip?-1:1,y=rail+.64,cz=z+side*3.15,w=20,d=4.6;
@@ -266,7 +267,7 @@ function safariStation(b,{x,z,rail,name,flip=false}){
   const x0=x-10,x1=x-15.5,zz=cz,ground=safariLandingHeight(x1,zz,.85),n=24;
   for(let i=0;i<n;i++){const px=mix(x0,x1,(i+.5)/n),yy=mix(y,ground,(i+1)/n);b.box(px,yy-.065,zz,.24,.13,1.65,'#bca378',22);}
   for(const side of[-1,1]){b.beam([x0,y-.20,zz+side*.62],[x1,ground-.08,zz+side*.62],.09,'#82734d',41,5);safariRailings(b,[[x0,y,zz+side*.80],[x1,ground,zz+side*.80]],.72);}
-  housePath(b,[[x1,zz],[2,-34.1],[7,-35.2]],.7,safariSurface,'#c9b385');
+  housePath(b,SAFARI_RIDGE_PATH,.7,safariSurface,'#c9b385');
  }
 }
 function safariLookout(b){

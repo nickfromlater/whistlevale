@@ -40,6 +40,8 @@ const terrainReport=state.run(`(()=>{
   const bottom=safariLandingHeight(x1,z,half);assert.ok((top-bottom)/Math.abs(x1-x0)<.85,name+' stair gradient');
   for(let i=0;i<n;i++){const x=mix(x0,x1,(i+.5)/n),y=mix(top,bottom,(i+1)/n);for(const side of[-half,0,half])assert.ok(y-safariSurface(x,z+side)>0,name+' tread is not buried');}
  }
+ const path=new Builder();housePath(path,SAFARI_RIDGE_PATH,.7,safariSurface,'#c9b385');
+ const heights=path.data.filter((_,i)=>i%12===1);assert.ok(Math.max(...heights)-Math.min(...heights)<.12,'ridge footpath stays on its planting shelf');
  // A forward rolling load tyre moves backward at its contact patch.
  const r=SAFARI_STOCK.loadRadius,p0=[0,-r,0],p1=transform(p0,rx(.001/r));assert.ok(p1[2]<p0[2],'correct load tyre rolling direction');
  // Check the exact emitted terrain triangle interpolation at both halves.

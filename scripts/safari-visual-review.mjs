@@ -23,7 +23,7 @@ const page=await context.newPage(),errors=[],consoleErrors=[];
 const report={renderer:null,capture:'native WebGL readback, paused animation between captures',hardwarePerformanceVerified:false,views:[],checks:[],uiCaptureErrors:[],errors,consoleErrors};
 page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
 page.setDefaultTimeout(90000);
-async function settle(target=page){await target.evaluate(()=>{resize();updateCamera(20);updateUI();render();gl.finish();});}
+async function settle(target=page){await target.evaluate(()=>{resize();updateCamera(20);updateUI();render();updateEditorOverlay();gl.finish();});}
 async function snap(name,{ui=false,target=page}={}){
  console.log('Capture:',name);await settle(target);
  const result=await target.evaluate(()=>({png:canvas.toDataURL('image/png'),width:canvas.width,height:canvas.height,error:gl.getError()}));
