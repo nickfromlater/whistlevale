@@ -1,0 +1,30 @@
+name: Safari iteration workspace
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.head_ref == 'codex/safari-observatory' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Package tracked source and reviewer runtime
+        run: |
+          mkdir -p /tmp/safari-iteration
+          git archive --format=tar HEAD -o /tmp/safari-iteration/source.tar
+          git rev-parse HEAD > /tmp/safari-iteration/source-commit.txt
+          cp "$(command -v node)" /tmp/safari-iteration/node24
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safari-iteration-workspace
+          path: /tmp/safari-iteration/
+          retention-days: 1
