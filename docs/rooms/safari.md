@@ -8,7 +8,7 @@ No animals or imported scenery are included.
 
 Start the normal preview with `npm run dev`, then open `/?room=safari`.
 The live house map discovers this native room at **west-4**.
-Use **Views → Places** for the eight authored compositions, or choose
+Use **Views → Places** for the nine authored compositions, or choose
 train-follow, cab, cutaway, and cinema through the existing house controls.
 
 ## Landscape and architecture
@@ -138,3 +138,10 @@ The additional passenger review is `node scripts/safari-ride-review.mjs`, using
 the same external Playwright variable and preview server. Its evidence is kept
 in `evidence/safari-ride/`. A software-rendered browser is not a frame-rate
 measurement or a physical-phone gesture test.
+
+Rock and concrete shading use the actual triangle face normal, alongside
+receiver-plane shadow filtering. Same-camera comparisons isolated the diagonal
+hatching to smoothed normals lighting geometrically back-facing cliff facets,
+not depth-sampler precision. This keeps the sharply cut shelves legible without
+disabling their shadows or applying a large detached-shadow bias. The source
+remains native to the house renderer; other materials keep their existing normals.

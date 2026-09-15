@@ -102,9 +102,9 @@ float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mi
 float shadow(vec3 n){
  vec3 p=vShadow.xyz/vShadow.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.||p.z>1.)return 1.;
  float bias=max(.00024,.00064*(1.-dot(n,uSun))),s=0.;vec2 size=vec2(textureSize(uShadow,0)),texel=1./size;
- // Only the new Safari surfaces use receiver-plane correction. Comparing
- // sloped rock against a neighbor texel's uncorrected depth made diagonal
- // self-shadow hatching across the cliff faces and the long concrete beam.
+ // Only the new Safari surfaces use receiver-plane correction. Each PCF
+ // neighbor is compared against its own position on the receiver's plane.
+ // Geometric rock normals below separately prevent shadow terminators.
  float material=floor(vMat+.5);bool receiver=material>=86.&&material<=89.;
  vec3 dx=dFdx(p),dy=dFdy(p);float determinant=dx.x*dy.y-dx.y*dy.x;
  vec2 gradient=abs(determinant)>1e-12?vec2(dy.y*dx.z-dx.y*dy.z,dx.x*dy.z-dy.x*dx.z)/determinant:vec2(0.);
@@ -195,7 +195,12 @@ vec4 moonlightBeam(vec2 uv,float night){
  return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
 }
 // MOONLIGHT_BEAM_END
-void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
+void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;
+ // Rock and concrete use the emitted triangle's actual face normal. Smoothing
+ // across a sharp ledge lights geometrically back-facing triangles, producing
+ // a striped shadow terminator that extra depth precision cannot correct.
+ if(m==86.||m==89.)n=normalize(cross(dFdx(vPos),dFdy(vPos)));
+ vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
  if(m==83.){frag=vec4(moonlightPicture(vUV,uTime),1.);return;}
  if(m==84.){frag=moonlightBeam(vUV,uNight);return;}
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);

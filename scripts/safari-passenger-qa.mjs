@@ -54,7 +54,7 @@ const canvas=context.canvas;canvas.dispatch('pointerdown',{clientX:120,clientY:2
 run(`assert.equal(safariRide.pointers.size,0);assert.equal(safariRide.pinch,null);`);
 canvas.dispatch('pointerdown',{pointerId:1,clientX:120,clientY:200});canvas.dispatch('pointerdown',{pointerId:2,clientX:200,clientY:200});canvas.dispatch('pointermove',{pointerId:2,clientX:260,clientY:200});
 run(`assert.ok(safariRide.zoom<1);`);context.window.dispatch('blur');run(`assert.equal(safariRide.pointers.size,0);`);
-run(`safariResetLook();setView('window-left');assert.equal(safariRide.side,-1);safariRideMotion.matches=true;safariRide.yaw=.45;updateCamera(.001);assert.equal(safariRide.lookYaw,.45);safariRideMotion.matches=false;safariResetLook();`);
+run(`safariResetLook();setView('window-left');updateUI();assert.equal($('safariWindowView').attributes.get('aria-pressed'),'true');assert.equal(safariRide.side,-1);safariRideMotion.matches=true;safariRide.yaw=.45;updateCamera(.001);assert.equal(safariRide.lookYaw,.45);safariRideMotion.matches=false;safariResetLook();`);
 context.window.dispatch('keydown',{key:'ArrowLeft',target:canvas});run(`assert.ok(safariRide.yaw<.17);`);
 context.window.dispatch('keydown',{key:'Home',target:canvas});run(`assert.equal(safariRide.yaw,.17);`);
 context.window.dispatch('keydown',{key:'Escape',target:canvas});run(`assert.equal(viewMode,'overview');assert.ok(!safariRide.mounted);assert.equal(orbit.distance,55);`);
@@ -64,3 +64,6 @@ const listenerCount=[...canvas.listeners.values()].reduce((n,a)=>n+a.length,0);
 run(`for(let i=0;i<50;i++){setView('window-left');setView('follow');}assert.equal(paused,true);assert.equal(throttle,42);assert.equal(cutaway,true);`);
 assert.equal([...canvas.listeners.values()].reduce((n,a)=>n+a.length,0),listenerCount);
 console.log(JSON.stringify({...geometry,inputLifecycle:true,listenersStableAcrossEntries:true},null,2));
+
+const renderer=await readFile(new URL('../src/railway.js',import.meta.url),'utf8');
+assert.ok(renderer.includes('if(m==86.||m==89.)n=normalize(cross(dFdx(vPos),dFdy(vPos)));'),'sharp rock and concrete use their geometric surface normal');

@@ -59,6 +59,7 @@ updateUI=function(){
  const available=safariPassengerAvailable(),active=safariPassengerActive();
  for(const button of document.querySelectorAll('[data-passenger-only]'))button.hidden=!available;
  $('safariSeatControls').hidden=!active;document.body.classList.toggle('passenger-seat',active);
+ $('safariWindowView').classList.toggle('selected',active);$('safariWindowView').setAttribute('aria-pressed',String(active));
  if(!active)return;
  $('safariSeatLeft').setAttribute('aria-pressed',String(safariRide.side===-1));$('safariSeatRight').setAttribute('aria-pressed',String(safariRide.side===1));
  $('safariSeatSide').textContent=safariRide.side===1?'Right window':'Left window';

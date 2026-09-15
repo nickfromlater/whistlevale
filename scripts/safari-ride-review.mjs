@@ -35,7 +35,7 @@ try{
  await orbitView('01-rift-landscape',[0,5,-1],138,.32,.60);
  await orbitView('02-eastern-bedding',[26,8,-21],52,-.45,.44);
  await orbitView('03-western-gorge',[-30,6,-23],46,.49,.34);
- await orbitView('04-water-and-stone',[13,6,-13],26,-.48,.42);
+ await page.evaluate(()=>{const button=[...document.querySelectorAll('#roomPlaces button')].find(b=>b.textContent.includes('The spring cascade'));if(!button)throw new Error('Cascade view missing');button.click();closeQuietControls();});await image('04-water-and-stone');
  await orbitView('05-acacia-ground',[-25,4,8],34,.12,.34);
  await page.evaluate(()=>setView('engine',false));await image('06-solstice',true);
  await page.evaluate(()=>{cutaway=true;shadowDirty=true;});await image('07-carriage-interior');
@@ -52,7 +52,7 @@ try{
  await page.mouse.move(630,360);await page.mouse.down();await page.mouse.move(790,445,{steps:4});await page.mouse.up();await image('13-look-around');
  assert.ok(await page.evaluate(()=>safariPassengerActive()&&Math.abs(safariRide.yaw-.17)>.1));
  await page.keyboard.press('Home');await page.keyboard.press('ArrowLeft');assert.ok(await page.evaluate(()=>safariRide.yaw>.17));
- await page.locator('#safariSeatLeft').click();assert.equal(await page.evaluate(()=>viewMode),'window-left');
+ await page.locator('#safariSeatLeft').click();assert.equal(await page.evaluate(()=>viewMode),'window-left');assert.equal(await page.locator('#safariWindowView').getAttribute('aria-pressed'),'true');
  await page.locator('#safariSeatRight').click();
  assert.deepEqual(await page.evaluate(()=>({throttle,paused,cutaway})),{throttle:controls.throttle,paused:controls.paused,cutaway:controls.cutaway});
  await page.evaluate(()=>{canvas.focus();});await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>safariPassengerActive()),false);
