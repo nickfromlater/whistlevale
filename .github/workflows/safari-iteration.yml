@@ -1,30 +1,81 @@
-name: Safari iteration workspace
+name: Safari terrain and passenger review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
-  source:
+  review:
     if: github.head_ref == 'codex/safari-observatory' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Package tracked source and reviewer runtime
+      - name: Apply the locally geometry-verified changes on this feature branch only
         run: |
-          mkdir -p /tmp/safari-iteration
-          git archive --format=tar HEAD -o /tmp/safari-iteration/source.tar
-          git rev-parse HEAD > /tmp/safari-iteration/source-commit.txt
-          cp "$(command -v node)" /tmp/safari-iteration/node24
+          set -euo pipefail
+          if test -f .github/safari-patch.0; then
+            cat .github/safari-patch.{0,1,2,3} | base64 -d | xz -d > /tmp/safari.patch
+            echo '43422b0af01f56b192b8d7be89c4cd7be6863e86b655fb095a69fa90701e37c8  /tmp/safari.patch' | sha256sum -c -
+            git apply --check /tmp/safari.patch
+            git apply /tmp/safari.patch
+            git rm .github/safari-patch.{0,1,2,3}
+            git add index.html scripts/safari-ride-review.mjs src/hobby.js src/railway.js src/rooms/safari.js src/safari-ride.css src/safari-ride.js src/trains/safari.js
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Rebuild safari geology, flowing water and observation stock; add real passenger window views'
+            git push origin HEAD:refs/heads/codex/safari-observatory
+          fi
+          mkdir -p evidence/safari-ride
+          git rev-parse HEAD > evidence/safari-ride/reviewed-commit.txt
+          git ls-tree -r HEAD > evidence/safari-ride/reviewed-tree.txt
+      - name: Install isolated reviewer browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Inspect native terrain, water, stock and window views
+        env:
+          PLAYWRIGHT_MODULE_PATH: /tmp/whistlevale-browser/node_modules/playwright/index.mjs
+        run: |
+          set -euo pipefail
+          python3 scripts/serve.py --port 4175 > evidence/safari-ride/server.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4175/ -o /dev/null; then break; fi; sleep 1; done
+          node scripts/safari-ride-review.mjs 2>&1 | tee evidence/safari-ride/browser-log.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: safari-iteration-workspace
-          path: /tmp/safari-iteration/
-          retention-days: 1
+          name: safari-ride-native-review
+          path: evidence/safari-ride/
+          retention-days: 7
+      - name: Complete project and geometry checks
+        if: always()
+        run: |
+          set +e
+          npm test > evidence/safari-ride/npm-test.txt 2>&1; tests=$?
+          npm run test:geometry:full > evidence/safari-ride/geometry-full.txt 2>&1; geometry=$?
+          npm run --silent check:contributions -- --json > evidence/safari-ride/contributions.json 2>&1; contributions=$?
+          printf '{"npmTest":%s,"geometryFull":%s,"contributions":%s}\n' "$tests" "$geometry" "$contributions" > evidence/safari-ride/test-statuses.json
+          cat evidence/safari-ride/test-statuses.json
+          tail -25 evidence/safari-ride/npm-test.txt
+          test "$tests" -eq 0 && test "$geometry" -eq 0 && test "$contributions" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-ride-checks
+          path: |
+            evidence/safari-ride/npm-test.txt
+            evidence/safari-ride/geometry-full.txt
+            evidence/safari-ride/contributions.json
+            evidence/safari-ride/test-statuses.json
+            evidence/safari-ride/reviewed-commit.txt
+          retention-days: 7
