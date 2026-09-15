@@ -1,0 +1,22 @@
+name: Safari review workspace
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  review:
+    if: github.head_ref == 'codex/safari-observatory'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package tracked public source for isolated visual review
+        run: git archive --format=tar HEAD -o /tmp/whistlevale-review.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: whistlevale-safari-review-source
+          path: /tmp/whistlevale-review.tar
+          retention-days: 1
