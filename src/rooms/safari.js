@@ -599,7 +599,7 @@ registerHouseRoom('safari',{
  description:'A richly planted savanna, broken escarpments and a winding green river. Visit Kopje House, a rugged stone-and-thatch expedition lodge with a map room, canvas mess fly and observation hide, then follow Solstice around the rift.',
  color:'#c1a26b',ambient:'forest',target:[0,4,-1],distance:149,phoneDistance:342,pitch:.60,yaw:.32,
  trainCollection:false,train:{name:'Solstice',number:'01',service:'The Rift Skyway',type:'panoramic electric monorail',power:'electric'},
- credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari, monorail and expedition gallery; Blender-rigged giraffes and native animated zebras and elephant, with agent assistance.'}],
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original safari, monorail and expedition gallery; Pixal3D surfaces and Blender-rigged giraffes, zebras and elephant, with agent assistance.'}],
  map:{plot:'west-4',scale:.40,footprint:[158,130],focus:[0,4,-1]},
  lights:[[-41,26.75,-46],[41,26.75,-46],[-41,26.75,46],[41,26.75,46],[-36,12,-61],[36,12,-61]],
  layoutLights:[[-33.2,9.3,32.65],[-25.2,9.3,32.65],[10.8,13.7,-32.65],[18.8,13.7,-32.65],[23.8,8.2,.25],[12.25,4.0,-.6],[34.45,11.2,-2.2],[24,4.6,5.1]],

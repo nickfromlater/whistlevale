@@ -109,9 +109,11 @@ local flow coordinates replace the earlier world-space striped ribbon.
 
 Safari-only surface materials 86–89 provide rock, flowing water, ground and
 concrete. Their receiver-plane shadow comparison accounts for sloping surfaces
-inside the shadow-map filter, avoiding diagonal self-shadow hatching. Other
-materials retain the original shadow comparison. No shader dependencies or
-image textures have been added.
+inside the shadow-map filter, avoiding diagonal self-shadow hatching. Material
+90 carries the Pixal3D wildlife coats and weighted skins. Gallery plaque
+material 91 uses the existing atlas with matte lighting, no sun or lamp
+specular reflection, and receiver-plane shadows, keeping lettering readable
+from either side. Other materials retain their existing behavior.
 
 Solstice now has a continuous chamfered ivory/green body, bronze window reveals,
 rounded clear apertures, transparent roof skylights, upholstered observation
@@ -184,7 +186,7 @@ remains native to the house renderer; other materials keep their existing normal
 
 ## The grazing lawn and expedition archive
 
-Two native, articulated plains zebras inhabit the western lawn at approximately
+Two textured, Blender-rigged plains zebras inhabit the western lawn at approximately
 `(-27, -5)` and `(-23, -7)`. The **zebra lawn** view frames their independent
 32-second walk/graze cycles. The whole neck bows from its shoulder and carries
 the head into the grass; ears and tails remain independently articulated.
@@ -194,12 +196,19 @@ with foraging, six articulated trunk sections, fanning ears and a swaying tail.
 All four feet sample the existing terrain and use two-segment leg articulation.
 The original giraffe family and its textured skin are unchanged.
 
-These additional animals are original native geometry, authored in
-`src/rooms/safari-wildlife.js`; no downloaded assets or additional generated
-recordings are used. Shared immutable parts belong to `scene.wildlife.parts`;
-individual poses belong to `scene.wildlife.companions`. Room, map and shadow
-passes consume the same transforms. The existing wildlife clock controls pause
-and reduced motion, and the room's mesh ownership controls disposal.
+Pixal3D generated both animal surfaces and coats from isolated reference
+images. Blender supplies cleanup, anatomical weights, and separate editable
+walk and grazing/foraging actions. The [editable characters and export recipe](../../models/safari-companions/README.md)
+retain the generated UV-mapped surfaces; the runtime does not substitute
+procedural animal parts. One immutable skin per species belongs to
+`scene.wildlife.parts`; individual bone palettes belong to
+`scene.wildlife.companions`. The two zebras share their geometry and coat. Room,
+map and shadow passes consume the same poses. The existing wildlife clock
+controls pause and reduced motion, and the room's mesh ownership controls
+disposal. No additional recordings or runtime service dependencies are used.
+
+The [animal authoring process](safari-animals.md) records reference preparation,
+the working GPU environment, cost tracking, rigging and independent validation.
 
 The house-scale expedition archive adds botanical study plates, warm timber
 bookcases, specimen drawers, field cases and an open survey folio with a brass
