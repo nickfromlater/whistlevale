@@ -1,0 +1,11 @@
+/* Window-seat controls never paint a fake window over the native carriage. */
+[data-passenger-only][hidden],#safariSeatControls[hidden]{display:none!important}
+#safariBoard{display:flex;align-items:center;gap:14px;width:100%;padding:15px 13px;margin-bottom:16px;border:1px solid #ccb27660;border-radius:13px;background:#afbd9620;text-align:left;min-height:58px}
+#safariBoard>span{display:grid;gap:5px}#safariBoard strong{font-weight:500}#safariBoard small{font-size:11px;color:#bec7b3}#safariBoard svg{width:27px;height:27px;color:#deca9d}
+#safariSeatControls{position:absolute;z-index:5;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(410px,calc(100% - 28px));padding:10px 12px;border:1px solid #d7c19750;border-radius:19px;background:#1b302be8;backdrop-filter:blur(18px);box-shadow:0 8px 30px #10251c33;pointer-events:auto}
+.safari-seat-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 3px 7px;font-size:11px;color:#ddd1b0}.safari-seat-heading strong{font-family:Georgia,serif;font-size:18px;font-weight:400}.safari-seat-heading span{color:#bfc5ae}
+.safari-seat-actions{display:grid;grid-template-columns:1fr 1fr 44px 66px;gap:5px}.safari-seat-actions button{min-height:44px;border:1px solid #c9b88925;border-radius:11px;font-size:12px;background:#ffffff05}.safari-seat-actions button:hover{background:#9fac8726}.safari-seat-actions button[aria-pressed=true]{background:#b7bd9230;border-color:#c9b88988;color:#f0dbae}
+.passenger-seat .view-caption,.passenger-seat .key-hint,.passenger-seat .speed-badge,.passenger-seat #hallInvitation{display:none!important}
+.passenger-seat .masthead{opacity:.65}.passenger-seat #ui:before{height:100px;background:linear-gradient(#10292244,transparent)}
+.hidden-ui #safariSeatControls,.cinematic #safariSeatControls,.shop-map-open #safariSeatControls{display:none!important}
+@media(max-width:600px){#safariSeatControls{bottom:calc(88px + env(safe-area-inset-bottom));padding:9px 10px}.safari-seat-heading strong{font-size:16px}.safari-seat-heading{font-size:10px}.safari-seat-actions{grid-template-columns:1fr 1fr 44px 60px}.safari-seat-actions button{font-size:11px}}

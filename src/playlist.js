@@ -25,6 +25,7 @@ const PLAYLIST_TRACKS = [
  {id:'workbench-sunday',   title:'Workbench Sunday', blurb:'Fingerpicked and sunlit.',                    trim:0},
  {id:'coast-gallery',      title:'Sea Air',          blurb:'Concertina and bright water.',                trim:0},
  {id:'alpine-loft',        title:'High Clear Air',   blurb:'Flute and clarinet, a window open.',          trim:0},
+ {id:'safari-acacia-express',title:'Acacia Express',blurb:'Warm marimba, airy woodwinds and a gentle railway pulse.',trim:0},
  {id:'yamaai-between-mountains',title:'Between the Mountains',blurb:'Soft koto, bamboo flute and still mountain air.',trim:0},
 ];
 
@@ -40,7 +41,7 @@ const PLAYLIST_TRACKS = [
 // Sea Air and High Clear Air stayed put. They measure just as busy, but their
 // activity is shimmer rather than incident, which sits under a slow camera
 // perfectly well — density alone was never the right test.
-const PLAYLIST_ROOM = {valley:'toy-shop-waltz',coast:'coast-gallery',alpine:'alpine-loft',studio:'waltz-woodwind-warm',yamaai:'yamaai-between-mountains'};
+const PLAYLIST_ROOM = {valley:'toy-shop-waltz',coast:'coast-gallery',alpine:'alpine-loft',studio:'waltz-woodwind-warm',yamaai:'yamaai-between-mountains',safari:'safari-acacia-express'};
 const PLAYLIST_CINEMA = 'waltz-slow-cinema';
 const PLAYLIST_NIGHT = 'waltz-after-hours';
 const PLAYLIST_FALLBACK = 'toy-shop-waltz';
@@ -58,7 +59,7 @@ function playlistAvailableTracks(){return PLAYLIST_TRACKS.filter(track=>houseRec
  * open the right piece before cinema starts rather than after. */
 function playlistWanted(){
  if(playlistChoice!=='auto'&&playlistKnown(playlistChoice))return playlistChoice;
- if(hobby?.room==='yamaai'&&houseRecordingAvailable(PLAYLIST_ROOM.yamaai))return PLAYLIST_ROOM.yamaai;
+ if((hobby?.room==='yamaai'||hobby?.room==='safari')&&houseRecordingAvailable(PLAYLIST_ROOM[hobby.room]))return PLAYLIST_ROOM[hobby.room];
  if(typeof night==='number'&&night>.62)return PLAYLIST_NIGHT;
  // The room decides, not the fact that cinema is running. Cinema is now the
  // only time the score sounds at all, so checking it first here made every
@@ -163,7 +164,7 @@ function playlistBuild(){
  const items=panel.querySelector('#playlistItems');
  // Grouped by what the house does with them, so the panel tells the truth about
  // which pieces you will hear without asking and which are yours to choose.
- const groups=[['Played for you',['toy-shop-waltz','waltz-woodwind-warm','coast-gallery','alpine-loft','waltz-after-hours']],
+ const groups=[['Played for you',['toy-shop-waltz','waltz-woodwind-warm','coast-gallery','alpine-loft','safari-acacia-express','waltz-after-hours']],
                ['Yours to choose',['village-fete-band','clockwork-parade','workbench-sunday','waltz-slow-cinema']]];
  for(const [label,ids] of groups){
   const present=ids.filter(id=>houseRecordingAvailable(id));if(!present.length)continue;

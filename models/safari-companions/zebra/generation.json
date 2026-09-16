@@ -1,0 +1,20 @@
+{
+  "name": "zebra",
+  "bytes": 6315244,
+  "sha256": "890c714e136849975bb91c4f80d577ef0e39c8d1327547f0d3e5620704e42079",
+  "source_revision": "40a1519aadf70a82110a500997c19b626668a144",
+  "model_revision": "b0cb2e1b794cab9aa0ac38a95d794a4d9337437f",
+  "input_sha256": "729d3c612d44dc699ab6bbaa7a3751e1e4ff2569f7e3dc0f7b9c4a018917b5cf",
+  "seed": 42,
+  "resolution": 1536,
+  "max_tokens": 49152,
+  "steps": 12,
+  "fov_radians": 0.2,
+  "triangle_target": 18000,
+  "texture_size": 4096,
+  "generation_export_seconds": 82.078,
+  "generator": "TencentARC/Pixal3D",
+  "model": "TencentARC/Pixal3D-T",
+  "input": "reference.png",
+  "reference_origin": "Isolated AI-generated reference; Pixal3D preprocessing"
+}

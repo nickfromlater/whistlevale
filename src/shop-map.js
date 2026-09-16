@@ -74,7 +74,7 @@ updateSimulation=function(dt){
   catch(error){console.error(error);toast('The updated room could not open. Please try again.');}
  }
  shopBase.simulation(dt);
- if(shopMap.active&&!paused)for(const [key,scene]of roomScenes)if(key!==hobby.room)for(const train of scene.trains)train.distance+=dt*train.speed*speed;
+ if(shopMap.active&&!paused)for(const [key,scene]of roomScenes)if(key!==hobby.room){for(const train of scene.trains)train.distance+=dt*train.speed*speed;if(scene.wildlife)safariUpdateWildlife(scene,dt);}
 };
 updateHobbyAudio=function(dt){
  if(!shopMap.active)return shopBase.audio(dt);

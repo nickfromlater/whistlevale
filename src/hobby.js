@@ -125,7 +125,7 @@ function renderRoomPlaces(){
  for(const [i,spot]of places.entries()){
   const button=document.createElement('button');button.textContent=spot.name;button.onclick=()=>{
    if(hobby.room==='valley'){if(hobby.cinema)leaveCinema(false);focusHouseWork(spot.contribution,spot.placement);return;}
-   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
+   if(hobby.cinema)leaveCinema(false);viewMode='overview';hobby.spot=i;orbit.target=spot.target.slice();orbit.distance=innerWidth<700?(spot.phoneDistance??(spot.distance??HOUSE_ROOMS[hobby.room].distance)*1.7):(spot.distance??HOUSE_ROOMS[hobby.room].distance);orbit.pitch=(innerWidth<700?spot.phonePitch:undefined)??spot.pitch??HOUSE_ROOMS[hobby.room].pitch;orbit.yaw=(innerWidth<700?spot.phoneYaw:undefined)??spot.yaw??HOUSE_ROOMS[hobby.room].yaw;
    for(const b of container.querySelectorAll('button'))b.classList.toggle('chosen',b===button);updateUI();
   };container.append(button);
   if(hobby.room==='valley'&&spot.contribution==='moonlight-drive-in'){
@@ -152,7 +152,7 @@ function syncRoomControls(){
  $('railControls').setAttribute('aria-label',railway?'Railway controls':'Landscape controls');
  $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
  for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
- for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=!railway&&!['room','overview','tour'].includes(button.dataset.camera);
+ for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=button.hasAttribute('data-passenger-only')?hobby.room!=='safari':!railway&&!['room','overview','tour'].includes(button.dataset.camera);
  const names=(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
  for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
 }
@@ -261,7 +261,7 @@ function bindCinemaCamera(){
 
 updateSimulation=function(dt){
  baseHobbySimulation(dt);
- if(hobby.room!=='valley'&&hobby.scene&&!paused)for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;
+ if(hobby.room!=='valley'&&hobby.scene&&!paused){for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;if(hobby.scene.wildlife)safariUpdateWildlife(hobby.scene,dt);}
 };
 
 function cinemaCamera(dt){
@@ -320,6 +320,7 @@ updateUI=function(){
  if(typeof isShopMapActive==='function'&&isShopMapActive())return;
  baseHobbyUI();if(!hobby.ready)return;
  const room=HOUSE_ROOMS[hobby.room],stock=hobbyTrainLabel();$('currentRoomName').textContent=room.name.replace(/^The /,'');$('currentRoomNumber').textContent=room.number;$('houseMapButton').setAttribute('aria-label','Switch room. Current room: '+room.name);
+ const collectionButton=$('trainCollectionButton');if(collectionButton)collectionButton.hidden=room.trainCollection===false;
  const electric=typeof collectionPower==='function'?collectionPower(hobby.room)!=='steam':/electric|railcar/i.test(stock.type||'');
  $('cabMark').textContent=(electric?'IN THE CAB · ':'ON THE FOOTPLATE · ')+stock.name.toUpperCase()+(stock.number?' No. '+stock.number:'');$('cabMark').classList.toggle('show',viewMode==='cab');
  const engineTitle=document.querySelector('.engine-title'),label=JSON.stringify([stock.number,stock.name]);

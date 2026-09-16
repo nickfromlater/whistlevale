@@ -1,0 +1,20 @@
+{
+  "name": "elephant",
+  "bytes": 4270208,
+  "sha256": "95abd25b6ee23f673d02aa4cefb13b2c5e0057f3bc12515b479243100346a942",
+  "source_revision": "40a1519aadf70a82110a500997c19b626668a144",
+  "model_revision": "b0cb2e1b794cab9aa0ac38a95d794a4d9337437f",
+  "input_sha256": "f29bdb7618e6c00e1c695eddde7156b9b11d33b6701dcd0bb5dcbf2fb94dfa6a",
+  "seed": 42,
+  "resolution": 1536,
+  "max_tokens": 49152,
+  "steps": 12,
+  "fov_radians": 0.2,
+  "triangle_target": 18000,
+  "texture_size": 4096,
+  "generation_export_seconds": 135.264,
+  "generator": "TencentARC/Pixal3D",
+  "model": "TencentARC/Pixal3D-T",
+  "input": "reference.png",
+  "reference_origin": "Isolated AI-generated reference; Pixal3D preprocessing"
+}

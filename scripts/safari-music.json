@@ -1,0 +1,22 @@
+{
+  "id": "safari-acacia-express",
+  "provider": "ElevenLabs",
+  "model": "music_v2",
+  "duration": 120,
+  "title": "Acacia Express",
+  "requestedBy": "nickfromlater",
+  "prompt": "An original instrumental train-safari score for a miniature panoramic railway winding through a sunlit acacia landscape, with giraffes browsing beside the line. Warm, quietly adventurous, curious and graceful, with a clear sense of gentle forward travel. A soft rolling 6/8 pulse around 88 BPM, understated warm marimba and lightly plucked acoustic strings carrying a repeating railway-like figure, rounded acoustic bass, airy wooden flute and mellow clarinet answering in spacious short melodic phrases, a restrained warm chamber-string bed. Very light brushed percussion and soft shakers, organic and precise, never pounding. Memorable tender melody and open sunlit harmonies, gradual small variations over two minutes, a spacious calmer middle passage and a gentle return to the opening motif. Elegant contemporary travel documentary feeling, intimate handmade miniature scale, not bombastic adventure trailer music. Keep steady moderate-low energy and restrained dynamics so birds, wind and the train can remain audible. No vocals, no choir, no speech, no literal train or animal sound effects, no alarms, no dramatic hits, no huge crescendo, no bright piercing bells, no heavy drums. Soft two-second entrance and a delicate sustained ending that can crossfade back to the beginning. Entirely original composition, no quotation or imitation of any existing song or artist.",
+  "generatedOn": "2026-09-15",
+  "file": "safari-acacia-express.mp3",
+  "bytes": 1921401,
+  "sha256": "498f4871f6091e8c9e3d81c90d0be5574ce2b5d2195b90e98acd9e793adab738",
+  "processing": "Gain -7.5 dB; 2-second fade in and 3-second fade out; stereo 44.1 kHz MP3 at 128 kbps. Existing mixer provides eight-second repeat crossfade.",
+  "measuredLUFS": -23.42,
+  "measuredTruePeakDBTP": -9.42,
+  "publication": "Local master only; not published or added to the hosted preservation manifest. Generated recordings stay outside Git.",
+  "pricingSource": "https://elevenlabs.io/pricing/api",
+  "estimatedGenerationUSD": 0.3,
+  "billingNote": "Two minutes at the published $0.15/minute API rate; invoice unverified. Existing subscription was used, with no plan or overage-setting change.",
+  "forceInstrumental": true,
+  "apiEndpoint": "https://api.elevenlabs.io/v1/music"
+}

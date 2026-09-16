@@ -3,7 +3,7 @@ import {communityContext,loadCommunity,loadContributionDefinitions,inspectCommun
 
 const state=await communityContext(),{context,run}=state,catalogue=await loadCommunity();
 await loadContributionDefinitions(state,catalogue);
-const noop=()=>{};context.glStub=new Proxy({getParameter:()=>8192},{get:(o,k)=>k in o?o[k]:noop});context.assert=assert;context.inspectScenes=keys=>inspectCommunityScenes(state,keys);
+const noop=()=>{};context.glStub=new Proxy({getParameter:()=>8192,createVertexArray:()=>({}),createBuffer:()=>({}),createTexture:()=>({})},{get:(o,k)=>k in o?o[k]:noop});context.assert=assert;context.inspectScenes=keys=>inspectCommunityScenes(state,keys);
 context.uploadCheck=data=>{assert.equal(data.length%36,0);for(const n of data)assert.ok(Number.isFinite(n),'geometry attributes must be finite');return{count:data.length/12};};
 run('gl=glStub;upload=uploadCheck;disposeMesh=function(){};initTracks();initLabels();initRoomArt();initHouseArt();');
 run(`

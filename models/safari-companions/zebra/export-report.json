@@ -1,0 +1,41 @@
+{
+  "sourceGLBSHA256": "890c714e136849975bb91c4f80d577ef0e39c8d1327547f0d3e5620704e42079",
+  "landmarksSHA256": "f560e44b6f38e4fd00b29db9f52ac3a555da8d32e846d00fd0297137b194885f",
+  "referenceSHA256": "729d3c612d44dc699ab6bbaa7a3751e1e4ff2569f7e3dc0f7b9c4a018917b5cf",
+  "authoringScriptSHA256": "cf54121e1e42ee2e45103e3a7e7b5f805df2cd1fdd61748d05ca54208c9b94f8",
+  "exporterSHA256": "f6ad16e3d02d01deedc033b85b6556862ef8617a6c9061282f527da25abff96c",
+  "triangles": 15999,
+  "bones": 19,
+  "parts": 1,
+  "vertices": 47997,
+  "uniqueVertices": 15808,
+  "textureSize": [
+    2048,
+    2048
+  ],
+  "authoringTextureSize": [
+    4096,
+    4096
+  ],
+  "textureBytes": 1682985,
+  "sourceBytes": 4172867,
+  "sha256": "99daa98fe45ef1f25dc0ae311ffacdcb771633e8464b96d046ca5296739cbc5c",
+  "blendSHA256": "9b3067a9083f8b4ce18aa784a44100ddef70f5c3d7cf012c5baaf945c91bca0f",
+  "blenderVersion": "5.1.1",
+  "walkFrames": 25,
+  "browseFrames": 25,
+  "bounds": [
+    [
+      -1.362059,
+      1.834521
+    ],
+    [
+      0.000701,
+      2.497772
+    ],
+    [
+      -0.471057,
+      0.487216
+    ]
+  ]
+}
