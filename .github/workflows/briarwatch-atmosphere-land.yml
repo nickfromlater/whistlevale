@@ -1,0 +1,79 @@
+name: Land audited Briarwatch atmosphere
+on:
+  push:
+    branches: [codex/briarwatch-castle]
+    paths: ['.github/workflows/briarwatch-atmosphere-land.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  land:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Require the exact native audit to finish successfully
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/codex/briarwatch-castle'
+          mkdir -p evidence/briarwatch-atmosphere-land
+          for attempt in $(seq 1 30); do
+            state=$(gh api repos/nickfromlater/whistlevale/actions/runs/35265670267 --jq '.status+":"+(.conclusion//"")')
+            echo "$state"
+            case "$state" in
+              completed:success) break ;;
+              completed:*) echo 'The exact reviewed source did not pass its full audit'; exit 1 ;;
+            esac
+            sleep 20
+          done
+          test "$state" = 'completed:success'
+          gh api repos/nickfromlater/whistlevale/actions/runs/35265670267 --jq '{id,head_sha,status,conclusion,html_url}' > evidence/briarwatch-atmosphere-land/audit.json
+      - name: Adopt only the byte-identical audited implementation
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, subprocess
+          expected = {
+            'src/rooms/briarwatch.js': '3f30c7663be92635bd6767d4e99b66fee345504c9f08f39290ed334755306d30',
+            'src/railway.js': 'b0bfa3aa2ab1c14a96c1e15b52649a6bd1b73e15cbff69e80bd3cd3a03dd0813',
+            'scripts/briarwatch-qa.mjs': 'b5735cfa7cf9cb386a23af72b5e60992d6f7780cb0919090ac776786a939e1be',
+            'docs/rooms/briarwatch.md': 'd0ee907da890a6ce0150aeb74a6680e58e3900f18698a48f5c9b847e513396ce'
+          }
+          digest = lambda name: hashlib.sha256(Path(name).read_bytes()).hexdigest()
+          if not all(digest(name) == value for name, value in expected.items()):
+            subprocess.run(['python3', '.briarwatch-atmosphere/apply.py'], check=True)
+          for name, value in expected.items():
+            assert digest(name) == value, 'Refusing a source that differs from the native audit: ' + name
+          Path('evidence/briarwatch-atmosphere-land/source-hashes.txt').write_text('\n'.join(value+' '+name for name,value in expected.items())+'\n')
+          PY
+          git diff --check
+          npm run check > evidence/briarwatch-atmosphere-land/check.txt
+          npm run test:briarwatch > evidence/briarwatch-atmosphere-land/focused.txt
+          npm run test:glazing > evidence/briarwatch-atmosphere-land/glazing.txt
+          npm run test:lighting > evidence/briarwatch-atmosphere-land/lighting.txt
+      - name: Fast-forward only this PR branch and remove used staging
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/briarwatch-castle | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/rooms/briarwatch.js src/railway.js scripts/briarwatch-qa.mjs docs/rooms/briarwatch.md
+          git rm --ignore-unmatch .briarwatch-atmosphere/apply.py .briarwatch-atmosphere/capture.cjs .briarwatch-atmosphere/geometry.js .briarwatch-atmosphere/shader.js .briarwatch-atmosphere/tests.js .briarwatch-atmosphere-review/apply.py .briarwatch-atmosphere-review/capture.cjs .briarwatch-atmosphere-review/revision.b64 .github/workflows/briarwatch-atmosphere-review.yml .github/workflows/briarwatch-estate-audit.yml
+          git diff --cached --check
+          git diff --cached --quiet || git commit -m 'Give Briarwatch glazed estate outlooks and warm gallery lamplight'
+          git push origin HEAD:refs/heads/codex/briarwatch-castle
+          git rev-parse HEAD > evidence/briarwatch-atmosphere-land/source-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: briarwatch-atmosphere-land
+          path: evidence/briarwatch-atmosphere-land/
+          retention-days: 14
