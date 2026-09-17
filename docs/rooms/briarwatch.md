@@ -76,6 +76,13 @@ against the unchanged 900,000 ceiling, and **5,592 moving wheel vertices** again
 from 34 to 56 trees. Buried roof-ridge and sleeper faces are omitted; small arch
 and tracery tessellation is scaled to their size. No shared renderer was changed.
 
+For visual review, start at the room arrival, then visit the keep, gate and
+courtyard before moving to the river gallery, gorge bridges and village. Orbit
+behind the eastern village to inspect the roofless watchtower; the spring and
+packhorse crossing sit behind the high viaduct. Finish with the evening mood
+and both narrow portrait widths. The eleven public viewpoints remain unchanged
+in number; close review cameras do not add controls or alter the saved route.
+
 ## Source and lifecycle
 
 - `src/rooms/briarwatch.js`: terrain, river, routes, bridges, vegetation, shell,
@@ -101,12 +108,16 @@ mechanism has a separate 6,000-vertex ceiling. Existing budgets are unchanged.
 Run `npm test`, `npm run test:geometry:full`, and
 `npm run check:contributions -- --json`. `npm run test:briarwatch` also runs as
 part of the full suite. Its focused checks cover the closed circuit, actual
-mesh-to-track and tree clearances, clipped river continuity, genuine cabinet voids, graded rail support, tunnel roof, real gate and
-keep and ruined-watchtower openings, swept train-envelope clipping against new scenic triangles, carved spring-bed clearance, deterministic mechanism, reduced motion, disposal, credits,
-script inclusion and house-map placement.
+mesh-to-track and tree clearances, clipped river continuity, genuine cabinet
+voids, graded rail support, tunnel roof, real gate, keep and ruined-watchtower
+openings, swept train-envelope clipping against new scenic triangles, carved
+spring-bed clearance, masonry backing for ivy and rainspout anchors,
+deterministic mechanism, reduced motion, disposal, credits, script inclusion
+and house-map placement.
 
-Screenshots and measured browser evidence belong in ignored `evidence/briarwatch/`.
-Report the exact camera, viewport, renderer and commit used. Software-rendered
-Chromium screenshots are appearance evidence, not physical-phone performance or
-touch-gesture verification. Source/export inclusion checks do not substitute
-for opening the exported playable house.
+Screenshots and measured browser evidence belong in ignored `evidence/` folders.
+The revision-3 review uses `evidence/briarwatch-scenery/`. Report the exact camera,
+viewport, renderer and commit used. Software-rendered Chromium screenshots are
+appearance evidence, not physical-phone performance or touch-gesture
+verification. Source/export inclusion checks do not substitute for opening the
+exported playable house.
