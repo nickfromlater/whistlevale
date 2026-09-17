@@ -1,0 +1,136 @@
+name: Briarwatch finished atmosphere
+on:
+  push:
+    branches: [codex/briarwatch-castle]
+    paths: ['.github/workflows/briarwatch-window-cap-review.yml']
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      source: ${{ steps.publish.outputs.source }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Trim only the verified window casing
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/codex/briarwatch-castle'
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('src/rooms/briarwatch.js')
+          data=p.read_bytes()
+          assert hashlib.sha256(data).hexdigest() == '2bee9234e9f57f528197129a67c0c225d46bc4041a714afbaf89f0cb7d4f7912'
+          old="b.box(0,46.5,(front+q.back)/2,2*r+2.3,7,front-q.back,'#bcb59d',20);"
+          new="b.box(0,43.2,(front+q.back)/2,2*r+2.3,.4,front-q.back,'#bcb59d',20);"
+          text=data.decode('utf-8')
+          assert text.count(old) == 1
+          revised=text.replace(old,new).encode('utf-8')
+          assert hashlib.sha256(revised).hexdigest() == 'b488f2cd7435990b5f1e00c46c35567e04abe09efa9bdaafe2d238e3b78f61e3'
+          for name,digest in {
+            'src/railway.js':'b0bfa3aa2ab1c14a96c1e15b52649a6bd1b73e15cbff69e80bd3cd3a03dd0813',
+            'scripts/briarwatch-qa.mjs':'2e183807a187ef2b0aee16e4c189a31ed488fcad876f9041746e021906577e72'
+          }.items():
+            assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == digest, name
+          p.write_bytes(revised)
+          PY
+          git diff --check
+          npm run check
+          npm run test:briarwatch
+      - name: Publish to this PR only
+        id: publish
+        run: |
+          set -euo pipefail
+          actual="$(git ls-remote origin refs/heads/codex/briarwatch-castle | cut -f1)"
+          echo "Expected $GITHUB_SHA; found $actual"
+          test "$actual" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/rooms/briarwatch.js
+          git rm .github/workflows/briarwatch-window-cap-review.yml
+          git commit -m 'Finish flush estate-window soffits without sky leaks'
+          git push origin HEAD:refs/heads/codex/briarwatch-castle
+          echo "source=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.source }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Full suite and complete geometry comparison
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/finished-atmosphere
+          git rev-parse HEAD > evidence/finished-atmosphere/source-commit.txt
+          sha256sum src/rooms/briarwatch.js src/railway.js scripts/briarwatch-qa.mjs > evidence/finished-atmosphere/source-hashes.txt
+          npm test > evidence/finished-atmosphere/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/finished-atmosphere/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/finished-atmosphere/contributions.txt 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: briarwatch-finished-atmosphere-checks
+          path: evidence/finished-atmosphere/
+          retention-days: 14
+  views:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.source }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Reuse the exact already-reviewed capture harness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/nickfromlater/whistlevale/actions/artifacts/10516743826/zip > /tmp/estate-review.zip
+          unzip -p /tmp/estate-review.zip capture.cjs > /tmp/estate-capture.cjs
+          echo 'e1274ba6f48f5fa96a890d5282e70b177d5e38d3ec2199e5eafc0aa05dd2f5bf  /tmp/estate-capture.cjs' | sha256sum -c -
+          mkdir -p evidence/briarwatch-atmosphere
+          cp /tmp/estate-capture.cjs evidence/briarwatch-atmosphere/capture.cjs
+          git rev-parse HEAD > evidence/briarwatch-atmosphere/source-commit.txt
+          sha256sum src/rooms/briarwatch.js src/railway.js scripts/briarwatch-qa.mjs > evidence/briarwatch-atmosphere/source-hashes.txt
+      - name: Capture actual room, dimmer, map and phone states
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/briarwatch-browser playwright
+          /tmp/briarwatch-browser/node_modules/.bin/playwright install --with-deps chromium
+          python3 scripts/serve.py --port 4175 > evidence/briarwatch-atmosphere/server.txt 2>&1 &
+          node /tmp/estate-capture.cjs after
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('evidence/briarwatch-atmosphere/after/report.json').read_text())
+          assert len(r['views']) == 18
+          assert not r['errors'] and not r['console']
+          assert all(v['glError'] == 0 for v in r['views'])
+          print('18 native states; zero page, console or GL errors')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: briarwatch-finished-atmosphere-views
+          path: evidence/briarwatch-atmosphere/
+          retention-days: 14
