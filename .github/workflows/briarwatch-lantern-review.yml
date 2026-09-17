@@ -25,7 +25,8 @@ jobs:
           mkdir -p evidence/briarwatch-lantern
           git rev-parse HEAD > evidence/briarwatch-lantern/base-commit.txt
           python3 .briarwatch-lantern/apply.py > evidence/briarwatch-lantern/initial-source-hashes.txt
-          python3 .briarwatch-lantern/finish.py | tee evidence/briarwatch-lantern/source-hashes.txt
+          python3 .briarwatch-lantern/finish.py > evidence/briarwatch-lantern/finishing-source-hashes.txt
+          python3 .briarwatch-lantern/comfort.py | tee evidence/briarwatch-lantern/source-hashes.txt
           git diff --check
           npm run check > evidence/briarwatch-lantern/source-check.txt
           npm run test:briarwatch > evidence/briarwatch-lantern/focused.txt
@@ -78,7 +79,8 @@ jobs:
           mkdir -p evidence/briarwatch-lantern
           git rev-parse HEAD > evidence/briarwatch-lantern/base-commit.txt
           python3 .briarwatch-lantern/apply.py > evidence/briarwatch-lantern/initial-source-hashes.txt
-          python3 .briarwatch-lantern/finish.py | tee evidence/briarwatch-lantern/source-hashes.txt
+          python3 .briarwatch-lantern/finish.py > evidence/briarwatch-lantern/finishing-source-hashes.txt
+          python3 .briarwatch-lantern/comfort.py | tee evidence/briarwatch-lantern/source-hashes.txt
           npm test > evidence/briarwatch-lantern/npm-test.txt 2>&1
           npm run test:geometry:full > evidence/briarwatch-lantern/geometry-full.txt 2>&1
           npm run check:contributions -- --json > evidence/briarwatch-lantern/contributions.txt 2>&1
