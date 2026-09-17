@@ -70,11 +70,12 @@ source pool, small cascade and open packhorse bridge. It joins the existing
 submerged river without changing the train circuit or the millrace. Raised beds,
 a clipped hedge and a small trellis connect the inn and weaver's yards.
 
-The focused native geometry check measures **895,086 static scene vertices**,
+The revision-3 scenery check measured **895,086 static scene vertices**,
 against the unchanged 900,000 ceiling, and **5,592 moving wheel vertices** against
-6,000. That adds roughly 0.6% to the prior static scene while increasing planting
-from 34 to 56 trees. Buried roof-ridge and sleeper faces are omitted; small arch
-and tracery tessellation is scaled to their size. No shared renderer was changed.
+6,000. That added roughly 0.6% to the prior static scene while increasing planting
+from 34 to 56 trees. Buried roof-ridge and sleeper faces were omitted; small arch
+and tracery tessellation was scaled to their size. No shared renderer was changed
+in that scenery pass. Current atmosphere totals are recorded below.
 
 For visual review, start at the room arrival, then visit the keep, gate and
 courtyard before moving to the river gallery, gorge bridges and village. Orbit
@@ -144,7 +145,22 @@ mood presets are unchanged. The existing 900,000 static-vertex ceiling remains,
 with an additional 40,000-vertex ceiling across the four room-wall meshes.
 
 The native visual review caught exposed sky above the window arches. Solid
-top and upper side returns now seal the casings, with high-angle intersection
-regressions. Exterior broadleaf trees reuse the miniature's tapered branches
-and asymmetric leaf clouds. Pendants now hang below connected beam outriggers;
-their native light positions match the lowered fixtures.
+upper side returns and a thin sealed soffit now close each casing without a
+bulky projection above the cornice. High-angle and oblique intersection checks
+retain that seal. Exterior broadleaf trees reuse the miniature's tapered
+branches and asymmetric leaf clouds. Pendants hang below connected beam
+outriggers; their native light positions match the lowered fixtures.
+
+### Finished atmosphere geometry
+
+The scene has **896,886 static vertices**, below the unchanged **900,000** cap.
+The four opaque wall meshes contain **21,636 / 4,080 / 4,080 / 9,078** vertices,
+**38,874** combined against their **40,000** cap. The back-wall mesh separately
+owns **132 clear-glass vertices**. The moving wheel remains **5,592 / 6,000**.
+These are geometry budgets, not claims about physical-device frame rate.
+
+The atmosphere review also checks both estate windows, day/evening/night,
+dimmer-off, reverse wall cutaways, the reading lamps, train view, 390px/320px
+portrait layouts, the live house map, switching to Coast and returning to
+Briarwatch. Store the rendered source commit with the images and distinguish
+it from a workflow's triggering commit when a job publishes the source first.
