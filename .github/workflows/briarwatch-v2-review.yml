@@ -1,0 +1,34 @@
+name: Briarwatch v2 transfer verification
+on:
+  push:
+    branches: [codex/briarwatch-castle]
+    paths: ['.briarwatch-v2/**', '.github/workflows/briarwatch-v2-review.yml']
+permissions:
+  contents: read
+jobs:
+  verify-transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate source transfer before applying any changes
+        run: |
+          mkdir -p evidence/briarwatch-v2-transfer
+          cp .briarwatch-v2/payload-*.json evidence/briarwatch-v2-transfer/
+          python3 - <<'PY' > evidence/briarwatch-v2-transfer/report.txt
+          import json, pathlib, zlib, base64, hashlib
+          for path in sorted(pathlib.Path('.briarwatch-v2').glob('payload-*.json')):
+              for file, entry in json.loads(path.read_text()).items():
+                  old = pathlib.Path(file).read_bytes()
+                  assert hashlib.sha256(old).hexdigest() == entry['base'], file
+                  try:
+                      d = zlib.decompressobj(zdict=old[-32768:])
+                      new = d.decompress(base64.b64decode(entry['data'])) + d.flush()
+                      print(file, 'verified' if hashlib.sha256(new).hexdigest() == entry['sha256'] else 'transfer mismatch')
+                  except Exception as e:
+                      print(file, type(e).__name__, str(e))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: briarwatch-v2-transfer
+          path: evidence/briarwatch-v2-transfer/
+          retention-days: 1
