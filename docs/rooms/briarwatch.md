@@ -8,159 +8,166 @@ No dragon, placeholder creature, flight system or associated controls are includ
 
 Serve with `npm run dev`, then open `http://127.0.0.1:4174/?room=briarwatch`.
 The room is also available from the house map at `west-5`. Views offers eleven
-composed camera positions. The usual train, cinema, lighting, sound and pause
-controls remain available. Portrait views have deliberately authored distances.
-
-The Crown & Cinder Line is a continuous, graded folded-dogbone steam circuit.
-It crosses a five-arch stone viaduct on the high rear line, returns across an
-open-sided covered timber bridge, curves over a braced wooden trestle, follows
-a cliff-side retaining balcony, and passes through a short rock tunnel. A
-connected goods siding, loading crane, stationary wagon and modeled semaphore
-signals enrich the station. The siding and signals are scenic, not an
-interactive switching or dispatch simulation. It uses the existing Tern steam family rather than
-claiming a new locomotive model.
+composed camera positions, including authored portrait distances. The usual train,
+cinema, lighting, sound and pause controls remain available.
 
 ## The miniature
 
+The contoured walnut-and-green cabinet wraps around the room in a horseshoe,
+with a castle peninsula, village peninsula and connecting rear gorge shelf.
+The central visitor aisle is an actual void in terrain and cabinet geometry,
+with the gallery floor below it, not a painted recess in a rectangular table.
+
 The ridge carries an asymmetrical limestone castle: old keep and stair turret,
-open twin-tower gatehouse, raised portcullis and drawbridge, great hall and
-braced timber river gallery, chapel and bellcote, courtyard well, arcades,
-kitchen, herb beds and terrain-following defenses. The keep entrance connects
-its external stair and landing through real masonry openings. Major plinths
-and round-tower foundations reach the finished terrain. Corbelled bartizans,
-a supported timber hoarding, an oriel, hall dormers, gable tracery and stone
-consoles articulate the castle at silhouette, architectural and detail scales.
+open twin-tower gatehouse, raised portcullis and drawbridge, great hall, braced
+timber river gallery, chapel, bellcote, arcaded courtyard, kitchen and herb beds.
+The external keep stair and landing connect through real masonry openings.
+Foundations meet the finished terrain. Corbelled bartizans, supported hoarding,
+an oriel, dormers, tracery, stepped gables, rose windows and a roof lantern give
+the buildings distinct silhouettes. Banners, dressings, rainspouts and ivy are
+anchored to the actual walls rather than floating in front of them.
 
 Eight individually placed lower-town buildings include the Copper Hart inn,
-an open working smithy, bakehouse and oven, weaver, farrier's house, orchard
-house, ferryman's cottage and watermill. A clipped river, working native mill wheel, mature branching trees, orchard
-and cultivated ground connect those places. Projecting window bays, roof
-dormers, braced jetties, carved bargeboards, cloth canopies, signboards and
-differentiated shop fittings give the town a more authored character.
-The contoured walnut-and-green cabinet wraps around the room in a horseshoe,
-with a castle peninsula, a village peninsula and a connecting rear gorge shelf.
-The central visitor aisle is an actual void in terrain and cabinet geometry,
-with the room floor below it, not a painted recess in a rectangular table.
-The oak-and-plaster estate gallery retains its wall-linked roof cutaways. The room
-uses Whistlevale's existing day/evening lighting and native material system.
+open smithy, bakehouse and oven, weaver, farrier's house, orchard house,
+ferryman's cottage and watermill. Projecting bays, braced jetties, bargeboards,
+cloth canopies, signboards and shop fittings differentiate them. The clipped
+river, stone-lined millrace, road bridge, orchard, gardens and station connect
+the town to its landscape.
 
-This is an authored miniature, not a freely walkable interior game. The castle's
-courtyard, gate passage, hall windows and smithy reward close cameras; most
-village houses are exterior miniatures. No historical accuracy is claimed for
-the intentionally anachronistic railway.
+Fifty-six fixed miniature trees use tapered branches and asymmetric crowns.
+Oak, beech, apple, willow and pine are grouped with roots, fallen timber,
+bracken, wildflowers and clearings. Dissected quarry slopes, limestone ribs,
+cliff buttresses and localized talus replace uniform hill contours. A roofless
+watchtower has a genuinely open entrance. A separately surveyed spring has a
+carved bed, downhill water ribbon, source pool, cascade and open packhorse
+bridge joining the river without changing the millrace or railway.
 
-## Scenery and castle revision 3
+This is an authored miniature, not a freely walkable interior game. Most village
+buildings are exterior models; the gate passage, courtyard, hall windows and
+smithy reward close cameras. No historical accuracy is claimed for the
+intentionally anachronistic railway.
 
-The keep now has projecting crow-stepped limestone gables, six-petal loft roses,
-louvered vents, chamfered arch dressings, dressed tower plinths and a slender
-roof lantern above the great hall. Swallowtail standards, carved keystones,
-machicolation consoles and climbing ivy break up the gate and curtain walls.
-The original open gate, keep entrance, bridge openings and courtyard paths remain.
+## The Crown & Cinder Line
 
-The landscape uses dissected quarry slopes, slope-embedded limestone ribs,
-projecting cliff buttresses, localized talus fans and bracken-filled woodland.
-Fifty-six explicitly placed trees replace the earlier thirty-four-tree planting.
-Oak, beech, apple, willow and pine have tapered branch skeletons and asymmetric,
-volumetric foliage with blended normals instead of pointed umbrella crowns.
-Fallen timber, roots, wildflowers and low vegetation are grouped by habitat.
-A roofless watchtower with a true open entrance anchors the eastern wooded ridge.
+A continuous, graded folded-dogbone steam circuit crosses a five-arch stone
+viaduct on the high rear line, returns across an open-sided covered timber
+bridge, curves over a braced trestle, follows a cliff-side retaining balcony
+and passes through a short rock tunnel. A connected goods siding, loading
+crane, stationary wagon and modeled semaphore signals enrich the station.
+The siding and signals are scenic, not an interactive switching or dispatch
+simulation. The train uses the existing Tern steam family.
 
-A separate surveyed spring has a carved bed, continuous downhill water ribbon,
-source pool, small cascade and open packhorse bridge. It joins the existing
-submerged river without changing the train circuit or the millrace. Raised beds,
-a clipped hedge and a small trellis connect the inn and weaver's yards.
+## The Lantern Gallery
 
-The revision-3 scenery check measured **895,086 static scene vertices**,
-against the unchanged 900,000 ceiling, and **5,592 moving wheel vertices** against
-6,000. That added roughly 0.6% to the prior static scene while increasing planting
-from 34 to 56 trees. Buried roof-ridge and sleeper faces were omitted; small arch
-and tracery tessellation was scaled to their size. No shared renderer was changed
-in that scenery pass. Current atmosphere totals are recorded below.
+The room is a private estate railway gallery, not another medieval building
+inside the model. Deep green dado panels, paired oak pilasters, layered
+cornices and picture rails give it a full-size architectural scale.
 
-For visual review, start at the room arrival, then visit the keep, gate and
-courtyard before moving to the river gallery, gorge bridges and village. Orbit
-behind the eastern village to inspect the roofless watchtower; the spring and
-packhorse crossing sit behind the high viaduct. Finish with the evening mood
-and both narrow portrait widths. The eleven public viewpoints remain unchanged
-in number; close review cameras do not add controls or alter the saved route.
+A large brass-trimmed railway clock anchors the rear wall. Its hands, moon
+subdial and original winged-wheel motif are fixed decoration, not a live
+clock or astronomical instrument. Tied-back pleated curtains frame the two
+estate windows without closing their clear apertures. Curtain headings meet
+the modeled rails; hems, ties and tassels are actual geometry.
 
-## Source and lifecycle
+Six-sided opal lanterns with diamond metalwork hang from supported outriggers.
+Their soft emission and the reading-lamp diffusers use opt-in material 100,
+with bounded radiance to avoid bright bloom replicas. The native six-light
+rig and its surveyed positions are retained. The existing wall washes remain
+dimmable; no additional shadow-casting light rig is introduced.
 
-- `src/rooms/briarwatch.js`: terrain, river, routes, bridges, vegetation, shell,
-  viewpoints and room registration.
-- `src/rooms/briarwatch-castle.js`: masonry openings, roof and timber helpers,
-  castle buildings, defenses and courtyard.
-- `src/rooms/briarwatch-village.js`: houses, station, gardens, vignettes and mill.
+A shallow green ceiling cove with brass seams and alternating compass-star
+inlays runs around the perimeter. Its corner miters and surface-attached
+ornament belong to each wall's native cutaway mesh. It leaves the center of
+the ceiling open and stays above the window heads.
 
-All three scripts load before house startup and atlas construction. No new
-runtime dependency, imported asset, recording or atlas allocation is required.
-Grounded details sample the exact triangles emitted by the terrain builder.
-Fixed placements and coordinate hashes do not consume the shared scene seed.
-
-The waterwheel is a cached `scene.movingParts` mesh. Its transform is tied to
-train travel, so pausing the railway also pauses the mechanism; reduced motion
-holds it still. It participates in the native dynamic and shadow passes. Room
-cache replacement and failed-build cleanup dispose its buffer with other room
-resources. The static scene has a fixed 900,000-vertex test ceiling; the moving
-mechanism has a separate 6,000-vertex ceiling. Existing budgets are unchanged.
-
-## Checks
-
-Run `npm test`, `npm run test:geometry:full`, and
-`npm run check:contributions -- --json`. `npm run test:briarwatch` also runs as
-part of the full suite. Its focused checks cover the closed circuit, actual
-mesh-to-track and tree clearances, clipped river continuity, genuine cabinet
-voids, graded rail support, tunnel roof, real gate, keep and ruined-watchtower
-openings, swept train-envelope clipping against new scenic triangles, carved
-spring-bed clearance, masonry backing for ivy and rainspout anchors,
-deterministic mechanism, reduced motion, disposal, credits, script inclusion
-and house-map placement.
-
-Screenshots and measured browser evidence belong in ignored `evidence/` folders.
-The revision-3 review uses `evidence/briarwatch-scenery/`. Report the exact camera,
-viewport, renderer and commit used. Software-rendered Chromium screenshots are
-appearance evidence, not physical-phone performance or touch-gesture
-verification. Source/export inclusion checks do not substitute for opening the
-exported playable house.
+The visitor floor has room-local herringbone parquet, walnut borders and fine
+inlay through opt-in material 99, plus flush compass marquetry and a restrained
+runner. Two upholstered viewing benches have splayed legs, brass feet, low
+arms and raised, softly shaded cushions. Cushions use textile shading rather
+than timber grain. Bench feet meet the room floor and stay outside the scenic
+peninsulas. A shallow archive bookcase and survey table with folio, rolled
+plans, brass rule, pencil and cup add a few human-scale details.
 
 ## Estate outlooks and lamplight
 
-The two rear windows now contain different shallow, forced-perspective estate
-scenes with layered hills, trees, a lodge or garden pavilion, and a foreground
-stone balustrade. Clear arched casements use the existing sorted architectural
-glazing pass. The outlooks stay inside the room footprint and share the back
-wall cutaway and disposal lifecycle; they are not a navigable outdoor world.
+The two rear windows contain distinct shallow, forced-perspective estate
+scenes with hills, branching trees, a lodge or garden pavilion, paths and
+stone balustrades. Clear arched casements use the existing sorted architectural
+glazing pass. Solid upper and side returns and thin soffits seal the casings
+without sky leaks or bulky projections above the arches.
 
 Opt-in materials 92/93/98 keep exterior sky, scenery and cottage windows
-independent of the gallery dimmer. Daylight fades into a blue-hour sky with a
-still crescent and sparse stars. The native six-light rig remains; its two task
-lights now coincide with modeled reading lamps beside the benches. Materials
-94/95/96 add a stylized, dimmable light wash to the gallery plaster using local
-UVs, so it remains attached in the transformed house map. This is authored
-surface lighting, not extra shadow-casting lamps or volumetric scattering.
+independent of the gallery dimmer. Daylight changes to blue-hour and night
+skies with a still crescent and sparse stars. Materials 94/95/96 add authored
+surface light to the plaster using wall-local UVs, which remain attached
+through the live house-map transform. These are not volumetric beams.
 
-No new textures, atlas slots, dependencies, uniforms or per-frame geometry.
-The castle, scenery, railway, cameras, automatic lighting settings and global
-mood presets are unchanged. The existing 900,000 static-vertex ceiling remains,
-with an additional 40,000-vertex ceiling across the four room-wall meshes.
+The outlooks remain within the room footprint and share the back wall's
+cutaway, glazing and disposal lifecycle. They are not a navigable exterior.
+The Lantern Gallery pass preserves their geometry, the miniature, terrain,
+railway, public viewpoints, automatic lighting settings and global mood presets.
 
-The native visual review caught exposed sky above the window arches. Solid
-upper side returns and a thin sealed soffit now close each casing without a
-bulky projection above the cornice. High-angle and oblique intersection checks
-retain that seal. Exterior broadleaf trees reuse the miniature's tapered
-branches and asymmetric leaf clouds. Pendants hang below connected beam
-outriggers; their native light positions match the lowered fixtures.
+## Source and lifecycle
 
-### Finished atmosphere geometry
+- `src/rooms/briarwatch.js`: terrain, river, routes, bridges, vegetation, gallery,
+  outlooks, viewpoints and room registration.
+- `src/rooms/briarwatch-castle.js`: masonry openings, roof and timber helpers,
+  castle buildings, defenses and courtyard.
+- `src/rooms/briarwatch-village.js`: houses, station, gardens, vignettes and mill.
+- `src/railway.js`: opt-in estate, gallery-plaster, parquet and opal shading.
 
-The scene has **896,886 static vertices**, below the unchanged **900,000** cap.
-The four opaque wall meshes contain **21,636 / 4,080 / 4,080 / 9,078** vertices,
-**38,874** combined against their **40,000** cap. The back-wall mesh separately
-owns **132 clear-glass vertices**. The moving wheel remains **5,592 / 6,000**.
-These are geometry budgets, not claims about physical-device frame rate.
+The three room scripts load before house startup and atlas construction.
+No new runtime dependency, imported model, texture, recording, atlas slot,
+uniform or per-frame geometry is needed. Original credits are preserved.
+Grounded details sample the exact emitted terrain triangles. Fixed placements
+and coordinate hashes do not consume the shared scene seed.
 
-The atmosphere review also checks both estate windows, day/evening/night,
-dimmer-off, reverse wall cutaways, the reading lamps, train view, 390px/320px
-portrait layouts, the live house map, switching to Coast and returning to
-Briarwatch. Store the rendered source commit with the images and distinguish
-it from a workflow's triggering commit when a job publishes the source first.
+The waterwheel is a cached `scene.movingParts` mesh tied to train travel.
+Pausing the railway pauses the mechanism; reduced motion holds it still.
+It participates in native dynamic and shadow passes. Room replacement and
+failed-build cleanup dispose its buffer with the other owned room resources.
+
+## Geometry budgets
+
+The completed Lantern Gallery has **899,550 static scene vertices** against
+the unchanged **900,000** ceiling. The four wall meshes contain **24,504 /
+3,468 / 3,468 / 8,076** vertices, totaling **39,516** against **40,000**.
+That wall total includes **132 clear-glass vertices** owned by the back wall;
+the opaque wall total is **39,384**. The moving wheel remains **5,592 / 6,000**.
+
+Each upholstered bench has 768 vertices. Ceiling coves use 348 vertices on
+the long walls and 324 on the side walls. Backs buried against existing solid
+geometry are omitted where appropriate. Geometry ceilings and test timeouts
+were not raised. These budgets do not establish physical-device frame rate.
+
+## Checks and visual review
+
+Run `npm test`, `npm run test:geometry:full`, and
+`npm run check:contributions -- --json`. `npm run test:briarwatch` is part of
+the full suite. Architectural glazing and lighting also have dedicated checks.
+
+Focused coverage includes finite/deterministic geometry, real castle and ruin
+openings, terrain contact, river and spring continuity, masonry backing for
+ivy and rainspouts, 7,416 scenic triangle/envelope checks, route closure/grade,
+track and tree clearance, cabinet voids, portrait framing, reduced motion,
+wheel transform/draw, disposal, credits and script/map/export inclusion.
+Gallery checks cover open casements, sealed high-angle rays, wall-local UVs,
+curtain clearances and headings, clock orientation, floor-local parquet,
+fixture alignment, bounded opal radiance, cove/bench bounds, floor contact,
+solid supported cushions and correct textile material assignment.
+
+The 21-state Lantern Gallery browser review covers day/evening/night, dimmer-off,
+clock and lanterns, curtained estate, archive, survey table, marquetry, ceiling
+cove, upholstered bench, reverse entry, 390px/320px portrait, train view,
+native-frame smoke, live house map, switching to Coast and returning.
+Store native images and logs in ignored `evidence/` folders with the exact
+source commit or hashes, camera, viewport and renderer. A workflow trigger
+commit is not necessarily the rendered source when patches are applied first.
+
+Chromium/SwiftShader stills are appearance evidence, not physical-iPhone FPS
+or native-touch verification. Still captures hold the animation callback and
+settle the native camera; a separate frame smoke check is included. Scripted
+export inclusion does not substitute for manually opening a fresh playable
+export. Earlier spring/sconce close-ups were occluded; use the composed room
+views for their visible context rather than treating those shots as evidence
+of every detail.
