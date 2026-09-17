@@ -2,8 +2,24 @@
 
 // Native masonry and timber construction for Briarwatch. Openings are built
 // from jambs, arch voussoirs and intrados, never a black rectangle on a solid wall.
+// The wall already closes the backs of its dressings. Emit only the visible
+// chamfer, face and intrados, not another complete buried masonry solid.
+function briarArchivolt(b,r,spring,z,trim,n,c){
+ const side=Math.sign(z)||1,back=z-side*.025,front=z+side*trim*.66,bevel=trim*.24;
+ const pt=(rad,a,depth)=>[rad*Math.cos(a),spring+rad*Math.sin(a),depth];
+ for(let i=0;i<n;i++){
+  const a=i*PI/n+.006,q=(i+1)*PI/n-.006,cc=shade(c,.94+.09*hash(i,r));
+  b.quad(pt(r,a,back),pt(r,a,front-bevel*side),pt(r,q,front-bevel*side),pt(r,q,back),shade(cc,.79),4);
+  b.quad(pt(r,a,front-bevel*side),pt(r+bevel,a,front),pt(r+bevel,q,front),pt(r,q,front-bevel*side),cc,4);
+  b.quad(pt(r+bevel,a,front),pt(r+trim,a,front),pt(r+trim,q,front),pt(r+bevel,q,front),cc,4);
+ }
+ for(const sign of[-1,1]){
+  const x=sign*(r+trim*.5);b.box(x,spring/2,z+side*trim*.18,trim,spring,trim*.65,shade(c,.98),4);
+  b.box(x,spring-.07,z+side*trim*.3,trim*1.54,.16,trim*1.18,shade(c,1.04),4);
+ }
+}
 function briarArchWall(b,w,h,d,opening,spring,c=BRIAR_COLORS.stone,trim=.18){
- const r=opening/2,pier=(w-opening)/2,n=14;
+ const r=opening/2,pier=(w-opening)/2,n=opening<1.1?8:opening<2.2?10:14;
  if(!(w>opening&&h>=spring+r&&spring>=0))throw new Error('Invalid Briarwatch arch proportions.');
  for(const s of[-1,1])b.box(s*(r+pier/2),h/2,0,pier,h,d,c,4);
  for(let i=0;i<n;i++){
@@ -12,10 +28,7 @@ function briarArchWall(b,w,h,d,opening,spring,c=BRIAR_COLORS.stone,trim=.18){
   b.quad([xa,ya,-d/2],[xa,ya,d/2],[xb,yb,d/2],[xb,yb,-d/2],shade(c,.80),4);
  }
  b.box(0,h-.025,0,opening,.05,d,c,4);
- if(trim>0)for(const z of[-d/2-.025,d/2+.025]){
-  archRing(b,0,spring,z,r,r+trim,trim*.65,shade(c,1.10),n);
-  for(const s of[-1,1])b.box(s*(r+trim/2),spring/2,z,trim,spring,trim*.65,shade(c,1.08),4);
- }
+ if(trim>0)for(const z of[-d/2-.025,d/2+.025])briarArchivolt(b,r,spring,z,trim,n,shade(c,1.10));
 }
 function briarArcadeBay(b,w,top,d,r,spring,base,c){
  b.push(0,base,0);briarArchWall(b,w,top-base,d,r*2,spring-base,c,.23);b.pop();
@@ -43,7 +56,10 @@ function briarRoof(b,w,d,y,rise,c=BRIAR_COLORS.slate,gable=true){
   b.box(s*w/2,y-.06,0,.12,.19,d,'#555d55',22);
  }
  b.box(0,y-.09,0,w,.16,d,shade(c,.76),22);
- for(let z=-d/2;z<d/2;z+=.7)b.cylinder(0,y+rise+.055,z+.35,.105,.105,Math.min(.7,d/2-z),shade(c,1.11),5,8,PI/2);
+ for(let z=-d/2;z<d/2;z+=.7)for(let i=0;i<4;i++){
+  const a=i*PI/4,q=(i+1)*PI/4,zz=Math.min(z+.68,d/2),r=.115;
+  b.quad([Math.cos(a)*r,y+rise+Math.sin(a)*r,z],[Math.cos(a)*r,y+rise+Math.sin(a)*r,zz],[Math.cos(q)*r,y+rise+Math.sin(q)*r,zz],[Math.cos(q)*r,y+rise+Math.sin(q)*r,z],shade(c,1.11),5);
+ }
 }
 function briarConeRoof(b,r,y,h,c=BRIAR_COLORS.slate){
  const rows=9,n=20;
@@ -91,6 +107,20 @@ function briarRoundTower(b,x,z,r,height,{roof='flat',floor=BRIAR.court,windows=t
   const a=i*TAU/n;b.push(Math.sin(a)*ap,low+j*levelH,Math.cos(a)*ap,0,a);
   if(windows&&(i+j)%3===0)briarWindowBay(b,side+.035,levelH,.64,Math.min(.65,side*.44),.9,1.02,j===levels-1?'#b3ad97':'#aaa58f');
   else b.box(0,levelH/2,0,side+.035,levelH,.64,j===levels-1?'#b1ab95':'#a5a18d',4);
+  b.pop();
+ }
+ // Recessed joints, staggered dressed stones and a battered plinth give the
+ // cylindrical towers scale without papering over any of their real openings.
+ for(let i=0;i<n;i++){
+  const a=i*TAU/n;b.push(Math.sin(a)*(ap+.327),0,Math.cos(a)*(ap+.327),0,a);
+  for(let row=0;row<5;row++)for(let k=0;k<3;k++){
+   const ww=side/3,xx=-side/2+(k+.5)*ww,yy=.54+row*.34;
+   b.quad([xx-ww*.45,yy,.008],[xx+ww*.45,yy,.008],[xx+ww*.45,yy+.255,.026],[xx-ww*.45,yy+.255,.026],shade('#b2ad96',.87+.17*hash(i*3+k,row)),4);
+  }
+  if(roof==='flat'){
+   briarConsole(b,0,height-.65,.035,.43,.75,.42,'#a5a18c');
+   for(const xx of[-side*.31,side*.31])b.quad([xx-.055,height-.77,.10],[xx+.055,height-.77,.10],[xx+.055,height-.13,.10],[xx-.055,height-.13,.10],'#646e60',22);
+  }
   b.pop();
  }
  for(const y of[low,height-.65,height])b.cylinder(0,y,0,r+.14,r+.14,.19,'#c1b79d',4,n);
@@ -144,7 +174,7 @@ function briarKeep(b){
  b.box(0,height+.05,0,w+.9,.40,d+.9,'#b7ad94',4);
  for(const zz of[-d/2-.18,d/2+.18])for(let xx=-w/2;xx<=w/2;xx+=1.48)b.box(xx,height+.86,zz,.78,1.22,.62,'#b8ae96',4);
  for(const xx of[-w/2-.18,w/2+.18])for(let zz=-d/2+1;zz<d/2;zz+=1.47)b.box(xx,height+.86,zz,.62,1.22,.78,'#b8ae96',4);
- briarRoof(b,w-.65,d-.65,height+.55,4.6,'#47555c');
+ briarRoof(b,w-.65,d-.65,height+.55,4.6,'#47555c',false);
  // A small lead-roofed dormer breaks the long southern slope.
  b.push(0,height+2.55,3.9);b.box(0,.45,0,1.55,.9,1.25,'#a59f89',4);briarArchedPane(b,.70,.42,.65,'#6d817a');briarRoof(b,1.9,1.7,.90,.85,'#526068');b.pop();
  briarFlag(b,-3.8,height+2.3,4.1,3.7,-.2);b.pop();
@@ -283,11 +313,17 @@ function briarCourtyard(b){
  for(let i=0;i<5;i++)b.box(-17.2+(i%3)*.5,y+.15+Math.floor(i/3)*.27,2.1,.46,.27,.61,'#b9ae92',4);
  briarLantern(b,-26.7,y+3.15,-.4,.46);
 }
+const BRIAR_CURTAINS=[[[-38,-23],[-32,-29],19.0],[[-32,-29],[-22,-30],19.5],[[-22,-30],[-11,-29],18.7],[[-11,-29],[-4,-23],18.5],[[-4,-23],[-2,-8],18.2],[[-2,-8],[-5,3.5],17.6],[[-5,3.5],[-17,5.0],17.5],[[-31,5.0],[-37,2.5],17.6],[[-37,2.5],[-40,-10],18.2],[[-40,-10],[-38,-23],18.8]];
+// Decorations share the actual curtain survey. Their backs touch its outward
+// face rather than guessed axis-aligned planes beside an angled wall.
+function briarCurtainAnchor(index,t=.5){
+ const [a,q,top]=BRIAR_CURTAINS[index],dx=q[0]-a[0],dz=q[1]-a[1],length=Math.hypot(dx,dz),nx=dz/length,nz=-dx/length;
+ return {x:mix(a[0],q[0],t)+nx*.57,z:mix(a[1],q[1],t)+nz*.57,angle:Math.atan2(nx,nz),nx,nz,top};
+}
 function briarCastle(b){
  b.push(BRIAR_CASTLE_OFFSET[0],0,BRIAR_CASTLE_OFFSET[1]);
  // An irregular ring has an intentionally open southern gate, not a square kit.
- const walls=[[[-38,-23],[-32,-29],19.0],[[-32,-29],[-22,-30],19.5],[[-22,-30],[-11,-29],18.7],[[-11,-29],[-4,-23],18.5],[[-4,-23],[-2,-8],18.2],[[-2,-8],[-5,3.5],17.6],[[-5,3.5],[-17,5.0],17.5],[[-31,5.0],[-37,2.5],17.6],[[-37,2.5],[-40,-10],18.2],[[-40,-10],[-38,-23],18.8]];
- for(const [a,q,top]of walls)briarCurtain(b,a,q,top);
+ for(const [a,q,top]of BRIAR_CURTAINS)briarCurtain(b,a,q,top);
  briarRoundTower(b,-38.7,-10,2.7,9.0,{roof:'flat'});
  briarRoundTower(b,-5.1,2.3,3.35,7.3,{roof:'flat'});
  briarRoundTower(b,-10.5,-29,2.15,9.7,{roof:'cone'});
@@ -307,11 +343,12 @@ function briarConsole(b,x,y,z,w=.65,h=.85,d=.75,c='#a6a58f'){
  b.box(x,y+.10,z+d*.5,w+.10,.20,d+.14,shade(c,1.1),4);
 }
 function briarRose(b,x,y,z,r,c='#c0b69d'){
- b.push(x,y,z);b.cylinder(0,0,-.05,r,r,.07,'#5e7972',6,24,PI/2);
- ringZ(b,0,0,0,r,r+.14,.18,c,4,24);ringZ(b,0,0,.08,r*.30,r*.36,.10,c,4,16);
- for(let i=0;i<8;i++){
-  const a=i*TAU/8;b.beam([Math.cos(a)*r*.34,Math.sin(a)*r*.34,.05],[Math.cos(a)*r*.93,Math.sin(a)*r*.93,.05],r*.027,c,4,5);
-  ringZ(b,Math.cos(a)*r*.65,Math.sin(a)*r*.65,.03,r*.16,r*.20,.07,c,4,10);
+ const n=r<.75?16:24,petals=r<.75?6:8;
+ b.push(x,y,z);b.cylinder(0,0,-.05,r,r,.07,'#5e7972',6,n,PI/2);
+ ringZ(b,0,0,0,r,r+.14,.18,c,4,n);ringZ(b,0,0,.08,r*.30,r*.36,.10,c,4,12);
+ for(let i=0;i<petals;i++){
+  const a=i*TAU/petals;b.beam([Math.cos(a)*r*.34,Math.sin(a)*r*.34,.05],[Math.cos(a)*r*.93,Math.sin(a)*r*.93,.05],r*.027,c,4,5);
+  ringZ(b,Math.cos(a)*r*.65,Math.sin(a)*r*.65,.03,r*.16,r*.20,.07,c,4,r<.75?8:10);
  }b.pop();
 }
 function briarDormer(b,x,y,z,angle=0,s=1,c='#556571'){
@@ -332,6 +369,7 @@ function briarOriel(b,x,y,z,angle=0,w=2.25,h=3.2){
 }
 function briarCastleDetails(b){
  const y=BRIAR.court;
+ briarCastleCarving(b);
  // The keep's south elevation has a projecting lord's oriel and a defensible
  // timber hoarding. Their consoles and braces are visible from the arrival.
  briarOriel(b,-28,y+9.95,-13.16,0,2.40,3.45);
@@ -394,4 +432,78 @@ function briarCastleDetails(b){
  b.push(-25.0,y,-.75);briarCart(b,0,0,0,-.3);b.pop();
  for(const [x,z]of[[-29.8,1.8],[-30.5,1.4],[-30.6,.65]])briarBarrel(b,x,y,z,.78);
  for(const [x,z]of[[-17,-9],[-19.4,-9],[-19.4,-13.5]])b.box(x,y+.20,z,.55,.36,.60,'#b8aa8b',4);
+}
+
+
+// Roof silhouettes, heraldry and vegetation are authored for the keep, gate and
+// riverside views. They share the original local castle coordinate system.
+function briarPennant(b,x,y,z,h=3.5,w=.9){
+ const point=(u,v)=>[x+u*w,y-v*h,z+.09+Math.sin(u*5.2+v*3)*.11+v*.09];
+ for(let j=0;j<8;j++)for(let i=0;i<4;i++){
+  const u0=i/4-.5,u1=(i+1)/4-.5,v0=j/8,v1=(j+1)/8;
+  const p=point(u0,v0),q=point(u1,v0),r=point(u1,v1),s=point(u0,v1);
+  if(j===7){r[1]+=Math.abs(u1)*.7;s[1]+=Math.abs(u0)*.7;}
+  b.quad(p,q,r,s,i===0||i===3||j===0?'#b49a62':'#773a3b',8);
+ }
+ b.beam([x-w*.67,y+.12,z],[x+w*.67,y+.12,z],.035,'#a08f65',41,5);
+ const yy=y-h*.40;b.beam([x-w*.23,yy-.20,z+.24],[x,yy+.12,z+.24],.045,'#c8b37d',23,4);b.beam([x,yy+.12,z+.24],[x+w*.23,yy-.20,z+.24],.045,'#c8b37d',23,4);
+}
+function briarWallIvy(b,x,y,z,w,h,angle=0,id=1){
+ b.push(x,y,z,0,angle);
+ for(let i=0;i<7;i++){
+  const u=(hash(i,id)-.5)*w,hh=h*(.45+.55*hash(id,i)),dx=.22*Math.sin(i*2.4);
+  briarTaperBranch(b,[u,0,.08],[u+dx,hh,.08],.025,.006,'#58634a');
+  for(let j=0;j<7;j++){
+   const yy=hh*(j+.5)/7,xx=u+dx*yy/hh+Math.sin(j*2.4+i)*.25,rr=.23+.13*hash(i,j+id),zz=.13;
+   b.tri([xx-rr,yy,zz],[xx,yy+rr*.85,zz+.07],[xx+rr,yy+.03,zz],'#4f6a46',8);
+   b.tri([xx-rr,yy,zz],[xx+rr,yy+.03,zz],[xx+.06,yy-rr*.66,zz+.06],j%3?'#657b4d':'#819061',8);
+  }
+ }
+ b.pop();
+}
+function briarCastleCarving(b){
+ const y=BRIAR.court;
+ // Crow-stepped, limestone loft gables replace the keep's unarticulated dark
+ // end triangles. The pitched slates remain behind the projecting coping.
+ for(const side of[-1,1]){
+  b.push(-28,y,-20+side*6.02,0,side<0?PI:0);
+  b.tri([-5.50,20.88,0],[5.50,20.88,0],[0,25.49,0],'#aaa892',4);
+  b.box(0,21.16,.04,10.5,.19,.23,'#c0b99f',4);
+  for(const s of[-1,1])for(let j=0;j<6;j++){
+   const xx=s*(5.06-j*.83),yy=21.04+j*.70;
+   b.box(xx,yy+.28,.11,.91,.60,.39,'#b9b39b',4);b.box(xx,yy+.61,.13,1.04,.15,.52,'#c4bba0',4);
+  }
+  briarRose(b,0,23.03,.12,.66,'#bdb69c');
+  for(const x of[-2.4,2.4]){
+   b.push(x,21.53,.08);briarArchedPane(b,.56,.78,.03,'#46594d',false);
+   briarArchivolt(b,.28,.78,.06,.12,8,'#c3bca1');
+   for(let k=0;k<5;k++)b.box(0,.17+k*.16,.14,.52,.055,.11,'#6b725d',22);b.pop();
+  }
+  b.pop();
+ }
+ // A slender leaded lantern above the great hall reads from the room entrance.
+ b.push(-8.1,y+15.23,-11.0);
+ b.box(0,.08,0,1.66,.32,1.9,'#68716b',4);
+ for(const side of[-1,1])for(const axis of[0,1]){
+  b.push(axis?side*.70:0,0,axis?0:side*.80,0,axis?side*PI/2:side<0?PI:0);
+  b.box(0,.9,0,1.4,1.55,.14,'#526157',22);
+  for(let j=0;j<6;j++)b.box(0,.30+j*.22,.11,1.3,.075,.21,'#afa78b',22);
+  for(const x of[-.70,.70])b.box(x,.86,.09,.13,1.9,.18,'#b9b299',4);b.pop();
+ }
+ briarRoof(b,2.0,2.15,1.90,1.2,'#405664');
+ b.beam([0,3.07,0],[0,4.05,0],.035,'#b6a46f',41,5);b.beam([-.44,3.77,0],[.44,3.77,0],.029,'#b6a46f',41,4);b.pop();
+ // Paired swallowtail standards flank rather than close the actual gate.
+ briarPennant(b,-29.46,y+9.0,7.87,3.15,.88);briarPennant(b,-18.57,y+9.25,7.72,3.2,.88);
+ // Gate voussoirs have an oversized, carved keystone and a small hood mould.
+ b.push(-24,y,7.69);
+ b.quad([-.19,4.76,.03],[.19,4.76,.03],[.33,5.33,.17],[-.33,5.33,.17],'#d0c3a2',4);
+ b.box(0,5.40,.12,.80,.17,.37,'#b8b098',4);b.pop();
+ // Fine stone coping is restrained: a few chipped rain spouts and ashlar
+ // patches tell a maintenance story instead of outlining every polygon.
+ for(const index of[8,7,6]){
+  const a=briarCurtainAnchor(index);b.push(a.x,a.top-.95,a.z,0,a.angle);briarConsole(b,0,0,0,.35,.4,.73,'#9b9e89');b.box(0,.09,.52,.38,.14,.96,'#b8b29b',4);b.pop();
+ }
+ for(const [index,w,h,base,id]of[[7,3.8,4.3,y,4],[8,3.5,5.0,y-1,9],[4,2.6,3.6,y+.7,12]]){
+  const a=briarCurtainAnchor(index);briarWallIvy(b,a.x,base,a.z,w,h,a.angle,id);
+ }
 }

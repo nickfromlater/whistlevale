@@ -249,6 +249,7 @@ function briarGoodsYard(b){
  for(let i=0;i<7;i++)b.box((i%3-.9)*.31,.69+Math.floor(i/3)*.27,(i%2-.5)*.8,.38,.28,.48,'#aeb197',4);b.pop();
 }
 function briarVillage(scene,b){
+ briarVillageGardens(b);
  for(const q of BRIAR_BUILDINGS)briarTimberHouse(b,q);
  briarMill(scene,b);briarStation(scene,b);briarGoodsYard(b);
  const lanes=[[[47.8,25.5],[48.2,18],[48.3,10],[47.6,3],[46,-3]],[[39,22],[47.9,24],[56,26]],[[29.5,0],[33,-3],[41,-1],[47.6,3],[58,3]]];
@@ -269,4 +270,23 @@ function briarVillage(scene,b){
  for(let i=0;i<3;i++)for(let j=0;j<7;j++){const xx=51.4+i*.55,zz=-11.3+j*.30,y=briarSurface(xx,zz);briarLeafCloud(b,[xx,y+.13,zz],.17,'#7e965a',i*7+j);}
  for(const [xx,zz,pose,angle]of[[47.5,23.3,'bag',.4],[49.3,18.4,'talk',2.6],[49.1,17.9,'talk',.2],[55.5,26.1,'work',1.4],[28.5,.7,'work',.9]])scenePerson(scene,b,xx,briarSurface(xx,zz)+.12,zz,pose,angle,.75);
  for(const [xx,zz]of[[46.5,24.5],[53,26.6],[29,-.4]])briarLantern(b,xx,briarSurface(xx,zz)+2.2,zz,.30);
+}
+
+
+function briarVillageGardens(b){
+ // The gap between the inn and weaver is a cultivated garden, not another
+ // building or an even scatter of props. The lane stays clear to its east.
+ for(let i=0;i<3;i++){
+  const x=39.6+i*1.8,z=9.0,y=briarSurface(x,z);
+  b.box(x,y+.09,z,1.3,.17,2.4,'#5e6650',9);
+  for(const side of[-1,1]){b.box(x+side*.67,y+.22,z,.10,.33,2.5,'#928366',22);b.box(x,y+.22,z+side*1.23,1.4,.33,.10,'#928366',22);}
+  for(let j=0;j<4;j++)for(const side of[-1,1])briarLeafCloud(b,[x+side*.28,y+.34,z-.84+j*.55],.21,i===1?'#8b9e63':'#63845b',i*12+j+side);
+ }
+ for(let i=0;i<13;i++){
+  const x=38.7+i*.52,z=11.0+Math.sin(i*.32)*.15,y=briarSurface(x,z);
+  briarLeafCloud(b,[x,y+.48,z],.49,'#57794f',170+i);
+ }
+ // A trellis frames the garden gate; it never projects into the main street.
+ for(const x of[45.5,46.6]){const y=briarSurface(x,10.4);b.box(x,y+.82,10.4,.10,1.64,.12,'#938463',22);}
+ b.beam([45.5,briarSurface(45.5,10.4)+1.48,10.4],[46.6,briarSurface(46.6,10.4)+1.48,10.4],.045,'#ac9a71',22,4);
 }

@@ -49,6 +49,33 @@ courtyard, gate passage, hall windows and smithy reward close cameras; most
 village houses are exterior miniatures. No historical accuracy is claimed for
 the intentionally anachronistic railway.
 
+## Scenery and castle revision 3
+
+The keep now has projecting crow-stepped limestone gables, six-petal loft roses,
+louvered vents, chamfered arch dressings, dressed tower plinths and a slender
+roof lantern above the great hall. Swallowtail standards, carved keystones,
+machicolation consoles and climbing ivy break up the gate and curtain walls.
+The original open gate, keep entrance, bridge openings and courtyard paths remain.
+
+The landscape uses dissected quarry slopes, slope-embedded limestone ribs,
+projecting cliff buttresses, localized talus fans and bracken-filled woodland.
+Fifty-six explicitly placed trees replace the earlier thirty-four-tree planting.
+Oak, beech, apple, willow and pine have tapered branch skeletons and asymmetric,
+volumetric foliage with blended normals instead of pointed umbrella crowns.
+Fallen timber, roots, wildflowers and low vegetation are grouped by habitat.
+A roofless watchtower with a true open entrance anchors the eastern wooded ridge.
+
+A separate surveyed spring has a carved bed, continuous downhill water ribbon,
+source pool, small cascade and open packhorse bridge. It joins the existing
+submerged river without changing the train circuit or the millrace. Raised beds,
+a clipped hedge and a small trellis connect the inn and weaver's yards.
+
+The focused native geometry check measures **895,086 static scene vertices**,
+against the unchanged 900,000 ceiling, and **5,592 moving wheel vertices** against
+6,000. That adds roughly 0.6% to the prior static scene while increasing planting
+from 34 to 56 trees. Buried roof-ridge and sleeper faces are omitted; small arch
+and tracery tessellation is scaled to their size. No shared renderer was changed.
+
 ## Source and lifecycle
 
 - `src/rooms/briarwatch.js`: terrain, river, routes, bridges, vegetation, shell,
@@ -75,7 +102,7 @@ Run `npm test`, `npm run test:geometry:full`, and
 `npm run check:contributions -- --json`. `npm run test:briarwatch` also runs as
 part of the full suite. Its focused checks cover the closed circuit, actual
 mesh-to-track and tree clearances, clipped river continuity, genuine cabinet voids, graded rail support, tunnel roof, real gate and
-keep openings, deterministic mechanism, reduced motion, disposal, credits,
+keep and ruined-watchtower openings, swept train-envelope clipping against new scenic triangles, carved spring-bed clearance, deterministic mechanism, reduced motion, disposal, credits,
 script inclusion and house-map placement.
 
 Screenshots and measured browser evidence belong in ignored `evidence/briarwatch/`.

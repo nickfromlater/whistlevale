@@ -41,6 +41,36 @@ for(let i=0;i<report.trees;i++){
  })()`);treeClearance=Math.min(treeClearance,c);
 }
 assert.ok(treeClearance>1.2,'branches and roots clear rolling stock');report.minimumTreeRailClearance=treeClearance;
+// New scenery is checked as emitted geometry, not only terrain samples. Clip
+// each candidate triangle against a swept train-sized box at half-unit steps.
+Object.assign(report,state.run(`(()=>{
+ const b=new Builder();for(const build of[briarEscarpments,briarWoodlandFloor,briarWatchRuin,briarSpring,briarVillageGardens])build(b);
+ const cells=new Map(),triangles=[];
+ for(let j=0;j<b.data.length;j+=36){
+  const t=[b.data.slice(j,j+3),b.data.slice(j+12,j+15),b.data.slice(j+24,j+27)],id=triangles.push(t)-1;
+  const minX=Math.min(...t.map(p=>p[0])),maxX=Math.max(...t.map(p=>p[0])),minZ=Math.min(...t.map(p=>p[2])),maxZ=Math.max(...t.map(p=>p[2]));
+  for(let x=Math.floor(minX/4);x<=Math.floor(maxX/4);x++)for(let z=Math.floor(minZ/4);z<=Math.floor(maxZ/4);z++){const key=x+','+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}
+ }
+ let tested=0;
+ for(let d=0;d<BRIAR_ROUTE.length;d+=.5){
+  const pose=BRIAR_ROUTE.at(d),f=norm([pose.f[0],0,pose.f[2]]),r=[f[2],0,-f[0]],cx=Math.floor(pose.p[0]/4),cz=Math.floor(pose.p[2]/4),ids=new Set();
+  for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)for(const id of cells.get((cx+x)+','+(cz+z))||[])ids.add(id);
+  for(const id of ids){
+   let polygon=triangles[id].map(p=>{const v=sub(p,pose.p);return [dot(v,r),v[1],dot(v,f)];});
+   if(polygon.every(p=>p[1]<.13)||polygon.every(p=>p[1]>2.48))continue;
+   for(const plane of[p=>p[0]+.72,p=>.72-p[0],p=>p[2]+.30,p=>.30-p[2],p=>p[1]-.13,p=>2.48-p[1]]){polygon=briarClip(polygon,plane);if(!polygon.length)break;}
+   tested++;assert.ok(polygon.length<3,'new scenic triangle enters rolling-stock envelope at '+d.toFixed(2)+' '+JSON.stringify(triangles[id]));
+  }
+ }
+ const spring=new Builder();briarSpring(spring);let waterClearance=Infinity;
+ for(let j=0;j<spring.data.length;j+=12)if([7,87].includes(spring.data[j+9])){const x=spring.data[j],y=spring.data[j+1],z=spring.data[j+2];assert.ok(briarInside(x,z,.5),'spring stays on its scenic peninsula');waterClearance=Math.min(waterClearance,y-briarSurface(x,z));}
+ assert.ok(waterClearance>.04,'spring ribbon and source pool stay above the actual carved bed: '+waterClearance);
+ assert.ok(BRIAR_SPRING.every((p,i)=>!i||p[2]<BRIAR_SPRING[i-1][2]),'spring flows downhill into the existing river');
+ assert.equal(new Set(BRIAR_TREES.map(t=>t[0]+','+t[1])).size,BRIAR_TREES.length,'no duplicate woodland placements');
+ assert.equal(getHouseScene('briarwatch').briarwatch.revision,3);
+ return {sceneryEnvelopeTriangleChecks:tested,minimumSpringBedClearance:waterClearance};
+})()`));
+
 // The full overview must fit the actual camera frustum at both phone widths.
 state.run(`(()=>{const q=HOUSE_ROOMS.briarwatch;
  for(const width of[320,390]){const eye=add(q.target,[Math.sin(q.phoneYaw)*Math.cos(q.phonePitch)*q.phoneDistance,Math.sin(q.phonePitch)*q.phoneDistance,Math.cos(q.phoneYaw)*Math.cos(q.phonePitch)*q.phoneDistance]);const vp=mm(perspective(.87,width/844,.1,500),lookAt(eye,q.target));
@@ -58,6 +88,10 @@ state.run(`
  const arch=new Builder();briarArchWall(arch,5.4,8.45,.9,3.7,3.1);
  assert.equal(briarQASegmentHits(arch,[0,2,-2],[0,2,2]),0,'true open arch');
  assert.ok(briarQASegmentHits(arch,[2.4,2,-2],[2.4,2,2])>0,'solid jamb');
+ const ruin=new Builder();briarWatchRuin(ruin);const rq=BRIAR_WATCH_RUIN,ruinY=briarSurface(rq.x,rq.z)+.92;
+ assert.equal(briarQASegmentHits(ruin,[rq.x,ruinY,rq.z+3.2],[rq.x,ruinY,rq.z+1.1]),0,'ruined watchtower retains a genuine open doorway');
+ const curtains=new Builder();for(const [a,q,top]of BRIAR_CURTAINS)briarCurtain(curtains,a,q,top);
+ for(const index of[4,6,7,8]){const a=briarCurtainAnchor(index),y=BRIAR.court+2;assert.ok(briarQASegmentHits(curtains,[a.x+a.nx*.1,y,a.z+a.nz*.1],[a.x-a.nx*.7,y,a.z-a.nz*.7])>0,'ivy and rainspout anchors have actual masonry backing');}
  const gate=new Builder();briarGatehouse(gate);assert.equal(briarQASegmentHits(gate,[-24,14.3,8.2],[-24,14.3,1.0]),0,'clear gate passage including open doors and raised portcullis');
  const keep=new Builder();briarKeep(keep);assert.equal(briarQASegmentHits(keep,[-28,16.4,-11.7],[-28,16.4,-15]),0,'stair landing opens into the keep');
 `);
