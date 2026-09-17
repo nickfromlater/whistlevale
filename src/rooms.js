@@ -23,7 +23,7 @@ function registerHouseRoom(key,definition){
  HOUSE_ROOMS[key]={number:String(Object.keys(HOUSE_ROOMS).length+1).padStart(2,'0'),name:key,layout:key,tag:'A LITTLE WORLD',description:'A railway waiting to be explored.',color:'#99ad83',distance:150,target:[0,0,0],pitch:.65,yaw:.35,ambient:'forest',...HOUSE_ROOMS[key],...metadata};
  HOUSE_ROOM_BUILDERS.set(key,build);if(shell)ROOM_SHELLS[key]=shell;
  const cached=roomScenes.get(key);
- if(cached){for(const mesh of[cached.mesh,cached.lifeDetails?.mesh,...(cached.wildlife?.parts||[]).map(p=>p.mesh),...cached.walls.map(w=>w.mesh)])disposeMesh(mesh);roomScenes.delete(key);}
+ if(cached){for(const mesh of[cached.mesh,cached.lifeDetails?.mesh,...(cached.wildlife?.parts||[]).map(p=>p.mesh),...(cached.movingParts||[]).map(p=>p.mesh),...cached.walls.map(w=>w.mesh)])disposeMesh(mesh);roomScenes.delete(key);}
  houseRoomRevision++;
  return HOUSE_ROOMS[key];
 }
@@ -219,7 +219,7 @@ function getHouseScene(key){
  }catch(error){
   // Shell walls may already be uploaded when a scene builder or its train
   // contract fails. Release those buffers; a partial room never enters the cache.
-  const owned=[scene.mesh,scene.lifeDetails?.mesh,...(scene.wildlife?.parts||[]).map(p=>p.mesh),...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
+  const owned=[scene.mesh,scene.lifeDetails?.mesh,...(scene.wildlife?.parts||[]).map(p=>p.mesh),...(scene.movingParts||[]).map(p=>p.mesh),...(Array.isArray(scene.walls)?scene.walls:[]).map(w=>w?.mesh)];
   for(const mesh of new Set(owned))if(mesh)disposeMesh(mesh);
   throw error;
  }finally{seed=oldSeed;}
@@ -233,6 +233,8 @@ function drawHouseRoom(scene,p,shadow=false){
 
 function houseTrainAt(train,offset=0){return circuitAt(train.edge,train.distance-offset);}
 function drawHouseTrains(scene,p){
+ // Small native mechanisms share the dynamic shadow pass and room ownership.
+ for(const part of scene.movingParts||[])draw(part.mesh,part.model(scene),p);
  if(scene.wildlife)safariDrawWildlife(scene,p);
  for(const train of scene.trains)drawHouseTrainFormation(scene,train,p);
 }
