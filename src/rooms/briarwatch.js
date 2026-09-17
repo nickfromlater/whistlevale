@@ -210,7 +210,7 @@ function briarEstateOutlook(b,x,index){
  b.box(0,lo-.43,(front+q.back)/2,2*r+2.3,.86,front-q.back+.4,'#b8ab8b',20);
  // Close the top and upper sides of the casing. Without these returns the
  // backing sky escaped above the arch in the high arrival camera.
- b.box(0,46.5,(front+q.back)/2,2*r+2.3,7,front-q.back,'#bcb59d',20);
+ b.box(0,43.2,(front+q.back)/2,2*r+2.3,.4,front-q.back,'#bcb59d',20);
  for(const side of[-1,1])b.box(side*(r+.56),(sy+43)/2,(front+q.back)/2,1.12,43-sy,front-q.back,'#bcb59d',20);
  for(let i=0;i<20;i++){
   const a=i*PI/20,c=(i+1)*PI/20,A=[Math.cos(a)*r,sy+Math.sin(a)*r],C=[Math.cos(c)*r,sy+Math.sin(c)*r];
