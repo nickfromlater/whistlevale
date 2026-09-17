@@ -1,0 +1,25 @@
+name: Briarwatch scenery review
+on:
+  push:
+    branches: [codex/briarwatch-castle]
+    paths: ['.github/workflows/briarwatch-scenery-review.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - name: Archive exact branch source for isolated native review
+        run: |
+          mkdir -p /tmp/briarwatch-source
+          git archive --format=zip HEAD -o /tmp/briarwatch-source/source.zip
+          git rev-parse HEAD > /tmp/briarwatch-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: briarwatch-scenery-source
+          path: /tmp/briarwatch-source/
+          retention-days: 3
