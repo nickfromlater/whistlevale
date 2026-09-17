@@ -121,3 +121,30 @@ viewport, renderer and commit used. Software-rendered Chromium screenshots are
 appearance evidence, not physical-phone performance or touch-gesture
 verification. Source/export inclusion checks do not substitute for opening the
 exported playable house.
+
+## Estate outlooks and lamplight
+
+The two rear windows now contain different shallow, forced-perspective estate
+scenes with layered hills, trees, a lodge or garden pavilion, and a foreground
+stone balustrade. Clear arched casements use the existing sorted architectural
+glazing pass. The outlooks stay inside the room footprint and share the back
+wall cutaway and disposal lifecycle; they are not a navigable outdoor world.
+
+Opt-in materials 92/93/98 keep exterior sky, scenery and cottage windows
+independent of the gallery dimmer. Daylight fades into a blue-hour sky with a
+still crescent and sparse stars. The native six-light rig remains; its two task
+lights now coincide with modeled reading lamps beside the benches. Materials
+94/95/96 add a stylized, dimmable light wash to the gallery plaster using local
+UVs, so it remains attached in the transformed house map. This is authored
+surface lighting, not extra shadow-casting lamps or volumetric scattering.
+
+No new textures, atlas slots, dependencies, uniforms or per-frame geometry.
+The castle, scenery, railway, cameras, automatic lighting settings and global
+mood presets are unchanged. The existing 900,000 static-vertex ceiling remains,
+with an additional 40,000-vertex ceiling across the four room-wall meshes.
+
+The native visual review caught exposed sky above the window arches. Solid
+top and upper side returns now seal the casings, with high-angle intersection
+regressions. Exterior broadleaf trees reuse the miniature's tapered branches
+and asymmetric leaf clouds. Pendants now hang below connected beam outriggers;
+their native light positions match the lowered fixtures.

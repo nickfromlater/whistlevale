@@ -147,6 +147,102 @@ function briarTable(b){
  b.box(-7,-12.3,29,4.4,.45,5.5,'#806949',22);
 }
 
+// Recessed, forced-perspective estate outlooks. Everything stays inside the
+// room footprint and belongs to the back wall's existing cutaway/cache mesh.
+const BRIAR_OUTLOOK={radius:10.2,bottom:3.3,spring:31.3,front:4.8,back:.72};
+function briarEstateTree(b,x,y,z,h,kind=0){
+ const start=b.data.length,bark='#545d50';
+ if(kind){
+  briarTaperBranch(b,[x,y,z],[x+.14,y+h*.9,z],h*.024,.015,bark);
+  for(let k=0;k<4;k++){
+   const r=h*(.27-k*.048),yy=y+h*(.40+k*.16);
+   b.push(x+Math.sin(k*2.1+x)*h*.022,yy,z,0,0,0,1,1,.22);
+   b.cylinder(0,0,0,r,.045,h*.37,['#3b5e55','#53766a','#6b8875'][k%3],93,7);b.pop();
+  }
+ }else{
+  // The same authored branching language as the miniature, not polygon balls.
+  // Compress only depth to fit the theatrical recess; keep the canopy airy.
+  b.push(x,y,z,0,0,0,1,1,.27);
+  const fork=[h*.035,h*.43,0];
+  briarTaperBranch(b,[0,0,0],[h*.012,h*.22,.03],h*.040,h*.028,bark);
+  briarTaperBranch(b,[h*.012,h*.22,.03],fork,h*.028,h*.020,bark);
+  for(let k=0;k<6;k++){
+   const a=k*2.399+x*.17,r=h*(.20+.045*hash(k,x)),q=[Math.cos(a)*r+h*.035,h*(.60+.12*hash(x,k)),Math.sin(a)*r],mid=lerpV(fork,q,.57);
+   mid[1]-=h*.055;briarTaperBranch(b,fork,mid,h*.015,h*.010,bark);briarTaperBranch(b,mid,q,h*.010,.008,bark);
+   briarLeafCloud(b,q,h*(.175+.018*(k%3)),['#557c65','#719279','#5d836b'][k%3],x+k*7);
+  }b.pop();
+ }
+ for(let i=start;i<b.data.length;i+=12)b.data[i+9]=93;
+}
+function briarEstateOutlook(b,x,index){
+ const q=BRIAR_OUTLOOK,r=q.radius,lo=q.bottom,sy=q.spring,front=q.front;
+ b.push(x,0,0);
+ // Sky and distant land are separate opaque surfaces; neither receives the
+ // gallery dimmer. UVs retain local coordinates through house-map transforms.
+ b.quad([-r,lo,q.back],[r,lo,q.back],[r,43,q.back],[-r,43,q.back],'#aec4b7',92,[0,0,1],[[index,0],[index+1,0],[index+1,1],[index,1]]);
+ for(let layer=0;layer<3;layer++){
+  const zz=1.0+layer*.66,n=24,profile=t=>10.9+(2-layer)*1.20+Math.sin(t*.23+index*2+layer)*1.48+Math.sin(t*.56-layer)*.54;
+  for(let i=0;i<n;i++){const a=-r+i*2*r/n,c=a+2*r/n;b.quad([a,lo,zz],[c,lo,zz],[c,profile(c),zz],[a,profile(a),zz],['#93aea2','#739589','#527967'][layer],93);}
+ }
+ // A different estate vignette in each window, not a repeated image: the
+ // west lodge and orchard, and the east walled garden with a little pavilion.
+ const hx=index?3.0:-3.0,hy=index?11.1:11.5,hz=2.8,hw=index?4.1:5.9,hh=index?3.5:4.2;
+ b.box(hx,hy+hh*.5,hz,hw,hh,.70,index?'#b2b29b':'#c5bf9f',93);
+ b.quad([hx-hw*.57,hy+hh,hz+.49],[hx+hw*.57,hy+hh,hz+.49],[hx+hw*.48,hy+hh+1.7,hz-.08],[hx-hw*.48,hy+hh+1.7,hz-.08],'#68736c',93);
+ b.tri([hx-hw*.57,hy+hh,hz+.49],[hx,hy+hh+1.7,hz+.49],[hx+hw*.57,hy+hh,hz+.49],'#8b8c77',93);
+ if(!index)b.box(hx-1.8,hy+hh+1.50,hz,.42,1.45,.46,'#9c9f88',93);
+ for(const dx of[-hw*.31,0,hw*.31]){
+  b.box(hx+dx,hy+1.45,hz+.375,.73,1.05,.035,'#d9b77b',98);
+  b.box(hx+dx,hy+1.45,hz+.41,.08,1.12,.05,'#667467',93);
+ }
+ // Terrace, winding garden path and a foreground stone balustrade. The
+ // landscape is a shallow theatrical perspective, not a navigable world.
+ b.quad([-r,lo,4.02],[r,lo,4.02],[r,8.5,3.0],[-r,8.5,3.0],'#718e69',93);
+ b.quad([-4.4,lo+.03,4.05],[-2.4,lo+.03,4.05],[3.8,8.53,3.03],[2.9,8.53,3.03],'#c0b99a',93);
+ b.box(0,6.4,3.78,20.2,.30,.31,'#9d9f84',93);
+ for(let i=0;i<15;i++)b.box(-9.5+i*1.35,5.25,3.8,.19,2.35,.24,'#8a957e',93);
+ for(const [i,t]of [[-4.5,9.7,3.35,11.5,0],[-7.2,11.0,2.45,7.4,1],[4.8,10.1,3.28,10.5,0],[7.1,11.5,2.40,8.7,1],[-.4,12.0,1.95,5.8,0]].entries()){
+  const [xx,yy,zz,h,k]=t;briarEstateTree(b,index?-xx:xx,yy,zz,h*(1+index*.06),k);
+ }
+ // Real reveal depth, with a segmented semicircular intrados. The backing
+ // wall stays behind the vista; the front aperture is clear up to the glass.
+ for(const s of[-1,1])b.box(s*(r+.56),(lo+sy)/2,(front+q.back)/2,1.12,sy-lo,front-q.back,'#b5ad92',20);
+ b.box(0,lo-.43,(front+q.back)/2,2*r+2.3,.86,front-q.back+.4,'#b8ab8b',20);
+ // Close the top and upper sides of the casing. Without these returns the
+ // backing sky escaped above the arch in the high arrival camera.
+ b.box(0,46.5,(front+q.back)/2,2*r+2.3,7,front-q.back,'#bcb59d',20);
+ for(const side of[-1,1])b.box(side*(r+.56),(sy+43)/2,(front+q.back)/2,1.12,43-sy,front-q.back,'#bcb59d',20);
+ for(let i=0;i<20;i++){
+  const a=i*PI/20,c=(i+1)*PI/20,A=[Math.cos(a)*r,sy+Math.sin(a)*r],C=[Math.cos(c)*r,sy+Math.sin(c)*r];
+  b.quad([A[0],A[1],q.back],[A[0],A[1],front],[C[0],C[1],front],[C[0],C[1],q.back],'#ada88e',20);
+  b.quad([A[0],A[1],front],[C[0],C[1],front],[C[0],43,front],[A[0],43,front],'#bcb59d',20);
+ }
+ archRing(b,0,sy,front,r,r+.62,.38,'#baad8b',20);
+ for(const xx of[-r,-r/3,r/3,r]){
+  const top=sy+Math.sqrt(Math.max(0,r*r-xx*xx));b.box(xx,(lo+top)/2,front+.12,.24,top-lo,.28,'#8a7755',22);
+ }
+ for(const yy of[lo,17,sy])b.box(0,yy,front+.16,2*r+.55,.26,.35,'#a18b62',22);
+ b.box(0,lo-.78,front+.24,2*r+3.2,.40,1.55,'#897550',22);
+ for(const xx of[-r/3,r/3]){b.box(xx+.20,17.55,front+.35,.10,.66,.10,'#c3a46b',41);b.box(xx+.31,17.24,front+.35,.31,.10,.10,'#c3a46b',41);}
+ // Clear panes use the existing sorted glazing pass and its disposal contract.
+ const glassZ=front-.05;b.quad([-r,lo,glassZ],[r,lo,glassZ],[r,sy,glassZ],[-r,sy,glassZ],'#b7c9bc',76);
+ for(let i=0;i<20;i++){const a=i*PI/20,c=(i+1)*PI/20;b.tri([0,sy,glassZ],[r*Math.cos(a),sy+r*Math.sin(a),glassZ],[r*Math.cos(c),sy+r*Math.sin(c),glassZ],'#b7c9bc',76);}
+ b.pop();
+}
+function briarReadingLamp(b,x,z){
+ b.cylinder(x,FLOOR+.20,z,.94,.88,.40,'#7d6c4c',41,12);
+ b.cylinder(x,FLOOR+4.95,z,.095,.095,9.4,'#ac9163',41,9);
+ b.cylinder(x,-13.25,z,1.74,.78,1.65,'#afa078',23,14);
+ b.cylinder(x,-14.1,z,1.59,1.59,.06,'#f6d5a1',25,14);
+ b.sphere(x,-14.06,z,.22,.27,.22,'#ffe0a6',25,7,4);
+}
+function briarGalleryReceiver(b,which,pos,angle){
+ // Plaster alone opts into the room-specific practical-light wash. Its local
+ // coordinates travel in UVs, so pools remain attached in the transformed map.
+ const mat=which==='back'?94:which==='front'?96:95,c=Math.cos(angle),s=Math.sin(angle);
+ for(let i=0;i<b.data.length;i+=12)if(b.data[i+9]===20){b.data[i+9]=mat;b.data[i+10]=c*(b.data[i]-pos[0])-s*(b.data[i+2]-pos[2]);b.data[i+11]=b.data[i+1];}
+}
+
 function briarShell(b){
  const walls=[];b.box(0,FLOOR-.25,0,158,.45,130,'#826c4c',21);
  // The room is an old estate railway gallery, not a neutral box. Furniture and
@@ -157,6 +253,7 @@ function briarShell(b){
  // Two museum benches and a narrow runner make the central aisle feel inhabited
  // without blocking the horseshoe cabinet or any authored camera.
  for(const x of[-24,24]){b.box(x,-20.72,50,10,.55,2.1,'#70573b',22);for(const dx of[-4.1,4.1])b.box(x+dx,-22.25,50,.45,3,.45,'#5b4936',22);}
+ for(const x of[-24,24])briarReadingLamp(b,x,56);
  b.box(0,FLOOR+.018,51,53,.035,5.2,'#6e4038',23);b.box(0,FLOOR+.038,51,49,.018,4.55,'#b18c62',23);
  for(const which of['back','left','right','front']){
   const w=new Builder(),back=which==='back',front=which==='front',side=!back&&!front,width=back||front?156:128,pos=back?[0,0,-64]:front?[0,0,64]:which==='left'?[-78,0,0]:[78,0,0],angle=back?0:front?PI:which==='left'?PI/2:-PI/2;
@@ -167,6 +264,7 @@ function briarShell(b){
   // Authored wall bays: broad recessed plaster fields framed by oak pilasters.
   const bay=side?16:18;
   for(let x=-width/2+5;x<width/2;x+=bay){
+   if(back&&Math.abs(Math.abs(x)-42)<12)continue;
    w.box(x,14,.82,.72,58.2,.72,'#70583d',22);
    w.box(x+bay*.42,35.5,.80,bay*.72,.34,.72,'#9a8058',22);
    w.box(x+bay*.42,-7.0,.80,bay*.72,.26,.66,'#9a8058',22);
@@ -174,14 +272,7 @@ function briarShell(b){
   // Raised dado panels read at room scale instead of a picket-fence rhythm.
   for(let x=-width/2+8;x<width/2-3;x+=12){w.box(x,-15.7,1.00,9.4,10.7,.16,'#3a5448',22);w.box(x,-15.7,1.10,8.2,9.5,.08,'#56705d',22);}
   if(back){
-   for(const x of[-42,42]){
-    // Deep arched window embrasures with stone-toned reveals and oak mullions.
-    w.box(x,18,.72,24,31,.50,'#9f9b8c',20);roomSign(w,'window',x,18,1.12,21,29,0,33);
-    for(const dx of[-10.6,0,10.6])w.box(x+dx,18,1.28,.48,29.6,.82,'#aa9167',22);
-    for(const y of[3.1,18,32.9])w.box(x,y,1.28,22,.55,.82,'#b39a70',22);
-    archRing(w,x,33,1.28,10.5,11.3,.86,'#958364',20);
-    w.box(x,1.7,1.35,23.6,.55,1.25,'#7b6547',22);
-   }
+   for(const [i,x]of[-42,42].entries())briarEstateOutlook(w,x,i);
    // A restrained heraldic centerpiece gives the far wall a focal point.
    w.box(0,20,.92,28,29,.28,'#a9a38f',20);w.box(0,20,1.10,25.5,26.5,.16,'#c8c0aa',20);
    w.push(0,20,1.24,0,0);w.cylinder(0,0,0,5.4,5.4,.16,'#72563d',22,16,PI/2);w.cylinder(0,0,.12,4.5,4.5,.12,'#9b7b50',22,16,PI/2);w.box(0,.2,.24,1.0,6.0,.18,'#3d5145',22);w.box(0,.2,.25,6.0,1.0,.18,'#3d5145',22);w.pop();
@@ -207,11 +298,11 @@ function briarShell(b){
    w.beam([-77,43,z],[77,43,z],.58,'#665039',22,4);
    for(const x of[-68,-34,0,34,68]){w.beam([x-7,35,z],[x,43,z],.34,'#806343',22,4);w.beam([x+7,35,z],[x,43,z],.34,'#806343',22,4);}
    for(const x of[-44,44]){
-    w.beam([x,43,lampZ],[x,46,lampZ],.045,'#51473a',41,6);w.cylinder(x,42.5,lampZ,3.0,1.35,1.15,'#94794f',41,20);w.cylinder(x,41.91,lampZ,2.72,2.72,.07,'#f0dcb0',25,20);
-    for(let i=0;i<6;i++){const a=i*TAU/6;w.beam([x,42.35,lampZ],[x+Math.cos(a)*2.2,41.55,lampZ+Math.sin(a)*2.2],.045,'#8f744d',41,5);w.sphere(x+Math.cos(a)*2.2,41.5,lampZ+Math.sin(a)*2.2,.18,.24,.18,'#e5c889',25,8,4);}
+    w.beam([x,43,z],[x,43,lampZ],.12,'#665039',22,4);w.beam([x,43,lampZ],[x,39.8,lampZ],.045,'#51473a',41,6);w.cylinder(x,39.3,lampZ,3.0,1.35,1.15,'#94794f',41,20);w.cylinder(x,38.71,lampZ,2.72,2.72,.07,'#f0dcb0',25,20);
+    for(let i=0;i<6;i++){const a=i*TAU/6;w.beam([x,39.15,lampZ],[x+Math.cos(a)*2.2,38.35,lampZ+Math.sin(a)*2.2],.045,'#8f744d',41,5);w.sphere(x+Math.cos(a)*2.2,38.3,lampZ+Math.sin(a)*2.2,.18,.24,.18,'#e5c889',25,8,4);}
    }
   }
-  w.pop();walls.push({which,mesh:w.mesh()});
+  briarGalleryReceiver(w,which,pos,angle);w.pop();walls.push({which,mesh:w.mesh()});
  }
  return walls;
 }
@@ -421,7 +512,7 @@ registerHouseRoom('briarwatch',{
  color:'#849075',ambient:'forest',target:[-1,8,-8],distance:163,phoneDistance:400,phoneYaw:1.48,phonePitch:.84,pitch:.64,yaw:.18,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Briarwatch castle, village, walk-in terrain and exhibition room, with agent assistance. Native geometry; no external model assets.'}],
  map:{plot:'west-5',scale:.40,footprint:[158,130],focus:[-1,8,-8]},
- lights:[[-44,41.9,-45],[44,41.9,-45],[-44,41.9,44],[44,41.9,44],[-42,17,-62],[42,17,-62]],
+ lights:[[-44,38.7,-45],[44,38.7,-45],[-44,38.7,44],[44,38.7,44],[-24,-14.1,56],[24,-14.1,56]],
  layoutLights:[[-38,17.8,15.9],[-30,17.8,15.9],[-19,23,1],[-31,15,3],[44,6,18],[55,4.8,21],[44,5.7,31],[22,2.4,-3]],
  build:briarwatchRoom,shell:briarShell
 });
