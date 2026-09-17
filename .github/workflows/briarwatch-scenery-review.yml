@@ -21,6 +21,18 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/codex/briarwatch-castle"
           mkdir -p evidence/briarwatch-scenery
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          # A repeated base64 span was caught by the source checksums. Repair
+          # only that exact transfer; the reviewed source hashes are unchanged.
+          path = pathlib.Path('.briarwatch-scenery-review/structure.json')
+          payload = json.loads(path.read_text())
+          entry = payload['src/rooms/briarwatch-village.js']
+          data = entry['data']
+          assert hashlib.sha256(data.encode()).hexdigest() == '7b2fc73ff18ea1f58c90e069dd8ac1396ea27298ff2fc757ca169e8250f112e7'
+          entry['data'] = data[:80] + data[112:]
+          path.write_text(json.dumps(payload))
+          PY
           cp .briarwatch-scenery-review/*.json evidence/briarwatch-scenery/
           python3 .briarwatch-scenery-review/apply.py | tee evidence/briarwatch-scenery/source-hashes.txt
           git diff --check
@@ -34,7 +46,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/rooms/briarwatch.md scripts/briarwatch-qa.mjs src/rooms/briarwatch.js src/rooms/briarwatch-castle.js src/rooms/briarwatch-village.js
-          git rm -r .briarwatch-scenery-review .github/workflows/briarwatch-scenery-review.yml
+          git rm -rf .briarwatch-scenery-review .github/workflows/briarwatch-scenery-review.yml
           git commit -m "Sculpt Briarwatch's wooded ravines, castle masonry and spring landscape"
           git push origin HEAD:refs/heads/codex/briarwatch-castle
           git rev-parse HEAD > evidence/briarwatch-scenery/source-commit.txt
