@@ -1,0 +1,23 @@
+name: Briarwatch atmosphere review
+on:
+  push:
+    branches: [codex/briarwatch-castle]
+    paths: ['.github/workflows/briarwatch-atmosphere-review.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Archive the exact review source
+        run: |
+          mkdir -p /tmp/briarwatch-atmosphere
+          git archive HEAD --format=zip -o /tmp/briarwatch-atmosphere/source.zip
+          git rev-parse HEAD > /tmp/briarwatch-atmosphere/source-commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: briarwatch-atmosphere-source
+          path: /tmp/briarwatch-atmosphere/
+          retention-days: 3
