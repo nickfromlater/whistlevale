@@ -233,8 +233,8 @@ function briarReadingLamp(b,x,z){
  b.cylinder(x,FLOOR+.20,z,.94,.88,.40,'#7d6c4c',41,12);
  b.cylinder(x,FLOOR+4.95,z,.095,.095,9.4,'#ac9163',41,9);
  b.cylinder(x,-13.25,z,1.74,.78,1.65,'#afa078',23,14);
- b.cylinder(x,-14.1,z,1.59,1.59,.06,'#f6d5a1',25,14);
- b.sphere(x,-14.06,z,.22,.27,.22,'#ffe0a6',25,7,4);
+ b.cylinder(x,-14.1,z,1.59,1.59,.06,'#f6d5a1',100,14);
+ b.sphere(x,-14.06,z,.22,.27,.22,'#ffe0a6',100,7,4);
 }
 function briarGalleryReceiver(b,which,pos,angle){
  // Plaster alone opts into the room-specific practical-light wash. Its local
@@ -243,64 +243,257 @@ function briarGalleryReceiver(b,which,pos,angle){
  for(let i=0;i<b.data.length;i+=12)if(b.data[i+9]===20){b.data[i+9]=mat;b.data[i+10]=c*(b.data[i]-pos[0])-s*(b.data[i+2]-pos[2]);b.data[i+11]=b.data[i+1];}
 }
 
+// The Lantern Gallery: room-scale joinery with a quiet railway-club identity.
+// Fixed scenic clock, hand-pleated curtains and marquetry; no live clock or new
+// frame-loop work. All wall fittings live in their wall's existing cutaway mesh.
+function briarGalleryRing(b,x,y,z,r,R,color,mat=41,n=48){
+ for(let i=0;i<n;i++){const a=i*TAU/n,q=(i+1)*TAU/n,p=(rr,t)=>[x+Math.sin(t)*rr,y+Math.cos(t)*rr,z];b.quad(p(r,a),p(r,q),p(R,q),p(R,a),color,mat);}
+}
+function briarGalleryPanel(b,x,y,z,w,h,color,rim='#8e7452'){
+ // Five visible bevel faces, with the back buried in an existing wall/case.
+ const a=[[-w/2,-h/2,0],[w/2,-h/2,0],[w/2,h/2,0],[-w/2,h/2,0]],t=.22;
+ b.push(x,y,z);for(let i=0;i<4;i++){const j=(i+1)%4,p=a[i],q=a[j],into=p=>[p[0]-Math.sign(p[0])*t,p[1]-Math.sign(p[1])*t,.13];b.quad(p,q,into(q),into(p),rim,22);}
+ b.quad([-w/2+t,-h/2+t,.10],[w/2-t,-h/2+t,.10],[w/2-t,h/2-t,.10],[-w/2+t,h/2-t,.10],color,22);b.pop();
+}
+function briarGalleryClock(b){
+ b.push(0,20,1.7);
+ b.cylinder(0,0,0,9.9,9.9,.70,'#403e31',22,40,PI/2);
+ // Backed face discs omit hidden caps and sides within the solid oak bezel.
+ for(const [r,z,c,m]of[[9.3,.53,'#aa8753',41],[8.91,.68,'#233f3b',23]])for(let i=0;i<40;i++){const a=i*TAU/40,q=(i+1)*TAU/40;b.tri([0,0,z],[Math.sin(a)*r,Math.cos(a)*r,z],[Math.sin(q)*r,Math.cos(q)*r,z],c,m);}
+ for(const [r,R,c]of[[8.48,8.60,'#c8a36b'],[7.26,7.31,'#92764f'],[8.98,9.05,'#edd0a0']])briarGalleryRing(b,0,0,.70,r,R,c);
+ for(let i=0;i<60;i++){
+  const a=i*TAU/60,major=i%5===0,r=major?7.51:8.02,R=8.32,w=major?.11:.032;
+  b.push(0,0,.73,0,0,-a);b.quad([-w,r,0],[w,r,0],[w,R,0],[-w,R,0],major?'#e2c28c':'#a79062',41);b.pop();
+ }
+ // Small moon-phase subdial and engraved constellation dots. A crafted object,
+ // not a working astronomical instrument or a new animated mechanism.
+ b.cylinder(0,3.6,.73,1.72,1.72,.06,'#172e30',23,20,PI/2);
+ briarGalleryRing(b,0,3.6,.78,1.72,1.77,'#a98c60',41,28);
+ for(let i=0;i<16;i++){
+  const a=-PI/2+i*PI/16,q=a+PI/16,p=t=>[Math.cos(t)*1.09-.36,3.6+Math.sin(t)*1.09,.80],v=t=>[Math.cos(t)*.69-.36,3.6+Math.sin(t)*1.09,.80];b.quad(p(a),p(q),v(q),v(a),'#dacba0',41);
+ }
+ for(const [x,y]of[[-1.0,4.45],[-.92,3.05],[.95,3.92],[1.1,3.12]])b.quad([x-.06,y,.80],[x,y+.09,.80],[x+.06,y,.80],[x,y-.09,.80],'#bea781',41);
+ // Railway-inspired skeleton hands fixed at ten past ten.
+ for(const [a,L,W]of[[PI/3,6.65,.16],[-PI/3,4.50,.25]]){
+  b.push(0,0,.87,0,0,-a);b.quad([-W,-.75,0],[W,-.75,0],[W*.45,L-.52,0],[-W*.45,L-.52,0],'#d5b275',41);b.tri([-W*.95,L-.72,0],[0,L,0],[W*.95,L-.72,0],'#ead3a0',41);b.pop();
+ }
+ b.cylinder(0,0,.95,.33,.33,.12,'#dfbd7d',41,12,PI/2);
+ // Brass winged-wheel device below the dial, an original railway-club motif.
+ for(const side of[-1,1])for(let i=0;i<3;i++){
+  const y=-3.4-i*.43;b.quad([side*.95,y,.77],[side*(3.2-i*.42),y+.35,.77],[side*(2.72-i*.32),y-.03,.77],[side*.95,y-.17,.77],'#b09361',41);
+ }
+ briarGalleryRing(b,0,-4,.77,.68,.87,'#c4a16c',41,20);
+ for(let i=0;i<6;i++){const a=i*TAU/6;b.beam([0,-4,.77],[Math.sin(a)*.66,-4+Math.cos(a)*.66,.77],.026,'#c4a16c',41,4);}
+ b.pop();
+}
+function briarGalleryCurtains(b,x){
+ const color='#394f48';b.push(x,0,0);
+ b.box(0,43.35,5.3,28,.36,.43,'#715738',22);
+ for(const side of[-1,1]){
+  const point=(u,v)=>{
+   const tie=Math.exp(-(((v-.725)/.17)**2)),spread=2.8-1.30*tie;
+   return [side*(10.7+1.5*tie+u*spread),43.15-v*40.5+.15*Math.sin(u*PI),5.22+.34*Math.cos(u*TAU*3)*(1-.50*tie)];
+  };
+  for(let j=0;j<7;j++)for(let i=0;i<12;i++){
+   const u=i/12,U=(i+1)/12,v=j/7,V=(j+1)/7;b.quad(point(u,v),point(U,v),point(U,V),point(u,V),shade(color,.91+.08*Math.cos(u*TAU*3)),23);
+  }
+  // A narrow sewn hem, visible restrained tieback and hanging tassel.
+  for(let j=0;j<9;j++){const a=point(0,j/9),q=point(0,(j+1)/9);b.quad(a,q,add(q,[side*.10,0,.035]),add(a,[side*.10,0,.035]),'#b39a66',23);}
+  b.box(side*12.95,13.8,5.70,2.0,.18,.16,'#b29a64',41);
+  b.beam([side*13.65,13.8,5.8],[side*13.65,12.15,5.8],.035,'#c1a774',23,4);
+  b.cylinder(side*13.65,11.9,5.8,.12,.19,.6,'#ac9260',23,6);
+ }
+ b.pop();
+}
+function briarGalleryLantern(b,x,z){
+ // Six opal panes replace the collection of little floating light bulbs.
+ // The lower light aperture stays at the already surveyed 38.7 light height.
+ const n=6,r=1.9,base=38.73,top=41.40,p=(a,y,R=r)=>[x+Math.cos(a)*R,y,z+Math.sin(a)*R];
+ b.beam([x,43,z],[x,42.18,z],.065,'#5b4a36',41,5);
+ for(let i=0;i<n;i++){
+  const a=i*TAU/n,q=(i+1)*TAU/n;
+  b.tri(p(a,top,2.06),[x,42.2,z],p(q,top,2.06),'#897047',41);
+  b.quad(p(a,base),p(q,base),p(q,top),p(a,top),'#eed4a0',100);
+  b.beam(p(a,base-.08),p(a,top+.08),.072,'#745b39',41,4);
+  for(const y of[base,base+.25,top-.18,top])b.quad(p(a,y-.055,1.94),p(q,y-.055,1.94),p(q,y+.055,1.94),p(a,y+.055,1.94),'#927547',41);
+  // One diamond tracery per pane, assembled from slender solid ribs.
+  const mid=(a+q)/2,A=p(mid,40.97,1.68),B=p(q-.16,40.06,1.82),C=p(mid,39.17,1.68),D=p(a+.16,40.06,1.82);
+  for(const [v,w]of[[A,B],[B,C],[C,D],[D,A]]){const r=[Math.sin(mid)*.035,0,-Math.cos(mid)*.035];b.quad(sub(v,r),sub(w,r),add(w,r),add(v,r),'#967846',41);}
+  b.tri([x,base-.03,z],p(q,base-.03),p(a,base-.03),'#f4dcaf',100);
+ }
+ b.cylinder(x,base-.3,z,.30,.16,.42,'#96784c',41,8);
+}
+function briarGalleryBracket(b,x,z,side){
+ // Solid curved corbel in the wall plane; both ends meet the post/beam.
+ const outline=[[0,33.4],[0,43],[9.3,43],[8.7,42.1],[6.5,41.6],[4.5,40.8],[2.8,39.3],[1.7,37.1],[1.0,34.2]];
+ b.push(x,0,z,0,0,0,side,1,1);
+ for(let i=1;i<outline.length-1;i++)for(const zz of[-.43,.43])b.tri([...outline[0],zz],[...outline[i],zz],[...outline[i+1],zz],'#795e3f',22);
+ for(let i=0;i<outline.length;i++){const a=outline[i],q=outline[(i+1)%outline.length];b.quad([...a,-.43],[...q,-.43],[...q,.43],[...a,.43],'#9b7c51',22);}
+ b.pop();
+}
+function briarGalleryBookcase(b){
+ // A single shallow archive cabinet on the entrance wall, well outside the
+ // scenic cabinet and aisle. Spines are authored groups, not random clutter.
+ b.push(40,0,1.3);b.box(0,(FLOOR+9)/2,1.4,22,9-FLOOR,2.9,'#3d473a',22);
+ for(const x of[-11,11])b.box(x,-7,3.12,.85,33,.7,'#897047',22);
+ for(const y of[FLOOR+.30,-14.7,-6.5,1.7,9.2])b.box(0,y,3.0,23,.6,1.3,'#9c7c4d',22);
+ for(let j=0;j<3;j++)for(let i=0;i<10;i++){
+  const x=-9.2+i*2.02,y=-14.4+j*8.2,h=4.3+hash(i,j)*1.7,color=['#6d4c3e','#6c7760','#aa9165','#475d52','#596c6a'][(i+j*2)%5];
+  b.box(x,y+h/2,3.04,1.48,h,.38,color,23);
+  for(const dy of[.62,h-.58])b.quad([x-.58,y+dy,3.241],[x+.58,y+dy,3.241],[x+.58,y+dy+.09,3.241],[x-.58,y+dy+.09,3.241],'#c5af7d',41);
+ }
+ b.box(0,9.62,2.0,24,.54,4.2,'#715638',22);
+ for(const x of[-5.3,5.3])briarGalleryPanel(b,x,-19,3.1,9.4,6.4,'#405646');
+ b.pop();
+}
+function briarGalleryDrafting(b){
+ // The old survey table gets a believable lived-in scale without figures.
+ b.push(2,-17.49,47);
+ b.box(4.7,.20,.0,1.0,.32,3.1,'#705442',22);b.box(4.7,.38,0,.89,.055,2.88,'#c3b28d',23);
+ for(const x of[-4.65,-4.15])b.cylinder(x,.20,-.7,.21,.21,3.3,'#d6c5a0',23,8,PI/2);
+ b.box(-.3,.53,1.72,6.4,.08,.20,'#b9a071',41);
+ b.beam([2.8,.53,-1.7],[3.2,.53,.4],.040,'#553f2d',22,5);
+ b.cylinder(4.1,.035,1.8,.54,.54,.07,'#d5c9a6',23,12);b.cylinder(4.1,.32,1.8,.29,.39,.5,'#d9cfb5',23,10);
+ b.cylinder(4.1,.55,1.8,.32,.32,.02,'#60553d',23,10);b.pop();
+}
+function briarGalleryCompass(b){
+ // Flush eight-point timber marquetry in the visitor aisle, not an obstacle.
+ const x=6,z=14,y=FLOOR+.035;
+ for(let i=0;i<16;i++){
+  const a=i*TAU/16,q=(i+1)*TAU/16,r=i%2?2.0:4.7,R=(i+1)%2?2.0:4.7;
+  b.tri([x,y,z],[x+Math.sin(a)*r,y,z+Math.cos(a)*r],[x+Math.sin(q)*R,y,z+Math.cos(q)*R],i%2?'#be9e69':'#60553c',22);
+ }
+ b.push(x,y+.004,z,-PI/2);briarGalleryRing(b,0,0,0,5.15,5.27,'#b79b65',22,48);b.pop();
+}
+
+function briarGalleryCove(b,width){
+ // A shallow, mitered ceiling cove belongs to its wall's native cutaway.
+ // It replaces the repeated dentil strip, not the open center of the ceiling.
+ const profile=[[44.55,1.04],[45.4,2.40],[46.65,4.0],[48.1,5.15],[49.25,5.55]];
+ const P=(x,i)=>[x,profile[i][0],profile[i][1]];
+ for(let i=1;i<profile.length;i++){
+  const a=width/2-profile[i-1][1],q=width/2-profile[i][1];
+  b.quad(P(-a,i-1),P(a,i-1),P(q,i),P(-q,i),['#354d48','#3d574f','#465e54','#536c5d'][i-1],22);
+ }
+ // Thin brass seams run into the corner miters. Nothing projects below the
+ // window heads, and each rib has exactly the same profile as its backing.
+ for(const i of[0,4]){const [y,z]=profile[i],w=width/2-z;b.quad([-w,y,z+.025],[w,y,z+.025],[w-.06,y+.09,z+.055],[-w+.06,y+.09,z+.055],'#b69963',41);}
+ const bays=Math.floor((width-18)/22),span=(width-18)/bays;
+ for(let k=0;k<=bays;k++){
+  const x=-width/2+9+k*span;
+  for(let i=1;i<profile.length;i++){const a=P(x-.052,i-1),q=P(x+.052,i-1),r=P(x+.052,i),t=P(x-.052,i);for(const p of[a,q,r,t])p[2]+=.035;b.quad(a,q,r,t,'#aa8b55',41);}
+ }
+ // Inlaid compass stars on the inclined middle panel, not luminous particles.
+ // The surface parameterization keeps each point flush on the actual cove.
+ const motif=(x,u,v)=>[x+u,47.23+v,4.0+(47.23+v-46.65)*1.15/1.45+.045];
+ for(let k=0;k<bays;k+=2){
+  const x=-width/2+9+(k+.5)*span;
+  for(let i=0;i<16;i++){
+   const a=i*TAU/16,q=(i+1)*TAU/16,r=i%2?.18:(i%4===0?.58:.37),R=(i+1)%2?.18:((i+1)%4===0?.58:.37);
+   b.tri(motif(x,0,0),motif(x,Math.sin(a)*r,Math.cos(a)*r),motif(x,Math.sin(q)*R,Math.cos(q)*R),i%2?'#b99c69':'#d4bb83',41);
+  }
+ }
+}
+function briarGalleryCushion(b,x,y,z,w,h,color){
+ // A softly shaded raised cushion, not the recessed timber panel helper.
+ // Five visible faces keep the same geometry cost; textile material avoids
+ // the wood-grain shader. Its buried back meets the bench frame.
+ const X=w/2,Y=h/2,r=.18;
+ const outer=[[-X,-Y,-.035],[X,-Y,-.035],[X,Y,-.035],[-X,Y,-.035]];
+ const inner=[[-X+r,-Y+r,.20],[X-r,-Y+r,.20],[X-r,Y-r,.20],[-X+r,Y-r,.20]];
+ const n=i=>norm([Math.sign(outer[i][0])*.70,Math.sign(outer[i][1])*.70,1]),front=[0,0,1];
+ b.push(x,y,z);
+ for(let i=0;i<4;i++){const j=(i+1)%4;b.tri(outer[i],outer[j],inner[j],shade(color,.95),23,[n(i),n(j),front]);b.tri(outer[i],inner[j],inner[i],color,23,[n(i),front,front]);}
+ b.quad(...inner,color,23,front);b.pop();
+}
+function briarGalleryBench(b,x){
+ // A full-size, leather-upholstered viewing bench. Splayed legs and low arms
+ // stay on the visitor floor, safely in front of the scenic peninsula ends.
+ b.push(x,FLOOR,50);
+ for(const side of[-1,1])for(const end of[-1,1]){
+  const X=side*4.35,Z=end*1.08;
+  b.beam([X*1.04,.16,Z*1.10],[X,3.40,Z],.27,'#6e5439',22,4);
+  b.box(X*1.04,.10,Z*1.10,.44,.20,.44,'#ad9061',41);
+ }
+ b.box(0,1.36,0,8.9,.26,.43,'#70573a',22);
+ b.box(0,3.43,0,10.8,.42,3.1,'#866844',22);
+ b.push(0,3.66,0,-PI/2);
+ for(const xx of[-3.43,0,3.43])briarGalleryCushion(b,xx,0,0,3.30,2.84,'#41594b');
+ b.pop();
+ b.box(0,4.94,1.36,10.48,2.45,.40,'#745839',22);
+ for(const xx of[-3.43,0,3.43]){b.push(xx,4.94,1.13,0,PI);briarGalleryCushion(b,0,0,0,3.20,1.88,'#3e594b');b.pop();}
+ for(const side of[-1,1]){
+  b.box(side*5.06,4.13,-1.10,.26,1.20,.26,'#816442',22);
+  b.box(side*5.06,4.76,0,.38,.23,2.91,'#a18a60',22);
+ }
+ b.pop();
+}
+
 function briarShell(b){
- const walls=[];b.box(0,FLOOR-.25,0,158,.45,130,'#826c4c',21);
- // The room is an old estate railway gallery, not a neutral box. Furniture and
- // fittings hug the perimeter so the miniature remains the visual center.
+ const walls=[],floorStart=b.data.length;b.box(0,FLOOR-.25,0,158,.45,130,'#826c4c',99);
+ // Floor grain is room-local and survives the live map transform.
+ for(let i=floorStart;i<b.data.length;i+=12){b.data[i+10]=b.data[i];b.data[i+11]=b.data[i+2];}
  b.box(2,-18,47,12,1.0,5,'#6d553a',22);
  for(const x of[-2,6])for(const z of[45,49])b.box(x,-21,z,.6,6,.6,'#5d4934',22);
  b.box(2,-17.25,47,7,.36,4.8,'#d8c9a6',23);b.push(2,-17.02,47,-PI/2);roomSign(b,'blueprint',0,0,0,6.8,4.5);b.pop();
- // Two museum benches and a narrow runner make the central aisle feel inhabited
- // without blocking the horseshoe cabinet or any authored camera.
- for(const x of[-24,24]){b.box(x,-20.72,50,10,.55,2.1,'#70573b',22);for(const dx of[-4.1,4.1])b.box(x+dx,-22.25,50,.45,3,.45,'#5b4936',22);}
+ briarGalleryDrafting(b);briarGalleryCompass(b);
+ for(const x of[-24,24])briarGalleryBench(b,x);
  for(const x of[-24,24])briarReadingLamp(b,x,56);
- b.box(0,FLOOR+.018,51,53,.035,5.2,'#6e4038',23);b.box(0,FLOOR+.038,51,49,.018,4.55,'#b18c62',23);
+ b.box(0,FLOOR+.018,51,53,.035,5.2,'#66463b',23);b.box(0,FLOOR+.038,51,49,.018,4.55,'#8d7250',23);
+ for(let i=0;i<22;i++){const x=-23.1+i*2.2;for(const z of[48.94,53.06])b.quad([x-.32,FLOOR+.051,z],[x,FLOOR+.051,z+.2],[x+.32,FLOOR+.051,z],[x,FLOOR+.051,z-.2],'#b6a078',23);}
  for(const which of['back','left','right','front']){
   const w=new Builder(),back=which==='back',front=which==='front',side=!back&&!front,width=back||front?156:128,pos=back?[0,0,-64]:front?[0,0,64]:which==='left'?[-78,0,0]:[78,0,0],angle=back?0:front?PI:which==='left'?PI/2:-PI/2;
   w.push(...pos,0,angle);
-  // Warm lime plaster above a deep oak dado, with layered skirting/cornice.
-  w.box(0,13,0,width,74,.6,'#c2bca7',20);w.box(0,-16,.45,width,16,.6,'#30483e',22);
-  w.box(0,-23.2,.92,width,.62,1.05,'#6b5438',22);w.box(0,-8.1,.90,width,.75,.92,'#806746',22);w.box(0,42.7,.82,width,.82,1.05,'#765d3e',22);
-  // Authored wall bays: broad recessed plaster fields framed by oak pilasters.
-  const bay=side?16:18;
-  for(let x=-width/2+5;x<width/2;x+=bay){
-   if(back&&Math.abs(Math.abs(x)-42)<12)continue;
-   w.box(x,14,.82,.72,58.2,.72,'#70583d',22);
-   w.box(x+bay*.42,35.5,.80,bay*.72,.34,.72,'#9a8058',22);
-   w.box(x+bay*.42,-7.0,.80,bay*.72,.26,.66,'#9a8058',22);
+  w.box(0,13,0,width,74,.6,'#bcb9a1',20);
+  w.box(0,-10.2,.45,width,27.2,.6,'#30453d',22);
+  // Substantial dado and a two-tier cornice give the tall room a human scale.
+  for(const [y,h,z,d,c]of[[-23.2,.62,.92,1.05,'#594835'],[3.4,.58,1.0,1.5,'#88704b'],[4.1,.14,1.15,1.7,'#b59a67'],[42.7,1.25,1.02,1.65,'#6e5539'],[43.5,.28,1.25,2.2,'#a78957'],[49.1,.55,.85,1.4,'#715637']])w.box(0,y,z,width,h,d,c,22);
+  for(let x=-width/2+7;x<width/2-4;x+=12){briarGalleryPanel(w,x,-15.9,.89,9.5,12.4,'#3c5547');briarGalleryPanel(w,x,-2.3,.89,9.5,11.0,'#364b42');}
+  // Broad paired pilasters and inset capitals replace the thin scaffolding.
+  const posts=back||front?[-72,-60,-25,25,60,72]:[-59,-8,8,59];
+  for(const x of posts){
+   w.box(x,23.2,1.02,.92,38.5,.96,'#654f38',22);w.box(x,23.2,1.52,.12,37.9,.06,'#b59664',41);
+   for(const y of[4.8,39.8])w.box(x,y,1.28,1.65,.75,1.37,'#92734d',22);
   }
-  // Raised dado panels read at room scale instead of a picket-fence rhythm.
-  for(let x=-width/2+8;x<width/2-3;x+=12){w.box(x,-15.7,1.00,9.4,10.7,.16,'#3a5448',22);w.box(x,-15.7,1.10,8.2,9.5,.08,'#56705d',22);}
+  briarGalleryCove(w,width);
   if(back){
-   for(const [i,x]of[-42,42].entries())briarEstateOutlook(w,x,i);
-   // A restrained heraldic centerpiece gives the far wall a focal point.
-   w.box(0,20,.92,28,29,.28,'#a9a38f',20);w.box(0,20,1.10,25.5,26.5,.16,'#c8c0aa',20);
-   w.push(0,20,1.24,0,0);w.cylinder(0,0,0,5.4,5.4,.16,'#72563d',22,16,PI/2);w.cylinder(0,0,.12,4.5,4.5,.12,'#9b7b50',22,16,PI/2);w.box(0,.2,.24,1.0,6.0,.18,'#3d5145',22);w.box(0,.2,.25,6.0,1.0,.18,'#3d5145',22);w.pop();
-   const key='house-'+Object.keys(HOUSE_ROOMS).indexOf('briarwatch');if(roomLabels[key])roomFrame(w,key,0,36,1.15,42,8);
+   for(const [i,x]of[-42,42].entries()){briarEstateOutlook(w,x,i);briarGalleryCurtains(w,x);}
+   w.box(0,21,1.0,36,35,.50,'#2e4741',22);
+   briarGalleryPanel(w,0,20,1.33,32,31,'#35554b','#a88a57');briarGalleryClock(w);
+   for(const x of[-17.2,17.2])w.box(x,21,1.43,.24,33,.18,'#b49a66',41);
+   const key='house-'+Object.keys(HOUSE_ROOMS).indexOf('briarwatch');if(roomLabels[key])roomFrame(w,key,0,40.2,1.65,42,6.0);
   }else if(side){
-   // Framed railway drawings sit inside the wall bays, with small brass labels.
-   roomFrame(w,'blueprint',-29,11,1.12,23,18);roomFrame(w,'slow',29,10,1.12,14,20);
-   for(const x of[-29,29]){w.box(x,-1.3,1.32,7.5,.42,.16,'#9c8355',41);w.cylinder(x-3.1,-1.3,1.42,.13,.13,.08,'#d0b778',41,10,PI/2);}
+   roomFrame(w,'blueprint',-30,19,1.15,24,18);roomFrame(w,'slow',30,19,1.15,16,22);
+   // Gallery picture rails and fine suspension rods make the artwork belong.
+   w.box(0,36.2,1.0,width,.27,.55,'#a88b59',22);
+   for(const [x,W,H]of[[-30,24,18],[30,16,22]]){
+    for(const s of[-1,1])w.beam([x+s*W*.28,36.2,1.3],[x+s*W*.28,19+H*.5,1.3],.023,'#957e55',41,4);
+    w.box(x,19-H*.5-1.2,1.30,7.5,.43,.15,'#baa06b',41);
+   }
   }
   if(front){
-   // Entry portal becomes a proper paneled gallery door surround.
-   w.box(0,-3,1,21,44,1,'#684f36',22);w.box(0,-3,1.62,16,39,.22,'#3c5145',22);
-   for(const x of[-7.2,7.2])w.box(x,-3,1.82,.55,39,.32,'#a0875d',22);
-   w.box(0,16.4,1.82,15,.55,.32,'#a0875d',22);w.cylinder(6,-4,1.98,.35,.35,.5,'#c3a977',41,14,PI/2);roomFrame(w,'shop-sign',0,24,1.05,35,8);
+   w.box(0,-3,1,22,44,1,'#5a4733',22);w.box(0,-3,1.62,16,39,.22,'#344b40',22);
+   for(const x of[-4.1,4.1])for(const y of[-14,0,11.3])briarGalleryPanel(w,x,y,1.8,6.65,y===11.3?7.6:11.9,'#365144');
+   for(const x of[-10.1,10.1])w.box(x,-3,1.85,1.0,43,1.45,'#a68a5a',22);
+   w.box(0,19.0,1.7,24,1.1,2.0,'#92734c',22);w.cylinder(6,-4,2.08,.35,.35,.5,'#c3a977',41,10,PI/2);roomFrame(w,'shop-sign',0,25,1.05,35,7.0);
+   briarGalleryBookcase(w);roomFrame(w,'blueprint',-40,7,1.1,24,19);
   }
-  // Wall sconces create pools of warm detail while staying above the layout.
   const sconces=back?[-65,-19,19,65]:side?[-47,-15,15,47]:[-55,-30,30,55];
-  for(const x of sconces){w.box(x,25,1.22,.24,3.2,.34,'#725f43',22);w.beam([x,24.4,1.30],[x,23.1,2.2],.055,'#9f875a',41,6);w.cylinder(x,22.75,2.28,.72,.34,.66,'#d7bd83',41,14);w.cylinder(x,22.40,2.28,.61,.61,.05,'#f0d9a7',25,14);}
-  // Roof fittings follow their wall's native cutaway. Layered trusses and
-  // lanterns suggest a timber gallery ceiling without spanning the miniature.
+  for(const x of sconces){
+   w.box(x,25,1.32,.50,3.5,.42,'#76603f',41);w.beam([x,24.4,1.40],[x,23.1,2.3],.06,'#b1945f',41,5);
+   w.cylinder(x,22.85,2.3,.81,.38,.80,'#ad8a55',41,8);w.cylinder(x,22.40,2.3,.69,.69,.06,'#f0d9a7',25,8);
+  }
   if(back||front){
+   // Short outriggers meet the wall's posts; no full-width foreground truss
+   // or hanging V-shaped braces obscure the miniature/clock.
    const z=back?15:18,lampZ=back?19:20;
-   w.beam([-77,43,z],[77,43,z],.58,'#665039',22,4);
-   for(const x of[-68,-34,0,34,68]){w.beam([x-7,35,z],[x,43,z],.34,'#806343',22,4);w.beam([x+7,35,z],[x,43,z],.34,'#806343',22,4);}
-   for(const x of[-44,44]){
-    w.beam([x,43,z],[x,43,lampZ],.12,'#665039',22,4);w.beam([x,43,lampZ],[x,39.8,lampZ],.045,'#51473a',41,6);w.cylinder(x,39.3,lampZ,3.0,1.35,1.15,'#94794f',41,20);w.cylinder(x,38.71,lampZ,2.72,2.72,.07,'#f0dcb0',25,20);
-    for(let i=0;i<6;i++){const a=i*TAU/6;w.beam([x,39.15,lampZ],[x+Math.cos(a)*2.2,38.35,lampZ+Math.sin(a)*2.2],.045,'#8f744d',41,5);w.sphere(x+Math.cos(a)*2.2,38.3,lampZ+Math.sin(a)*2.2,.18,.24,.18,'#e5c889',25,8,4);}
+   w.box(0,43.0,z,154,1.15,1.2,'#604b35',22);w.box(0,43.68,z,154,.16,1.40,'#9e8153',22);
+   for(const x of[-72,72]){
+    w.box(x,43,z/2,1.1,1.05,z+1.1,'#6b5439',22);
+    briarGalleryBracket(w,x,1.55,-Math.sign(x));
+    w.beam([x,36,1.8],[x,43,z],.25,'#7d623f',22,4);
    }
+   for(const x of[-44,44]){w.box(x,43,(z+lampZ)/2,.32,.40,lampZ-z+.2,'#806742',22);briarGalleryLantern(w,x,lampZ);}
   }
   briarGalleryReceiver(w,which,pos,angle);w.pop();walls.push({which,mesh:w.mesh()});
  }

@@ -125,6 +125,63 @@ const atmosphereSource=await read('src/railway.js'),skyStart=atmosphereSource.in
 assert.ok(skyStart>0&&skyEnd>skyStart);assert.ok(!/uRoomLevel|uTime/.test(atmosphereSource.slice(skyStart,skyEnd)),'estate sky is independent of dimmer and motion clock');
 assert.match(atmosphereSource,/if\(m>=94\.&&m<=96\.\)lit\+=albedo[^\n]*uRoomLevel/,'only opt-in plaster receives the dimmable surface light wash');
 
+// Gallery fittings stay inside the room envelope and outside the railway.
+Object.assign(report,state.run(`(()=>{
+ const saved=seed,parts=[];
+ for(const fn of[briarGalleryClock,briarGalleryCurtains,briarGalleryLantern,briarGalleryBookcase,briarGalleryDrafting,briarGalleryCompass]){
+  const a=new Builder(),b=new Builder();fn(a,0,19);fn(b,0,19);
+  assert.ok(a.data.length>0&&a.data.every(Number.isFinite),fn.name+' has finite geometry');assert.deepEqual(a.data,b.data,fn.name+' is deterministic');
+  assert.equal(a.stack.length,0,fn.name+' balances transforms');parts.push({name:fn.name,vertices:a.data.length/12});
+ }
+ assert.equal(seed,saved,'gallery details do not consume the shared landscape seed');
+ for(const x of[-42,42]){
+  const b=new Builder();briarGalleryCurtains(b,x);
+  for(let i=0;i<b.data.length;i+=12){const xx=b.data[i],y=b.data[i+1],z=b.data[i+2];assert.ok(Math.abs(xx)<59&&y>=2&&y<44&&z<6,'curtains stay outside the miniature and within the window bay');}
+  assert.equal(briarQASegmentHits(b,[x,24,0],[x,24,7]),0,'curtains leave the estate aperture clear');
+  assert.ok(b.data.some((v,i)=>i%12===1&&v>=43.17&&b.data[i+8]===23),'fabric pleats reach the actual curtain rail');
+ }
+ const opal=new Builder();briarGalleryLantern(opal,0,19);let opalVertices=0;for(let i=9;i<opal.data.length;i+=12){assert.notEqual(opal.data[i],25,'large lanterns do not use high-energy bulb material');if(opal.data[i]===100)opalVertices++;}assert.equal(opalVertices,54,'six opal panes and underside');
+ const clockFace=new Builder();briarGalleryClock(clockFace);assert.ok(briarQASegmentHits(clockFace,[0,20,0],[0,20,4])>0,'clock has a solid backing and bezel');
+ const archive=new Builder();briarGalleryBookcase(archive);
+ let low=Infinity;for(let i=0;i<archive.data.length;i+=12){low=Math.min(low,archive.data[i+1]);assert.ok(archive.data[i+2]<5.6&&archive.data[i]>27&&archive.data[i]<53,'archive remains against its owning entrance wall');}
+ assert.ok(Math.abs(low-FLOOR)<1e-6,'archive case reaches the actual floor');
+ const compass=new Builder();briarGalleryCompass(compass);
+ for(let i=0;i<compass.data.length;i+=12){const x=compass.data[i],y=compass.data[i+1],z=compass.data[i+2];assert.ok(!briarInside(x,z),'marquetry stays on visitor floor, not scenery');assert.ok(y>FLOOR&&y<FLOOR+.06,'marquetry is flush, not a visitor obstruction');}
+ const floor=new Builder();briarShell(floor);let parquet=0;
+ for(let i=0;i<floor.data.length;i+=12)if(floor.data[i+9]===99){parquet++;assert.equal(floor.data[i+10],floor.data[i]);assert.equal(floor.data[i+11],floor.data[i+2]);}
+ assert.equal(parquet,36,'only the room floor opts into room-local parquet');
+ return {galleryDetails:parts,galleryParquetVertices:parquet,galleryWallVertices:getHouseScene('briarwatch').walls.reduce((n,w)=>n+w.mesh.count,0)};
+})()`));
+assert.match(atmosphereSource,/if\(m==99\.\)[\s\S]*?vec2 q=vec2\(vUV.x\+vUV.y/,'parquet coordinates remain local in the house map');
+assert.match(atmosphereSource,/if\(m==100\.\)lit=min\(lit,vec3\(1\.02\)\)/,'opal radiance stays below the sparse bloom extraction threshold');
+
+// The cove replaces dentils without filling the open ceiling. Upholstered
+// benches stay below the miniature and remain wholly on the visitor floor.
+Object.assign(report,state.run(`(()=>{
+ const saved=seed,coves=[];
+ for(const width of[156,128]){
+  const a=new Builder(),b=new Builder();briarGalleryCove(a,width);briarGalleryCove(b,width);
+  assert.deepEqual(a.data,b.data,'ceiling cove is deterministic');assert.equal(a.stack.length,0);
+  assert.ok(a.data.every(Number.isFinite));
+  for(let i=0;i<a.data.length;i+=12){const x=a.data[i],y=a.data[i+1],z=a.data[i+2];assert.ok(y>=44.55&&y<49.6&&z>=1&&z<5.8&&Math.abs(x)<width/2,'cove stays in the high perimeter cutaway');}
+  coves.push({width,vertices:a.data.length/12});
+ }
+ const benches=[];
+ for(const x of[-24,24]){
+  const a=new Builder(),b=new Builder();briarGalleryBench(a,x);briarGalleryBench(b,x);
+  assert.deepEqual(a.data,b.data,'bench is deterministic');assert.equal(a.stack.length,0);
+  assert.ok(a.data.every(Number.isFinite));let low=Infinity;
+  for(let i=0;i<a.data.length;i+=12){const X=a.data[i],y=a.data[i+1],z=a.data[i+2];low=Math.min(low,y);assert.ok(!briarInside(X,z),'bench never enters scenic terrain');assert.ok(Math.abs(X-x)<5.5&&z>48&&z<52&&y>=FLOOR&&y<FLOOR+6.3,'bench respects the surveyed visitor zone');}
+  assert.equal(a.data.filter((v,i)=>i%12===9&&v===23).length,180,'six cushion panels use textile shading instead of timber grain');
+  assert.ok(Math.abs(low-FLOOR)<1e-5,'bench feet meet the room floor within matrix precision');
+  assert.ok(briarQASegmentHits(a,[x,FLOOR+3,50],[x,FLOOR+4.4,50])>0,'upholstered seat has a solid supported surface');
+  benches.push({x,vertices:a.data.length/12});
+ }
+ const lamp=new Builder();briarReadingLamp(lamp,24,56);assert.ok(lamp.data.every(Number.isFinite));assert.ok(!lamp.data.some((v,i)=>i%12===9&&v===25),'reading lamp diffusers avoid the high-energy bloom material');assert.equal(lamp.data.filter((v,i)=>i%12===9&&v===100).length,336,'reading lamp uses bounded opal radiance');
+ assert.equal(seed,saved,'finishing details preserve the shared scene seed');
+ return {galleryCeilingCoves:coves,galleryUpholsteredBenches:benches};
+})()`));
+
 Object.assign(report,state.run(`(()=>{
  const s=getHouseScene('briarwatch'),part=s.movingParts[0],distance=s.trains[0].distance,m=part.model(s),savedClock=clock;clock+=10;
  assert.deepEqual(part.model(s),m,'stationary train gives a stationary mill wheel');clock=savedClock;
