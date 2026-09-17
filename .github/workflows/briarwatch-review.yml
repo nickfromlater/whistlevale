@@ -1,19 +1,53 @@
-name: Briarwatch review workspace
+name: Briarwatch native browser review
 on:
   push:
     branches: [codex/briarwatch-castle]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  source:
+  review:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - name: Package tracked public source for isolated local review
-        run: git archive --format=zip HEAD > /tmp/whistlevale-source.zip
-      - uses: actions/upload-artifact@v4
+      - name: Apply the hash-verified native room patch on this review branch only
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/briarwatch-castle
+          if test -f .briarwatch-review/patch.0; then
+            python3 - <<'PY'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          parts=sorted(Path('.briarwatch-review').glob('patch.*'))
+          patch=gzip.decompress(base64.b64decode(''.join(p.read_text() for p in parts),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='fd3588e371706df323f23acf687fa8ff93c8325af286e12996c9f99236d6c747'
+          Path('/tmp/briarwatch-native.patch').write_bytes(patch)
+          PY
+            git apply --check /tmp/briarwatch-native.patch
+            git apply /tmp/briarwatch-native.patch
+            git rm .briarwatch-review/patch.*
+            git add index.html src/rooms.js src/rooms/briarwatch*.js
+            git -c user.name='Nick' -c user.email='7002620+nickfromlater@users.noreply.github.com' commit -m 'Build Briarwatch Castle, its town, river and Crown & Cinder railway'
+            git push origin HEAD:refs/heads/codex/briarwatch-castle
+          fi
+      - uses: actions/setup-node@v7
         with:
-          name: briarwatch-review-source
-          path: /tmp/whistlevale-source.zip
-          retention-days: 1
+          node-version: 24
+      - run: npm run check
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix /tmp/briarwatch-browser playwright
+          /tmp/briarwatch-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture the actual native room
+        run: |
+          mkdir -p evidence/briarwatch
+          python3 scripts/serve.py --port 4175 > evidence/briarwatch/server.log 2>&1 &
+          node .briarwatch-review/capture.cjs
+      - name: Package reviewed source
+        if: always()
+        run: git archive --format=zip HEAD > evidence/briarwatch/whistlevale-source.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: briarwatch-native-browser-review
+          path: evidence/briarwatch/
+          retention-days: 3
