@@ -30,7 +30,7 @@ function briarWindowBay(b,w,h,d,opening=.9,sill=1.15,spring=1.12,c=BRIAR_COLORS.
  if(glass)briarArchedPane(b,opening,spring,-d*.34,'#758781',opening>1.0);
  b.box(0,-.05,d/2+.12,opening+.4,.16,d*.43,shade(c,1.1),4);b.pop();
 }
-function briarRoof(b,w,d,y,rise,c=BRIAR_COLORS.slate){
+function briarRoof(b,w,d,y,rise,c=BRIAR_COLORS.slate,gable=true){
  const rows=Math.max(7,Math.ceil(rise/.35)),cols=Math.ceil(d/.8);
  // Individual slate courses catch the light without a noisy texture overlay.
  for(const s of[-1,1])for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
@@ -38,7 +38,7 @@ function briarRoof(b,w,d,y,rise,c=BRIAR_COLORS.slate){
   b.quad([x0,y0,z0],[x0,y0,z1],[x1,y1,z1],[x1,y1,z0],shade(c,.89+.15*hash(i,j+s*17)),5);
  }
  for(const s of[-1,1]){
-  const z=s*d/2;b.tri([-w/2,y,z],[w/2,y,z],[0,y+rise,z],shade(c,.77),5);
+  const z=s*d/2;if(gable)b.tri([-w/2,y,z],[w/2,y,z],[0,y+rise,z],shade(c,.77),5);
   b.beam([-w/2,y,z],[0,y+rise,z],.07,'#7b7e70',4,5);b.beam([0,y+rise,z],[w/2,y,z],.07,'#7b7e70',4,5);
   b.box(s*w/2,y-.06,0,.12,.19,d,'#555d55',22);
  }

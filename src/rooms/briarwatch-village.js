@@ -85,7 +85,7 @@ function briarTimberHouse(b,q){
   b.beam([-w/2,h,s*(d/2+.05)],[0,h+q.roof-.10,s*(d/2+.05)],.09,'#7c6547',22,4);b.beam([0,h+q.roof-.10,s*(d/2+.05)],[w/2,h,s*(d/2+.05)],.09,'#7c6547',22,4);
   b.box(0,h+q.roof*.46,s*(d/2+.08),.12,q.roof*.89,.14,'#8c7350',22);
  }
- briarRoof(b,w+.9,d+.9,h,q.roof,q.slate);
+ briarRoof(b,w+.9,d+.9,h,q.roof,q.slate,false);
  const chimneyX=-w*.25,chimneyZ=q.kind==='baker'?-d*.27:d*.12;
  b.box(chimneyX,h+q.roof*.65,chimneyZ,.73,q.roof+1.4,.82,'#a89371',4);b.box(chimneyX,h+q.roof*1.15+.75,chimneyZ,1.0,.18,1.05,'#c1ad86',4);
  b.cylinder(chimneyX,h+q.roof*1.15+1.06,chimneyZ,.18,.20,.45,'#7c7460',4,8);
@@ -133,12 +133,13 @@ function briarMill(scene,b){
  // The leat is a low, stone-lined branch of the river, not water painted uphill.
  const x=10.5,z=-4,water=BRIAR.water+.02;
  for(const side of[-1,1]){
-  b.box(x+side*.93,(water-.40)/2,z,.25,Math.abs(water-.40),8.1,'#999c86',4);
+  const wallX=x+side*.93,foot=Math.min(...Array.from({length:17},(_,i)=>briarSurface(wallX,z-4.05+i*8.1/16)))-.15;
+  b.box(wallX,(foot+.36)/2,z,.25,.36-foot,8.1,'#999c86',4);
   b.box(x+side*.93,.43,z,.36,.15,8.25,'#bab194',4);
  }
  b.quad([x-.8,water,-8.1],[x+.8,water,-8.1],[x+.8,water,.1],[x-.8,water,.1],'#476c61',7);
  // Trestle bearings visibly carry the axle above the channel.
- for(const xx of[9.65,11.4]){b.box(xx,-1.05,z,.5,3.0,.9,'#888e79',4);b.box(xx,.46,z,.68,.25,1.1,'#a9a58c',4);}
+ for(const xx of[9.65,11.4]){const foot=Math.min(briarSurface(xx,z-.45),briarSurface(xx,z+.45))-.15;b.box(xx,(foot+.34)/2,z,.5,.34-foot,.9,'#888e79',4);b.box(xx,.46,z,.68,.25,1.1,'#a9a58c',4);}
  b.beam([9.5,-.67,z],[12.2,-.67,z],.14,'#6e5d40',22,9);
  const wheel=new Builder();briarMillWheel(wheel);
  scene.movingParts=[{mesh:wheel.mesh(),model:current=>mm(trans(x,-.67,z),mm(ry(PI/2),rz(reduceMotion?0:-current.trains[0].distance*.085)))}];

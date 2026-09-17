@@ -28,6 +28,7 @@ Object.assign(report,state.run(`(()=>{
   assert.ok(Math.abs(briarSurface(x+u*g.dx,z+v*g.dz)-y)<1e-9,'props sample the actual emitted triangles');
  }
  for(let z=-43;z<44;z+=.5)assert.ok(briarSurface(briarRiverX(z),z)<BRIAR.water,'continuous submerged channel');
+ for(let i=1;i<BRIAR_LEAT.length;i++)for(let t=0;t<=1;t+=.1){const a=BRIAR_LEAT[i-1],q=BRIAR_LEAT[i];assert.ok(briarSurface(mix(a[0],q[0],t),mix(a[1],q[1],t))<BRIAR.water-.20,'mill race stays submerged through its outlet');}
  for(let x=BRIAR_TUNNEL.x0+.3;x<BRIAR_TUNNEL.x1;x+=.4)assert.ok(briarSurface(x,BRIAR_TUNNEL.z)>BRIAR.rail+3.1,'real rock roof above tunnel intrados');
  return {routeLength:e.length,maxGrade:grade,minimumTrackTerrainClearance:clearance};
 })()`));
@@ -39,6 +40,12 @@ for(let i=0;i<report.trees;i++){
  })()`);treeClearance=Math.min(treeClearance,c);
 }
 assert.ok(treeClearance>1.2,'branches and roots clear rolling stock');report.minimumTreeRailClearance=treeClearance;
+// The full overview must fit the actual camera frustum at both phone widths.
+state.run(`(()=>{const q=HOUSE_ROOMS.briarwatch;
+ for(const width of[320,390]){const eye=add(q.target,[Math.sin(.12)*Math.cos(.74)*q.phoneDistance,Math.sin(.74)*q.phoneDistance,Math.cos(.12)*Math.cos(.74)*q.phoneDistance]);const vp=mm(perspective(.87,width/844,.1,500),lookAt(eye,q.target));
+  for(const x of[-63.25,63.25])for(const z of[-45.25,45.25])for(const y of[-10.55,0]){const clip=[0,1,2,3].map(i=>vp[i]*x+vp[i+4]*y+vp[i+8]*z+vp[i+12]);assert.ok(Math.abs(clip[0]/clip[3])<.975&&Math.abs(clip[1]/clip[3])<.975&&clip[2]<clip[3],'portrait overview frames the full scenic cabinet');}
+ }
+})()`);
 // A segment-triangle intersection checks actual masonry, not black door decals.
 state.run(`
  function briarQASegmentHits(b,a,q){const d=sub(q,a);let hits=0;

@@ -7,6 +7,7 @@ const BRIAR={width:124,depth:88,step:.8,water:-2.8,bed:-4.8,rail:3.2,court:12.2}
 const BRIAR_COLORS={stone:'#aaa592',light:'#c7bfaa',shadow:'#797c72',slate:'#485862',wood:'#62513b',oak:'#93754d',grass:'#7f8b64',iron:'#343e3b',red:'#873e3e',brass:'#b9a16d'};
 const BRIAR_RIDGE=[[-45,-26],[-37,-37],[-22,-39],[-7,-33],[2,-24],[3,-8],[-1,7],[-16,12],[-33,10],[-44,-2]];
 const BRIAR_ROAD=[[24,26,2.65],[24,16,2.6],[12,16,2.6],[1,18,2.6],[-13,18,2.6],[-27,20,3.4],[-42,15,6.0],[-43,5,8.0],[-35,9,10.2],[-24,12,11.8],[-24,5,12.2]];
+const BRIAR_LEAT=[[10.5,-8.4],[10.5,0],[8.4,1],[6.5,1.2]];
 const BRIAR_TUNNEL={x0:-38,x1:-16,z:-33,half:1.65};
 const BRIAR_ROUTE=(()=>{
  const p=(x,z)=>[x,BRIAR.rail,z],line=(a,q)=>[a,lerpV(a,q,1/3),lerpV(a,q,2/3),q];
@@ -58,6 +59,9 @@ function briarRawHeight(x,z){
  const town=(1-smooth(17,21,Math.abs(x-29)))*(1-smooth(15,19,Math.abs(z-7)));
  h=mix(h,2.32,town);
  h=mix(BRIAR.bed,h,smooth(-.45,3.6,bank));
+ // The mill race has a cut bed and an outlet that rejoins the river.
+ let leat=Infinity;for(let i=1;i<BRIAR_LEAT.length;i++)leat=Math.min(leat,briarSegment(x,z,BRIAR_LEAT[i-1],BRIAR_LEAT[i]).distance);
+ if(leat<1.4)h=mix(Math.min(h,BRIAR.water-1.2),h,smooth(.66,1.4,leat));
  // Roads are shaped into the land, except across the real river bridge.
  const road=briarRoadNear(x,z);
  if(bank>1.0&&road.distance<3.5)h=mix(h,road.height-.10,1-smooth(1.35,3.5,road.distance));
@@ -274,14 +278,16 @@ function briarShell(b){
    const key='house-'+Object.keys(HOUSE_ROOMS).indexOf('briarwatch');if(roomLabels[key])roomFrame(w,key,0,33,1,42,10);
   }else if(!front){roomFrame(w,'blueprint',-29,11,1,23,18);roomFrame(w,'slow',29,10,1,14,20);}
   if(front){w.box(0,-3,1,19,42,1,'#756044',22);w.box(0,-3,1.6,16,39,.2,'#42554a',22);w.cylinder(6,-4,1.95,.35,.35,.5,'#c3a977',41,14,PI/2);roomFrame(w,'shop-sign',0,24,1,35,8);}
+  // Roof fittings follow their wall's native cutaway instead of bisecting the miniature.
+  if(back||front){
+   const z=back?15:18,lampZ=back?19:20;
+   w.beam([-77,43,z],[77,43,z],.50,'#755d3f',22,4);
+   for(const x of[-68,68])w.beam([x,35,z],[x-Math.sign(x)*11,43,z],.40,'#886d48',22,4);
+   for(const x of[-44,44]){
+    w.beam([x,43,lampZ],[x,46,lampZ],.045,'#5b5141',41,6);w.cylinder(x,42.5,lampZ,2.9,1.3,1.1,'#a48e61',41,20);w.cylinder(x,41.93,lampZ,2.65,2.65,.07,'#f0dcb0',25,20);
+   }
+  }
   w.pop();walls.push({which,mesh:w.mesh()});
- }
- for(const z of[-49,46]){
-  b.beam([-77,43,z],[77,43,z],.50,'#755d3f',22,4);
-  for(const x of[-68,68])b.beam([x,35,z],[x-Math.sign(x)*11,43,z],.40,'#886d48',22,4);
- }
- for(const x of[-44,44])for(const z of[-45,44]){
-  b.beam([x,43,z],[x,46,z],.045,'#5b5141',41,6);b.cylinder(x,42.5,z,2.9,1.3,1.1,'#a48e61',41,20);b.cylinder(x,41.93,z,2.65,2.65,.07,'#f0dcb0',25,20);
  }
  return walls;
 }
@@ -292,23 +298,23 @@ function briarwatchRoom(scene,b){
  scene.canPlace=()=>false;
  scene.briarwatch={revision:1,castle:'Briarwatch',railway:'The Crown & Cinder Line',villageBuildings:8,trees:BRIAR_TREES.length};
  scene.spots=[
-  {name:'Briarwatch Castle',target:[-7,10,-3],distance:143,phoneDistance:285,pitch:.55,yaw:.40,detail:'A limestone fortress above a river, a small working town, and the Crown & Cinder train taking the long way around.'},
+  {name:'Briarwatch Castle',target:[-7,10,-3],distance:143,phoneDistance:410,phonePitch:.74,phoneYaw:.12,pitch:.55,yaw:.40,detail:'A limestone fortress above a river, a small working town, and the Crown & Cinder train taking the long way around.'},
   {name:'The old keep',target:[-27,26,-19],distance:44,phoneDistance:77,pitch:.34,yaw:-.65,detail:'Deep-set windows, a weathered stair turret and layered slate roofs. The oldest masonry grows straight out of the ridge.'},
   {name:'Through the gate',target:[-24,15,6],distance:33,phoneDistance:61,pitch:.30,yaw:.15,detail:'A timber drawbridge crosses the dry ditch. Iron-bound doors and a raised portcullis frame the sheltered courtyard beyond.'},
-  {name:'The sheltered courtyard',target:[-22,15,-7],distance:37,phoneDistance:67,pitch:.69,yaw:.32,detail:'A well, covered walks, kitchen steps and a little herb garden connect the great hall to the keep.'},
+  {name:'The sheltered courtyard',target:[-22,14,-7],distance:37,phoneDistance:67,pitch:1.04,yaw:-.15,detail:'A well, covered walks, kitchen steps and a little herb garden connect the great hall to the keep.'},
   {name:'The river gallery',target:[-5,20,-10],distance:36,phoneDistance:63,pitch:.30,yaw:1.34,detail:'An oak gallery hangs on substantial braces above the gorge. Warm hall windows sit beneath the long slate roof.'},
   {name:'Crown & Cinder viaduct',target:[-13,3,30],distance:49,phoneDistance:91,pitch:.22,yaw:.18,detail:'Five stone arches carry the steam train across the river. Cutwater piers meet the streambed, and the castle rises behind.'},
   {name:'The lower town',target:[27,5,7],distance:46,phoneDistance:81,pitch:.46,yaw:.53,detail:'The inn, bakery and smithy gather along a crooked lane. Every gable and little working yard has a different purpose.'},
-  {name:'The mill leat',target:[10,1,-3],distance:28,phoneDistance:49,pitch:.33,yaw:.55,detail:'A timber mill, a stone-lined watercourse and an undershot wheel at the edge of the willow bank.'},
+  {name:'The mill leat',target:[11.5,1.7,-3.5],distance:21,phoneDistance:40,pitch:.42,yaw:-.30,detail:'A timber mill, a stone-lined watercourse and an undershot wheel at the edge of the willow bank.'},
   {name:'The orchard station',target:[24,4,28],distance:35,phoneDistance:62,pitch:.33,yaw:.46,detail:'Luggage beneath a timber canopy, a short path into town, and apple trees beyond the platform.'},
   {name:'The western road',target:[-38,7,15],distance:43,phoneDistance:76,pitch:.38,yaw:-.82,detail:'A worn approach climbs around the ridge, passing an ancient spreading oak before finding the castle gate.'},
-  {name:'The estate gallery',target:[0,5,-1],distance:172,phoneDistance:330,pitch:.51,yaw:.35,detail:'Oak beams, plaster walls, brass exhibition lamps and a deep walnut-and-green cabinet. A complete miniature world, held in a quiet room.'}
+  {name:'The estate gallery',target:[0,5,-1],distance:172,phoneDistance:420,phonePitch:1.1,phoneYaw:PI/2,pitch:.51,yaw:.35,detail:'Oak beams, plaster walls, brass exhibition lamps and a deep walnut-and-green cabinet. A complete miniature world, held in a quiet room.'}
  ];
 }
 registerHouseRoom('briarwatch',{
  name:'Briarwatch Castle',layout:'The Crown & Cinder Line',tag:'STONE, STEAM & STORY',
  description:'A storied limestone castle above a river gorge. Follow a little steam train past an inhabited town, a watermill, orchards and five stone arches.',
- color:'#9b9a7b',ambient:'forest',target:[-7,10,-3],distance:147,phoneDistance:290,pitch:.55,yaw:.40,
+ color:'#9b9a7b',ambient:'forest',target:[-7,10,-3],distance:147,phoneDistance:410,pitch:.55,yaw:.40,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Briarwatch castle, village, terrain and exhibition room, with agent assistance. Native Whistlevale geometry; no external model assets.'}],
  map:{plot:'west-5',scale:.40,footprint:[158,130],focus:[-7,10,-3]},
  lights:[[-44,41.9,-45],[44,41.9,-45],[-44,41.9,44],[44,41.9,44],[-42,17,-62],[42,17,-62]],
