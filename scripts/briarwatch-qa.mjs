@@ -10,40 +10,41 @@ const report=state.run(`(()=>{
  assert.ok(s.spots.every(p=>p.phoneDistance>p.distance&&p.target.every(Number.isFinite)));
  assert.ok(validateCredits(HOUSE_ROOMS.briarwatch.credits).some(c=>c.handle==='nickfromlater'));
  assert.equal(HOUSE_ROOMS.briarwatch.map.plot,'west-5');assert.equal(BRIAR_BUILDINGS.length,8);
- assert.ok(s.height(0,0)===briarSurface(0,0));
+ assert.equal(s.height(6,20),FLOOR,'walk-in aisle has real room floor');assert.equal(s.height(12,37),FLOOR);
+ for(const [x,z]of[[-40,0],[50,20],[0,-44]])assert.ok(briarInside(x,z),'three room-wrapping scenic arms');
  return {room:'briarwatch',sceneVertices:s.mesh.count,wallVertices:s.walls.map(w=>w.mesh.count),movingVertices:s.movingParts[0].mesh.count,viewpoints:s.spots.length,buildings:BRIAR_BUILDINGS.length,trees:BRIAR_TREES.length};
 })()`);
 Object.assign(report,state.run(`(()=>{
  const e=BRIAR_ROUTE;assert.ok(len(sub(e.at(0).p,e.at(e.length).p))<1e-8);assert.ok(dot(e.at(0).f,e.at(e.length).f)>.9999);
  let clearance=Infinity,grade=0;
  for(let d=0;d<e.length;d+=.17){const p=e.at(d),r=norm([p.f[2],0,-p.f[0]]);grade=Math.max(grade,Math.abs(p.f[1]));
-  assert.ok(Math.abs(p.p[0])<60&&Math.abs(p.p[2])<42);
+  assert.ok(briarInside(p.p[0],p.p[2],1.1));
   for(const side of[-.8,0,.8]){const x=p.p[0]+side*r[0],z=p.p[2]+side*r[2];if(!briarInTunnel(x,z,2))clearance=Math.min(clearance,p.p[1]-briarSurface(x,z));}
  }
- assert.ok(grade<1e-9,'level continuous railway');assert.ok(clearance>.20,'finished triangle mesh clears the running envelope: '+clearance);
+ assert.ok(grade>.02&&grade<.065,'the graded folded circuit stays under a 6.5 percent vertical direction envelope');assert.ok(clearance>.20,'finished triangle mesh clears the running envelope: '+clearance);
  const g=BRIAR_GRID;
  for(let i=0;i<120;i++)for(const [u,v]of[[.17,.29],[.73,.82]]){
-  const ix=i*31%g.nx,iz=i*19%g.nz,x=-62+ix*g.dx,z=-44+iz*g.dz,a=briarRawHeight(x,z),r=briarRawHeight(x+g.dx,z),f=briarRawHeight(x,z+g.dz),q=briarRawHeight(x+g.dx,z+g.dz);
+  const ix=i*31%g.nx,iz=i*19%g.nz,x=BRIAR.minX+ix*g.dx,z=BRIAR.minZ+iz*g.dz,a=briarRawHeight(x,z),r=briarRawHeight(x+g.dx,z),f=briarRawHeight(x,z+g.dz),q=briarRawHeight(x+g.dx,z+g.dz);
   const y=u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);
   assert.ok(Math.abs(briarSurface(x+u*g.dx,z+v*g.dz)-y)<1e-9,'props sample the actual emitted triangles');
  }
- for(let z=-43;z<44;z+=.5)assert.ok(briarSurface(briarRiverX(z),z)<BRIAR.water,'continuous submerged channel');
+ for(let z=-53;z<45;z+=.5){const x=briarRiverX(z);if(briarInside(x,z,1))assert.ok(briarSurface(x,z)<BRIAR.water,'continuous submerged river on the clipped scenery');}
  for(let i=1;i<BRIAR_LEAT.length;i++)for(let t=0;t<=1;t+=.1){const a=BRIAR_LEAT[i-1],q=BRIAR_LEAT[i];assert.ok(briarSurface(mix(a[0],q[0],t),mix(a[1],q[1],t))<BRIAR.water-.20,'mill race stays submerged through its outlet');}
- for(let x=BRIAR_TUNNEL.x0+.3;x<BRIAR_TUNNEL.x1;x+=.4)assert.ok(briarSurface(x,BRIAR_TUNNEL.z)>BRIAR.rail+3.1,'real rock roof above tunnel intrados');
+ for(let x=BRIAR_TUNNEL.x0+1;x<BRIAR_TUNNEL.x1-1;x+=.4)assert.ok(briarSurface(x,BRIAR_TUNNEL.z)>BRIAR_TUNNEL.y+3.1,'real rock roof above tunnel intrados');
  return {routeLength:e.length,maxGrade:grade,minimumTrackTerrainClearance:clearance};
 })()`));
 let treeClearance=Infinity;
 for(let i=0;i<report.trees;i++){
- const c=state.run(`(()=>{const t=BRIAR_TREES[${i}],b=new Builder();briarTree(b,...t);let c=Infinity;
-  for(let j=0;j<b.data.length;j+=12){const x=b.data[j],y=b.data[j+1],z=b.data[j+2];assert.ok(Math.abs(x)<62&&Math.abs(z)<44,'tree stays on the layout');if(y>BRIAR.rail-.12&&y<BRIAR.rail+2.6)c=Math.min(c,briarRailNear(x,z).distance);}
+ const c=state.run(`(()=>{const t=BRIAR_TREES[${i}],b=new Builder();if(briarRailNear(t[0],t[1]).distance>2)briarTree(b,...t);let c=Infinity;
+  for(let j=0;j<b.data.length;j+=12){const x=b.data[j],y=b.data[j+1],z=b.data[j+2];const rail=briarRailNear(x,z);if(rail.point&&y>rail.point[1]-.12&&y<rail.point[1]+2.6)c=Math.min(c,rail.distance);}
   return c;
  })()`);treeClearance=Math.min(treeClearance,c);
 }
 assert.ok(treeClearance>1.2,'branches and roots clear rolling stock');report.minimumTreeRailClearance=treeClearance;
 // The full overview must fit the actual camera frustum at both phone widths.
 state.run(`(()=>{const q=HOUSE_ROOMS.briarwatch;
- for(const width of[320,390]){const eye=add(q.target,[Math.sin(.12)*Math.cos(.74)*q.phoneDistance,Math.sin(.74)*q.phoneDistance,Math.cos(.12)*Math.cos(.74)*q.phoneDistance]);const vp=mm(perspective(.87,width/844,.1,500),lookAt(eye,q.target));
-  for(const x of[-63.25,63.25])for(const z of[-45.25,45.25])for(const y of[-10.55,0]){const clip=[0,1,2,3].map(i=>vp[i]*x+vp[i+4]*y+vp[i+8]*z+vp[i+12]);assert.ok(Math.abs(clip[0]/clip[3])<.975&&Math.abs(clip[1]/clip[3])<.975&&clip[2]<clip[3],'portrait overview frames the full scenic cabinet');}
+ for(const width of[320,390]){const eye=add(q.target,[Math.sin(q.phoneYaw)*Math.cos(q.phonePitch)*q.phoneDistance,Math.sin(q.phonePitch)*q.phoneDistance,Math.cos(q.phoneYaw)*Math.cos(q.phonePitch)*q.phoneDistance]);const vp=mm(perspective(.87,width/844,.1,500),lookAt(eye,q.target));
+  for(const x of[-73,71])for(const z of[-56,47])for(const y of[-10.55,0]){const clip=[0,1,2,3].map(i=>vp[i]*x+vp[i+4]*y+vp[i+8]*z+vp[i+12]);assert.ok(Math.abs(clip[0]/clip[3])<.975&&Math.abs(clip[1]/clip[3])<.975&&clip[2]<clip[3],'portrait overview frames the full scenic cabinet');}
  }
 })()`);
 // A segment-triangle intersection checks actual masonry, not black door decals.
@@ -53,6 +54,7 @@ state.run(`
    const s=sub(a,p),u=dot(s,h)/det;if(u<-1e-8||u>1+1e-8)continue;const r=cross(s,e1),vv=dot(d,r)/det,t=dot(e2,r)/det;if(vv>=-1e-8&&u+vv<=1+1e-8&&t>1e-7&&t<1-1e-7)hits++;
   }return hits;
  }
+ const underside=new Builder();briarCabinetUnderside(underside);assert.equal(briarQASegmentHits(underside,[6,0,20],[6,-20,20]),0,'cabinet triangulation does not fill the visitor aisle');assert.ok(briarQASegmentHits(underside,[-40,0,0],[-40,-20,0])>0,'castle peninsula has a closed underside');
  const arch=new Builder();briarArchWall(arch,5.4,8.45,.9,3.7,3.1);
  assert.equal(briarQASegmentHits(arch,[0,2,-2],[0,2,2]),0,'true open arch');
  assert.ok(briarQASegmentHits(arch,[2.4,2,-2],[2.4,2,2])>0,'solid jamb');

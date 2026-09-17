@@ -11,9 +11,13 @@ The room is also available from the house map at `west-5`. Views offers eleven
 composed camera positions. The usual train, cinema, lighting, sound and pause
 controls remain available. Portrait views have deliberately authored distances.
 
-The Crown & Cinder Line is a continuous, level steam circuit. It crosses a
-five-arch stone viaduct, passes through a short native rock tunnel, and returns
-past the orchard station. It uses the existing Tern steam family rather than
+The Crown & Cinder Line is a continuous, graded folded-dogbone steam circuit.
+It crosses a five-arch stone viaduct on the high rear line, returns across an
+open-sided covered timber bridge, curves over a braced wooden trestle, follows
+a cliff-side retaining balcony, and passes through a short rock tunnel. A
+connected goods siding, loading crane, stationary wagon and modeled semaphore
+signals enrich the station. The siding and signals are scenic, not an
+interactive switching or dispatch simulation. It uses the existing Tern steam family rather than
 claiming a new locomotive model.
 
 ## The miniature
@@ -23,13 +27,21 @@ open twin-tower gatehouse, raised portcullis and drawbridge, great hall and
 braced timber river gallery, chapel and bellcote, courtyard well, arcades,
 kitchen, herb beds and terrain-following defenses. The keep entrance connects
 its external stair and landing through real masonry openings. Major plinths
-and round-tower foundations reach the finished terrain.
+and round-tower foundations reach the finished terrain. Corbelled bartizans,
+a supported timber hoarding, an oriel, hall dormers, gable tracery and stone
+consoles articulate the castle at silhouette, architectural and detail scales.
 
 Eight individually placed lower-town buildings include the Copper Hart inn,
 an open working smithy, bakehouse and oven, weaver, farrier's house, orchard
-house, ferryman's cottage and watermill. A river, road bridge, working native
-mill wheel, mature trees, orchard and cultivated ground connect those places.
-The walnut display case stands in an oak-and-plaster estate gallery. The room
+house, ferryman's cottage and watermill. A clipped river, working native mill wheel, mature branching trees, orchard
+and cultivated ground connect those places. Projecting window bays, roof
+dormers, braced jetties, carved bargeboards, cloth canopies, signboards and
+differentiated shop fittings give the town a more authored character.
+The contoured walnut-and-green cabinet wraps around the room in a horseshoe,
+with a castle peninsula, a village peninsula and a connecting rear gorge shelf.
+The central visitor aisle is an actual void in terrain and cabinet geometry,
+with the room floor below it, not a painted recess in a rectangular table.
+The oak-and-plaster estate gallery retains its wall-linked roof cutaways. The room
 uses Whistlevale's existing day/evening lighting and native material system.
 
 This is an authored miniature, not a freely walkable interior game. The castle's
@@ -62,7 +74,7 @@ mechanism has a separate 6,000-vertex ceiling. Existing budgets are unchanged.
 Run `npm test`, `npm run test:geometry:full`, and
 `npm run check:contributions -- --json`. `npm run test:briarwatch` also runs as
 part of the full suite. Its focused checks cover the closed circuit, actual
-mesh-to-track and tree clearances, river continuity, tunnel roof, real gate and
+mesh-to-track and tree clearances, clipped river continuity, genuine cabinet voids, graded rail support, tunnel roof, real gate and
 keep openings, deterministic mechanism, reduced motion, disposal, credits,
 script inclusion and house-map placement.
 

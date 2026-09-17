@@ -1,271 +1,153 @@
 'use strict';
 
-// BRIARWATCH. An original limestone castle and estate railway by nickfromlater,
-// with agent assistance. Approved whole-room proposal #42. No creature systems.
-// Every placement uses the finished, emitted terrain surface. No shared RNG.
-const BRIAR={width:124,depth:88,step:.8,water:-2.8,bed:-4.8,rail:3.2,court:12.2};
-const BRIAR_COLORS={stone:'#aaa592',light:'#c7bfaa',shadow:'#797c72',slate:'#485862',wood:'#62513b',oak:'#93754d',grass:'#7f8b64',iron:'#343e3b',red:'#873e3e',brass:'#b9a16d'};
-const BRIAR_RIDGE=[[-45,-26],[-37,-37],[-22,-39],[-7,-33],[2,-24],[3,-8],[-1,7],[-16,12],[-33,10],[-44,-2]];
-const BRIAR_ROAD=[[24,26,2.65],[24,16,2.6],[12,16,2.6],[1,18,2.6],[-13,18,2.6],[-27,20,3.4],[-42,15,6.0],[-43,5,8.0],[-35,9,10.2],[-24,12,11.8],[-24,5,12.2]];
-const BRIAR_LEAT=[[10.5,-8.4],[10.5,0],[8.4,1],[6.5,1.2]];
-const BRIAR_TUNNEL={x0:-38,x1:-16,z:-33,half:1.65};
+// BRIARWATCH / THE WALK-IN GALLERY. Original native miniature by nickfromlater,
+// with agent assistance. Proposal #42, PR #43. No dragon or creature placeholders.
+// The scenery is a concave, room-wrapping cabinet, not a rectangular terrain slab.
+const BRIAR={width:148,depth:112,minX:-74,minZ:-58,step:1.06,water:-2.8,bed:-5.1,rail:3.2,highRail:6.7,court:12.2};
+const BRIAR_COLORS={stone:'#aaa99b',light:'#c8c3af',shadow:'#727b73',slate:'#3f505a',wood:'#62513b',oak:'#93754d',grass:'#58724f',iron:'#343e3b',red:'#873e3e',brass:'#b9a16d'};
+const BRIAR_CASTLE_OFFSET=[-10,10];
+const BRIAR_OUTLINE=[[-71,-51],[-58,-56],[-31,-55],[-7,-54],[16,-56],[43,-55],[64,-49],[70,-36],[71,-12],[69,16],[65,33],[55,44],[38,47],[24,43],[19,33],[16,20],[15,7],[16,-8],[20,-19],[11,-24],[-1,-24],[-5,-16],[-1,2],[-2,16],[-8,29],[-21,39],[-40,43],[-57,38],[-68,25],[-72,7],[-73,-21]];
+const BRIAR_RIDGE=[[-45,-26],[-37,-37],[-22,-39],[-7,-33],[2,-24],[3,-8],[-1,7],[-16,12],[-33,10],[-44,-2]].map(([x,z])=>[x-10,z+10]);
+const BRIAR_ROAD=[[-15,19,3.0],[-28,25,3.2],[-42,25,4.4],[-56,20,6.0],[-54,12,8.0],[-45,19,10.2],[-34,22,11.8],[-34,15,12.2]];
+const BRIAR_LEAT=[[22.5,-8.4],[22.5,0],[20.4,1],[18.5,1.2]];
+const BRIAR_TUNNEL={x0:-47,x1:-25,z:-43,half:1.72,y:6.7};
+function briarCurve(a,q,fa,fq,k=1/3){const d=len(sub(q,a))*k;return [a,add(a,mul(fa,d)),sub(q,mul(fq,d)),q];}
 const BRIAR_ROUTE=(()=>{
- const p=(x,z)=>[x,BRIAR.rail,z],line=(a,q)=>[a,lerpV(a,q,1/3),lerpV(a,q,2/3),q];
+ const p=(x,y,z)=>[x,y,z],line=(a,q)=>[a,lerpV(a,q,1/3),lerpV(a,q,2/3),q];
+ // A folded dogbone. The high rear line and low returning line are separate,
+ // visibly engineered passages over the gorge. Only the tunnel section is hidden.
  return new Edge('The Crown & Cinder Line',[
-  line(p(-35,31),p(33,31)),
-  [p(33,31),p(49,31),p(54,24),p(54,9)],
-  [p(54,9),p(54,-7),p(54,-23),p(41,-28)],
-  [p(41,-28),p(26,-34),p(15,-33),p(2,-33)],
-  line(p(2,-33),p(-37,-33)),
-  [p(-37,-33),p(-50,-33),p(-54,-25),p(-54,-10)],
-  [p(-54,-10),p(-54,5),p(-54,18),p(-48,25)],
-  [p(-48,25),p(-43,31),p(-40,31),p(-35,31)]
- ]);
+  line(p(35,3.2,35),p(50,3.2,35)),
+  [p(50,3.2,35),p(62,3.2,35),p(65,3.5,25),p(65,4,14)],
+  [p(65,4,14),p(65,4.5,2),p(66,6.7,-26),p(57,7.7,-37)],
+  [p(57,7.7,-37),p(51,8.2,-45),p(44,8.2,-43),p(33,8.2,-43)],
+  line(p(33,8.2,-43),p(-47,8.2,-43)),
+  [p(-47,8.2,-43),p(-62,8.2,-43),p(-65,7.4,-29),p(-65,6.9,-17)],
+  [p(-65,6.9,-17),p(-65,6.4,-5),p(-66,4.8,16),p(-57,4.2,26)],
+  [p(-57,4.2,26),p(-49,3.67,35),p(-39,3.2,34),p(-29,3.2,33)],
+  [p(-29,3.2,33),p(-17,3.2,32),p(-9,3.2,24),p(-6,3.2,13)],
+  [p(-6,3.2,13),p(-3,3.2,2),p(-7,3.2,-7),p(-8,3.2,-15)],
+  [p(-8,3.2,-15),p(-9,3.2,-27),p(-8,3.2,-31),p(-3,3.2,-31)],
+  line(p(-3,3.2,-31),p(22,3.2,-31)),
+  [p(22,3.2,-31),p(29,3.2,-31),p(33,3.2,-29),p(38,3.2,-23)],
+  [p(38,3.2,-23),p(45,3.2,-15),p(40,3.2,-7),p(34,3.2,1)],
+  [p(34,3.2,1),p(28,3.2,9),p(25,3.2,17),p(24,3.2,25)],
+  [p(24,3.2,25),p(23,3.2,33),p(28,3.2,35),p(35,3.2,35)]
+ ].map(c=>c.map(([x,y,z])=>[x,BRIAR.rail+(y-BRIAR.rail)*.70,z])));
 })();
-const BRIAR_RAIL_GRID=(()=>{
- const cells=new Map();for(let d=0;d<BRIAR_ROUTE.length;d+=.35){const a=BRIAR_ROUTE.at(d),key=Math.floor(a.p[0]/6)+','+Math.floor(a.p[2]/6);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(a);}
- return cells;
-})();
-function briarRailNear(x,z){
- let distance=Infinity,point=null;const ix=Math.floor(x/6),iz=Math.floor(z/6);
- for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)for(const q of BRIAR_RAIL_GRID.get((ix+i)+','+(iz+j))||[]){const d=Math.hypot(x-q.p[0],z-q.p[2]);if(d<distance){distance=d;point=q.p;}}
- return {distance,point};
-}
+const BRIAR_RAIL_GRID=(()=>{const cells=new Map();for(let d=0;d<BRIAR_ROUTE.length;d+=.28){const a=BRIAR_ROUTE.at(d),key=Math.floor(a.p[0]/6)+','+Math.floor(a.p[2]/6);if(!cells.has(key))cells.set(key,[]);cells.get(key).push({...a,d});}return cells;})();
+function briarRailNear(x,z){let distance=Infinity,point=null,along=0;const ix=Math.floor(x/6),iz=Math.floor(z/6);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)for(const q of BRIAR_RAIL_GRID.get((ix+i)+','+(iz+j))||[]){const d=Math.hypot(x-q.p[0],z-q.p[2]);if(d<distance){distance=d;point=q.p;along=q.d;}}return {distance,point,along};}
 function briarSegment(x,z,a,q){const dx=q[0]-a[0],dz=q[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1));return {distance:Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz),t};}
-function briarPolygonDistance(x,z,polygon){
- let inside=false,d=Infinity;
- for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
-  const a=polygon[i],q=polygon[j];d=Math.min(d,briarSegment(x,z,a,q).distance);
-  if((a[1]>z)!==(q[1]>z)&&x<(q[0]-a[0])*(z-a[1])/(q[1]-a[1])+a[0])inside=!inside;
- }
- return (inside?1:-1)*d;
-}
-function briarRoadNear(x,z){
- let nearest={distance:Infinity,height:0,index:-1};
- for(let i=1;i<BRIAR_ROAD.length;i++){const a=BRIAR_ROAD[i-1],q=BRIAR_ROAD[i],v=briarSegment(x,z,a,q);if(v.distance<nearest.distance)nearest={...v,height:mix(a[2],q[2],v.t),index:i-1};}
- return nearest;
-}
-function briarRiverX(z){return 4.5-z*.54+2.5*Math.sin(z*.092+.6);}
-function briarRiverWidth(z){return 2.8+1.1*Math.exp(-(((z-25)/13)**2))+.35*Math.cos(z*.16);}
+function briarPolygonDistance(x,z,polygon){let inside=false,d=Infinity;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const a=polygon[i],q=polygon[j];d=Math.min(d,briarSegment(x,z,a,q).distance);if((a[1]>z)!==(q[1]>z)&&x<(q[0]-a[0])*(z-a[1])/(q[1]-a[1])+a[0])inside=!inside;}return (inside?1:-1)*d;}
+function briarInside(x,z,margin=0){return briarPolygonDistance(x,z,BRIAR_OUTLINE)>margin;}
+function briarCastleSurface(x,z){return briarSurface(x+BRIAR_CASTLE_OFFSET[0],z+BRIAR_CASTLE_OFFSET[1]);}
+function briarRoadNear(x,z){let nearest={distance:Infinity,height:0,index:-1};for(let i=1;i<BRIAR_ROAD.length;i++){const a=BRIAR_ROAD[i-1],q=BRIAR_ROAD[i],v=briarSegment(x,z,a,q);if(v.distance<nearest.distance)nearest={...v,height:mix(a[2],q[2],v.t),index:i-1};}return nearest;}
+function briarRiverX(z){const upper=5.5+2.2*Math.sin(z*.12),lower=20.4-z*.12+Math.sin(z*.10+.6);return mix(upper,lower,smooth(-35,-20,z));}
+function briarRiverWidth(z){return 2.0+.7*Math.exp(-(((z+32)/12)**2))+.25*Math.cos(z*.16);}
 function briarBank(x,z){return Math.abs(x-briarRiverX(z))-briarRiverWidth(z);}
 function briarInTunnel(x,z,margin=0){return x>BRIAR_TUNNEL.x0-margin&&x<BRIAR_TUNNEL.x1+margin&&Math.abs(z-BRIAR_TUNNEL.z)<BRIAR_TUNNEL.half+margin;}
+function briarGorge(x,z){return Math.abs(x-(5.5+2.2*Math.sin(z*.12)))-5.4;}
+function briarBridgeAt(x,z){return (x>-5&&x<22&&z<-27)||(x>-35&&x<-11&&z>25);}
 function briarRawHeight(x,z){
- const bank=briarBank(x,z),sd=briarPolygonDistance(x,z,BRIAR_RIDGE),strata=sd+.24*Math.sin(x*.7+z*.33);
- let h=.9+.30*Math.sin(x*.13+z*.04)+.23*Math.cos(z*.19)+.11*(noise(x*.4,z*.4)-.5);
- h+=3.3*smooth(-7,-2.5,strata)+4.5*smooth(-2.5,.2,strata)+3.4*smooth(.4,2.8,strata);
- h=mix(h,11.85,smooth(2.8,4,sd));
- // Broad woodland shelves and the town's modest building terrace.
- h+=1.45*Math.exp(-((x-40)**2/120+(z+16)**2/260));
- const town=(1-smooth(17,21,Math.abs(x-29)))*(1-smooth(15,19,Math.abs(z-7)));
+ const bank=briarBank(x,z),sd=briarPolygonDistance(x,z,BRIAR_RIDGE);
+ let h=.65+.43*Math.sin(x*.09+z*.035)+.31*Math.cos(z*.15-x*.03);
+ // One steep, broken limestone escarpment, not evenly stacked concentric hills.
+ const fold=sd+.48*Math.sin(x*.61+z*.28)+.22*Math.sin(z*.81-x*.26);
+ h+=11.5*smooth(-4.2,2.5,fold);h=mix(h,11.85,smooth(2.3,4.5,sd));
+ const gully=(a,q,w)=>1-smooth(w*.28,w,briarSegment(x,z,a,q).distance);
+ h-=2.5*gully([-52,-12],[-61,1],2.0)*(1-smooth(-1,1.7,sd));
+ h-=2.9*gully([-16,-7],[-8,8],1.7)*(1-smooth(-.8,1.7,sd));
+ // Rear quarry and eastern wooded scarp have different geological profiles.
+ const rear=(1-smooth(12,18,Math.abs(x+41)))*(1-smooth(4,9,Math.abs(z+50)));
+ h+=14*rear;
+ const east=(1-smooth(10,17,Math.abs(x-57)))*(1-smooth(9,20,Math.abs(z+26)));
+ h+=10.4*east*(.84+.16*Math.sin(x*.26+z*.13));
+ const town=(1-smooth(16,20,Math.abs(x-47)))*(1-smooth(21,25,Math.abs(z-11)));
  h=mix(h,2.32,town);
- h=mix(BRIAR.bed,h,smooth(-.45,3.6,bank));
- // The mill race has a cut bed and an outlet that rejoins the river.
+ const yard=(1-smooth(10.5,13,Math.abs(x-47)))*(1-smooth(3.5,5.5,Math.abs(z-39)));h=mix(h,2.87,yard);
+ if(z<-24&&x>-8&&x<25)h=mix(-5.3,h,smooth(-.6,4.3,briarGorge(x,z)));
+ h=mix(BRIAR.bed,h,smooth(-.25,3.4,bank));
  let leat=Infinity;for(let i=1;i<BRIAR_LEAT.length;i++)leat=Math.min(leat,briarSegment(x,z,BRIAR_LEAT[i-1],BRIAR_LEAT[i]).distance);
  if(leat<1.4)h=mix(Math.min(h,BRIAR.water-1.2),h,smooth(.66,1.4,leat));
- // Roads are shaped into the land, except across the real river bridge.
- const road=briarRoadNear(x,z);
- if(bank>1.0&&road.distance<3.5)h=mix(h,road.height-.10,1-smooth(1.35,3.5,road.distance));
- // A short dry ditch stays open below the castle's timber drawbridge.
- if(x>-29&&x<-19&&z>7.1&&z<10.4)h-=1.8*Math.sin((z-7.1)/3.3*PI)*smooth(-29,-27,x)*(1-smooth(-21,-19,x));
+ // A fern-filled ravine under the inner return bend earns its timber trestle.
+ if(x>-36&&x<-10&&z>24)h=mix(h,-3.7,(1-smooth(8,13,Math.abs(x+23)))*(1-smooth(1,7,Math.abs(z-32))));
+ const road=briarRoadNear(x,z);if(road.distance<3.0)h=mix(h,road.height-.10,1-smooth(1.35,3,road.distance));
+ if(x>-39&&x<-29&&z>17.1&&z<20.4)h-=1.8*Math.sin((z-17.1)/3.3*PI)*smooth(-39,-37,x)*(1-smooth(-31,-29,x));
  const rail=briarRailNear(x,z);
- if(rail.distance<3.2&&bank>1.2&&!briarInTunnel(x,z,1.2))h=mix(h,BRIAR.rail-.245,1-smooth(1.75,3.2,rail.distance));
- // Railway shoulder remains a rock roof rather than a clipped green tunnel.
- if(briarInTunnel(x,z,.25))h=Math.max(h,BRIAR.rail+3.6);
+ if(rail.point&&rail.distance<3.6&&!briarInTunnel(x,z,1.1)){
+  const bench=rail.point[1]-.27;
+  h=mix(h,briarBridgeAt(x,z)?Math.min(h,bench-3.2):bench,1-smooth(1.55,3.6,rail.distance));
+ }
+ if(briarInTunnel(x,z,.18))h=Math.max(h,BRIAR_TUNNEL.y+3.65);
  return h;
 }
 const BRIAR_GRID={nx:Math.ceil(BRIAR.width/BRIAR.step),nz:Math.ceil(BRIAR.depth/BRIAR.step)};
 BRIAR_GRID.dx=BRIAR.width/BRIAR_GRID.nx;BRIAR_GRID.dz=BRIAR.depth/BRIAR_GRID.nz;
 const BRIAR_HEIGHT_CACHE=new Map();
-function briarGridHeight(ix,iz){const key=iz*(BRIAR_GRID.nx+1)+ix;if(!BRIAR_HEIGHT_CACHE.has(key))BRIAR_HEIGHT_CACHE.set(key,briarRawHeight(-BRIAR.width/2+ix*BRIAR_GRID.dx,-BRIAR.depth/2+iz*BRIAR_GRID.dz));return BRIAR_HEIGHT_CACHE.get(key);}
-function briarSurface(x,z){
- const g=BRIAR_GRID,ix=clamp(Math.floor((x+62)/g.dx),0,g.nx-1),iz=clamp(Math.floor((z+44)/g.dz),0,g.nz-1),u=clamp((x+62-ix*g.dx)/g.dx),v=clamp((z+44-iz*g.dz)/g.dz);
- const a=briarGridHeight(ix,iz),r=briarGridHeight(ix+1,iz),f=briarGridHeight(ix,iz+1),q=briarGridHeight(ix+1,iz+1);
- return u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);
-}
-function briarGroundColor(x,y,z,n){
- const patch=.5+.24*Math.sin(x*.11+Math.sin(z*.08)*2)+.16*Math.cos(z*.16-x*.045);
- let c=lerpV(col('#657d61'),col('#a5aa79'),clamp(patch));
- c=lerpV(c,col('#ada994'),smooth(.10,.37,1-n[1])*.87);
- c=lerpV(c,col('#b4aa8c'),(1-smooth(1.25,2.1,briarRoadNear(x,z).distance))*.65);
- if(y<BRIAR.water+.7)c=lerpV(col('#566761'),col('#9ba08a'),smooth(BRIAR.bed,BRIAR.water+.7,y));
- return c;
-}
+function briarGridHeight(ix,iz){const key=iz*(BRIAR_GRID.nx+1)+ix;if(!BRIAR_HEIGHT_CACHE.has(key))BRIAR_HEIGHT_CACHE.set(key,briarRawHeight(BRIAR.minX+ix*BRIAR_GRID.dx,BRIAR.minZ+iz*BRIAR_GRID.dz));return BRIAR_HEIGHT_CACHE.get(key);}
+function briarSurface(x,z){const g=BRIAR_GRID,ix=clamp(Math.floor((x-BRIAR.minX)/g.dx),0,g.nx-1),iz=clamp(Math.floor((z-BRIAR.minZ)/g.dz),0,g.nz-1),u=clamp((x-BRIAR.minX-ix*g.dx)/g.dx),v=clamp((z-BRIAR.minZ-iz*g.dz)/g.dz),a=briarGridHeight(ix,iz),r=briarGridHeight(ix+1,iz),f=briarGridHeight(ix,iz+1),q=briarGridHeight(ix+1,iz+1);return u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);}
+function briarGroundColor(x,y,z,n){const patch=.5+.25*Math.sin(x*.14+Math.sin(z*.09)*2)+.19*Math.cos(z*.18-x*.045);let c=lerpV(col('#426647'),col('#899665'),clamp(patch));c=lerpV(c,lerpV(col('#7f8a83'),col('#ada99a'),.5+.22*Math.sin(y*2+x*.15)),smooth(.09,.36,1-n[1]));c=lerpV(c,col('#a99b7c'),(1-smooth(1.25,2.1,briarRoadNear(x,z).distance))*.8);if(y<BRIAR.water+.7)c=lerpV(col('#405c50'),col('#93987e'),smooth(BRIAR.bed,BRIAR.water+.7,y));return c;}
+function briarClip(points,field){const out=[];for(let i=0;i<points.length;i++){const a=points[i],q=points[(i+1)%points.length],da=field(a),dq=field(q),inside=da>=0,next=dq>=0;if(inside)out.push(a);if(inside!==next)out.push(lerpV(a,q,da/(da-dq)));}return out;}
 function briarTerrain(b){
- const g=BRIAR_GRID,verts=[],normals=[],colors=[];
- for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){
-  const x=-62+i*g.dx,z=-44+j*g.dz,y=briarGridHeight(i,j),n=norm([briarRawHeight(x-.18,z)-briarRawHeight(x+.18,z),.36,briarRawHeight(x,z-.18)-briarRawHeight(x,z+.18)]);
-  verts.push([x,y,z]);normals.push(n);colors.push(briarGroundColor(x,y,z,n));
- }
- const water=points=>{
-  const out=[];for(let i=0;i<points.length;i++){const a=points[i],q=points[(i+1)%points.length],inside=a[1]<BRIAR.water,next=q[1]<BRIAR.water;if(inside)out.push(a);if(inside!==next)out.push(lerpV(a,q,(BRIAR.water-a[1])/(q[1]-a[1])));}
-  for(let i=1;i+1<out.length;i++)for(const p of[out[0],out[i],out[i+1]])b.vertex([p[0],BRIAR.water+.009,p[2]],[0,1,0],lerpV(col('#355b58'),col('#83998b'),smooth(-2.2,.55,briarBank(p[0],p[2]))),7);
+ const g=BRIAR_GRID,verts=[],ns=[],cs=[],bounds=[];
+ for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){const x=BRIAR.minX+i*g.dx,z=BRIAR.minZ+j*g.dz,y=briarGridHeight(i,j);verts.push([x,y,z]);bounds.push(briarPolygonDistance(x,z,BRIAR_OUTLINE));}
+ const cap=(a,q)=>{
+  // The same clipped terrain edges close the scenic earth, curved fascia and
+  // underside. No rectangular fill, invisible collision slab or floating edge.
+  for(const [lo,hi,c,mat]of[[-10.8,-10.55,'#b29a69',41],[-10.55,-7.3,'#30493f',22],[-7.3,-7.12,'#ad9465',41]])b.quad([a[0],lo,a[2]],[q[0],lo,q[2]],[q[0],hi,q[2]],[a[0],hi,a[2]],c,mat);
+  b.quad([a[0],-7.12,a[2]],[q[0],-7.12,q[2]],q,a,'#727565',86);
  };
  for(let j=0;j<g.nz;j++)for(let i=0;i<g.nx;i++){
-  const a=j*(g.nx+1)+i;for(const ids of[[a,a+g.nx+1,a+1],[a+1,a+g.nx+1,a+g.nx+2]]){
-   const mid=mul(ids.map(k=>verts[k]).reduce(add),1/3),face=norm(cross(sub(verts[ids[1]],verts[ids[0]]),sub(verts[ids[2]],verts[ids[0]])));
-   if(briarInTunnel(mid[0],mid[2],.20)&&mid[1]<BRIAR.rail+3.15)continue;
-   for(const k of ids)b.vertex(verts[k],face[1]<.76?norm(lerpV(normals[k],face,.5)):normals[k],colors[k],face[1]<.76?86:88);
-   water(ids.map(k=>verts[k]));
+  const k=j*(g.nx+1)+i;
+  for(const ids of[[k,k+g.nx+1,k+1],[k+1,k+g.nx+1,k+g.nx+2]]){
+   const ds=ids.map(v=>bounds[v]);if(ds.every(d=>d<0))continue;
+   const tri=ids.map(v=>verts[v]);let points=tri;
+   if(ds.some(d=>d<0)){
+    points=[];const crossings=[];
+    for(let n=0;n<3;n++){const nn=(n+1)%3,a=tri[n],q=tri[nn],da=ds[n],dq=ds[nn];if(da>=0)points.push(a);if((da>=0)!==(dq>=0)){const cut=lerpV(a,q,da/(da-dq));points.push(cut);crossings.push(cut);}}
+    if(crossings.length===2)cap(...crossings);
+   }
+   const normal=norm(cross(sub(tri[1],tri[0]),sub(tri[2],tri[0])));
+   for(let n=1;n+1<points.length;n++){
+    for(const v of[points[0],points[n],points[n+1]])b.vertex(v,normal,briarGroundColor(...v,normal),normal[1]<.76?86:88);
+    // The underside is triangulated once from the concave outline below.
+   }
+   const wet=briarClip(points,p=>BRIAR.water-p[1]);
+   for(let n=1;n+1<wet.length;n++)for(const v of[wet[0],wet[n],wet[n+1]])b.vertex([v[0],BRIAR.water+.012,v[2]],[0,1,0],lerpV(col('#234d47'),col('#6f9480'),smooth(-2,.7,briarBank(v[0],v[2]))),7);
   }
  }
- // Exposed scenic cross-sections meet the cabinet; no hanging turf curtains.
- for(const side of[-1,1])for(const alongX of[true,false]){
-  const n=alongX?g.nx:g.nz,step=alongX?g.dx:g.dz,half=alongX?62:44;
-  for(let i=0;i<n;i++){
-   const t=-half+i*step,q=t+step,a=alongX?[t,side*44]:[side*62,t],r=alongX?[q,side*44]:[side*62,q];
-   b.quad([a[0],-6.8,a[1]],[r[0],-6.8,r[1]],[r[0],briarSurface(...r),r[1]],[a[0],briarSurface(...a),a[1]],'#7c7968',86);
-   if(briarSurface(...a)<BRIAR.water&&briarSurface(...r)<BRIAR.water)b.quad([a[0],briarSurface(...a),a[1]],[r[0],briarSurface(...r),r[1]],[r[0],BRIAR.water,r[1]],[a[0],BRIAR.water,a[1]],'#4c7069',7);
-  }
- }
+}
+function briarCabinetUnderside(b){
+ // Ear clipping preserves the walk-in void. A fan from the origin would fill it.
+ const points=BRIAR_OUTLINE.map(p=>p.slice()),area=points.reduce((a,p,i)=>{const q=points[(i+1)%points.length];return a+p[0]*q[1]-q[0]*p[1];},0);
+ if(area<0)points.reverse();const cross2=(a,q,r)=>(q[0]-a[0])*(r[1]-a[1])-(q[1]-a[1])*(r[0]-a[0]);let guard=0;
+ while(points.length>2&&guard++<500){let cut=false;for(let i=0;i<points.length;i++){const a=points[(i+points.length-1)%points.length],q=points[i],r=points[(i+1)%points.length];if(cross2(a,q,r)<=0)continue;
+  if(points.some(v=>v!==a&&v!==q&&v!==r&&cross2(a,q,v)>=0&&cross2(q,r,v)>=0&&cross2(r,a,v)>=0))continue;
+  b.tri(...[a,q,r].map(v=>[v[0],-10.8,v[1]]),'#2e3d33',22);points.splice(i,1);cut=true;break;
+ }if(!cut)throw new Error('Briarwatch cabinet outline cannot be triangulated.');}
 }
 function briarTable(b){
- b.box(0,-8.65,0,126,3.6,90,'#415348',22);b.box(0,-6.77,0,126.5,.25,90.5,'#8a7352',22);
- b.box(0,-10.45,0,126.5,.20,90.5,'#9c8057',22);
- for(const x of[-55,55])for(const z of[-37,37]){
-  b.box(x,(FLOOR-10.5)/2,z,3.7,-10.5-FLOOR,3.7,'#68543b',22);b.box(x,FLOOR+.4,z,4.3,.8,4.3,'#4c4334',22);
-  b.beam([x,-12,z],[x-Math.sign(x)*8,-10.2,z],.55,'#715b3e',22,4);
+ briarCabinetUnderside(b);
+ for(const [x,z]of[[-63,-42],[-30,-48],[40,-47],[63,-24],[57,28],[29,36],[-20,29],[-56,29],[-62,-5]]){
+  b.box(x,(FLOOR-10.8)/2,z,2.4,-10.8-FLOOR,2.4,'#544935',22);b.box(x,FLOOR+.28,z,3.1,.55,3.1,'#3c3d2f',22);
+  for(const s of[-1,1])b.beam([x,-15,z],[x+s*4.5,-10.85,z],.28,'#776143',22,4);
  }
- for(const z of[-45.08,45.08])for(let x=-56;x<=56;x+=16){b.box(x,-8.7,z,14.2,2.5,.07,'#34473e',22);b.box(x,-7.43,z,14.4,.08,.10,'#aa9366',41);}
- b.box(0,-8.65,45.18,29,2.15,.12,'#b29b6b',41);
- const plaque='house-'+Object.keys(HOUSE_ROOMS).indexOf('briarwatch');if(roomLabels[plaque])roomSign(b,plaque,0,-8.65,45.27,28,1.95);
- for(const x of[-14.1,14.1])for(const y of[-9.48,-7.82])b.sphere(x,y,45.3,.08,.08,.035,'#e1cca0',41,6,4);
+ // The visitor can walk into the negative space between the two peninsulas.
+ // A full-size low stool and a narrow control shelf reinforce that room scale.
+ for(const x of[4,8])for(const z of[31,35])b.box(x,FLOOR+2.9,z,.45,5.8,.45,'#806847',22);
+ b.box(6,FLOOR+5.9,33,6.2,.60,6.2,'#807354',22);b.box(6,FLOOR+6.25,33,5.8,.25,5.8,'#6c7960',23);
+ b.box(-7,-12.3,29,4.4,.45,5.5,'#806949',22);
 }
-function briarRailway(b){
- createRail(b,BRIAR_ROUTE);
- // Five structurally closed arches, with true voids and buried spread footings.
- const start=-29,end=4,n=5,span=(end-start)/n,top=BRIAR.rail-.22,r=2.47,spring=top-r-.42,z=31;
- for(let i=0;i<n;i++){
-  const x=start+(i+.5)*span;b.push(x,0,z);
-  briarArcadeBay(b,span,top,2.28,r,spring,BRIAR.bed-.45,BRIAR_COLORS.stone);
-  for(const s of[-1,1]){
-   const px=x+s*span/2,ground=briarSurface(px,z),foot=Math.min(ground,spring-.6);
-   b.box(s*span/2,(foot+spring)/2,0,1.12,Math.max(.15,spring-foot),2.6,'#939588',4);
-   b.box(s*span/2,foot-.14,0,1.65,.50,3.1,'#8b8d80',4);
-   // Tapered upstream cutwater noses, not piers ending at the water surface.
-   b.tri([s*span/2-.48,foot,1.27],[s*span/2+.48,foot,1.27],[s*span/2,foot,2.2],'#8c9387',4);
-   b.quad([s*span/2-.48,foot,1.27],[s*span/2,foot,2.2],[s*span/2,spring-.2,1.55],[s*span/2-.48,spring-.2,1.27],'#999d8d',4);
-   b.quad([s*span/2,foot,2.2],[s*span/2+.48,foot,1.27],[s*span/2+.48,spring-.2,1.27],[s*span/2,spring-.2,1.55],'#999d8d',4);
-  }
-  b.pop();
- }
- for(const side of[-1,1]){
-  b.box((start+end)/2,BRIAR.rail+.23,z+side*1.08,end-start,.70,.28,'#b5ae99',4);
-  b.box((start+end)/2,BRIAR.rail+.64,z+side*1.08,end-start+.3,.16,.37,'#ccc2a7',4);
- }
- // The rear tunnel has actual intrados, sidewalls and two deep portals.
- for(const [x,angle]of[[BRIAR_TUNNEL.x0,PI/2],[BRIAR_TUNNEL.x1,-PI/2]]){
-  b.push(x,BRIAR.rail-.2,-33,0,angle);briarArchWall(b,7.4,6.2,1.3,3.4,1.52,'#999b8c',.29);
-  for(const side of[-1,1]){b.box(side*3.3,2.3,0,1.0,4.6,1.8,'#999789',4);b.box(side*3.3,4.8,0,1.2,.35,2.0,'#b4ae99',4);}
-  b.box(0,6.35,0,7.8,.32,1.8,'#bcb49e',4);b.pop();
- }
- const {x0,x1}=BRIAR_TUNNEL;
- for(const side of[-1,1])b.box((x0+x1)/2,BRIAR.rail+.7,-33+side*1.64,x1-x0,1.8,.24,'#494e49',4);
- for(let i=0;i<20;i++){
-  const a=i*PI/20,q=(i+1)*PI/20,pt=(x,t)=>[x,BRIAR.rail+1.45+Math.sin(t)*1.72,-33+Math.cos(t)*1.72];
-  b.quad(pt(x0,a),pt(x1,a),pt(x1,q),pt(x0,q),'#545952',4);
- }
-}
-function briarRoads(b){
- for(let i=1;i<BRIAR_ROAD.length;i++){
-  const a=BRIAR_ROAD[i-1],q=BRIAR_ROAD[i],n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.55),f=norm([q[0]-a[0],0,q[1]-a[1]]),r=[f[2],0,-f[0]],width=i===10?1.62:1.25;
-  for(let k=0;k<n;k++){
-   const t=k/n,v=(k+1)/n,x=mix(a[0],q[0],t),z=mix(a[1],q[1],t),xx=mix(a[0],q[0],v),zz=mix(a[1],q[1],v);
-   if(briarBank((x+xx)/2,(z+zz)/2)<1.1||((z+zz)/2>7.1&&(z+zz)/2<10.4&&x>-29&&x<-19))continue;
-   const pt=(px,pz,s)=>[px+r[0]*s,briarSurface(px+r[0]*s,pz+r[2]*s)+.045,pz+r[2]*s];
-   b.quad(pt(x,z,-width),pt(xx,zz,-width),pt(xx,zz,width),pt(x,z,width),i>6?'#b1a791':'#b4ab8d',9);
-   if(k%2===0&&i>5)for(const s of[-1,1]){const p=pt(x,z,s*(width+.07));b.box(p[0],p[1]+.045,p[2],.28,.13,.32,'#969781',4);}
-  }
- }
- // A separate low road bridge connects the town to the ascending old road.
- const x=briarRiverX(18),span=11.4,top=2.56;
- b.push(x,0,18);briarArcadeBay(b,span,top,3.3,4.25,top-4.25-.30,BRIAR.bed-.2,'#a39f8c');
- b.box(0,top+.13,0,span+.7,.25,3.75,'#b3aa91',9);
- for(const s of[-1,1]){b.box(0,top+.48,s*1.76,span+.3,.58,.25,'#a5a18a',4);b.box(0,top+.81,s*1.76,span+.5,.13,.35,'#c4b99e',4);}
- b.pop();
- // Heavy drawbridge planks span the dry ditch beneath the gate passage.
- for(let i=0;i<17;i++){
-  const z=6+i*.31,y=12.14-(z-6)*.062;b.box(-24,y-.12,z,3.75,.22,.30,i%4?'#8c7350':'#786445',22);
- }
- for(const x of[-25.45,-22.55])b.beam([x,11.7,6],[x,11.36,11.1],.15,'#5d503d',22,4);
- for(const x of[-25.7,-22.3]){b.beam([x,16.8,5.8],[x,12.0,10.6],.029,'#484d43',42,6);b.beam([x,12,7],[x,11.7,10.8],.047,'#736247',22,5);}
-}
-// Each tree is built from a branching skeleton and individually shaped crowns.
-const BRIAR_TREES=[
- [-41,24,7.8,'oak'],[-35,22,5.2,'beech'],[-48,3,5.5,'beech'],[-46,-16,6,'pine'],[-49,-22,4.8,'pine'],
- [37,-19,7.0,'oak'],[43,-21,8.1,'pine'],[46,-18,6.9,'pine'],[45,-13,6.0,'beech'],[39,-12,5.6,'beech'],[34,-23,5.4,'pine'],[30,-21,4.7,'beech'],[47,-5,6.2,'oak'],[41,-3,5.3,'beech'],
- [13,-13,5.5,'willow'],[5,5,5.8,'willow'],[-13,24,4.7,'willow'],[-25,37,5.6,'willow'],[-33,38,6.4,'oak'],
- [15,-23,4.8,'beech'],[19,-25,6.2,'pine'],[25,-26,5.1,'pine'],[8,36,5.4,'oak'],[45,22,7.7,'oak'],[49,16,4.4,'beech'],
- [31,19,3.9,'apple'],[36,20,4.1,'apple'],[40,19,3.7,'apple'],[33,24,3.6,'apple'],[39,24,3.8,'apple'],
- [-53,36,5.5,'dead'],[56,-31,5.7,'pine'],[51,-35,4.8,'beech'],[-9,-40,4.1,'beech']
-];
-function briarTree(b,x,z,h,kind='oak'){
- const y=briarSurface(x,z),id=x*3+z,lean=.30*Math.sin(id),trunk=h*(kind==='pine'?.66:.43),bark=kind==='beech'?'#8a8b76':'#716851';
- const root=[x,y-.14,z],fork=[x+lean,y+trunk,z+.22];b.beam(root,fork,h*.042,bark,22,7);
- for(let i=0;i<5;i++){const a=i*TAU/5+.4,p=[x+Math.cos(a)*h*.17,0,z+Math.sin(a)*h*.15];p[1]=briarSurface(p[0],p[2])+.04;b.beam([x,y+.34,z],p,h*.023,bark,22,5);}
- if(kind==='pine'){
-  for(let k=0;k<5;k++){
-   const yy=y+h*(.29+k*.125),r=h*(.24-k*.032),count=9;
-   for(let j=0;j<count;j++){
-    const a=j*TAU/count,q=(j+1)*TAU/count,rr=r*(.85+.22*hash(j+k,id));
-    b.tri([x+lean*.6,yy+h*.31,z+.15],[x+Math.cos(a)*rr,yy,z+Math.sin(a)*rr],[x+Math.cos(q)*rr,yy,z+Math.sin(q)*rr],['#486956','#55735a','#647f60'][(j+k)%3],8);
-   }
-  }return;
- }
- const count=kind==='dead'?5:kind==='willow'?7:6;
- for(let i=0;i<count;i++){
-  const a=i*2.4+id*.2,r=h*(.19+.10*hash(i,id)),end=[x+Math.cos(a)*r+lean,y+h*(.64+.16*hash(i,id+4)),z+Math.sin(a)*r],mid=lerpV(fork,end,.48);mid[1]-=.16;
-  b.beam(fork,mid,h*.023,bark,22,5);b.beam(mid,end,h*.013,bark,22,5);
-  if(kind==='dead'){
-   b.beam(mid,add(end,[.6,.5,-.1]),h*.010,bark,22,5);continue;
-  }
-  const c=kind==='apple'?['#788a54','#8c985d','#637b50'][i%3]:kind==='willow'?['#7c956e','#93a780','#69856a'][i%3]:['#627d58','#839365','#718962'][i%3];
-  b.sphere(...end,h*.22,h*(kind==='willow'?.17:.23),h*.21,c,8,8,5,true);
-  for(let j=0;j<2;j++){const aa=a+j*2.3;b.sphere(end[0]+Math.cos(aa)*h*.16,end[1]-.28,end[2]+Math.sin(aa)*h*.14,h*.15,h*.17,h*.14,shade(c,.94+j*.07),8,7,4,true);}
-  if(kind==='willow')for(let j=0;j<5;j++){
-   const aa=a+j*1.26,dx=Math.cos(aa)*h*.17,dz=Math.sin(aa)*h*.17,p=[end[0]+dx,end[1],end[2]+dz],q=[p[0]+dx*.25,p[1]-h*(.22+.11*hash(j,i)),p[2]+dz*.3];
-   b.quad(add(p,[-.10,0,0]),add(q,[-.03,0,0]),add(q,[.03,0,0]),add(p,[.10,0,0]),shade(c,.85),8);
-  }
-  if(kind==='apple'&&i%2===0)for(let k=0;k<3;k++)b.sphere(end[0]+Math.cos(k*2.1)*.43,end[1]-.38,end[2]+Math.sin(k*2.1)*.5,.10,.11,.10,'#a75f40',23,6,4);
- }
-}
-function briarRock(b,x,z,s=1){
- const y=briarSurface(x,z);b.push(x,y-.12,z,.08*Math.sin(x),hash(x,z)*TAU,0,s,s,s);
- b.sphere(0,.19,0,.78,.43,.65,'#a8a895',86,7,4,true);b.pop();
-}
-function briarNature(b){
- for(const [x,z,h,kind]of BRIAR_TREES)briarTree(b,x,z,h,kind);
- for(let i=0;i<125;i++){
-  const z=-40+hash(i,111)*80,x=briarRiverX(z)+(i%2?1:-1)*(briarRiverWidth(z)+.3+hash(i,57)*1.3);
-  if(briarRailNear(x,z).distance<2.15||briarRoadNear(x,z).distance<2.2)continue;
-  const y=briarSurface(x,z);if(y>1.1||y<BRIAR.water-.1)continue;
-  for(let j=0;j<3;j++){
-   const a=j*2.6+i,h=.38+hash(j,i)*.75,xx=x+Math.cos(a)*.17,zz=z+Math.sin(a)*.17;
-   b.beam([xx,y,zz],[xx+.08,y+h,zz+.1],.015,'#718463',8,4);
-   b.tri([xx,y+.13,zz],[xx+.19,y+h*.68,zz+.1],[xx+.05,y+.2,zz],'#87966d',8);
-   if(j===1)b.cylinder(xx+.08,y+h,zz+.1,.028,.023,.17,'#675f43',23,5);
-  }
- }
- for(let i=0;i<290;i++){
-  const x=-58+hash(i,443)*116,z=-41+hash(i,772)*82,y=briarSurface(x,z);
-  if(y<.3||briarRailNear(x,z).distance<2||briarRoadNear(x,z).distance<2.6||briarPolygonDistance(x,z,BRIAR_RIDGE)>-2||(x>9&&x<45&&z>-13&&z<27))continue;
-  if(i%6===0){briarRock(b,x,z,.4+hash(i,32)*1.1);continue;}
-  for(let j=0;j<3;j++){const a=i+j*2.2,h=.14+hash(i,j)*.24;b.tri([x-.05,y,z],[x+Math.sin(a)*.20,y+h,z+Math.cos(a)*.14],[x+.05,y,z],i%2?'#a8ad7e':'#8b9d71',8);}
- }
- // Rock ledges follow the final ridge; the facade does not float above it.
- for(const [x,z,s]of[[-40,-8,2.2],[-42,-17,1.9],[-36,-29,1.4],[-8,-26,2.1],[-3,-17,2.2],[-2,-6,2.0],[-7,7,1.6],[-15,10,1.3]])briarRock(b,x,z,s);
- // A small abandoned wall and fallen oak reward the quiet western orbit.
- for(let i=0;i<12;i++){const x=-47+i*.58,z=31.8+.1*Math.sin(i);b.box(x,briarSurface(x,z)+.25,z,.58,.48,.64,i%3?'#979986':'#b0ab95',4);}
- const a=[-40,briarSurface(-40,37)+.3,37],q=[-35,briarSurface(-35,39)+.4,39];b.beam(a,q,.31,'#74694e',22,9);b.beam(lerpV(a,q,.6),[-37,1.3,41],.12,'#74694e',22,6);
-}
+
 function briarShell(b){
  const walls=[];b.box(0,FLOOR-.25,0,158,.45,130,'#8d7756',21);
  // Low furniture stays away from the landscape's sight lines.
- b.box(-64,-18,-53,19,1.0,8,'#775f43',22);
- for(const x of[-71,-57])for(const z of[-56,-50])b.box(x,-21,z,.6,6,.6,'#6f583e',22);
- b.box(-63,-17.25,-53,7,.36,4.8,'#d8c9a6',23);b.push(-63,-17.02,-53,-PI/2);roomSign(b,'blueprint',0,0,0,6.8,4.5);b.pop();
+ b.box(2,-18,47,12,1.0,5,'#775f43',22);
+ for(const x of[-2,6])for(const z of[45,49])b.box(x,-21,z,.6,6,.6,'#6f583e',22);
+ b.box(2,-17.25,47,7,.36,4.8,'#d8c9a6',23);b.push(2,-17.02,47,-PI/2);roomSign(b,'blueprint',0,0,0,6.8,4.5);b.pop();
  for(const which of['back','left','right','front']){
   const w=new Builder(),back=which==='back',front=which==='front',width=back||front?156:128,pos=back?[0,0,-64]:front?[0,0,64]:which==='left'?[-78,0,0]:[78,0,0],angle=back?0:front?PI:which==='left'?PI/2:-PI/2;
-  w.push(...pos,0,angle);w.box(0,13,0,width,74,.6,'#c3b99d',20);w.box(0,-16,.45,width,16,.6,'#45574b',22);
+  w.push(...pos,0,angle);w.box(0,13,0,width,74,.6,'#b5b29e',20);w.box(0,-16,.45,width,16,.6,'#344d42',22);
   for(let x=-width/2+5;x<width/2;x+=12){w.box(x,-16,.82,.2,14,.2,'#957e57',22);w.box(x,14,.82,.65,59,.6,'#786347',22);}
   for(const y of[-23.2,-8,43])w.box(0,y,.8,width,.5,.8,'#927a53',22);
   if(back){
@@ -291,33 +173,174 @@ function briarShell(b){
  }
  return walls;
 }
+
+
+// Track uses the native gauge and sleeper profile, with surface-only chair plates
+// rather than hundreds of thousands of invisible chair-box faces.
+function briarTrack(b,e){
+ ribbon(b,e,1.55,0,-.245,'#697568',9,0,e.length,.55);ribbon(b,e,1.35,0,-.15,'#899082',9,0,e.length,.45);
+ for(let d=0;d<e.length;d+=.34){const a=e.at(d);b.matrix(basis(a.p,a.f));b.box(0,-.063,0,1.08,.077,.14,shade('#695d46',.85+.22*hash(d,e.length)),2);
+  for(const s of[-1,1])b.quad([s*.32-.073,-.012,-.085],[s*.32+.073,-.012,-.085],[s*.32+.073,-.012,.085],[s*.32-.073,-.012,.085],'#45564e',11);b.pop();
+ }
+ for(const s of[-1,1]){ribbon(b,e,.058,s*.32,.020,'#4f615b',11,0,e.length,.28);ribbon(b,e,.072,s*.32,.059,'#b8bfb0',1,0,e.length,.28);}
+}
+function briarRailRange(predicate){let start=Infinity,end=-Infinity;for(let d=0;d<BRIAR_ROUTE.length;d+=.16)if(predicate(BRIAR_ROUTE.at(d).p)){start=Math.min(start,d);end=Math.max(end,d);}return [start,end];}
+function briarSignal(b,d,side=1){const a=BRIAR_ROUTE.at(d),r=norm([a.f[2],0,-a.f[0]]),p=add(a.p,mul(r,side*1.66));b.push(...p,0,Math.atan2(a.f[0],a.f[2]));
+ b.box(0,-.11,0,.65,.25,.75,'#979983',4);b.cylinder(0,1.9,0,.075,.065,3.8,'#d2c8a9',41,7);
+ for(let i=0;i<11;i++)b.beam([-.15,.23+i*.30,-.14],[.15,.23+i*.30,-.14],.018,'#61664e',42,4);
+ for(const x of[-.16,.16])b.beam([x,.2,-.14],[x,3.7,-.14],.019,'#61664e',42,4);
+ b.box(.39,3.42,0,.91,.20,.08,'#9b4d3c',23);b.box(.65,3.42,.05,.12,.20,.016,'#e1d4b1',23);b.cylinder(0,3.42,.08,.15,.15,.075,'#444f43',42,9,PI/2);b.sphere(0,3.42,.13,.065,.065,.026,'#b1be91',10,8,4);b.pop();
+}
+function briarViaduct(b){
+ const start=-4,end=23,span=(end-start)/5,y=BRIAR.highRail,z=-43,top=y-.24,r=span*.36,spring=top-r-.55;
+ for(let i=0;i<5;i++){
+  const x=start+(i+.5)*span;b.push(x,0,z);briarArcadeBay(b,span,top,2.4,r,spring,-5.3,'#999e93');
+  for(const s of[-1,1]){
+   const xx=s*span/2,ground=Math.min(briarSurface(x+xx,z),spring-1.0)-.25;
+   b.box(xx,(ground+spring)/2,0,.98,spring-ground,2.75,'#879184',4);b.box(xx,ground+.13,0,1.58,.52,3.4,'#778374',4);
+   for(const zz of[-1,1]){b.push(xx,0,zz*1.35,0,zz<0?PI:0);b.quad([-.48,ground,0],[.48,ground,0],[.34,spring-.35,.30],[-.34,spring-.35,.30],'#939b8b',4);b.tri([-.48,ground,0],[0,ground,1.0],[.48,ground,0],'#8c9686',4);b.pop();}
+  }
+  for(let row=0;row<5;row++)for(const side of[-1,1]){const yy=spring+.3+row*.38;for(let j=0;j<2;j++)b.box((j?1:-1)*(span/2-.24),yy,side*1.23,.42,.25,.08,(row+i)%3?'#aab09d':'#889783',4);}
+  b.pop();
+ }
+ for(const side of[-1,1]){
+  b.box((start+end)/2,y+.17,z+side*1.19,end-start+.45,.72,.30,'#a9ad99',4);b.box((start+end)/2,y+.60,z+side*1.19,end-start+.65,.15,.45,'#c2c1a8',4);
+  for(let x=start;x<=end;x+=2.7)b.box(x,y+.19,z+side*1.20,.34,.85,.44,'#b3b69e',4);
+ }
+}
+function briarCoveredBridge(b){
+ const z=-31,start=-3,end=22,y=3.2,spacing=3.1;
+ // Low return line: an open-sided, oak-framed bridge below the stone viaduct.
+ b.box((start+end)/2,y-.39,z,end-start, .35,2.6,'#735f43',22);
+ for(let x=start;x<end;x+=.28)b.box(x,y-.17,z,.25,.13,2.65,'#8c7853',22);
+ for(const side of[-1,1]){
+  const zz=z+side*1.34;b.beam([start,y-.5,zz],[end,y-.5,zz],.16,'#61533d',22,4);b.beam([start,y+2.9,zz],[end,y+2.9,zz],.12,'#786243',22,4);
+  for(let x=start;x<end;x+=spacing){const q=Math.min(x+spacing,end);b.beam([x,y-.35,zz],[x,y+2.9,zz],.10,'#8b714b',22,4);b.beam([x,y-.20,zz],[q,y+2.85,zz],.10,'#a28a58',22,4);b.beam([q,y-.20,zz],[x,y+2.85,zz],.06,'#786448',22,4);b.beam([x,y+.8,zz],[q,y+.8,zz],.055,'#ad9769',22,4);}
+ }
+ for(const x of[start,end]){const g=Math.min(briarSurface(x,z),y-1);b.box(x,(g+y-.50)/2,z,1.8,y-.50-g,3.6,'#88927c',4);b.box(x,y-.5,z,2.1,.4,3.9,'#b1b398',4);}
+ b.push((start+end)/2,y+3.1,z,0,PI/2);briarRoof(b,3.5,end-start+.5,0,1.1,'#516764',false);b.pop();
+}
+function briarTrestle(b){
+ const [start,end]=briarRailRange(p=>p[0]>-35&&p[0]<-11&&p[2]>25);
+ if(!Number.isFinite(start))return;
+ for(const side of[-1,1])ribbon(b,BRIAR_ROUTE,.32,side*.84,-.38,'#655b40',22,start,end,.35);
+ for(let d=start;d<end;d+=2.9){
+  const a=BRIAR_ROUTE.at(d),r=norm([a.f[2],0,-a.f[0]]),foot=Math.min(briarSurface(a.p[0],a.p[2]),a.p[1]-1.0)-.22;
+  b.matrix(basis([a.p[0],0,a.p[2]],norm([a.f[0],0,a.f[2]])));
+  for(const side of[-1,1]){b.beam([side*1.1,foot,0],[side*.76,a.p[1]-.4,0],.12,'#796a47',22,5);b.box(side*1.1,foot,.0,.78,.28,.83,'#a3a18a',4);}
+  for(const y of[foot+1,a.p[1]-1.2])b.beam([-1.04,y,0],[1.04,y,0],.10,'#947c50',22,4);
+  b.beam([-1.04,foot+.4,.09],[.91,a.p[1]-.55,.09],.077,'#a48b58',22,4);b.beam([1.04,foot+.4,-.09],[-.91,a.p[1]-.55,-.09],.077,'#8f7750',22,4);b.pop();
+ }
+ for(const side of[-1,1]){
+  ribbon(b,BRIAR_ROUTE,.12,side*1.25,1.05,'#a58f65',22,start,end,.45);
+  for(let d=start;d<end;d+=1.0){const a=BRIAR_ROUTE.at(d),r=norm([a.f[2],0,-a.f[0]]),p=add(a.p,mul(r,side*1.25));b.beam(add(p,[0,-.3,0]),add(p,[0,1.08,0]),.035,'#8f805b',22,5);}
+ }
+}
+function briarTunnel(b){
+ const t=BRIAR_TUNNEL;
+ for(const [x,angle]of[[t.x0,PI/2],[t.x1,-PI/2]]){
+  b.push(x,t.y-.22,t.z,0,angle);briarArchWall(b,7.4,6.2,1.3,3.5,1.54,'#899488',.33);
+  for(const s of[-1,1]){b.box(s*3.3,2.3,0,.90,4.6,1.8,'#8d9484',4);b.box(s*3.3,4.8,0,1.16,.30,2.0,'#b4b49b',4);for(let yy=.5;yy<4.7;yy+=.42)b.box(s*3.3,yy,1.0,1.0,.11,.08,'#9ea18e',4);}
+  b.box(0,6.34,0,7.8,.30,1.8,'#b9b89f',4);b.box(0,5.55,.75,1.3,.43,.13,'#c2bca2',4);b.pop();
+ }
+ for(const side of[-1,1])b.box((t.x0+t.x1)/2,t.y+.68,t.z+side*1.70,t.x1-t.x0,1.85,.25,'#46584e',4);
+ for(let i=0;i<16;i++){const a=i*PI/16,q=(i+1)*PI/16,pt=(x,v)=>[x,t.y+1.42+Math.sin(v)*1.8,t.z+Math.cos(v)*1.8];b.quad(pt(t.x0,a),pt(t.x1,a),pt(t.x1,q),pt(t.x0,q),'#4e5e53',4);}
+}
+function briarRailway(b){
+ briarTrack(b,BRIAR_ROUTE);briarViaduct(b);briarCoveredBridge(b);briarTrestle(b);briarTunnel(b);
+ // Curved retaining balcony below the castle's eastern cliff.
+ const [a,q]=briarRailRange(p=>p[0]>-10&&p[0]<-3&&p[2]>-17&&p[2]<20);
+ for(let d=a;d<q;d+=1.5){const p=BRIAR_ROUTE.at(d),r=norm([p.f[2],0,-p.f[0]]),point=add(p.p,mul(r,-1.50)),g=briarSurface(point[0],point[2]);b.matrix(basis([point[0],0,point[2]],p.f));b.box(0,(g+point[1]-.3)/2,0,.43,Math.max(.2,point[1]-.3-g),1.60,'#939e8b',4);b.box(0,point[1]+.18,0,.25,.72,1.53,'#b1b59d',4);b.pop();}
+ for(const [d,side]of[[8,-1],[65,1],[160,-1],[BRIAR_ROUTE.length-21,1]])briarSignal(b,d,side);
+}
+function briarRoads(b){
+ housePath(b,BRIAR_ROAD.map(p=>p.slice(0,2)),1.24,briarSurface,'#ac9f80');
+ for(let i=0;i<17;i++){const z=16+i*.31,y=12.14-(z-16)*.062;b.box(-34,y-.12,z,3.75,.22,.30,i%4?'#8c7350':'#786445',22);}
+ for(const x of[-35.45,-32.55])b.beam([x,11.7,16],[x,11.36,21.1],.15,'#5d503d',22,4);
+ for(const x of[-35.7,-32.3])b.beam([x,16.8,15.8],[x,12,20.6],.029,'#484d43',42,6);
+ // Broken curb stones, drainage channels and a retaining parapet articulate the climb.
+ for(let i=1;i<BRIAR_ROAD.length-1;i++){const p=BRIAR_ROAD[i-1],q=BRIAR_ROAD[i],n=Math.ceil(Math.hypot(q[0]-p[0],q[1]-p[1])/.7),dx=q[0]-p[0],dz=q[1]-p[1],L=Math.hypot(dx,dz),r=[dz/L,-dx/L];
+  for(let j=0;j<n;j++)for(const s of[-1,1]){const x=mix(p[0],q[0],j/n)+s*r[0]*1.4,z=mix(p[1],q[1],j/n)+s*r[1]*1.4,y=briarSurface(x,z);b.push(x,y+.08,z,0,Math.atan2(dx,dz));b.box(0,0,0,.26,.19,.49,j%5?'#aaa78d':'#898f78',4);b.pop();}
+ }
+}
+// A tapered branch skeleton with airy, broken crowns rather than a trunk with
+// a pile of identical spheres. All variations are independent coordinate hashes.
+const BRIAR_TREES=[[-58,15,7.4,'oak'],[-56,2,7,'beech'],[-59,-16,6.2,'pine'],[-53,-32,5.8,'pine'],[-62,-48,6,'pine'],[-49,-49,5.2,'pine'],[-32,-51,5.7,'pine'],[-21,-48,7.3,'pine'],[-14,-48,5.7,'beech'],[31,-50,6.5,'pine'],[44,-48,7.2,'pine'],[51,-35,8.5,'pine'],[55,-24,7.4,'pine'],[62,-20,6.2,'pine'],[59,-12,5.1,'beech'],[60,-16,4.4,'pine'],[59,3,4.5,'beech'],[60,14,5,'beech'],[53,38,6,'oak'],[35,40,5.3,'oak'],[31,30,3.7,'apple'],[33,26,4.0,'apple'],[33,23,3.3,'apple'],[31,19,3.5,'apple'],[29,-12,5.4,'willow'],[20,-10,5.7,'willow'],[15,-46,5.2,'beech'],[-17,-34,5.6,'beech'],[-17,23,4.6,'beech'],[-27,39,6.8,'oak'],[-36,40.5,5.3,'beech'],[-45,38,6.2,'oak'],[-63,30,5.5,'dead'],[-58,34.5,5.6,'oak']];
+function briarTaperBranch(b,a,q,r,R,c){
+ const f=norm(sub(q,a)),u=norm(cross(Math.abs(f[1])>.98?[1,0,0]:[0,1,0],f)),v=cross(f,u),n=5;
+ const pt=(p,rr,t)=>add(p,add(mul(u,Math.cos(t)*rr),mul(v,Math.sin(t)*rr)));
+ for(let i=0;i<n;i++){const t=i*TAU/n,k=(i+1)*TAU/n;b.quad(pt(a,r,t),pt(a,r,k),pt(q,R,k),pt(q,R,t),c,22);}
+}
+function briarLeafCloud(b,p,s,c,id){
+ // Irregular tetrahedral leaf masses deliberately expose the branching limbs.
+ const n=7,ring=[];for(let i=0;i<n;i++){const a=i*TAU/n,r=s*(.65+.35*hash(i,id));ring.push([p[0]+Math.cos(a)*r,p[1]+s*(hash(id,i)-.5)*.3,p[2]+Math.sin(a)*r]);}
+ const top=[p[0]+s*.13,p[1]+s*.62,p[2]-s*.12],bottom=[p[0]-.1*s,p[1]-s*.32,p[2]+s*.1];for(let i=0;i<n;i++){const q=(i+1)%n;b.tri(top,ring[i],ring[q],shade(c,.91+.14*hash(i,id)),8);b.tri(bottom,ring[q],ring[i],shade(c,.76+.12*hash(id,i)),8);}
+}
+function briarTree(b,x,z,h,kind='oak'){
+ if(!briarInside(x,z,1))return;const y=briarSurface(x,z),id=x*3+z,bark=kind==='beech'?'#7d8270':'#6d634c',lean=[h*.06*Math.sin(id),0,h*.04*Math.cos(id)];
+ const root=[x,y-.13,z],low=[x+lean[0]*.4,y+h*.22,z+lean[2]*.4],fork=[x+lean[0],y+h*.46,z+lean[2]];
+ briarTaperBranch(b,root,low,h*.067,h*.048,bark);briarTaperBranch(b,low,fork,h*.048,h*.029,bark);
+ for(let i=0;i<4;i++){const a=i*TAU/4+.4,xx=x+Math.cos(a)*h*.17,zz=z+Math.sin(a)*h*.15;briarTaperBranch(b,[x,y+.35,z],[xx,briarSurface(xx,zz)+.04,zz],h*.026,h*.009,bark);}
+ if(kind==='pine'){
+  briarTaperBranch(b,fork,[x+lean[0]*1.4,y+h,z+lean[2]],h*.031,.015,bark);
+  for(let j=0;j<7;j++)for(let k=0;k<5;k++){const a=k*2.4+j*.7,r=h*(.25-j*.025)*(.8+.3*hash(k,j+id)),yy=y+h*(.32+j*.083),p=[x+Math.cos(a)*r,yy-.13,z+Math.sin(a)*r],q=[x+lean[0]*j/7,yy+.22,z+lean[2]*j/7];briarTaperBranch(b,q,p,h*.009,.012,bark);briarLeafCloud(b,add(p,[0,h*.058,0]),r*.64,['#345b48','#477153','#5d7e59'][(j+k)%3],id+j*5+k);}
+  briarLeafCloud(b,[x+lean[0],y+h*.96,z+lean[2]],h*.085,'#608364',id);return;
+ }
+ for(let i=0;i<7;i++){
+  const a=i*2.4+id*.2,r=h*(.23+.10*hash(i,id)),end=[x+Math.cos(a)*r+lean[0],y+h*(.64+.23*hash(i,id+4)),z+Math.sin(a)*r],mid=lerpV(fork,end,.52);mid[1]-=h*.055;
+  briarTaperBranch(b,fork,mid,h*.026,h*.014,bark);briarTaperBranch(b,mid,end,h*.014,.025,bark);
+  for(let j=0;j<3;j++){const aa=a+(j-1)*.95,q=[end[0]+Math.cos(aa)*h*.16,end[1]+h*(.04+j*.027),end[2]+Math.sin(aa)*h*.16];briarTaperBranch(b,mid,q,h*.011,.01,bark);
+   if(kind==='dead')continue;
+   const c=kind==='apple'?['#65854b','#8b9b59','#6d8b4f'][j%3]:kind==='willow'?['#6d916c','#86a17d','#5f8161'][j%3]:['#4e774e','#67834f','#81915f'][j%3];
+   briarLeafCloud(b,q,h*(.125+.04*hash(j,id+i)),c,id+i*3+j);
+   if(j!==1)briarLeafCloud(b,add(q,[h*.055,-h*.06,-h*.025]),h*.09,shade(c,.94),id+j+8);
+   if(kind==='willow')for(let k=0;k<3;k++){const dx=(k-1)*h*.08,p=add(q,[dx,0,h*.07]);b.quad(add(p,[-.05,0,0]),add(p,[.08,-h*.30,.07]),add(p,[.15,-h*.27,.09]),add(p,[.08,0,0]),shade(c,.9),8);}
+   if(kind==='apple'&&j===1)b.sphere(q[0],q[1]-.20,q[2],.095,.10,.095,'#ac6644',23,5,3);
+  }
+ }
+}
+function briarOutcrop(b,x,z,r,h,id=0){
+ const y=briarSurface(x,z)-.3,n=7,levels=4;const pt=(i,k)=>{const a=i*TAU/n+.17,rr=r*(1-.13*k)*( .77+.25*hash(i,id));return [x+Math.cos(a)*rr+k*.12,y+h*k/(levels-1)+.16*Math.sin(i*2.2+k),z+Math.sin(a)*rr-k*.14];};
+ for(let k=0;k<levels-1;k++)for(let i=0;i<n;i++)b.quad(pt(i,k),pt((i+1)%n,k),pt((i+1)%n,k+1),pt(i,k+1),['#7f8b82','#939b8d','#a2a48d'][k],86);
+ for(let i=0;i<n;i++)b.tri([x+.3,y+h+.09,z-.4],pt(i,levels-1),pt((i+1)%n,levels-1),'#a7ac92',86);
+}
+function briarFern(b,x,z,s=1){if(!briarInside(x,z,.3))return;const y=briarSurface(x,z);for(let i=0;i<7;i++){const a=i*2.4,p=[x,y,z],q=[x+Math.cos(a)*s*.5,y+s*.38,z+Math.sin(a)*s*.5];briarTaperBranch(b,p,q,.013,.004,'#627850');for(let k=1;k<5;k++){const v=lerpV(p,q,k/5),w=s*.15*(1-k/6),r=[Math.sin(a)*w,0,-Math.cos(a)*w];b.tri(v,add(v,r),add(v,[Math.cos(a)*s*.17,s*.05,Math.sin(a)*s*.17]),'#759659',8);b.tri(v,sub(v,r),add(v,[Math.cos(a)*s*.17,s*.05,Math.sin(a)*s*.17]),'#648c51',8);}}}
+function briarNature(b){
+ for(const t of BRIAR_TREES)if(briarRailNear(t[0],t[1]).distance>2.0)briarTree(b,...t);
+ for(const [i,x,z,r,h]of[[1,-54,-5,2.2,3],[2,-58,-14,2.2,3.2],[3,-49,-27,2.2,2.3],[4,-18,-9,1.8,3.3],[5,-14,4,1.6,2.6],[6,-22,19,2,1.8],[7,3,-49,2.4,4.8],[8,12,-50,2.5,4.3],[9,56,-29,3,4],[10,54,-19,2.3,3.5],[11,43,-39,3.1,2.3]])if(briarRailNear(x,z).distance>2.7)briarOutcrop(b,x,z,r,h,i);
+ for(let i=0;i<310;i++){
+  const x=-70+hash(i,343)*140,z=-53+hash(i,772)*94,y=briarSurface(x,z);if(!briarInside(x,z,1.0)||y<BRIAR.water+.2||briarRailNear(x,z).distance<1.85||briarRoadNear(x,z).distance<2.3||briarPolygonDistance(x,z,BRIAR_RIDGE)>1.5||(x>31&&x<62&&z>-14&&z<37))continue;
+  if(i%4===0)briarFern(b,x,z,.45+hash(i,57)*.62);else for(let k=0;k<3;k++){const a=i+k*2.4,h=.12+hash(i,k)*.20;b.tri([x-.04,y,z],[x+Math.sin(a)*.16,y+h,z+Math.cos(a)*.17],[x+.04,y,z],i%2?'#a4a777':'#6f8b58',8);}
+ }
+ for(let i=0;i<46;i++){const z=-49+i*1.52,x=briarRiverX(z)+briarRiverWidth(z)+.8;if(!briarInside(x,z,1)||briarRailNear(x,z).distance<2)continue;const y=briarSurface(x,z);if(y>0)continue;for(let k=0;k<3;k++){const xx=x+k*.12;b.beam([xx,y,z],[xx+.04,y+.7,z+.1],.012,'#768e5b',8,4);if(k===1)b.cylinder(xx+.04,y+.72,z+.1,.026,.026,.17,'#6e6243',23,5);}}
+ // A broken ridge wall and waymarker lie beyond the defended castle, not random rubble.
+ for(let i=0;i<18;i++){const x=-48+i*.53,z=36+Math.sin(i*.14);if(briarRailNear(x,z).distance<2)continue;const y=briarSurface(x,z);b.box(x,y+.23,z,.50,.43,.56,i%3?'#909b84':'#b0b195',4);if(i<7)b.box(x,y+.59,z,.48,.27,.52,'#9aa38c',4);}
+}
 function briarwatchRoom(scene,b){
  briarTable(b);briarTerrain(b);briarRailway(b);briarRoads(b);briarCastle(b);briarVillage(scene,b);briarNature(b);
- scene.routes=[BRIAR_ROUTE];scene.trains=[{edge:BRIAR_ROUTE,distance:42,speed:.85,type:'steam',stock:'coast',cars:3}];
- scene.height=(x,z)=>Math.abs(x)<=62&&Math.abs(z)<=44?Math.max(BRIAR.water,briarSurface(x,z)):FLOOR;
- scene.canPlace=()=>false;
- scene.briarwatch={revision:1,castle:'Briarwatch',railway:'The Crown & Cinder Line',villageBuildings:8,trees:BRIAR_TREES.length};
+ scene.routes=[BRIAR_ROUTE];scene.trains=[{edge:BRIAR_ROUTE,distance:125,speed:.90,type:'steam',stock:'coast',cars:3}];
+ scene.height=(x,z)=>briarInside(x,z)?Math.max(BRIAR.water,briarSurface(x,z)):FLOOR;scene.canPlace=()=>false;
+ scene.briarwatch={revision:2,castle:'Briarwatch',railway:'The Crown & Cinder Line',layout:'Walk-in horseshoe with two scenic peninsulas',villageBuildings:BRIAR_BUILDINGS.length,trees:BRIAR_TREES.length};
  scene.spots=[
-  {name:'Briarwatch Castle',target:[-7,10,-3],distance:143,phoneDistance:410,phonePitch:.74,phoneYaw:.12,pitch:.55,yaw:.40,detail:'A limestone fortress above a river, a small working town, and the Crown & Cinder train taking the long way around.'},
-  {name:'The old keep',target:[-27,26,-19],distance:44,phoneDistance:77,pitch:.34,yaw:-.65,detail:'Deep-set windows, a weathered stair turret and layered slate roofs. The oldest masonry grows straight out of the ridge.'},
-  {name:'Through the gate',target:[-24,15,6],distance:33,phoneDistance:61,pitch:.30,yaw:.15,detail:'A timber drawbridge crosses the dry ditch. Iron-bound doors and a raised portcullis frame the sheltered courtyard beyond.'},
-  {name:'The sheltered courtyard',target:[-22,14,-7],distance:37,phoneDistance:67,pitch:1.04,yaw:-.15,detail:'A well, covered walks, kitchen steps and a little herb garden connect the great hall to the keep.'},
-  {name:'The river gallery',target:[-5,20,-10],distance:36,phoneDistance:63,pitch:.30,yaw:1.34,detail:'An oak gallery hangs on substantial braces above the gorge. Warm hall windows sit beneath the long slate roof.'},
-  {name:'Crown & Cinder viaduct',target:[-13,3,30],distance:49,phoneDistance:91,pitch:.22,yaw:.18,detail:'Five stone arches carry the steam train across the river. Cutwater piers meet the streambed, and the castle rises behind.'},
-  {name:'The lower town',target:[27,5,7],distance:46,phoneDistance:81,pitch:.46,yaw:.53,detail:'The inn, bakery and smithy gather along a crooked lane. Every gable and little working yard has a different purpose.'},
-  {name:'The mill leat',target:[11.5,1.7,-3.5],distance:21,phoneDistance:40,pitch:.42,yaw:-.30,detail:'A timber mill, a stone-lined watercourse and an undershot wheel at the edge of the willow bank.'},
-  {name:'The orchard station',target:[24,4,28],distance:35,phoneDistance:62,pitch:.33,yaw:.46,detail:'Luggage beneath a timber canopy, a short path into town, and apple trees beyond the platform.'},
-  {name:'The western road',target:[-38,7,15],distance:43,phoneDistance:76,pitch:.38,yaw:-.82,detail:'A worn approach climbs around the ridge, passing an ancient spreading oak before finding the castle gate.'},
-  {name:'The estate gallery',target:[0,5,-1],distance:172,phoneDistance:420,phonePitch:1.1,phoneYaw:PI/2,pitch:.51,yaw:.35,detail:'Oak beams, plaster walls, brass exhibition lamps and a deep walnut-and-green cabinet. A complete miniature world, held in a quiet room.'}
+  {name:'The walk-in castle gallery',target:[-1,8,-8],distance:160,phoneDistance:400,phoneYaw:1.48,phonePitch:.84,pitch:.64,yaw:.18,detail:'Two shaped scenic peninsulas wrap around a real visitor aisle. A high stone viaduct, low timber bridge and castle railway connect the little worlds.'},
+  {name:'The old keep',target:[-38,27,-9],distance:47,phoneDistance:84,pitch:.37,yaw:-.55,detail:'Corbelled bartizans, slate dormers, carved dripstones, deep windows and an oriel break the old keep into layers of carefully modeled masonry.'},
+  {name:'The gate and barbican',target:[-34,15,15],distance:35,phoneDistance:67,pitch:.35,yaw:.12,detail:'A braced drawbridge, carved gatehouse, raised portcullis and a sheltered passage through the walls.'},
+  {name:'The sheltered courtyard',target:[-33,15,3],distance:41,phoneDistance:74,pitch:1.05,yaw:-.2,detail:'Arcades, timber stairs, an open well, kitchen gardens and a narrow working court connect the hall to the keep.'},
+  {name:'The river gallery',target:[-14,23,0],distance:42,phoneDistance:76,pitch:.34,yaw:1.25,detail:'Tall hall windows, stone tracery, roof dormers and oak braces above the cliff-side railway balcony.'},
+  {name:'Two bridges over the gorge',target:[8,4,-37],distance:48,phoneDistance:90,pitch:.40,yaw:.36,detail:'The train returns below its outward journey: a five-arch limestone viaduct behind an open-sided timber bridge.'},
+  {name:'The Copper Hart village',target:[47,6,14],distance:48,phoneDistance:84,pitch:.5,yaw:.5,detail:'Individually modeled timber houses, working shops, jettied rooms, projecting bays and a little market in the lower town.'},
+  {name:'The mill and watercourse',target:[25,2,-3],distance:26,phoneDistance:48,pitch:.42,yaw:-.40,detail:'A turning waterwheel, sack hoist, dressed stone millrace and a timber receiving deck along the willow bank.'},
+  {name:'The station and goods yard',target:[44,5,31],distance:36,phoneDistance:66,pitch:.39,yaw:.45,detail:'A long timber canopy, railway clock, goods loading dock and sidings at the orchard end of the line.'},
+  {name:'The curved timber trestle',target:[-23,2,31],distance:43,phoneDistance:78,pitch:.31,yaw:.1,detail:'Timber bents and diagonal braces carry the sweeping return curve over a fern-filled ravine.'},
+  {name:'The estate gallery',target:[0,3,-3],distance:179,phoneDistance:410,phoneYaw:1.48,phonePitch:.84,pitch:.69,yaw:.19,detail:'Scenery follows the room instead of filling a box. Walk between the two cabinet lobes and look back up at the castle.'}
  ];
 }
 registerHouseRoom('briarwatch',{
- name:'Briarwatch Castle',layout:'The Crown & Cinder Line',tag:'STONE, STEAM & STORY',
- description:'A storied limestone castle above a river gorge. Follow a little steam train past an inhabited town, a watermill, orchards and five stone arches.',
- color:'#9b9a7b',ambient:'forest',target:[-7,10,-3],distance:147,phoneDistance:410,pitch:.55,yaw:.40,
- credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Briarwatch castle, village, terrain and exhibition room, with agent assistance. Native Whistlevale geometry; no external model assets.'}],
- map:{plot:'west-5',scale:.40,footprint:[158,130],focus:[-7,10,-3]},
+ name:'Briarwatch Castle',layout:'The Crown & Cinder Line',tag:'THE WALK-IN CASTLE GALLERY',description:'A limestone fortress and a working medieval town on two room-wrapping peninsulas. A winding steam line crosses stone arches, a covered timber bridge and a curved trestle.',
+ color:'#849075',ambient:'forest',target:[-1,8,-8],distance:163,phoneDistance:400,phoneYaw:1.48,phonePitch:.84,pitch:.64,yaw:.18,
+ credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Briarwatch castle, village, walk-in terrain and exhibition room, with agent assistance. Native geometry; no external model assets.'}],
+ map:{plot:'west-5',scale:.40,footprint:[158,130],focus:[-1,8,-8]},
  lights:[[-44,41.9,-45],[44,41.9,-45],[-44,41.9,44],[44,41.9,44],[-42,17,-62],[42,17,-62]],
- layoutLights:[[-28,17.8,5.9],[-20,17.8,5.9],[-9,19,-9],[-21,14,-7],[20,5,8],[32,4.8,8],[24,5.7,27],[10,2.4,-3]],
+ layoutLights:[[-38,17.8,15.9],[-30,17.8,15.9],[-19,23,1],[-31,15,3],[44,6,18],[55,4.8,21],[44,5.7,31],[22,2.4,-3]],
  build:briarwatchRoom,shell:briarShell
 });

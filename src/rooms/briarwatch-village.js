@@ -3,14 +3,14 @@
 // Eight individually placed buildings around the lower lane. The common joinery
 // vocabulary is shared; footprints, additions, roofs and working yards are not.
 const BRIAR_BUILDINGS=[
- {name:'The Copper Hart',x:20.8,z:6.5,w:6.4,d:7.6,h:5.7,roof:3.0,angle:.07,plaster:'#d1c3a0',slate:'#695e53',kind:'inn'},
- {name:'The smithy',x:32.6,z:9.0,w:5.9,d:5.5,h:3.5,roof:2.1,angle:-.07,plaster:'#a59d85',slate:'#536365',kind:'smith'},
- {name:'The bakehouse',x:30.1,z:-3.8,w:5.6,d:6.3,h:4.7,roof:2.7,angle:.10,plaster:'#c6b78f',slate:'#856b56',kind:'baker'},
- {name:'The mill',x:14,z:-4,w:5.0,d:6.0,h:5.8,roof:2.7,angle:0,plaster:'#b8ac8c',slate:'#637174',kind:'mill'},
- {name:'Weavers Cottage',x:20.8,z:-5.1,w:4.7,d:5.2,h:5.0,roof:2.9,angle:-.12,plaster:'#b4bea1',slate:'#586770',kind:'weaver'},
- {name:'The farrier house',x:39.8,z:3.4,w:4.8,d:6.0,h:4.2,roof:2.7,angle:.18,plaster:'#c9bf9e',slate:'#797462',kind:'house'},
- {name:'The orchard house',x:38.0,z:-7.7,w:5.6,d:5.1,h:4.3,roof:2.9,angle:-.12,plaster:'#a8b5a0',slate:'#886f54',kind:'garden'},
- {name:'The ferryman house',x:13.5,z:10.4,w:4.1,d:4.6,h:3.8,roof:2.5,angle:-.22,plaster:'#c5bda5',slate:'#5c7172',kind:'cottage'}
+ {name:'The Copper Hart',x:43.3,z:16.8,w:6.4,d:7.6,h:5.7,roof:3.1,angle:.07,plaster:'#c7bda3',slate:'#6c6055',kind:'inn'},
+ {name:'The smithy',x:55.2,z:22.0,w:5.9,d:5.5,h:3.5,roof:2.1,angle:-.10,plaster:'#939e89',slate:'#445e60',kind:'smith'},
+ {name:'The bakehouse',x:54,z:8.1,w:5.6,d:6.3,h:4.7,roof:2.8,angle:.13,plaster:'#c9ba92',slate:'#8c7057',kind:'baker'},
+ {name:'The mill',x:26,z:-4,w:5.0,d:6.0,h:5.8,roof:2.7,angle:0,plaster:'#afa58d',slate:'#53696e',kind:'mill'},
+ {name:'Weavers Cottage',x:42.2,z:3.2,w:4.7,d:5.2,h:5.0,roof:3.1,angle:-.14,plaster:'#a8b49c',slate:'#4b656f',kind:'weaver'},
+ {name:'The farrier house',x:57.8,z:-3.0,w:4.8,d:6.0,h:4.2,roof:2.8,angle:.20,plaster:'#c1b89c',slate:'#687464',kind:'house'},
+ {name:'The orchard house',x:48,z:-6.8,w:5.6,d:5.1,h:4.3,roof:2.9,angle:-.11,plaster:'#9aaf97',slate:'#876e56',kind:'garden'},
+ {name:'The ferryman house',x:34.8,z:17.7,w:4.1,d:4.6,h:3.8,roof:2.6,angle:-.26,plaster:'#bfb69b',slate:'#506b6b',kind:'cottage'}
 ];
 function briarBarrel(b,x,y,z,s=1){
  b.push(x,y,z,0,0,0,s,s,s);b.cylinder(0,.34,0,.29,.33,.68,'#9b8055',22,10);b.cylinder(0,.68,0,.31,.31,.035,'#ad9061',22,10);
@@ -60,7 +60,9 @@ function briarTimberHouse(b,q){
   b.box(0,.02,0,w,.06,d,'#8f8770',9);
   for(const xx of[-2.0,2.0])b.box(xx,h/2,d/2,.20,h,.22,'#7c6545',22);
  }else{
-  b.box(0,1.2,0,w,2.4,d,q.kind==='mill'?'#a2a08a':'#b8ae91',4);
+  const lower=q.kind==='mill'?'#969d8a':'#ada98e';
+  b.box(0,1.2,-d/2,w,2.4,.34,lower,4);for(const side of[-1,1])b.box(side*w/2,1.2,0,.34,2.4,d,lower,4);
+  b.push(0,0,d/2);briarArchWall(b,w,2.4,.34,1.16,1.53,lower,.11);b.pop();b.box(0,.02,0,w-.3,.08,d-.3,'#85765a',22);
   if(h>2.4)b.box(0,(h+2.4)/2,0,w+(jetty?.35:0),h-2.4,d+(jetty?.35:0),q.plaster,23);
   for(const side of[-1,1]){
    for(const xx of[-w/2+.12,0,w/2-.12])b.box(xx,h*.69,side*(d/2+.18),.12,h*.62,.13,'#706044',22);
@@ -116,7 +118,7 @@ function briarTimberHouse(b,q){
   for(let i=0;i<5;i++)b.box(w/2+.8,.42+i*.03,-1+i*.52,1.2,.11,.47,['#9b6856','#acaa81','#7b947f'][i%3],23);
   b.beam([w/2+.2,2.6,-2],[w/2+1.8,2.6,1.2],.015,'#a79469',23,5);
  }
- b.pop();return floor;
+ briarHouseDetails(b,q);b.pop();return floor;
 }
 function briarMillWheel(b){
  const r=2.24;
@@ -130,19 +132,20 @@ function briarMillWheel(b){
  b.cylinder(0,0,0,.28,.28,1.65,'#8c7047',22,14,PI/2);b.cylinder(0,0,.86,.15,.15,.17,'#575d4e',42,12,PI/2);
 }
 function briarMill(scene,b){
+ b.push(12,0,0);const millSurface=(x,z)=>briarSurface(x+12,z);
  // The leat is a low, stone-lined branch of the river, not water painted uphill.
  const x=10.5,z=-4,water=BRIAR.water+.02;
  for(const side of[-1,1]){
-  const wallX=x+side*.93,foot=Math.min(...Array.from({length:17},(_,i)=>briarSurface(wallX,z-4.05+i*8.1/16)))-.15;
+  const wallX=x+side*.93,foot=Math.min(...Array.from({length:17},(_,i)=>millSurface(wallX,z-4.05+i*8.1/16)))-.15;
   b.box(wallX,(foot+.36)/2,z,.25,.36-foot,8.1,'#999c86',4);
   b.box(x+side*.93,.43,z,.36,.15,8.25,'#bab194',4);
  }
  b.quad([x-.8,water,-8.1],[x+.8,water,-8.1],[x+.8,water,.1],[x-.8,water,.1],'#476c61',7);
  // Trestle bearings visibly carry the axle above the channel.
- for(const xx of[9.65,11.4]){const foot=Math.min(briarSurface(xx,z-.45),briarSurface(xx,z+.45))-.15;b.box(xx,(foot+.34)/2,z,.5,.34-foot,.9,'#888e79',4);b.box(xx,.46,z,.68,.25,1.1,'#a9a58c',4);}
+ for(const xx of[9.65,11.4]){const foot=Math.min(millSurface(xx,z-.45),millSurface(xx,z+.45))-.15;b.box(xx,(foot+.34)/2,z,.5,.34-foot,.9,'#888e79',4);b.box(xx,.46,z,.68,.25,1.1,'#a9a58c',4);}
  b.beam([9.5,-.67,z],[12.2,-.67,z],.14,'#6e5d40',22,9);
  const wheel=new Builder();briarMillWheel(wheel);
- scene.movingParts=[{mesh:wheel.mesh(),model:current=>mm(trans(x,-.67,z),mm(ry(PI/2),rz(reduceMotion?0:-current.trains[0].distance*.085)))}];
+ scene.movingParts=[{mesh:wheel.mesh(),model:current=>mm(trans(x+12,-.67,z),mm(ry(PI/2),rz(reduceMotion?0:-current.trains[0].distance*.085)))}];
  // Sack hoist, receiving platform and a millstone explain the building's work.
  const floor=BRIAR_BUILDINGS.find(q=>q.kind==='mill').floor;
  for(let i=0;i<9;i++)b.box(15.7,floor+.02,-.1+i*.27,2.3,.15,.255,'#9a8056',22);
@@ -150,50 +153,120 @@ function briarMill(scene,b){
  b.beam([14.6,floor+2.37,1.9],[16.8,floor+2.37,1.9],.09,'#8e7250',22,5);b.beam([15.7,floor+2.37,1.9],[15.7,floor+.6,1.9],.022,'#b8a370',23,5);
  for(const [xx,zz]of[[16.6,.4],[15.9,.2],[16.7,1.1]])b.sphere(xx,floor+.43,zz,.25,.48,.28,'#c4b58c',23,8,6,true);
  b.cylinder(17.2,floor+.43,-6,.66,.66,.19,'#9b9c87',4,20,PI/2);b.cylinder(17.2,floor+.43,-5.89,.10,.10,.025,'#575e50',42,12,PI/2);
+ b.pop();
+}
+
+const BRIAR_GLYPHS={A:['01110','10001','10001','11111','10001','10001','10001'],B:['11110','10001','10001','11110','10001','10001','11110'],C:['01111','10000','10000','10000','10000','10000','01111'],D:['11110','10001','10001','10001','10001','10001','11110'],E:['11111','10000','10000','11110','10000','10000','11111'],F:['11111','10000','10000','11110','10000','10000','10000'],G:['01111','10000','10000','10111','10001','10001','01110'],H:['10001','10001','10001','11111','10001','10001','10001'],I:['11111','00100','00100','00100','00100','00100','11111'],K:['10001','10010','10100','11000','10100','10010','10001'],L:['10000','10000','10000','10000','10000','10000','11111'],M:['10001','11011','10101','10101','10001','10001','10001'],N:['10001','11001','10101','10011','10001','10001','10001'],O:['01110','10001','10001','10001','10001','10001','01110'],P:['11110','10001','10001','11110','10000','10000','10000'],R:['11110','10001','10001','11110','10100','10010','10001'],S:['01111','10000','10000','01110','00001','00001','11110'],T:['11111','00100','00100','00100','00100','00100','00100'],U:['10001','10001','10001','10001','10001','10001','01110'],V:['10001','10001','10001','10001','01010','01010','00100'],W:['10001','10001','10001','10101','10101','11011','10001'],Y:['10001','01010','01010','00100','00100','00100','00100']};
+function briarLettering(b,text,x,y,z,w,h,c='#ded0a6'){
+ const cw=w/(text.length*6-1),ch=h/7;for(let k=0;k<text.length;k++){const glyph=BRIAR_GLYPHS[text[k]];if(!glyph)continue;for(let j=0;j<7;j++)for(let i=0;i<5;i++)if(glyph[j][i]==='1'){const xx=x-w/2+(k*6+i)*cw,yy=y+h/2-j*ch;b.quad([xx,yy,z],[xx+cw*.91,yy,z],[xx+cw*.91,yy-ch*.93,z],[xx,yy-ch*.93,z],c,23);}}
+}
+function briarSignboard(b,text,x,y,z,w=3.2,h=.55){b.box(x,y,z,w+.36,h+.32,.12,'#34594d',22);for(const s of[-1,1])b.box(x,y+s*(h/2+.11),z+.08,w+.35,.055,.045,'#b1a076',41);briarLettering(b,text,x,y,z+.085,w,h);}
+function briarAwning(b,x,y,z,w,depth=1.7,c='#9b5b48'){
+ const cols=10,rows=5;for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const pt=(u,v)=>[x+(u-.5)*w,y-.34*v-.16*Math.sin(v*PI),z+v*depth];b.quad(pt(i/cols,j/rows),pt((i+1)/cols,j/rows),pt((i+1)/cols,(j+1)/rows),pt(i/cols,(j+1)/rows),i%2?'#c7bf9b':c,23);}
+ for(let i=0;i<cols;i++){const xx=x-w/2+(i+.5)*w/cols;for(let j=0;j<4;j++){const a=-PI/2+j*PI/4,q=-PI/2+(j+1)*PI/4;b.tri([xx,y-.34,z+depth],[xx+Math.sin(a)*w/cols/2,y-.42-Math.cos(a)*.13,z+depth],[xx+Math.sin(q)*w/cols/2,y-.42-Math.cos(q)*.13,z+depth],i%2?'#c7bf9b':c,23);}}
+ for(const s of[-1,1])b.beam([x+s*w*.48,y-.34,z+depth],[x+s*w*.48,y-1.0,z-.05],.040,'#7b6b4a',42,5);
+}
+function briarHouseDetails(b,q){
+ const {w,d,h}=q;
+ // Carved bargeboards, pegged braces, jetty brackets and rain chains give each
+ // timber house a plausible construction rather than a painted block facade.
+ for(const side of[-1,1]){
+  const z=side*(d/2+.10);
+  for(let i=0;i<5;i++){const t=(i+.5)/5,xx=(w/2+.28)*(1-t),yy=h+q.roof*t-.06;for(const s of[-1,1]){b.box(s*xx,yy,z,.17,.33,.20,'#c0ab7c',22);b.sphere(s*xx,yy-.12,z+side*.13,.045,.045,.025,'#75694e',42,5,3);}}
+  for(const xx of[-w*.35,0,w*.35]){b.beam([xx,1.65,z],[xx,2.48,z+side*.36],.074,'#776746',22,4);b.box(xx,2.43,z+side*.19,.28,.15,.54,'#9a8356',22);}
+  for(let i=0;i<4;i++){const xx=-w*.42+i*w*.28;b.box(xx,.42,z,.69,.26,.08,'#a8a58c',4);}
+ }
+ // Stone sill brackets and deep, jettied projecting bays vary the silhouette.
+ if(['inn','weaver','house'].includes(q.kind)){
+  const xx=q.kind==='inn'?w*.30:-w*.21,yy=h>4.7?3.0:2.55,zz=d/2+.50;
+  b.push(xx,yy,zz);b.box(0,.58,0,1.6,1.16,.95,q.plaster,23);briarHouseWindow(b,0,.02,.50,1.12,1.05,false);b.box(0,-.11,0,1.83,.16,1.15,'#a28a5a',22);
+  for(const s of[-1,1])b.beam([s*.59,-.81,-.38],[s*.59,-.14,.50],.065,'#8b7550',22,4);
+  b.quad([-.94,1.3,-.53],[.94,1.3,-.53],[.94,1.17,.64],[-.94,1.17,.64],q.slate,5);b.pop();
+ }
+ if(['inn','baker','weaver','garden'].includes(q.kind))briarDormer(b,w*.28,h+q.roof*.43,-d*.1,PI/2,.69,q.slate);
+ // Roof gutters are supported, with chains and a rain barrel, not free piping.
+ b.beam([w/2+.41,h-.09,-d/2-.3],[w/2+.41,h-.09,d/2+.3],.038,'#778171',42,6);
+ for(let i=0;i<8;i++)ringZ(b,w/2+.43,h-.17-i*.23,d/2+.31,.047,.063,.025,'#8e8b68',41,7);
+ if(q.kind!=='smith')briarBarrel(b,w/2+.45,0,d/2+.30,.68);
+ if(q.kind==='inn'){
+  briarSignboard(b,'COPPER HART',0,2.55,d/2+.21,w*.78,.36);
+  b.push(w/2+.62,0,-d*.22);b.box(0,1.9,0,1.6,3.8,2.9,q.plaster,23);briarRoof(b,2.05,3.4,3.85,1.25,q.slate,false);briarHouseWindow(b,0,2.0,1.48,.72,1.08);b.pop();
+  briarLantern(b,-w/2-.26,2.24,d/2+.33,.34);
+ }else if(q.kind==='baker'){
+  briarAwning(b,-.3,2.43,d/2+.26,w*.86,1.82,'#9f7350');briarSignboard(b,'BAKERY',0,h-.65,d/2+.24,2.4,.31);
+  for(let i=0;i<3;i++)briarCrate(b,-2.7+i*.60,0,d/2+2.0,.56,.42,.55);
+ }else if(q.kind==='smith'){
+  // Bellows, tool hooks, horse shoes and an open timber fuel store.
+  b.push(1.65,.42,-1.20,0,-.4);b.box(0,.13,0,.75,.26,1.30,'#876b4c',22);b.beam([0,.3,-.5],[0,.65,.65],.08,'#6d5a3e',22,4);b.pop();
+  for(let i=0;i<5;i++){const xx=-2.1+i*.35;b.beam([xx,1.8,-d/2+.3],[xx,2.5,-d/2+.3],.025,'#596858',42,5);b.box(xx,2.49,-d/2+.3,.25,.07,.12,'#8d9786',41);}
+  for(const xx of[-1.9,-1.35])archRing(b,xx,1.35,-d/2+.27,.15,.20,.04,'#717f6b',9,0,PI*1.65);
+ }else if(q.kind==='mill'){
+  briarSignboard(b,'BRIAR MILL',0,h-.58,d/2+.22,3.3,.40);
+  b.push(0,h-1.0,d/2+.44);b.box(0,.58,.20,1.4,1.16,1.4,'#8b7753',22);briarRoof(b,1.9,1.95,1.16,.83,q.slate,false);b.pop();
+  b.beam([0,h+.28,d/2+.2],[0,h+.28,d/2+2.6],.095,'#715f44',22,5);b.beam([0,h-.5,d/2+.2],[0,h+.28,d/2+2],.06,'#927a52',22,4);
+  ringZ(b,0,h+.1,d/2+2.6,.13,.19,.09,'#998452',41,10);b.beam([0,h+.1,d/2+2.63],[0,.6,d/2+2.63],.018,'#a99469',23,4);
+ }else if(q.kind==='weaver'){
+  briarAwning(b,-.2,2.44,d/2+.28,w*.93,1.4,'#6d8c7b');
+  for(let i=0;i<4;i++)b.box(-1.1+i*.65,.63,d/2+1.0,.57,.12,.81,['#aa7860','#919d86','#b7ad86'][i%3],23);
+ }
 }
 function briarStation(scene,b){
- const x=24,y=BRIAR.rail-.12,z=27.4,w=18,d=3.5;
- b.box(x,y-.28,z,w,.56,d,'#a29f86',4);b.box(x,y+.03,z,w+.15,.12,d+.12,'#c1b79b',9);
- for(let i=0;i<26;i++)b.box(x-w/2+(i+.5)*w/26,y+.14,z+d/2-.05,w/26-.025,.10,.35,'#d4c7a5',4);
- b.push(x-1.0,y+.08,z-.6);b.box(0,1.45,0,5.4,2.9,2.4,'#b8ae8d',4);briarRoof(b,6.1,3.1,2.95,1.4,'#59695f');
- for(const xx of[-1.6,1.6])briarHouseWindow(b,xx,.96,1.25,.7,.95,false);b.box(0,1.0,1.25,.83,1.9,.12,'#536958',22);b.pop();
- for(const xx of[x-7.7,x-4.3,x+4.3,x+7.7]){b.box(xx,y+1.25,z+.96,.10,2.5,.11,'#617061',41);b.beam([xx,y+1.96,z+.96],[xx+.50,y+2.48,z+.96],.038,'#71816a',41,5);}
- b.box(x,y+2.55,z+.80,w-.7,.14,2.1,'#5e7165',5);b.box(x,y+2.41,z+1.81,w-.6,.22,.08,'#c6bc96',22);
+ const x=44,y=BRIAR.rail-.12,z=31.4,w=18,d=3.5;
+ b.box(x,y-.31,z,w,.62,d,'#939e87',4);b.box(x,y+.03,z,w+.15,.12,d+.12,'#bfb69b',9);
+ for(let i=0;i<26;i++)b.box(x-w/2+(i+.5)*w/26,y+.14,z+d/2-.05,w/26-.025,.10,.35,'#d2c7aa',4);
+ b.push(x-1,y+.08,z-.6);b.box(0,1.45,0,5.4,2.9,2.4,'#b6b095',4);briarRoof(b,6.1,3.1,2.95,1.4,'#50645d',false);
+ for(const xx of[-1.6,1.6])briarHouseWindow(b,xx,.96,1.25,.7,.95,false);b.box(0,1,1.25,.83,1.9,.12,'#486250',22);briarSignboard(b,'BRIARWATCH',0,2.48,1.27,3.7,.35);b.pop();
+ for(const xx of[x-7.7,x-4.3,x+4.3,x+7.7]){b.box(xx,y+1.25,z+.96,.10,2.5,.11,'#536b59',41);for(const s of[-1,1])b.beam([xx,y+1.93,z+.96],[xx+s*.53,y+2.48,z+.96],.038,'#768467',41,5);}
+ b.box(x,y+2.55,z+.80,w-.7,.14,2.1,'#486156',5);b.box(x,y+2.41,z+1.81,w-.6,.22,.08,'#c3b996',22);
+ // Open fretwork valance, small clock and station flower troughs.
+ for(let i=0;i<48;i++)b.box(x-w*.46+i*w*.92/47,y+2.24,z+1.81,.075,.26,.07,'#c8bc99',22);
  for(const xx of[x-6,x+5.8]){bench(b,xx,y+.10,z+.6);briarLantern(b,xx,y+2.14,z+.85,.30);}
- briarCrate(b,x+7,y+.14,z-.65,.7,.65,.75);briarCrate(b,x+6.0,y+.14,z-.65,.8,.50,.6);
- for(const [xx,zz,angle]of[[19,28.2,.3],[28,28.2,2.2]])scenePerson(scene,b,xx,y+.16,zz,'bag',angle,.80);
- housePath(b,[[24,25.6],[24,21],[24,17]],1.15,briarSurface,'#b8ad8c');
+ b.push(x+3.6,y+1.88,z+1.38);sign(b,'clock',0,0,0,.72,.72);b.pop();
+ briarCrate(b,x+7,y+.14,z-.65,.7,.65,.75);briarCrate(b,x+6,y+.14,z-.65,.8,.5,.6);
+ for(const [xx,zz,angle]of[[39,32.2,.3],[48,32.2,2.2]])scenePerson(scene,b,xx,y+.16,zz,'bag',angle,.80);
+ housePath(b,[[44,29.6],[46,26],[47.8,22.5]],.88,briarSurface,'#b7ab8b');
+}
+function briarGoodsYard(b){
+ const y=BRIAR.rail,curve=[[36,y,35],[43,y,35],[40,y,40],[48,y,40]],e=new Edge('Briarwatch goods siding',[curve,[[48,y,40],[51,y,40],[54,y,40],[57,y,40]]]);briarTrack(b,e);
+ // Point blades and the connected spur are real track geometry; they are not
+ // presented as an interactive dispatch or automatic switching simulation.
+ for(const side of[-1,1])b.beam([37,y+.018,35+side*.31],[41,y+.018,35.3+side*.32],.022,'#aeb6a1',1,5);
+ b.beam([38,y+.10,36],[38,y+.48,36.55],.045,'#7b8672',42,6);b.sphere(38,y+.48,36.55,.11,.11,.11,'#b79f64',41,8,4);
+ const foot=briarSurface(51,42.7);b.box(51,(foot+y+.6)/2,42.7,8,y+.6-foot,2.6,'#929c87',4);
+ for(let i=0;i<25;i++)b.box(47.1+i*.33,y+.67,42.7,.30,.15,2.6,'#95805a',22);
+ briarSignboard(b,'GOODS',51,y+1.0,41.34,2,.29);
+ for(const [x,z,w,h]of[[49,42.7,1.1,.8],[50.6,43,.9,1.05],[48.2,43.4,.65,.65]])briarCrate(b,x,y+.78,z,w,h,.9);
+ for(const x of[53,54])briarBarrel(b,x,y+.76,43,.85);
+ // A diagonal loading crane: pedestal, gear housing, tie and hanging chain.
+ b.box(55.2,y+.27,43,.88,.54,.90,'#838e7d',4);b.cylinder(55.2,y+2.5,43,.14,.14,4.5,'#57705c',42,10);
+ b.beam([55.2,y+4.35,43],[52.8,y+3.8,40.3],.10,'#8a7952',22,6);b.beam([55.2,y+1.9,43],[52.8,y+3.8,40.3],.063,'#a58e5f',22,5);b.beam([52.8,y+3.8,40.3],[52.8,y+1.43,40.3],.017,'#6d775f',42,5);archRing(b,52.8,y+1.29,40.3,.12,.17,.045,'#929e87',9,PI*.7,PI*2.1);
+ // A stationary plank-sided goods wagon with gauge-matched wheels and buffers.
+ const a=e.at(e.length-4.5);b.matrix(basis(a.p,a.f));b.box(0,.46,0,1.12,.17,2.5,'#655e48',42);
+ for(const z of[-.77,.77])for(const side of[-1,1])b.cylinder(side*.39,.265,z,.21,.21,.10,'#485d4f',42,12,0,PI/2);
+ for(const side of[-1,1])for(let j=0;j<4;j++)b.box(side*.56,.66+j*.15,0,.085,.13,2.48,'#9a8a5c',22);
+ for(const side of[-1,1])b.box(0,.88,side*1.20,1.12,.70,.08,'#8e7b55',22);
+ for(const x of[-.33,.33])for(const side of[-1,1])b.cylinder(x,.44,side*1.40,.085,.085,.21,'#566b57',42,8,PI/2);
+ for(let i=0;i<7;i++)b.box((i%3-.9)*.31,.69+Math.floor(i/3)*.27,(i%2-.5)*.8,.38,.28,.48,'#aeb197',4);b.pop();
 }
 function briarVillage(scene,b){
  for(const q of BRIAR_BUILDINGS)briarTimberHouse(b,q);
- briarMill(scene,b);briarStation(scene,b);
- housePath(b,[[24,16],[25.8,10.2],[26.0,3],[26.4,-3],[28.4,-10]],1.0,briarSurface,'#b6aa88');
- housePath(b,[[26,3],[34.1,1.0],[42,-1.4]],.78,briarSurface,'#b6aa88');
- housePath(b,[[22,13.5],[17,15],[13.2,13.5]],.64,briarSurface,'#b4a885');
- // A small market court, not a sprawling collection of random market props.
- const y=briarSurface(25.8,3)+.06;
- for(let i=0;i<9;i++)for(let j=0;j<7;j++){
-  const x=24.0+i*.43,z=1.6+j*.43;b.box(x,briarSurface(x,z)+.035,z,.40,.07,.40,(i+j)%3?'#aaa48b':'#beb294',9);
+ briarMill(scene,b);briarStation(scene,b);briarGoodsYard(b);
+ const lanes=[[[47.8,25.5],[48.2,18],[48.3,10],[47.6,3],[46,-3]],[[39,22],[47.9,24],[56,26]],[[29.5,0],[33,-3],[41,-1],[47.6,3],[58,3]]];
+ for(const lane of lanes)housePath(b,lane,.94,briarSurface,'#b3a586');
+ // A paved market court with curved striped cloth, baskets and useful space.
+ const x=48.6,z=16.8,y=briarSurface(x,z)+.06;
+ for(let i=0;i<9;i++)for(let j=0;j<8;j++){const xx=x-1.8+i*.43,zz=z-1.6+j*.43;b.quad([xx,y,zz],[xx+.395,y,zz],[xx+.395,y,zz+.395],[xx,y,zz+.395],(i+j)%3?'#aaa88c':'#bfb497',9);}
+ for(const xx of[x-1.2,x+1.2])b.box(xx,y+1.08,z,.09,2.16,.09,'#8b7551',22);
+ briarAwning(b,x,y+2.25,z-.5,3,1.45,'#768965');b.box(x,y+.86,z+.12,2.6,.13,.88,'#9a8358',22);
+ for(let i=0;i<6;i++)b.sphere(x-.86+i*.34,y+1.04,z+.12,.17,.12,.15,i%2?'#819c5c':'#be9e64',23,6,4);
+ briarCart(b,46.1,briarSurface(46.1,26.3)+.07,26.3,-.32);
+ briarBarrel(b,40.3,BRIAR_BUILDINGS[0].floor,22.1,.9);briarCrate(b,54.5,BRIAR_BUILDINGS[1].floor,26.2,.9,.65,.65);
+ // A low orchard wall, trellises and kitchen beds separate yards without
+ // turning all available ground into scattered props.
+ for(const [a,q]of[[[52,-12],[59,-12]],[[59,-12],[61,-6]],[[36,12],[38,8]],[[34,24],[35,28]]]){
+  const n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.65);for(let i=0;i<=n;i++){const xx=mix(a[0],q[0],i/n),zz=mix(a[1],q[1],i/n),h=briarSurface(xx,zz);b.box(xx,h+.4,zz,.07,.8,.07,'#8c815b',22);}for(const h of[.3,.65])b.beam([a[0],briarSurface(...a)+h,a[1]],[q[0],briarSurface(...q)+h,q[1]],.033,'#a08d5f',22,5);
  }
- for(const xx of[24.5,27.1])b.box(xx,y+1.08,2.5,.08,2.16,.08,'#8b7250',22);
- b.quad([24.2,y+2.25,1.9],[27.4,y+2.25,1.9],[27.4,y+2.04,3.2],[24.2,y+2.04,3.2],'#bbb48a',23);
- b.box(25.8,y+.87,2.65,2.8,.12,.85,'#9c8054',22);
- for(let i=0;i<6;i++)b.sphere(24.9+i*.34,y+1.02,2.65,.17,.12,.15,i%2?'#9aab6a':'#bfaa6d',23,6,4);
- // Working yards tell different stories through a few legible arrangements.
- briarCart(b,22.8,briarSurface(22.8,13.3)+.07,13.3,-.22);
- briarBarrel(b,18.0,BRIAR_BUILDINGS[0].floor,11.6,.9);briarBarrel(b,18.65,BRIAR_BUILDINGS[0].floor,11.7,.75);
- briarCrate(b,33.7,BRIAR_BUILDINGS[1].floor,13.3,.9,.65,.65);
- for(let i=0;i<6;i++)b.cylinder(38.1+i*.19,briarSurface(38.1,9)+.18,9,.13,.13,1.6,'#997c4f',22,7,PI/2);
- // Garden fences are low and have actual openings to the lanes.
- for(const [a,q]of[[[35,15],[43,15]],[[43,15],[44,24]],[[30,23],[30,18]],[[35,-13],[42,-13]],[[42,-13],[43,-6]]]){
-  const n=Math.ceil(Math.hypot(q[0]-a[0],q[1]-a[1])/.7);
-  for(let i=0;i<=n;i++){const x=mix(a[0],q[0],i/n),z=mix(a[1],q[1],i/n),h=briarSurface(x,z);b.box(x,h+.45,z,.075,.90,.075,'#92825b',22);}
-  for(const h of[.35,.70])b.beam([a[0],briarSurface(...a)+h,a[1]],[q[0],briarSurface(...q)+h,q[1]],.034,'#ac9566',22,5);
- }
- for(let i=0;i<3;i++)for(let j=0;j<8;j++){
-  const x=35.1+i*.65,z=-12.1+j*.29,h=briarSurface(x,z);b.sphere(x,h+.13,z,.15,.12,.17,'#80905c',8,6,4,true);
- }
- // Small figures reinforce scale; no full-size gallery visitors.
- for(const [x,z,pose,angle]of[[24.4,10.9,'bag',.4],[26.3,5.8,'talk',2.6],[25.7,5.4,'talk',.2],[32,12.8,'work',1.4],[16.5,.7,'work',.9]])scenePerson(scene,b,x,briarSurface(x,z)+.12,z,pose,angle,.75);
- for(const [x,z]of[[24.1,11.3],[33.8,12.7],[12.3,10.8]])briarLantern(b,x,briarSurface(x,z)+2.2,z,.30);
+ for(let i=0;i<3;i++)for(let j=0;j<7;j++){const xx=51.4+i*.55,zz=-11.3+j*.30,y=briarSurface(xx,zz);briarLeafCloud(b,[xx,y+.13,zz],.17,'#7e965a',i*7+j);}
+ for(const [xx,zz,pose,angle]of[[47.5,23.3,'bag',.4],[49.3,18.4,'talk',2.6],[49.1,17.9,'talk',.2],[55.5,26.1,'work',1.4],[28.5,.7,'work',.9]])scenePerson(scene,b,xx,briarSurface(xx,zz)+.12,zz,pose,angle,.75);
+ for(const [xx,zz]of[[46.5,24.5],[53,26.6],[29,-.4]])briarLantern(b,xx,briarSurface(xx,zz)+2.2,zz,.30);
 }

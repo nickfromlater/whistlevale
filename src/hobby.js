@@ -49,7 +49,7 @@ function drawHobbyParticles(){
 
 function houseOrbit(room,close=false){
  const q=HOUSE_ROOMS[room],phone=innerWidth<700;
- orbit.target=q.target.slice();orbit.distance=(phone?(q.phoneDistance??q.distance*1.78):q.distance)*(close?.82:1);orbit.pitch=phone?Math.max(.74,q.pitch):q.pitch;orbit.yaw=phone?.12:q.yaw;
+ orbit.target=q.target.slice();orbit.distance=(phone?(q.phoneDistance??q.distance*1.78):q.distance)*(close?.82:1);orbit.pitch=phone?(q.phonePitch??Math.max(.74,q.pitch)):q.pitch;orbit.yaw=phone?(q.phoneYaw??.12):q.yaw;
 }
 
 setView=function(mode,announce=true){
