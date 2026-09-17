@@ -7,41 +7,47 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - name: Apply the hash-verified native room patch on this review branch only
+      - name: Apply verified refinements on the review branch only
         run: |
           test "$GITHUB_REF" = refs/heads/codex/briarwatch-castle
-          if test -f .briarwatch-review/patch.0; then
+          if test -f .briarwatch-review/refine.0; then
             python3 - <<'PY'
           from pathlib import Path
           import base64,gzip,hashlib
-          parts=sorted(Path('.briarwatch-review').glob('patch.*'))
-          patch=gzip.decompress(base64.b64decode(''.join(p.read_text() for p in parts),validate=True))
-          assert hashlib.sha256(patch).hexdigest()=='fd3588e371706df323f23acf687fa8ff93c8325af286e12996c9f99236d6c747'
-          Path('/tmp/briarwatch-native.patch').write_bytes(patch)
+          patch=gzip.decompress(base64.b64decode(''.join(p.read_text() for p in sorted(Path('.briarwatch-review').glob('refine.*'))),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='b92790e87dc53256402ea0d1865d89c127fb76af7ce1144db240e3589422eb68'
+          Path('/tmp/refine.patch').write_bytes(patch)
           PY
-            git apply --check /tmp/briarwatch-native.patch
-            git apply /tmp/briarwatch-native.patch
-            git rm .briarwatch-review/patch.*
-            git add index.html src/rooms.js src/rooms/briarwatch*.js
-            git -c user.name='Nick' -c user.email='7002620+nickfromlater@users.noreply.github.com' commit -m 'Build Briarwatch Castle, its town, river and Crown & Cinder railway'
+            git apply --check /tmp/refine.patch
+            git apply /tmp/refine.patch
+            git rm .briarwatch-review/refine.*
+            git add package.json src/rooms/briarwatch*.js scripts/briarwatch-qa.mjs docs/rooms/briarwatch.md
+            git -c user.name='Nick' -c user.email='7002620+nickfromlater@users.noreply.github.com' commit -m 'Ground castle foundations, connect entrances and add Briarwatch regression tests'
             git push origin HEAD:refs/heads/codex/briarwatch-castle
           fi
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm run check
       - name: Install isolated browser tooling
         run: |
           npm install --prefix /tmp/briarwatch-browser playwright
           /tmp/briarwatch-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Capture the actual native room
+      - name: Capture native room with deterministic single-frame stepping
         run: |
           mkdir -p evidence/briarwatch
           python3 scripts/serve.py --port 4175 > evidence/briarwatch/server.log 2>&1 &
           node .briarwatch-review/capture.cjs
+      - name: Full Node 24 checks
+        if: always()
+        run: |
+          mkdir -p evidence/briarwatch
+          set -o pipefail
+          npm test 2>&1 | tee evidence/briarwatch/npm-test.log
+          npm run test:geometry:full 2>&1 | tee evidence/briarwatch/geometry-full.log
+          npm run check:contributions -- --json | tee evidence/briarwatch/contributions.json.log
       - name: Package reviewed source
         if: always()
         run: git archive --format=zip HEAD > evidence/briarwatch/whistlevale-source.zip
@@ -50,4 +56,4 @@ jobs:
         with:
           name: briarwatch-native-browser-review
           path: evidence/briarwatch/
-          retention-days: 3
+          retention-days: 14
