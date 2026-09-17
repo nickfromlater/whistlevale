@@ -1,4 +1,4 @@
-name: Briarwatch native browser review
+name: Briarwatch final review
 on:
   push:
     branches: [codex/briarwatch-castle]
@@ -7,25 +7,27 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v7
-      - name: Apply verified refinements on the review branch only
+      - name: Apply verified final patch on the review branch only
         run: |
           test "$GITHUB_REF" = refs/heads/codex/briarwatch-castle
-          if test -f .briarwatch-review/refine.0; then
+          if test -f .briarwatch-review/finish.patch.gz; then
             python3 - <<'PY'
           from pathlib import Path
-          import base64,gzip,hashlib
-          patch=gzip.decompress(base64.b64decode(''.join(p.read_text() for p in sorted(Path('.briarwatch-review').glob('refine.*'))),validate=True))
-          assert hashlib.sha256(patch).hexdigest()=='b92790e87dc53256402ea0d1865d89c127fb76af7ce1144db240e3589422eb68'
-          Path('/tmp/refine.patch').write_bytes(patch)
+          import gzip,hashlib
+          patch=gzip.decompress(Path('.briarwatch-review/finish.patch.gz').read_bytes())
+          assert hashlib.sha256(patch).hexdigest()=='3be4973dd19086e786a79316e0212a59ea28720559c0905b164e9b0d7a2ecf01'
+          Path('/tmp/finish.patch').write_bytes(patch)
           PY
-            git apply --check /tmp/refine.patch
-            git apply /tmp/refine.patch
-            git rm .briarwatch-review/refine.*
-            git add package.json src/rooms/briarwatch*.js scripts/briarwatch-qa.mjs docs/rooms/briarwatch.md
-            git -c user.name='Nick' -c user.email='7002620+nickfromlater@users.noreply.github.com' commit -m 'Ground castle foundations, connect entrances and add Briarwatch regression tests'
+            git apply --check /tmp/finish.patch
+            git apply /tmp/finish.patch
+            git apply --check .briarwatch-review/presentation.patch
+            git apply .briarwatch-review/presentation.patch
+            git rm .briarwatch-review/finish.patch.gz .briarwatch-review/presentation.patch
+            git add src/rooms/briarwatch*.js scripts/briarwatch-qa.mjs
+            git -c user.name='Nick' -c user.email='7002620+nickfromlater@users.noreply.github.com' commit -m 'Finish mill drainage, timber gables, portrait views and native roof cutaways'
             git push origin HEAD:refs/heads/codex/briarwatch-castle
           fi
       - uses: actions/setup-node@v7
@@ -35,25 +37,31 @@ jobs:
         run: |
           npm install --prefix /tmp/briarwatch-browser playwright
           /tmp/briarwatch-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Capture native room with deterministic single-frame stepping
+      - name: Capture final native presentation
         run: |
           mkdir -p evidence/briarwatch
           python3 scripts/serve.py --port 4175 > evidence/briarwatch/server.log 2>&1 &
-          node .briarwatch-review/capture.cjs
-      - name: Full Node 24 checks
-        if: always()
-        run: |
-          mkdir -p evidence/briarwatch
-          set -o pipefail
-          npm test 2>&1 | tee evidence/briarwatch/npm-test.log
-          npm run test:geometry:full 2>&1 | tee evidence/briarwatch/geometry-full.log
-          npm run check:contributions -- --json | tee evidence/briarwatch/contributions.json.log
-      - name: Package reviewed source
-        if: always()
-        run: git archive --format=zip HEAD > evidence/briarwatch/whistlevale-source.zip
+          timeout 480s node .briarwatch-review/capture.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: briarwatch-native-browser-review
+          name: briarwatch-final-views
           path: evidence/briarwatch/
+          retention-days: 14
+      - name: Full Node 24 checks
+        if: always()
+        run: |
+          mkdir -p evidence/checks
+          set -o pipefail
+          npm test 2>&1 | tee evidence/checks/npm-test.log
+          npm run test:geometry:full 2>&1 | tee evidence/checks/geometry-full.log
+          npm run check:contributions -- --json | tee evidence/checks/contributions.json.log
+      - name: Package final source
+        if: always()
+        run: git archive --format=zip HEAD > evidence/checks/whistlevale-source.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: briarwatch-final-checks
+          path: evidence/checks/
           retention-days: 14

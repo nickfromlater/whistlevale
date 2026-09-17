@@ -1,0 +1,40 @@
+--- a/src/rooms/briarwatch.js
++++ b/src/rooms/briarwatch.js
+@@ -278,14 +278,16 @@
+    const key='house-'+Object.keys(HOUSE_ROOMS).indexOf('briarwatch');if(roomLabels[key])roomFrame(w,key,0,33,1,42,10);
+   }else if(!front){roomFrame(w,'blueprint',-29,11,1,23,18);roomFrame(w,'slow',29,10,1,14,20);}
+   if(front){w.box(0,-3,1,19,42,1,'#756044',22);w.box(0,-3,1.6,16,39,.2,'#42554a',22);w.cylinder(6,-4,1.95,.35,.35,.5,'#c3a977',41,14,PI/2);roomFrame(w,'shop-sign',0,24,1,35,8);}
++  // Roof fittings follow their wall's native cutaway instead of bisecting the miniature.
++  if(back||front){
++   const z=back?15:18,lampZ=back?19:20;
++   w.beam([-77,43,z],[77,43,z],.50,'#755d3f',22,4);
++   for(const x of[-68,68])w.beam([x,35,z],[x-Math.sign(x)*11,43,z],.40,'#886d48',22,4);
++   for(const x of[-44,44]){
++    w.beam([x,43,lampZ],[x,46,lampZ],.045,'#5b5141',41,6);w.cylinder(x,42.5,lampZ,2.9,1.3,1.1,'#a48e61',41,20);w.cylinder(x,41.93,lampZ,2.65,2.65,.07,'#f0dcb0',25,20);
++   }
++  }
+   w.pop();walls.push({which,mesh:w.mesh()});
+- }
+- for(const z of[-49,46]){
+-  b.beam([-77,43,z],[77,43,z],.50,'#755d3f',22,4);
+-  for(const x of[-68,68])b.beam([x,35,z],[x-Math.sign(x)*11,43,z],.40,'#886d48',22,4);
+- }
+- for(const x of[-44,44])for(const z of[-45,44]){
+-  b.beam([x,43,z],[x,46,z],.045,'#5b5141',41,6);b.cylinder(x,42.5,z,2.9,1.3,1.1,'#a48e61',41,20);b.cylinder(x,41.93,z,2.65,2.65,.07,'#f0dcb0',25,20);
+  }
+  return walls;
+ }
+@@ -299,11 +301,11 @@
+   {name:'Briarwatch Castle',target:[-7,10,-3],distance:143,phoneDistance:410,phonePitch:.74,phoneYaw:.12,pitch:.55,yaw:.40,detail:'A limestone fortress above a river, a small working town, and the Crown & Cinder train taking the long way around.'},
+   {name:'The old keep',target:[-27,26,-19],distance:44,phoneDistance:77,pitch:.34,yaw:-.65,detail:'Deep-set windows, a weathered stair turret and layered slate roofs. The oldest masonry grows straight out of the ridge.'},
+   {name:'Through the gate',target:[-24,15,6],distance:33,phoneDistance:61,pitch:.30,yaw:.15,detail:'A timber drawbridge crosses the dry ditch. Iron-bound doors and a raised portcullis frame the sheltered courtyard beyond.'},
+-  {name:'The sheltered courtyard',target:[-22,15,-7],distance:37,phoneDistance:67,pitch:.69,yaw:.32,detail:'A well, covered walks, kitchen steps and a little herb garden connect the great hall to the keep.'},
++  {name:'The sheltered courtyard',target:[-22,14,-7],distance:37,phoneDistance:67,pitch:1.04,yaw:-.15,detail:'A well, covered walks, kitchen steps and a little herb garden connect the great hall to the keep.'},
+   {name:'The river gallery',target:[-5,20,-10],distance:36,phoneDistance:63,pitch:.30,yaw:1.34,detail:'An oak gallery hangs on substantial braces above the gorge. Warm hall windows sit beneath the long slate roof.'},
+   {name:'Crown & Cinder viaduct',target:[-13,3,30],distance:49,phoneDistance:91,pitch:.22,yaw:.18,detail:'Five stone arches carry the steam train across the river. Cutwater piers meet the streambed, and the castle rises behind.'},
+   {name:'The lower town',target:[27,5,7],distance:46,phoneDistance:81,pitch:.46,yaw:.53,detail:'The inn, bakery and smithy gather along a crooked lane. Every gable and little working yard has a different purpose.'},
+-  {name:'The mill leat',target:[10,1,-3],distance:28,phoneDistance:49,pitch:.33,yaw:.55,detail:'A timber mill, a stone-lined watercourse and an undershot wheel at the edge of the willow bank.'},
++  {name:'The mill leat',target:[11.5,1.7,-3.5],distance:21,phoneDistance:40,pitch:.42,yaw:-.30,detail:'A timber mill, a stone-lined watercourse and an undershot wheel at the edge of the willow bank.'},
+   {name:'The orchard station',target:[24,4,28],distance:35,phoneDistance:62,pitch:.33,yaw:.46,detail:'Luggage beneath a timber canopy, a short path into town, and apple trees beyond the platform.'},
+   {name:'The western road',target:[-38,7,15],distance:43,phoneDistance:76,pitch:.38,yaw:-.82,detail:'A worn approach climbs around the ridge, passing an ancient spreading oak before finding the castle gate.'},
+   {name:'The estate gallery',target:[0,5,-1],distance:172,phoneDistance:420,phonePitch:1.1,phoneYaw:PI/2,pitch:.51,yaw:.35,detail:'Oak beams, plaster walls, brass exhibition lamps and a deep walnut-and-green cabinet. A complete miniature world, held in a quiet room.'}
