@@ -64,7 +64,7 @@ function briarRawHeight(x,z){
  // A short dry ditch stays open below the castle's timber drawbridge.
  if(x>-29&&x<-19&&z>7.1&&z<10.4)h-=1.8*Math.sin((z-7.1)/3.3*PI)*smooth(-29,-27,x)*(1-smooth(-21,-19,x));
  const rail=briarRailNear(x,z);
- if(rail.distance<3.2&&bank>1.2&&!briarInTunnel(x,z,1.2))h=mix(h,BRIAR.rail-.245,1-smooth(.94,3.2,rail.distance));
+ if(rail.distance<3.2&&bank>1.2&&!briarInTunnel(x,z,1.2))h=mix(h,BRIAR.rail-.245,1-smooth(1.75,3.2,rail.distance));
  // Railway shoulder remains a rock roof rather than a clipped green tunnel.
  if(briarInTunnel(x,z,.25))h=Math.max(h,BRIAR.rail+3.6);
  return h;
@@ -187,9 +187,9 @@ function briarRoads(b){
 }
 // Each tree is built from a branching skeleton and individually shaped crowns.
 const BRIAR_TREES=[
- [-45,22,7.8,'oak'],[-35,22,5.2,'beech'],[-50,4,5.5,'beech'],[-46,-16,6,'pine'],[-49,-22,4.8,'pine'],
- [37,-19,7.0,'oak'],[43,-21,8.1,'pine'],[48,-18,6.9,'pine'],[45,-13,6.0,'beech'],[39,-12,5.6,'beech'],[34,-23,5.4,'pine'],[30,-21,4.7,'beech'],[47,-5,6.2,'oak'],[41,-3,5.3,'beech'],
- [13,-13,5.5,'willow'],[5,5,5.8,'willow'],[-13,24,4.7,'willow'],[-25,37,5.6,'willow'],[-32,35,6.4,'oak'],
+ [-41,24,7.8,'oak'],[-35,22,5.2,'beech'],[-48,3,5.5,'beech'],[-46,-16,6,'pine'],[-49,-22,4.8,'pine'],
+ [37,-19,7.0,'oak'],[43,-21,8.1,'pine'],[46,-18,6.9,'pine'],[45,-13,6.0,'beech'],[39,-12,5.6,'beech'],[34,-23,5.4,'pine'],[30,-21,4.7,'beech'],[47,-5,6.2,'oak'],[41,-3,5.3,'beech'],
+ [13,-13,5.5,'willow'],[5,5,5.8,'willow'],[-13,24,4.7,'willow'],[-25,37,5.6,'willow'],[-33,38,6.4,'oak'],
  [15,-23,4.8,'beech'],[19,-25,6.2,'pine'],[25,-26,5.1,'pine'],[8,36,5.4,'oak'],[45,22,7.7,'oak'],[49,16,4.4,'beech'],
  [31,19,3.9,'apple'],[36,20,4.1,'apple'],[40,19,3.7,'apple'],[33,24,3.6,'apple'],[39,24,3.8,'apple'],
  [-53,36,5.5,'dead'],[56,-31,5.7,'pine'],[51,-35,4.8,'beech'],[-9,-40,4.1,'beech']

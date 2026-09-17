@@ -1,0 +1,73 @@
+# Briarwatch Castle
+
+A native Whistlevale railway room, created by **nickfromlater** with agent assistance.
+Approved scope: [proposal #42](https://github.com/nickfromlater/whistlevale/issues/42).
+No dragon, placeholder creature, flight system or associated controls are included.
+
+## Visit
+
+Serve with `npm run dev`, then open `http://127.0.0.1:4174/?room=briarwatch`.
+The room is also available from the house map at `west-5`. Views offers eleven
+composed camera positions. The usual train, cinema, lighting, sound and pause
+controls remain available. Portrait views have deliberately authored distances.
+
+The Crown & Cinder Line is a continuous, level steam circuit. It crosses a
+five-arch stone viaduct, passes through a short native rock tunnel, and returns
+past the orchard station. It uses the existing Tern steam family rather than
+claiming a new locomotive model.
+
+## The miniature
+
+The ridge carries an asymmetrical limestone castle: old keep and stair turret,
+open twin-tower gatehouse, raised portcullis and drawbridge, great hall and
+braced timber river gallery, chapel and bellcote, courtyard well, arcades,
+kitchen, herb beds and terrain-following defenses. The keep entrance connects
+its external stair and landing through real masonry openings. Major plinths
+and round-tower foundations reach the finished terrain.
+
+Eight individually placed lower-town buildings include the Copper Hart inn,
+an open working smithy, bakehouse and oven, weaver, farrier's house, orchard
+house, ferryman's cottage and watermill. A river, road bridge, working native
+mill wheel, mature trees, orchard and cultivated ground connect those places.
+The walnut display case stands in an oak-and-plaster estate gallery. The room
+uses Whistlevale's existing day/evening lighting and native material system.
+
+This is an authored miniature, not a freely walkable interior game. The castle's
+courtyard, gate passage, hall windows and smithy reward close cameras; most
+village houses are exterior miniatures. No historical accuracy is claimed for
+the intentionally anachronistic railway.
+
+## Source and lifecycle
+
+- `src/rooms/briarwatch.js`: terrain, river, routes, bridges, vegetation, shell,
+  viewpoints and room registration.
+- `src/rooms/briarwatch-castle.js`: masonry openings, roof and timber helpers,
+  castle buildings, defenses and courtyard.
+- `src/rooms/briarwatch-village.js`: houses, station, gardens, vignettes and mill.
+
+All three scripts load before house startup and atlas construction. No new
+runtime dependency, imported asset, recording or atlas allocation is required.
+Grounded details sample the exact triangles emitted by the terrain builder.
+Fixed placements and coordinate hashes do not consume the shared scene seed.
+
+The waterwheel is a cached `scene.movingParts` mesh. Its transform is tied to
+train travel, so pausing the railway also pauses the mechanism; reduced motion
+holds it still. It participates in the native dynamic and shadow passes. Room
+cache replacement and failed-build cleanup dispose its buffer with other room
+resources. The static scene has a fixed 900,000-vertex test ceiling; the moving
+mechanism has a separate 6,000-vertex ceiling. Existing budgets are unchanged.
+
+## Checks
+
+Run `npm test`, `npm run test:geometry:full`, and
+`npm run check:contributions -- --json`. `npm run test:briarwatch` also runs as
+part of the full suite. Its focused checks cover the closed circuit, actual
+mesh-to-track and tree clearances, river continuity, tunnel roof, real gate and
+keep openings, deterministic mechanism, reduced motion, disposal, credits,
+script inclusion and house-map placement.
+
+Screenshots and measured browser evidence belong in ignored `evidence/briarwatch/`.
+Report the exact camera, viewport, renderer and commit used. Software-rendered
+Chromium screenshots are appearance evidence, not physical-phone performance or
+touch-gesture verification. Source/export inclusion checks do not substitute
+for opening the exported playable house.

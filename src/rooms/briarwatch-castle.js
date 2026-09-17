@@ -82,6 +82,8 @@ function briarFlag(b,x,y,z,h=4,angle=0){
  b.pop();
 }
 function briarRoundTower(b,x,z,r,height,{roof='flat',floor=BRIAR.court,windows=true}={}){
+ const foot=Math.min(...Array.from({length:12},(_,i)=>briarSurface(x+Math.sin(i*TAU/12)*(r+.42),z+Math.cos(i*TAU/12)*(r+.42))))-.18;
+ b.cylinder(x,(foot+floor)/2,z,r+.57,r+.40,Math.max(.15,floor-foot),'#888d80',4,12);
  b.push(x,floor,z);const n=12,ap=r*Math.cos(PI/n),side=2*r*Math.sin(PI/n),low=2.3;
  b.cylinder(0,.55,0,r+.42,r+.16,1.1,'#929383',4,n);b.cylinder(0,(low+1.1)/2,0,r,r,low-1.1,'#a09e8b',4,n);
  const levels=Math.max(1,Math.round((height-low)/4.5)),levelH=(height-low)/levels;
@@ -119,13 +121,13 @@ function briarCurtain(b,a,q,top=18.3){
 }
 function briarKeep(b){
  const x=-28,z=-20,y=BRIAR.court,w=11.8,d=12.6,height=20.3;
- b.push(x,y,z);
+ b.push(x,y,z);b.box(0,-.35,0,w+1.3,.75,d+1.3,'#878d80',4);
  b.box(0,1.6,0,w+1.0,3.2,d+1.0,'#929587',4);
  // Three different storeys, with window proportions changing as the keep rises.
  for(const [yy,hh,sill,opening,spring]of[[3.2,5.5,1.1,.72,1.40],[8.7,5.9,1.55,1.28,1.40],[14.6,5.7,1.35,1.50,1.40]]){
   for(const [px,pz,angle,width]of[[0,d/2,0,w],[0,-d/2,PI,w],[w/2,0,PI/2,d],[-w/2,0,-PI/2,d]]){
    b.push(px,yy,pz,0,angle);
-   for(let i=0;i<3;i++){b.push((i-1)*width/3,0,0);briarWindowBay(b,width/3+.01,hh,1.05,opening,sill,spring);b.pop();}
+   for(let i=0;i<3;i++){b.push((i-1)*width/3,0,0);if(yy===3.2&&angle===0&&i===1)briarArchWall(b,width/3+.01,hh,1.05,1.9,2.5,'#a29e89',.15);else briarWindowBay(b,width/3+.01,hh,1.05,opening,sill,spring);b.pop();}
    b.pop();
   }
   briarCornice(b,w+.05,d+.05,yy+hh-.24,yy<9?'#aca892':'#c1b69b');
@@ -150,7 +152,8 @@ function briarKeep(b){
  briarRoundTower(b,-21.9,-25.0,2.15,24.2,{roof:'tall'});
  b.push(-21.9,37.5,-25);b.beam([0,4.9,0],[0,6.1,0],.035,'#aca079',41,5);b.beam([-.65,5.7,0],[.65,5.7,0],.032,'#aca079',41,5);b.pop();
  // Exterior stair reaches a projecting vestibule rather than a painted door.
- b.push(-28,BRIAR.court,-12.85);briarArchWall(b,3.8,5.6,2.0,1.75,2.3,'#a29e89',.17);briarRoof(b,4.2,2.4,5.6,1.5,'#5a6266');b.pop();
+ b.box(-28,BRIAR.court+1.62,-12.40,2.4,3.24,1.85,'#a8a18b',4);
+ b.push(-28,BRIAR.court+3.25,-12.85);briarArchWall(b,3.8,5.6,2.0,1.75,2.3,'#a29e89',.17);briarRoof(b,4.2,2.4,5.6,1.5,'#5a6266');b.pop();
  for(let i=0;i<13;i++){const zz=-6.2-i*.44,h=(i+1)*.25;b.box(-28,BRIAR.court+h/2,zz,2.4,h,.45,'#b8af98',4);}
  for(const s of[-1,1])for(let i=0;i<13;i++){const zz=-6.2-i*.44,h=(i+1)*.25;b.box(-28+s*1.3,BRIAR.court+h+.20,zz,.28,.53,.46,'#a8a28c',4);}
 }
@@ -181,13 +184,14 @@ function briarGatehouse(b){
 }
 function briarHall(b){
  const x=-8.1,z=-10.5,y=BRIAR.court,w=8.8,d=19.0,lower=4.2,upper=6.0;
- b.push(x,y,z);
+ const footing=Math.min(...[-1,1].flatMap(a=>[-1,1].map(q=>briarSurface(x+a*(w+.7)/2,z+q*(d+.7)/2))))-.12;
+ b.box(x,(footing+y)/2,z,w+.7,y-footing,d+.7,'#858c7e',4);b.push(x,y,z);
  b.box(0,.28,0,w+.7,.56,d+.7,'#939382',4);
  for(const s of[-1,1]){
   b.push(s*w/2,0,0,0,s*PI/2);
   for(let i=0;i<5;i++){
    b.push((i-2)*d/5,0,0);briarWindowBay(b,d/5+.01,lower,.85,.76,1.1,.9,'#9e9d88');
-   b.push(0,lower,0);briarWindowBay(b,d/5+.01,upper,.75,1.80,1.15,2.5,'#b7ad96');b.pop();b.pop();
+   b.push(0,lower,0);if(s===1&&i===2)briarArchWall(b,d/5+.01,upper,.75,1.75,2.8,'#b7ad96',.16);else briarWindowBay(b,d/5+.01,upper,.75,1.80,1.15,2.5,'#b7ad96');b.pop();b.pop();
   }b.pop();
  }
  for(const s of[-1,1]){
@@ -211,7 +215,7 @@ function briarHall(b){
  b.box(0,lower+.02,-7.6,5.5,.06,2.9,'#8e4b43',23);b.box(-3.62,lower+1.2,-3.5,.50,2.4,3.1,'#8b8773',4);
  b.pop();
  // The projecting oak river gallery is open, braced, and roofed separately.
- const gx=-2.75,gy=y+5.35;
+ const gx=-2.75,gy=y+lower+.08;
  for(let i=0;i<28;i++)b.box(gx,gy,-19.0+i*.62,2.3,.16,.60,i%4?'#907550':'#a1875c',22);
  for(const zz of[-18.5,-15.0,-11.5,-8,-4.5,-1.5]){
   b.beam([-4.1,y+1.7,zz],[-1.6,gy-.1,zz],.15,'#735f42',22,6);b.beam([-4.15,gy-.15,zz],[-1.5,gy-.15,zz],.16,'#8c704b',22,4);
@@ -224,7 +228,7 @@ function briarHall(b){
  for(const zz of[-16,-5])briarLantern(b,-1.75,gy+2.22,zz,.40);
 }
 function briarChapel(b){
- const y=BRIAR.court;b.push(-15.7,y,-24.5);
+ const y=BRIAR.court;b.push(-15.7,y,-24.5);b.box(0,-.31,0,6.8,.70,10.3,'#929583',4);
  for(const s of[-1,1]){
   b.push(s*3.0,0,0,0,s*PI/2);for(const i of[-1,0,1]){b.push(i*3.2,0,0);briarWindowBay(b,3.21,6.6,.70,1.15,1.85,2.7,'#b8b19b');b.pop();}b.pop();
  }
@@ -260,7 +264,7 @@ function briarCourtyard(b){
  }
  briarWell(b,-21.1,y,-5.3);
  // Kitchen wing: stone lower storey, louvered smoke hood, low uneven roof.
- b.push(-33,y,-3.2);b.box(0,2.1,0,5.5,4.2,9.0,'#b0a58c',4);
+ b.push(-33,y,-3.2);b.box(0,-.32,0,5.9,.74,9.4,'#8b8c7c',4);b.box(0,2.1,0,5.5,4.2,9.0,'#b0a58c',4);
  for(const zz of[-2.6,1.8]){b.push(2.78,0,zz,0,PI/2);briarWindowBay(b,2.7,4.2,.5,.84,1.0,1.15,'#b0a58c');b.pop();}
  briarRoof(b,6.3,9.8,4.2,2.8,'#6b7066');b.box(-1.4,5.7,1.2,1.1,5.2,1.15,'#a99a7c',4);b.box(-1.4,8.33,1.2,1.4,.25,1.45,'#b9aa8b',4);
  for(const s of[-1,1])b.box(s*1.5,.45,5.2,1.3,.9,1.05,'#8f7853',22);b.pop();
