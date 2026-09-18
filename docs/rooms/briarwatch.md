@@ -186,7 +186,7 @@ the full suite. Architectural glazing and lighting also have dedicated checks.
 
 Focused coverage includes finite/deterministic geometry, real castle and ruin
 openings, terrain contact, river and spring continuity, masonry backing for
-ivy and rainspouts, 63,391 scenic triangle/envelope checks, route closure/grade,
+ivy and rainspouts, 61,711 scenic triangle/envelope checks, route closure/grade,
 track and tree clearance, cabinet voids, portrait framing, reduced motion,
 wheel transform/draw, disposal, credits and script/map/export inclusion.
 Gallery checks cover open casements, sealed high-angle rays, wall-local UVs,
@@ -198,10 +198,24 @@ trees, constant per-triangle terrain materials, new vignette envelope clipping,
 platform contact and estate-stock cache, bounds and partial-failure recovery.
 The original train catalogue keeps its independent isolation/selection tests.
 
-The 21-state Lantern Gallery browser review covers day/evening/night, dimmer-off,
-clock and lanterns, curtained estate, archive, survey table, marquetry, ceiling
-cove, upholstered bench, reverse entry, 390px/320px portrait, train view,
-native-frame smoke, live house map, switching to Coast and returning.
+The earlier 21-state Lantern Gallery browser review covers day/evening/night,
+dimmer-off, clock and lanterns, curtained estate, archive, survey table,
+marquetry, ceiling cove, upholstered bench, reverse entry, portrait layouts,
+train view, native-frame smoke, house map and switching to Coast and back.
+
+The final fieldcraft review is [run 35301363036](https://github.com/nickfromlater/whistlevale/actions/runs/35301363036).
+Its 21 native states cover the hero trees, quarry, gorge, trestle, village,
+engine and coaches, water column, orchard ladder, railway hut, cab view,
+evening overview, 390px/320px portrait, native motion, live map, Coast and
+return. It also selects Cinder to verify that user train choices override the
+estate default. Page, console and reported WebGL errors were all zero.
+The full Node 24 suite, production build, 501-mesh geometry comparison and
+contribution audit passed on the same runtime and QA hashes. The publisher
+then reproduced those exact bytes in commit
+`8f578d6e9dc9d3d817678b607f67779ca116d1ed`; this documentation update does not
+change the rendered implementation. The three artifacts on the run contain
+native views, full check logs and the published-source receipt respectively.
+
 Store native images and logs in ignored `evidence/` folders with the exact
 source commit or hashes, camera, viewport and renderer. A workflow trigger
 commit is not necessarily the rendered source when patches are applied first.
