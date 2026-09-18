@@ -80,7 +80,7 @@ function mhTree(b,x,y,z,h,seed=0){
  for(let i=1;i<trunk.length;i++)b.beam(trunk[i-1],trunk[i],h*(.051-.009*i),c,22,7);
  for(let k=0;k<7;k++){
   const t=.30+k*.075,a=k*2.399+seed,len=h*(.39-.015*k),root=[.03,h*t,0],elbow=[Math.cos(a)*len*.50,h*(t+.13),Math.sin(a)*len*.50],tip=[Math.cos(a)*len,h*(t+.24),Math.sin(a)*len];
-  b.beam(root,elbow,h*.019,c,22,6);b.beam(elbow,tip,h*.012,c,22,5);
+  b.beam(root,elbow, h*.019,c,22,6);b.beam(elbow,tip,h*.012,c,22,5);
   for(const s of[-1,1]){const p=[tip[0]+Math.cos(a+s*.7)*h*.16,tip[1]+h*.13,tip[2]+Math.sin(a+s*.7)*h*.16];b.beam(tip,p,h*.006,c,22,4);b.beam(p,[p[0]+Math.cos(a+s)*h*.06,p[1]-h*.04,p[2]+Math.sin(a+s)*h*.06],h*.003,c,22,4);}
   b.beam(elbow,[elbow[0]+Math.cos(a+.6)*h*.16,elbow[1]-h*.09,elbow[2]+Math.sin(a+.6)*h*.16],h*.007,c,22,4);
  }
@@ -272,7 +272,7 @@ function mhPortrait(b,x,y,z,w,h,kind=0){
  for(let i=0;i<face.length;i++){const p=face[i],q=face[(i+1)%face.length];b.tri([0,0,.88],[p[0]*w*flip,p[1]*h,.88],[q[0]*w*flip,q[1]*h,.88],c,23);}
  if(kind%2===0){b.box(-.045*w,.38*h,.91,.36*w,.045*h,.035,c,23);b.box(-.045*w,.49*h,.91,.23*w,.19*h,.035,c,23);}else{b.sphere(-.16*w,.24*h,.9,.105*w,.11*h,.04,c,23,14,8);b.tri([-.08*w,-.055*h,.92],[.12*w,-.12*h,.92],[-.08*w,-.17*h,.92],'#b6a68c',23);}
  b.sphere(flip*.109*w,.22*h,.94,.045,.035,.013,MH.ghost,6,7,4);
- for(const side of[-1,1])for(const t of[-1,1]){b.sphere(side*w*.50,t*h*.50,.61,.40,.40,.13,MH.gold,41,8,5);for(let j=0;j<3;j++)b.beam([side*(w*.5-j*.48),t*h*.5,.63],[side*w*.5,t*(h*.5-j*.48),.63],.05,MH.brass,41,5);}
+ for(const side of[-1,1])for(const t of[-1,1]){b.sphere(side*w*.50,t*h*.50,.61,.40,.40,.13,MH.gold,41,8,5);for(let j=1;j<3;j++)b.beam([side*(w*.5-j*.48),t*h*.5,.63],[side*w*.5,t*(h*.5-j*.48),.63],.05,MH.brass,41,5);}
  b.pop();
 }
 function morrowShell(b){
