@@ -203,6 +203,32 @@ vec4 moonlightBeam(vec2 uv,float night){
  return vec4(.63,.68,.57,edge*ends*density*folds*light*step(.5,uMoonlightReady));
 }
 // MOONLIGHT_BEAM_END
+// BRIARWATCH_ATMOSPHERE_BEGIN: opt-in materials; other rooms keep their shading.
+// 92 = estate sky, 93 = exterior models, 94/95/96 = gallery plaster,
+// 98 = estate windows. No textures, new uniforms or per-frame geometry.
+vec3 briarEstateSky(vec2 uv,float dusk,float deepNight){
+ float height=clamp(uv.y,0.,1.);
+ vec3 day=mix(vec3(.66,.69,.48),vec3(.23,.42,.49),smoothstep(.10,.94,height));
+ vec3 blueHour=mix(vec3(.10,.075,.062),vec3(.015,.037,.067),smoothstep(.12,.88,height));
+ vec3 dark=mix(vec3(.020,.034,.038),vec3(.005,.015,.032),height);
+ vec3 sky=mix(day,mix(blueHour,dark,deepNight),dusk);
+ // A still crescent and sparse stars belong to the sky, not the room lamps.
+ vec2 moon=(uv-vec2(1.68,.77))*vec2(1.,1.84);float d=length(moon),aa=max(fwidth(d),.0006);
+ float disc=1.-smoothstep(.033-aa,.033+aa,d),cut=1.-smoothstep(.030-aa,.030+aa,length(moon-vec2(.016,.007)));
+ float crescent=disc*(1.-cut);sky+=vec3(.39,.46,.40)*crescent*dusk;
+ sky+=vec3(.013,.024,.030)*exp(-d*d*230.)*dusk;
+ vec2 grid=uv*vec2(69.,116.),cell=floor(grid),p=fract(grid)-.5;
+ float star=smoothstep(.985,1.,meridianHash(cell))*exp(-dot(p,p)*100.);
+ sky+=vec3(.15,.21,.23)*star*smoothstep(.40,.94,height)*dusk;
+ return sky;
+}
+float briarPracticalWash(float material,vec2 uv){
+ float x=abs(uv.x),y=uv.y,dx=material==94.?min(abs(x-19.),abs(x-65.)):material==95.?min(abs(x-15.),abs(x-47.)):min(abs(x-30.),abs(x-55.));
+ float below=max(0.,22.4-y),spread=1.9+below*.28;
+ vec2 q=vec2(dx/spread,(y-22.4)/(y>22.4?3.0:10.5));
+ return exp(-dot(q,q)*1.35);
+}
+// BRIARWATCH_ATMOSPHERE_END
 void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;
  // Rock and concrete use the emitted triangle's actual face normal. Smoothing
  // across a sharp ledge lights geometrically back-facing triangles, producing
@@ -212,6 +238,9 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==83.){frag=vec4(moonlightPicture(vUV,uTime),1.);return;}
  if(m==84.){frag=moonlightBeam(vUV,uNight);return;}
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
+ if(m==92.){frag=vec4(briarEstateSky(vUV,dusk,deepNight),1.);return;}
+ if(m==93.){vec3 a=pow(max(base,vec3(0.)),vec3(2.2));vec3 day=a*(.54+max(n.y,0.)*.42+max(n.z,0.)*.18);vec3 dark=a*vec3(.055,.11,.17)+vec3(.003,.008,.010);frag=vec4(mix(day,dark,dusk),1.);return;}
+ if(m==98.){frag=vec4(mix(pow(base,vec3(2.2))*.12,vec3(.78,.39,.10),dusk),1.);return;}
  if(m==1.||m==11.){rough=.3;metal=.72;}
  if(m==2.){float w=noise(vec3(p.x*.75,p.y*12.,p.z*8.));base*=.87+.21*w;rough=.55;}
  if(m==3.){float textureN=noise(p*4.5);base*=.87+.18*textureN;rough=.97;}
@@ -247,15 +276,34 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==90.){base=texture(uWildlifeCoat,vUV).rgb*vColor;rough=.88;}
  if(m==15.){base=texture(uAtlas,vUV).rgb;rough=.79;}
  if(m==85.){base=texture(uMoonlightNameplate,vUV).rgb;rough=.65;em=.06+.15*uNight;}
- if(m==20.){base*=.955+.06*noise(p*1.4);rough=.95;}
+ if(m==20.||(m>=94.&&m<=96.)){base*=.955+.06*noise(p*1.4);rough=.95;}
  if(m==21.){
   vec2 q=p.xz;float row=floor(q.x/2.6);float joint=fract((q.y+mod(row,3.)*4.1)/13.);float side=fract(q.x/2.6);float seam=min(min(joint,1.-joint)*13.,min(side,1.-side)*2.6);
   float cell=hash(vec3(row,floor((q.y+mod(row,3.)*4.1)/13.),1.));float grain=noise(vec3(q.x*7.,q.y*.075,cell*4.));base=mix(vec3(.43,.32,.21),vec3(.68,.53,.35),cell*.65+grain*.30);float seamAA=max(fwidth(seam),.004);base*=1.-.30*(1.-smoothstep(.008-seamAA,.026+seamAA,seam));base*=.93+.10*noise(vec3(q.x*21.,0.,q.y*.32));rough=.47;metal=.045;
+ }
+ // Briarwatch-only room-local herringbone oak. No effect on other floors.
+ if(m==99.){
+  vec2 q=vec2(vUV.x+vUV.y,vUV.y-vUV.x)*.70710678/1.65,c=floor(q),f=fract(q);
+  float k=mod(c.x+c.y,10.);bool across=k<5.;
+  vec2 wood=across?vec2(k+f.x,f.y):vec2(k-5.+f.y,f.x);
+  vec2 id=across?vec2(c.x-k,c.y):vec2(c.x,c.y-k+5.);
+  float seed=meridianHash(id+vec2(across?0.:87.,4.));
+  float g=noise(vec3(wood.x*.14,wood.y*16.,seed*12.));
+  base=mix(vec3(.30,.235,.16),vec3(.55,.43,.28),seed*.63+g*.25);
+  float seam=min(min(wood.x,5.-wood.x),min(wood.y,1.-wood.y)),aa=max(fwidth(seam),.012);
+  base*=mix(.72,1.,smoothstep(.015-aa,.035+aa,seam));
+  // A calm walnut border and double holly inlay frame the parquet field.
+  float edge=min(78.-abs(vUV.x),64.-abs(vUV.y));
+  if(edge<3.6)base=vec3(.24,.19,.13)*( .94+.08*g);
+  float inlay=min(abs(edge-3.6),abs(edge-4.1));
+  base=mix(base,vec3(.64,.54,.37),1.-smoothstep(.06,.06+max(fwidth(edge),.02),inlay));rough=.50;metal=.025;
  }
  if(m==22.){vec3 q=abs(n.y)>.65?p.xzy:p;float gr=noise(vec3(q.x*.14,q.y*5.5,q.z*6.));base*=.88+.20*gr;rough=.45;metal=.06;}
  if(m==23.){base*=.96+.05*noise(p*14.);rough=.8;}
  if(m==24.){base*=.91+.15*noise(p*6.);rough=.42;}
  if(m==25.){em=3.0*uRoomLevel+.025;rough=.32;}
+ // Large opal panels keep their detail without feeding sharp replicas into bloom.
+ if(m==100.){em=.72*uRoomLevel+.015;rough=.48;}
  if(m==32.||m==33.||m==91.){base=texture(uRoomAtlas,vUV).rgb;rough=m==91.?1.:.83;}
  if(m==40.){rough=.22;metal=.35;base*=.975+.025*noise(p*35.);}
  if(m==41.){rough=.17;metal=.92;}
@@ -288,6 +336,9 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   lit+=albedo*warm*(diff+.08)*ao;
   vec3 rh=normalize(ll+v);if(m!=91.)lit+=warm*pow(max(dot(n,rh),0.),mix(12.,140.,1.-rough))*mix(.025,.22,metal);
  }
+ // Stylized surface light, not extra shadow-casting lights. The real six
+ // practical lamps still illuminate the scene and the dimmer drives both.
+ if(m>=94.&&m<=96.)lit+=albedo*vec3(1.,.54,.23)*briarPracticalWash(m,vUV)*uRoomLevel*2.0;
  if(dusk>.01){for(int i=0;i<8;i++){vec3 lp=uLamps[i]-p;float ld=dot(lp,lp);float fall=1./(1.+ld*.65);lit+=albedo*vec3(1.,.66,.31)*max(dot(n,normalize(lp)),.08)*dusk*fall*3.;}}
  vec3 toHead=uHead-p;float hd=length(toHead);float cone=pow(max(dot(-normalize(toHead),uForward),0.),18.);lit+=albedo*vec3(1.,.69,.32)*cone*max(dot(n,normalize(toHead)),.1)*(dusk*.9+.08)*4./(1.+hd*hd*.15);
  if(m==7.){
@@ -299,6 +350,7 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==33.){vec3 sky=pow(base,vec3(2.2));vec3 exterior=mix(sky*vec3(.075,.16,.28)+vec3(.008,.018,.030),sky*vec3(.015,.036,.075)+vec3(.003,.007,.015),deepNight);lit=mix(sky*1.28,exterior,dusk);if(uRain>.01){vec2 q=vUV*vec2(160.,54.);float cell=floor(q.x);float h=hash(vec3(cell,0.,2.));float y=fract(q.y+uTime*(.09+h*.13));float x=fract(q.x);float drop=exp(-pow((x-.5)*14.,2.)-pow((y-.5)*9.,2.));float tail=exp(-pow((x-.5)*22.,2.))*smoothstep(.10,.5,y)*(1.-smoothstep(.5,.97,y));lit=mix(lit,lit*.88+vec3(.06,.075,.085)*(drop+tail*.28),uRain);}}
  // The window softly paints the oak, rather than illuminating an outdoor void.
  if(m==21.&&p.y< -23.){vec2 patchCoord=vec2(p.x+p.z*.16,(p.z+30.)*.65);float inside=(1.-smoothstep(19.,22.,abs(patchCoord.x-3.)))*(1.-smoothstep(14.,17.,abs(patchCoord.y)));float mull=step(.17,abs(sin((patchCoord.x+17.)/10.5*3.14159)));lit+=vec3(.09,.067,.033)*inside*mull*sunlight*sh;}
+ if(m==100.)lit=min(lit,vec3(1.02));
  lit=mix(lit,uInvalid>.5?vec3(.48,.12,.06):vec3(.12,.42,.22),uPreview*.25);float dist=length(uEye-p);vec3 fog=mix(vec3(.07,.077,.062),mix(vec3(.018,.027,.044),vec3(.011,.019,.033),deepNight),dusk);float fogF=1.-exp(-dist*dist*.0000010);lit=mix(lit,fog,clamp(fogF,0.,.25));frag=vec4(lit,1.);
 }`;
 const SHVS=`#version 300 es
