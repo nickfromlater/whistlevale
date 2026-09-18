@@ -33,6 +33,19 @@ Object.assign(report,state.run(`(()=>{
  for(let x=BRIAR_TUNNEL.x0+1;x<BRIAR_TUNNEL.x1-1;x+=.4)assert.ok(briarSurface(x,BRIAR_TUNNEL.z)>BRIAR_TUNNEL.y+3.1,'real rock roof above tunnel intrados');
  return {routeLength:e.length,maxGrade:grade,minimumTrackTerrainClearance:clearance};
 })()`));
+Object.assign(report,state.run(`(()=>{
+ const ds=briarTrackStations(BRIAR_ROUTE),at=(d,w)=>{const q=BRIAR_ROUTE.at(d);return add(q.p,mul(norm([q.f[2],0,-q.f[0]]),w));};
+ assert.equal(ds[0],0);assert.equal(ds[ds.length-1],BRIAR_ROUTE.length);assert.equal(briarTrackStations(BRIAR_ROUTE),ds,'sampling is cached per route');
+ assert.ok(ds.length<600,'straight rails no longer consume uniformly dense ribbons');let maxError=0;
+ for(let i=1;i<ds.length;i++){
+  assert.ok(ds[i]>ds[i-1]&&ds[i]-ds[i-1]<=2.000001);
+  for(let j=1;j<10;j++)for(const w of[-.80,.80]){const t=j/10;maxError=Math.max(maxError,len(sub(at(mix(ds[i-1],ds[i],t),w),lerpV(at(ds[i-1],w),at(ds[i],w),t))));}
+ }
+ assert.ok(maxError<.026,'rail/ballast edges stay within .026 model units of the native segmented route: '+maxError);
+ assert.equal(BRIAR_HERO_TREES.length,7);assert.equal(new Set(BRIAR_HERO_TREES.map(t=>t.x+','+t.z)).size,7);
+ for(const hero of BRIAR_HERO_TREES){const t=BRIAR_TREES.find(t=>t[0]===hero.x&&t[1]===hero.z);assert.ok(t,'each hero is an existing surveyed tree');const a=new Builder(),b=new Builder();briarTree(a,...t);briarTree(b,...t);assert.ok(a.data.length>0&&a.data.every(Number.isFinite));assert.deepEqual(a.data,b.data,'authored tree is deterministic');}
+ return {heroTrees:7,adaptiveTrackSegments:ds.length-1,maximumTrackSurfaceDeviation:maxError};
+})()`));
 let treeClearance=Infinity;
 for(let i=0;i<report.trees;i++){
  const c=state.run(`(()=>{const t=BRIAR_TREES[${i}],b=new Builder();if(briarRailNear(t[0],t[1]).distance>2)briarTree(b,...t);let c=Infinity;
@@ -44,7 +57,7 @@ assert.ok(treeClearance>1.2,'branches and roots clear rolling stock');report.min
 // New scenery is checked as emitted geometry, not only terrain samples. Clip
 // each candidate triangle against a swept train-sized box at half-unit steps.
 Object.assign(report,state.run(`(()=>{
- const b=new Builder();for(const build of[briarEscarpments,briarWoodlandFloor,briarWatchRuin,briarSpring,briarVillageGardens])build(b);
+ const b=new Builder();for(const build of[briarEscarpments,briarWoodlandFloor,briarWatchRuin,briarSpring,briarVillageGardens,briarFieldDetails])build(b);
  const cells=new Map(),triangles=[];
  for(let j=0;j<b.data.length;j+=36){
   const t=[b.data.slice(j,j+3),b.data.slice(j+12,j+15),b.data.slice(j+24,j+27)],id=triangles.push(t)-1;
@@ -67,7 +80,7 @@ Object.assign(report,state.run(`(()=>{
  assert.ok(waterClearance>.04,'spring ribbon and source pool stay above the actual carved bed: '+waterClearance);
  assert.ok(BRIAR_SPRING.every((p,i)=>!i||p[2]<BRIAR_SPRING[i-1][2]),'spring flows downhill into the existing river');
  assert.equal(new Set(BRIAR_TREES.map(t=>t[0]+','+t[1])).size,BRIAR_TREES.length,'no duplicate woodland placements');
- assert.equal(getHouseScene('briarwatch').briarwatch.revision,3);
+ assert.equal(getHouseScene('briarwatch').briarwatch.revision,4);
  return {sceneryEnvelopeTriangleChecks:tested,minimumSpringBedClearance:waterClearance};
 })()`));
 

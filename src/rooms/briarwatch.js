@@ -69,6 +69,14 @@ function briarRawHeight(x,z){
  h+=10.4*east*(.84+.16*Math.sin(x*.26+z*.13));
  h-=2.5*east*gully([53,-34],[48,-16],2.1);
  h-=1.8*rear*gully([-36,-55],[-31,-45],1.8);
+ // Folded limestone ravines and low woodland hummocks are localized, not
+ // a blanket noise pass. Engineered grades/water/house terraces are applied last.
+ const wild=(1-smooth(-1.6,1.4,sd))*(1-smooth(22,31,Math.abs(x+46)))*(1-smooth(28,44,Math.abs(z-4)));
+ h+=wild*(.24*Math.sin(x*.73+z*.23)+.16*Math.sin(z*.79-x*.34));
+ for(const [a,q,w,depth]of[[[-53,-9],[-60,4],1.6,.85],[[-23,20],[-18,26],1.2,.72],[[52,-25],[47,-18],1.45,1.0]]){
+  const v=briarSegment(x,z,a,q),end=Math.sin(v.t*PI);
+  h-=depth*(1-smooth(w*.18,w,v.distance))*end*(1-smooth(0,1.8,sd));
+ }
  const town=(1-smooth(16,20,Math.abs(x-47)))*(1-smooth(21,25,Math.abs(z-11)));
  h=mix(h,2.32,town);
  const yard=(1-smooth(10.5,13,Math.abs(x-47)))*(1-smooth(3.5,5.5,Math.abs(z-39)));h=mix(h,2.87,yard);
@@ -94,7 +102,18 @@ BRIAR_GRID.dx=BRIAR.width/BRIAR_GRID.nx;BRIAR_GRID.dz=BRIAR.depth/BRIAR_GRID.nz;
 const BRIAR_HEIGHT_CACHE=new Map();
 function briarGridHeight(ix,iz){const key=iz*(BRIAR_GRID.nx+1)+ix;if(!BRIAR_HEIGHT_CACHE.has(key))BRIAR_HEIGHT_CACHE.set(key,briarRawHeight(BRIAR.minX+ix*BRIAR_GRID.dx,BRIAR.minZ+iz*BRIAR_GRID.dz));return BRIAR_HEIGHT_CACHE.get(key);}
 function briarSurface(x,z){const g=BRIAR_GRID,ix=clamp(Math.floor((x-BRIAR.minX)/g.dx),0,g.nx-1),iz=clamp(Math.floor((z-BRIAR.minZ)/g.dz),0,g.nz-1),u=clamp((x-BRIAR.minX-ix*g.dx)/g.dx),v=clamp((z-BRIAR.minZ-iz*g.dz)/g.dz),a=briarGridHeight(ix,iz),r=briarGridHeight(ix+1,iz),f=briarGridHeight(ix,iz+1),q=briarGridHeight(ix+1,iz+1);return u+v<=1?a+(r-a)*u+(f-a)*v:q+(f-q)*(1-u)+(r-q)*(1-v);}
-function briarGroundColor(x,y,z,n){const patch=.5+.25*Math.sin(x*.14+Math.sin(z*.09)*2)+.19*Math.cos(z*.18-x*.045);let c=lerpV(col('#385e46'),col('#81946a'),clamp(patch));c=lerpV(c,lerpV(col('#768378'),col('#a7aa94'),.52+.20*Math.sin(y*.43+x*.28+z*.17)),smooth(.09,.36,1-n[1]));c=lerpV(c,col('#a99b7c'),(1-smooth(1.25,2.1,briarRoadNear(x,z).distance))*.8);if(y<BRIAR.water+.7)c=lerpV(col('#405c50'),col('#93987e'),smooth(BRIAR.bed,BRIAR.water+.7,y));return c;}
+function briarGroundColor(x,y,z,n){
+ const patch=.5+.24*Math.sin(x*.14+Math.sin(z*.09)*2)+.19*Math.cos(z*.18-x*.045);
+ let c=lerpV(col('#3e6348'),col('#879568'),clamp(patch));
+ const bedding=.5+.5*Math.sin(y*1.12+x*.12-z*.075),rock=lerpV(col('#747f71'),col('#b7b296'),bedding*.46+.35);
+ c=lerpV(c,rock,smooth(.08,.33,1-n[1]));
+ // Thin dry soils on the ridge, damp moss beneath its feet, managed village turf.
+ if(y>7)c=lerpV(c,col('#a5a077'),(1-smooth(.09,.24,1-n[1]))*.14);
+ if(x>32&&z>-12&&z<32)c=lerpV(c,col('#819460'),.16);
+ c=lerpV(c,col('#a99b7c'),(1-smooth(1.25,2.1,briarRoadNear(x,z).distance))*.8);
+ if(y<BRIAR.water+.7)c=lerpV(col('#405c50'),col('#93987e'),smooth(BRIAR.bed,BRIAR.water+.7,y));
+ return c;
+}
 function briarClip(points,field){const out=[];for(let i=0;i<points.length;i++){const a=points[i],q=points[(i+1)%points.length],da=field(a),dq=field(q),inside=da>=0,next=dq>=0;if(inside)out.push(a);if(inside!==next)out.push(lerpV(a,q,da/(da-dq)));}return out;}
 function briarTerrain(b){
  const g=BRIAR_GRID,verts=[],ns=[],cs=[],bounds=[];
@@ -508,12 +527,30 @@ function briarSleeper(b,c){
  b.quad([-X,hi,-Z],[-X,hi,Z],[X,hi,Z],[X,hi,-Z],shade(c,1.04),2);
  for(const [a,q]of[[[-X,-Z],[X,-Z]],[[X,-Z],[X,Z]],[[X,Z],[-X,Z]],[[-X,Z],[-X,-Z]]])b.quad([a[0],lo,a[1]],[q[0],lo,q[1]],[q[0],hi,q[1]],[a[0],hi,a[1]],c,2);
 }
+// Share an error-bounded sampling of both track edges across all six ribbons.
+// Straight track needs two endpoints, while curved/graded track keeps its shape.
+const BRIAR_TRACK_STATIONS=new WeakMap();
+function briarTrackStations(e){
+ if(BRIAR_TRACK_STATIONS.has(e))return BRIAR_TRACK_STATIONS.get(e);
+ const out=[0],at=d=>{const q=e.at(d),r=norm([q.f[2],0,-q.f[0]]);return [-.80,.80].map(w=>add(q.p,mul(r,w)));};
+ const split=(a,z,depth=0)=>{
+  const A=at(a),Z=at(z);let error=0;
+  for(const t of[.25,.5,.75]){const M=at(mix(a,z,t));for(let side=0;side<2;side++)error=Math.max(error,len(sub(M[side],lerpV(A[side],Z[side],t))));}
+  if(error>.012&&z-a>.24&&depth<12){const mid=(a+z)/2;split(a,mid,depth+1);split(mid,z,depth+1);}else out.push(z);
+ };
+ for(let a=0;a<e.length;a+=2)split(a,Math.min(e.length,a+2));
+ BRIAR_TRACK_STATIONS.set(e,out);return out;
+}
+function briarTrackRibbon(b,e,width,offset,yoff,c,mat){
+ const ds=briarTrackStations(e),point=(d,side)=>{const q=e.at(d),r=norm([q.f[2],0,-q.f[0]]);return add(add(q.p,mul(r,offset+side*width/2)),[0,yoff,0]);};
+ for(let i=1;i<ds.length;i++){const a=ds[i-1],q=ds[i];b.quad(point(a,-1),point(q,-1),point(q,1),point(a,1),c,mat,[0,1,0],[[0,a],[0,q],[1,q],[1,a]]);}
+}
 function briarTrack(b,e){
- ribbon(b,e,1.55,0,-.245,'#697568',9,0,e.length,.55);ribbon(b,e,1.35,0,-.15,'#899082',9,0,e.length,.45);
+ briarTrackRibbon(b,e,1.55,0,-.245,'#697568',9);briarTrackRibbon(b,e,1.35,0,-.15,'#899082',9);
  for(let d=0;d<e.length;d+=.34){const a=e.at(d);b.matrix(basis(a.p,a.f));briarSleeper(b,shade('#695d46',.85+.22*hash(d,e.length)));
   for(const s of[-1,1])b.quad([s*.32-.073,-.012,-.085],[s*.32+.073,-.012,-.085],[s*.32+.073,-.012,.085],[s*.32-.073,-.012,.085],'#45564e',11);b.pop();
  }
- for(const s of[-1,1]){ribbon(b,e,.058,s*.32,.020,'#4f615b',11,0,e.length,.28);ribbon(b,e,.072,s*.32,.059,'#b8bfb0',1,0,e.length,.28);}
+ for(const s of[-1,1]){briarTrackRibbon(b,e,.058,s*.32,.020,'#4f615b',11);briarTrackRibbon(b,e,.072,s*.32,.059,'#b8bfb0',1);}
 }
 function briarRailRange(predicate){let start=Infinity,end=-Infinity;for(let d=0;d<BRIAR_ROUTE.length;d+=.16)if(predicate(BRIAR_ROUTE.at(d).p)){start=Math.min(start,d);end=Math.max(end,d);}return [start,end];}
 function briarSignal(b,d,side=1){const a=BRIAR_ROUTE.at(d),r=norm([a.f[2],0,-a.f[0]]),p=add(a.p,mul(r,side*1.66));b.push(...p,0,Math.atan2(a.f[0],a.f[2]));
@@ -629,48 +666,127 @@ function briarLeafCloud(b,p,s,c,id){
  const top=[p[0]+s*.07,p[1]+s*.84,p[2]-s*.08],low=[p[0],p[1]-s*.58,p[2]];
  for(let i=0;i<n;i++){const k=(i+1)%n;face(rings[2][i],rings[2][k],top,shade(c,1.025));face(rings[0][k],rings[0][i],low,shade(c,.80));}
 }
+const BRIAR_HERO_TREES=[
+ {x:-57,z:11,name:'The gate oak',spread:1.16,lean:.13,angle:2.30},
+ {x:-58,z:-8,name:'The quarry veteran',spread:1.10,lean:.09,angle:-1.25},
+ {x:-27,z:39,name:'The trestle oak',spread:1.10,lean:.12,angle:1.35},
+ {x:29,z:-12,name:'The mill willow',spread:1.08,lean:.14,angle:-2.15},
+ {x:20,z:-10,name:'The ferryman willow',spread:1.08,lean:.13,angle:-1.00},
+ {x:51,z:-35,name:'The watch-ridge pine',spread:1.05,lean:.095,angle:.70},
+ {x:33,z:26,name:'The orchard fork',spread:1.13,lean:.10,angle:-.8}
+];
+function briarTwig(b,a,q,width,c){
+ // A very small twig is a tapered five-sided branch, never a leaf-colored pole.
+ briarTaperBranch(b,a,q,width,.005,c);
+}
+function briarFoliagePad(b,p,w,h,d,c,id){
+ b.push(...p,0,hash(id,3)*.4,0,w,h,d);briarLeafCloud(b,[0,0,0],1,c,id);b.pop();
+}
 function briarTree(b,x,z,h,kind='oak'){
  if(!briarInside(x,z,1))return;
- const y=briarSurface(x,z),id=x*3+z,bark=kind==='beech'?'#858879':'#635d48',pine=kind==='pine',willow=kind==='willow';
- const lean=[h*(pine?.025:.065)*Math.sin(id),0,h*.05*Math.cos(id)];
- const root=[x,y-.16,z],low=[x+lean[0]*.18,y+h*.21,z+lean[2]*.34],fork=[x+lean[0],y+h*.43,z+lean[2]];
- briarTaperBranch(b,root,low,h*.070,h*.045,bark);briarTaperBranch(b,low,fork,h*.045,h*.027,bark);
+ const y=briarSurface(x,z),id=x*3+z,hero=BRIAR_HERO_TREES.find(t=>t.x===x&&t.z===z),apple=kind==='apple',pine=kind==='pine',willow=kind==='willow',beech=kind==='beech';
+ const bark=beech?'#84867a':willow?'#696c52':'#665b44',angle=hero?.angle??hash(x,z)*TAU,lean=hero?.lean??(pine?.045:.06),spread=hero?.spread??1;
+ const sway=[Math.sin(angle)*h*lean,0,Math.cos(angle)*h*lean];
+ const P=(xx,yy,zz)=>[x+xx,y+yy,z+zz],stem=[P(0,-.12,0),P(-sway[0]*.14,h*.15,-sway[2]*.1),P(sway[0]*.38,h*.31,sway[2]*.33),P(sway[0],h*(beech?.57:apple?.35:.44),sway[2])];
+ const radius=h*(apple?.066:beech?.046:pine?.046:hero?.078:.066);
+ for(let i=1;i<stem.length;i++)briarTaperBranch(b,stem[i-1],stem[i],radius*[1,.65,.46][i-1],radius*[.65,.46,.31][i-1],bark);
+ // Splayed buttress roots bite into the same surface triangles as the terrain.
  for(let i=0;i<5;i++){
-  const a=i*TAU/5+.4,xx=x+Math.cos(a)*h*.13,zz=z+Math.sin(a)*h*.13;
-  briarTaperBranch(b,[x,y+.45,z],[xx,briarSurface(xx,zz)+.025,zz],h*.027,h*.006,bark);
+  const a=angle+i*1.29,rr=h*(.115+.026*hash(i,id)),xx=x+Math.cos(a)*rr,zz=z+Math.sin(a)*rr;
+  if(!briarInside(xx,zz,.25))continue;
+  const end=[xx,briarSurface(xx,zz)+.025,zz],mid=lerpV(P(0,.24,0),end,.56);mid[1]=Math.max(mid[1],briarSurface(mid[0],mid[2])+.07);
+  if(hero){briarTaperBranch(b,P(0,.23,0),mid,radius*.42,radius*.19,bark);briarTaperBranch(b,mid,end,radius*.19,.012,bark);}else briarTaperBranch(b,P(0,.23,0),end,radius*.36,.012,bark);
  }
+ const fork=stem[3];
  if(pine){
-  const tip=[x+lean[0]*1.5,y+h,z+lean[2]];briarTaperBranch(b,fork,tip,h*.028,.008,bark);
-  // Broken whorls, bare lower limbs and asymmetric pads of needles. Fewer,
-  // broader crowns retain branch gaps and avoid a stack of perfect cones.
+  const tip=P(sway[0]*1.55,h,sway[2]*1.35);briarTaperBranch(b,fork,tip,radius*.35,.008,bark);
+  // Wind-combed needle shelves alternate with empty whorls and visible elbows.
   for(let j=0;j<6;j++)for(let k=0;k<2;k++){
-   const a=k*2.86+j*1.19+id,rr=h*(.245-j*.030)*(.88+.16*hash(k,id+j)),yy=y+h*(.36+j*.10);
-   const q=[x+Math.cos(a)*rr+lean[0]*j/6,yy-h*.035,z+Math.sin(a)*rr+lean[2]*j/6],v=[x,yy+h*.025,z];
-   briarTaperBranch(b,v,q,h*.009,.009,bark);briarLeafCloud(b,add(q,[0,h*.045,0]),h*(.165-j*.017),['#355b47','#436a4e','#567954'][(j+k)%3],id+j*3+k);
+   const a=angle+j*1.61+k*2.69,rr=h*(.26-j*.030)*(.80+.30*hash(j+k,id)),yy=h*(.35+j*.105);
+   const start=lerpV(fork,tip,clamp((yy/h-.44)/.56)),elbow=P(sway[0]*j/6+Math.cos(a)*rr*.66,yy-h*.045,sway[2]*j/6+Math.sin(a)*rr*.66),q=P(sway[0]*j/6+Math.cos(a)*rr,yy+h*.015,sway[2]*j/6+Math.sin(a)*rr);
+   briarTaperBranch(b,start,elbow,h*.010,.012,bark);briarTwig(b,elbow,q,.014,bark);
+   const w=h*(.157-j*.015)*spread;
+   briarFoliagePad(b,add(q,[0,h*.035,0]),w,w*.53,w*.89,['#345c49','#436b50','#628265'][(j+k)%3],id+j*7+k);
   }
-  for(let i=0;i<3;i++){const a=i*2.4+id;briarTaperBranch(b,[x,y+h*.31,z],[x+Math.cos(a)*h*.15,y+h*.27,z+Math.sin(a)*h*.15],h*.011,.008,bark);}
-  briarLeafCloud(b,add(tip,[0,-h*.06,0]),h*.063,'#648368',id);return;
+  for(let i=0;i<3;i++){
+   const a=angle+i*2.2,q=P(Math.cos(a)*h*.17,h*.27,Math.sin(a)*h*.17);briarTwig(b,stem[2],q,h*.012,bark);briarTwig(b,q,add(q,[Math.cos(a+.7)*h*.06,-h*.015,Math.sin(a+.7)*h*.06]),.015,'#8c8b73');
+  }
+  briarFoliagePad(b,add(tip,[0,-h*.03,0]),h*.065,h*.12,h*.07,'#6b8766',id);return;
  }
- const limbs=5;
+ const colors=apple?['#638445','#849951','#759051']:willow?['#6e9062','#8ea67b','#7f9d6d']:beech?['#69814d','#95a36d','#7b955c']:['#486e45','#759056','#597b47'];
+ const limbs=beech?5:6;
  for(let i=0;i<limbs;i++){
-  const a=i*2.399+id*.12,r=h*(.27+.09*hash(i,id)),rise=i===4?.88:.62+.18*hash(id,i),end=[x+Math.cos(a)*r+lean[0],y+h*rise,z+Math.sin(a)*r+lean[2]],mid=lerpV(fork,end,.52);
-  mid[1]-=h*.075;briarTaperBranch(b,fork,mid,h*.029,h*.018,bark);briarTaperBranch(b,mid,end,h*.018,.012,bark);
-  for(let j=0;j<3;j++){
-   const aa=a+(j-1)*.94,q=[end[0]+Math.cos(aa)*h*.12,end[1]+h*(j===1?.10:.01),end[2]+Math.sin(aa)*h*.12];
-   briarTaperBranch(b,end,q,h*.011,.006,bark);if(kind==='dead')continue;
-   const colors=kind==='apple'?['#5e804d','#829450','#74914d']:willow?['#78956c','#8da47b','#6c8b65']:kind==='beech'?['#657d4c','#91a267','#7b9259']:['#416b49','#648451','#789057'];
-   briarLeafCloud(b,q,h*(j===1?.21:.18),colors[j],id+i*3+j);
+  const a=angle+i*2.399,reach=h*(beech?.245:apple?.31:.33)*spread*(.77+.25*hash(i,id)),rise=beech?.77:apple?.62:i===4?.90:.58+.14*hash(id,i);
+  const start=i<2?stem[2]:fork,end=P(Math.cos(a)*reach+sway[0],h*rise,Math.sin(a)*reach+sway[2]),elbow=lerpV(start,end,.52);
+  elbow[1]-=h*(apple?.08:.07);briarTaperBranch(b,start,elbow,radius*(i===0?.43:.34),radius*.18,bark);briarTaperBranch(b,elbow,end,radius*.18,.012,bark);
+  // One bleached broken branch creates negative space in an old crown.
+  if(kind==='dead'||(hero&&i===2&&!willow&& !apple)){
+   const q=add(end,[Math.cos(a)*h*.06,h*.025,Math.sin(a)*h*.06]);briarTwig(b,end,q,h*.02,'#9e9578');
+   briarTwig(b,elbow,add(elbow,[Math.sin(a)*h*.12,h*.08,-Math.cos(a)*h*.12]),h*.022,bark);continue;
+  }
+  for(let j=0;j<2;j++){
+   const aa=a+(j-.55)*1.04,q=add(end,[Math.cos(aa)*h*.09,h*(j===0?.06:.015),Math.sin(aa)*h*.09]);briarTwig(b,end,q,h*.011,bark);
+   const w=h*(beech?.176:apple?.178:willow?.19:.212)*spread;
+   briarFoliagePad(b,q,w,w*(beech?1.30:apple?.71:.79),w*.89,colors[(i+j)%3],id+i*11+j);
+   // Tiny detached edge clusters and exposed twigs soften the silhouette without
+   // filling every opening in the crown with a second overlapping sphere.
+   if(i%3===0){const twig=add(q,[Math.cos(aa+.4)*w*.88,w*.05,Math.sin(aa+.4)*w*.88]);briarTwig(b,q,twig,h*.007,bark);briarFoliagePad(b,twig,w*.37,w*.38,w*.35,colors[(i+j+1)%3],id+i*13+j+83);}
    if(willow)for(let k=0;k<4;k++){
-    const a2=k*1.9,xx=q[0]+Math.cos(a2)*h*.11,zz=q[2]+Math.sin(a2)*h*.10,drop=h*(.19+.10*hash(k,id));
-    b.quad([xx-.09,q[1],zz],[xx+.10,q[1],zz],[xx+.18,q[1]-drop,zz+.12],[xx-.03,q[1]-drop*.9,zz+.13],shade(colors[j],.96),8);
+    const a2=aa+k*1.62,origin=add(q,[Math.cos(a2)*w*.8,0,Math.sin(a2)*w*.8]),drop=h*(.24+.10*hash(i+k,id)),drift=[Math.sin(angle)*h*.08,0,Math.cos(angle)*h*.08];
+    for(let n=0;n<3;n++){
+     const v=n/3,u=(n+1)/3,F=t=>add(origin,[drift[0]*t*t,-drop*t,drift[2]*t*t]),A=F(v),Z=F(u),r=[Math.cos(a2)*.095,0,Math.sin(a2)*.095];
+     b.quad(sub(A,r),add(A,r),add(Z,mul(r,.45)),sub(Z,mul(r,.45)),colors[(i+k)%3],8);
+    }
    }
-   if(kind==='apple'&&j===1)b.sphere(q[0],q[1]-.20,q[2],.095,.10,.095,'#a65a3e',23,5,3);
+   if(apple&&i%2===0){const fruit=add(q,[0,-w*.43,0]);b.sphere(...fruit,.07,.082,.07,'#aa6040',23,5,3);}
   }
  }
+ // A weathered trunk seam and a scar, visible only at close range.
+ if(hero&&!willow){const q=lerpV(stem[1],stem[2],.55);briarTwig(b,add(q,[radius*.30,0,radius*.33]),add(q,[radius*.27,h*.13,radius*.31]),.014,'#464d39');}
 }
 function briarFern(b,x,z,s=1){if(!briarInside(x,z,.3))return;const y=briarSurface(x,z);for(let i=0;i<7;i++){const a=i*2.4,p=[x,y,z],q=[x+Math.cos(a)*s*.5,y+s*.38,z+Math.sin(a)*s*.5];briarTaperBranch(b,p,q,.013,.004,'#627850');for(let k=1;k<5;k++){const v=lerpV(p,q,k/5),w=s*.15*(1-k/6),r=[Math.sin(a)*w,0,-Math.cos(a)*w];b.tri(v,add(v,r),add(v,[Math.cos(a)*s*.17,s*.05,Math.sin(a)*s*.17]),'#759659',8);b.tri(v,sub(v,r),add(v,[Math.cos(a)*s*.17,s*.05,Math.sin(a)*s*.17]),'#648c51',8);}}}
+// Surface-conforming islands, not large floating grass discs. Edges and centers
+// use the emitted terrain sampler, and no patch crosses a path, rail or water.
+function briarFieldSafe(x,z,margin=1.8){
+ return briarInside(x,z,.8)&&briarRailNear(x,z).distance>margin&&briarRoadNear(x,z).distance>1.6&&briarSurface(x,z)>BRIAR.water+.20;
+}
+function briarLeafLitter(b,x,z,r,id){
+ if(!briarFieldSafe(x,z,2))return;
+ for(let i=0;i<9;i++){
+  const a=i*2.399,rr=r*Math.sqrt(hash(i,id)),xx=x+Math.cos(a)*rr,zz=z+Math.sin(a)*rr;
+  if(!briarFieldSafe(xx,zz,2))continue;
+  const y=briarSurface(xx,zz)+.025,rx=.14+.13*hash(i+4,id),rz=rx*.48;
+  b.tri([xx-rx,y,zz],[xx,y+.026,zz+rz],[xx+rx,y,zz],i%2?'#858261':'#7b7857',9);
+ }
+}
+function briarFieldDetails(b){
+ for(const t of BRIAR_TREES){if(t[3]!=='pine')briarLeafLitter(b,t[0],t[1],t[2]*.30,t[0]-t[1]);}
+ // Flower spikes and seed heads only at sunny woodland margins, not scattered
+ // uniformly across roofs, paths or the open castle court.
+ for(const [x,z,r,id]of[[-55,30,3.3,1],[-43,37,3.1,2],[-17,24,2.1,3],[30,27,1.8,4],[59,-14,2.5,5],[47,-17,2.5,6]])for(let i=0;i<13;i++){
+  const a=i*2.399,rr=r*Math.sqrt(hash(i,id)),xx=x+Math.cos(a)*rr,zz=z+Math.sin(a)*rr;
+  if(!briarFieldSafe(xx,zz,2.0))continue;
+  const y=briarSurface(xx,zz),h=.30+.39*hash(i,id);
+  b.tri([xx-.035,y,zz],[xx+.045,y+h,zz+.03],[xx+.035,y,zz], '#76854d',8);
+  for(let j=0;j<4;j++){
+   const yy=y+h*(.5+j*.12),dx=j%2?.057:-.057,sz=.055-j*.007;
+   b.tri([xx+dx-sz,yy,zz],[xx+dx+sz,yy,zz],[xx+dx,yy+.08,zz+.028],id%2?'#b7a9c0':'#d1c99a',8);
+  }
+ }
+ // Quarry spoil: flat angular plates separated by cracks, seated in the slope.
+ for(const [id,x,z]of[[1,-59,4],[2,-48,29],[3,-21,24],[4,50,-16],[5,-40,-47]])for(let i=0;i<11;i++){
+  const a=i*2.399,rr=2.6*Math.sqrt(hash(i,id)),xx=x+Math.cos(a)*rr,zz=z+Math.sin(a)*rr;if(!briarFieldSafe(xx,zz,2.3))continue;
+  const y=briarSurface(xx,zz),w=.16+.38*hash(id,i),q=[xx+w*.18,y+.11,zz-w*.10],rim=[];
+  for(let j=0;j<5;j++){const aa=j*TAU/5+i,rx=Math.cos(aa)*w,rz=Math.sin(aa)*w*.66;rim.push([xx+rx,briarSurface(xx+rx,zz+rz)+.035,zz+rz]);}
+  for(let j=0;j<5;j++)b.tri(q,rim[j],rim[(j+1)%5],i%3?'#a4a58d':'#8b957b',3);
+ }
+ // A pollarded stump, a cut face and a moss-covered windfall beside the ravine.
+ const x=-32,z=38,y=briarSurface(x,z);briarTaperBranch(b,[x,y-.08,z],[x+.07,y+.8,z-.04],.33,.25,'#74674e');
+ b.cylinder(x+.07,y+.805,z-.04,.235,.235,.015,'#bb9d69',22,7);
+ for(let i=0;i<4;i++){const xx=x-1.4+i*.65,zz=z-.40-i*.23,yy=briarSurface(xx,zz);briarFoliagePad(b,[xx,yy+.11,zz],.23,.09,.18,'#718754',i*19+126);}
+}
 function briarNature(b){
- briarEscarpments(b);briarWoodlandFloor(b);briarWatchRuin(b);briarSpring(b);
+ briarEscarpments(b);briarWoodlandFloor(b);briarWatchRuin(b);briarSpring(b);briarFieldDetails(b);
  for(const t of BRIAR_TREES)if(briarRailNear(t[0],t[1]).distance>2.0)briarTree(b,...t);
 
  for(let i=0;i<310;i++){
@@ -685,7 +801,7 @@ function briarwatchRoom(scene,b){
  briarTable(b);briarTerrain(b);briarRailway(b);briarRoads(b);briarCastle(b);briarVillage(scene,b);briarNature(b);
  scene.routes=[BRIAR_ROUTE];scene.trains=[{edge:BRIAR_ROUTE,distance:125,speed:.90,type:'steam',stock:'coast',cars:3}];
  scene.height=(x,z)=>briarInside(x,z)?Math.max(BRIAR.water,briarSurface(x,z)):FLOOR;scene.canPlace=()=>false;
- scene.briarwatch={revision:3,castle:'Briarwatch',railway:'The Crown & Cinder Line',layout:'Walk-in horseshoe with two scenic peninsulas',villageBuildings:BRIAR_BUILDINGS.length,trees:BRIAR_TREES.length,watchRuin:true,spring:true};
+ scene.briarwatch={revision:4,heroTrees:BRIAR_HERO_TREES.length,castle:'Briarwatch',railway:'The Crown & Cinder Line',layout:'Walk-in horseshoe with two scenic peninsulas',villageBuildings:BRIAR_BUILDINGS.length,trees:BRIAR_TREES.length,watchRuin:true,spring:true};
  scene.spots=[
   {name:'The walk-in castle gallery',target:[-1,8,-8],distance:160,phoneDistance:400,phoneYaw:1.48,phonePitch:.84,pitch:.64,yaw:.18,detail:'Two shaped scenic peninsulas wrap around a real visitor aisle. A high stone viaduct, low timber bridge and castle railway connect the little worlds.'},
   {name:'The old keep',target:[-38,27,-9],distance:47,phoneDistance:84,pitch:.37,yaw:-.55,detail:'Crow-stepped limestone gables, traceried loft roses, chamfered archivolts, corbelled bartizans and an oak hoarding articulate the old keep.'},
