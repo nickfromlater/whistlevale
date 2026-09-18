@@ -106,7 +106,8 @@ function briarGroundColor(x,y,z,n){
  const patch=.5+.24*Math.sin(x*.14+Math.sin(z*.09)*2)+.19*Math.cos(z*.18-x*.045);
  let c=lerpV(col('#3e6348'),col('#879568'),clamp(patch));
  const bedding=.5+.5*Math.sin(y*1.12+x*.12-z*.075),rock=lerpV(col('#747f71'),col('#b7b296'),bedding*.46+.35);
- c=lerpV(c,rock,smooth(.08,.33,1-n[1]));
+ const rail=briarRailNear(x,z),fill=rail.point&&rail.distance<5.6&&y<rail.point[1]+.15&&!briarBridgeAt(x,z)&&!briarInTunnel(x,z,2);
+ c=lerpV(c,rock,smooth(.08,.33,1-n[1])*(fill?.17:1));
  // Thin dry soils on the ridge, damp moss beneath its feet, managed village turf.
  if(y>7)c=lerpV(c,col('#a5a077'),(1-smooth(.09,.24,1-n[1]))*.14);
  if(x>32&&z>-12&&z<32)c=lerpV(c,col('#819460'),.16);
@@ -117,7 +118,10 @@ function briarGroundColor(x,y,z,n){
 function briarClip(points,field){const out=[];for(let i=0;i<points.length;i++){const a=points[i],q=points[(i+1)%points.length],da=field(a),dq=field(q),inside=da>=0,next=dq>=0;if(inside)out.push(a);if(inside!==next)out.push(lerpV(a,q,da/(da-dq)));}return out;}
 function briarTerrain(b){
  const g=BRIAR_GRID,verts=[],ns=[],cs=[],bounds=[];
- for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){const x=BRIAR.minX+i*g.dx,z=BRIAR.minZ+j*g.dz,y=briarGridHeight(i,j);verts.push([x,y,z]);bounds.push(briarPolygonDistance(x,z,BRIAR_OUTLINE));}
+ for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){const x=BRIAR.minX+i*g.dx,z=BRIAR.minZ+j*g.dz,y=briarGridHeight(i,j);verts.push([x,y,z]);bounds.push(briarPolygonDistance(x,z,BRIAR_OUTLINE));
+  const ix0=Math.max(0,i-1),ix1=Math.min(g.nx,i+1),iz0=Math.max(0,j-1),iz1=Math.min(g.nz,j+1);
+  ns.push(norm([-(briarGridHeight(ix1,j)-briarGridHeight(ix0,j))/((ix1-ix0)*g.dx),1,-(briarGridHeight(i,iz1)-briarGridHeight(i,iz0))/((iz1-iz0)*g.dz)]));
+ }
  const cap=(a,q)=>{
   // The same clipped terrain edges close the scenic earth, curved fascia and
   // underside. No rectangular fill, invisible collision slab or floating edge.
@@ -136,7 +140,14 @@ function briarTerrain(b){
    }
    const normal=norm(cross(sub(tri[1],tri[0]),sub(tri[2],tri[0])));
    for(let n=1;n+1<points.length;n++){
-    for(const v of[points[0],points[n],points[n+1]])b.vertex(v,normal,briarGroundColor(...v,normal),normal[1]<.76?3:88);
+    const center=mul(add(add(points[0],points[n]),points[n+1]),1/3),rail=briarRailNear(center[0],center[2]);
+    const fill=rail.point&&rail.distance<5.6&&center[1]<rail.point[1]+.15&&!briarBridgeAt(center[0],center[2])&&!briarInTunnel(center[0],center[2],2),material=fill||normal[1]>=.76?88:3;
+    for(const v of[points[0],points[n],points[n+1]]){
+     // Smooth shared soil normals remove alternating bright triangle strips.
+     // Actual cliff faces retain their crisp normals and collision triangles.
+     const original=tri.indexOf(v),N=normal[1]>.32&&original>=0?ns[ids[original]]:normal;
+     b.vertex(v,N,briarGroundColor(...v,N),material);
+    }
     // The underside is triangulated once from the concave outline below.
    }
    const wet=briarClip(points,p=>BRIAR.water-p[1]);
@@ -799,7 +810,7 @@ function briarNature(b){
 }
 function briarwatchRoom(scene,b){
  briarTable(b);briarTerrain(b);briarRailway(b);briarRoads(b);briarCastle(b);briarVillage(scene,b);briarNature(b);
- scene.routes=[BRIAR_ROUTE];scene.trains=[{edge:BRIAR_ROUTE,distance:125,speed:.90,type:'steam',stock:'coast',cars:3}];
+ scene.routes=[BRIAR_ROUTE];scene.trains=[{edge:BRIAR_ROUTE,distance:125,speed:.90,type:'steam',stock:'coast',finish:'briarwatch',cars:3}];
  scene.height=(x,z)=>briarInside(x,z)?Math.max(BRIAR.water,briarSurface(x,z)):FLOOR;scene.canPlace=()=>false;
  scene.briarwatch={revision:4,heroTrees:BRIAR_HERO_TREES.length,castle:'Briarwatch',railway:'The Crown & Cinder Line',layout:'Walk-in horseshoe with two scenic peninsulas',villageBuildings:BRIAR_BUILDINGS.length,trees:BRIAR_TREES.length,watchRuin:true,spring:true};
  scene.spots=[

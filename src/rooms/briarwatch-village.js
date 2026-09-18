@@ -249,7 +249,7 @@ function briarGoodsYard(b){
  for(let i=0;i<7;i++)b.box((i%3-.9)*.31,.69+Math.floor(i/3)*.27,(i%2-.5)*.8,.38,.28,.48,'#aeb197',4);b.pop();
 }
 function briarVillage(scene,b){
- briarVillageGardens(b);
+ briarVillageGardens(b);briarWorkingRailway(b);briarVillageLife(b);briarRailwayPatina(b);
  for(const q of BRIAR_BUILDINGS)briarTimberHouse(b,q);
  briarMill(scene,b);briarStation(scene,b);briarGoodsYard(b);
  const lanes=[[[47.8,25.5],[48.2,18],[48.3,10],[47.6,3],[46,-3]],[[39,22],[47.9,24],[56,26]],[[29.5,0],[33,-3],[41,-1],[47.6,3],[58,3]]];
@@ -289,4 +289,105 @@ function briarVillageGardens(b){
  // A trellis frames the garden gate; it never projects into the main street.
  for(const x of[45.5,46.6]){const y=briarSurface(x,10.4);b.box(x,y+.82,10.4,.10,1.64,.12,'#938463',22);}
  b.beam([45.5,briarSurface(45.5,10.4)+1.48,10.4],[46.6,briarSurface(46.6,10.4)+1.48,10.4],.045,'#ac9a71',22,4);
+}
+
+// Little working scenes, kept in the railway's service strip rather than
+// scattered over the miniature. Grounded feet use the emitted terrain surface.
+function briarMilkChurn(b,x,y,z){
+ const metal='#9aa798';
+ b.cylinder(x,y+.25,z,.18,.145,.5,metal,41,9);b.cylinder(x,y+.51,z,.145,.10,.10,metal,41,9);
+ b.cylinder(x,y+.60,z,.095,.095,.09,metal,41,9);b.cylinder(x,y+.66,z,.12,.12,.032,'#b3bca9',41,9);
+ for(const side of[-1,1]){b.beam([x+side*.15,y+.40,z],[x+side*.25,y+.42,z],.018,metal,41,5);b.beam([x+side*.25,y+.42,z],[x+side*.25,y+.31,z],.018,metal,41,5);}
+}
+function briarWorkingRailway(b){
+ // Ornamental cast-iron water column, valve wheel and a swung-away hose.
+ const x=54.1,z=31.25,y=briarSurface(x,z);
+ b.cylinder(x,y+.13,z,.50,.44,.26,'#878c75',4,8);b.cylinder(x,y+1.52,z,.15,.105,2.8,'#425c49',42,10);
+ for(const yy of[.31,2.45,2.82])b.cylinder(x,y+yy,z,.20,.20,.085,'#ae9668',41,10);
+ b.beam([x,y+2.82,z],[x,y+2.82,z+1.85],.12,'#3a5342',42,8);
+ b.beam([x,y+2.22,z],[x,y+2.80,z+1.05],.05,'#a08c61',41,5);
+ b.beam([x,y+2.82,z+1.85],[x+.10,y+1.15,z+1.80],.065,'#363e32',42,8);
+ ringZ(b,x,y+.94,z+.19,.18,.21,.035,'#9f7b52',41,12);
+ for(const a of[0,PI/3,2*PI/3])b.beam([x-Math.cos(a)*.17,y+.94-Math.sin(a)*.17,z+.20],[x+Math.cos(a)*.17,y+.94+Math.sin(a)*.17,z+.20],.014,'#bc9c63',41,5);
+ // Silver churns and a low luggage trolley sit on the platform, not the track.
+ for(const [xx,zz]of[[36.6,31.7],[37,31.6],[36.8,32.15]])briarMilkChurn(b,xx,BRIAR.rail-.03,zz);
+ const tx=51.8,tz=32.0,ty=BRIAR.rail-.03;
+ b.box(tx,ty+.31,tz,1.1,.09,.60,'#826e4f',22);
+ for(const xx of[-.43,.43])for(const zz of[-.25,.25])b.cylinder(tx+xx,ty+.13,tz+zz,.13,.13,.065,'#455544',42,9,PI/2);
+ for(const zz of[-.25,.25])b.beam([tx-.50,ty+.30,tz+zz],[tx-.85,ty+.81,tz+zz],.023,'#5c7157',42,5);
+ b.beam([tx-.85,ty+.81,tz-.25],[tx-.85,ty+.81,tz+.25],.026,'#987f55',22,5);
+ for(const [dx,h,w]of[[-.20,.34,.5],[.25,.27,.39]]){
+  b.box(tx+dx,ty+.37+h/2,tz,w,h,.45,dx<0?'#79573f':'#8c7754',23);
+  for(const zz of[-.13,.13])b.box(tx+dx,ty+.38+h,tz+zz,w,.018,.045,'#b29a70',23);
+ }
+ // Platelayer's hut with a real dark recess, timber siding, gutter and bench.
+ const hx=61,hz=21,hy=briarSurface(hx,hz);
+ b.box(hx,hy+.12,hz,2.05,.24,1.8,'#8e9480',4);
+ b.push(hx,hy+.24,hz,0,-.18);
+ b.box(0,.95,-.78,1.8,1.9,.11,'#738272',22);for(const side of[-1,1])b.box(side*.84,.95,0,.12,1.9,1.6,'#738272',22);
+ for(const xx of[-.62,.62])b.box(xx,.95,.75,.5,1.9,.10,'#8b9178',22);
+ b.box(0,1.74,.75,.78,.31,.12,'#8b9178',22);b.box(0,.82,.03,.58,1.64,.05,'#435545',22);
+ for(const yy of[.42,.8,1.2,1.57])for(const side of[-1,1])b.box(side*.91,yy,0,.025,.025,1.66,'#546552',22);
+ briarRoof(b,2.30,2.14,1.99,.49,'#546966',false);
+ b.box(-.43,1.30,-.85,.45,.50,.02,'#b5b894',6);b.box(-.43,1.30,-.88,.025,.51,.04,'#657360',22);
+ b.box(.13,.45,1.10,1.40,.09,.33,'#ac9464',22);for(const xx of[-.39,.65])b.box(xx,.23,1.10,.09,.46,.27,'#7a6d4d',22);
+ b.beam([1.03,1.9,-.65],[1.03,.14,-.65],.025,'#4f6657',42,6);b.pop();
+ // Spare sleepers on cribbing near the goods dock, and a hand shovel.
+ const sx=58,sz=41.9,sy=briarSurface(sx,sz);
+ for(const dx of[-.45,.45])b.box(sx+dx,sy+.1,sz,.16,.2,1.50,'#78684b',22);
+ for(let j=0;j<3;j++)for(let i=0;i<4;i++)b.box(sx+(i-1.5)*.25,sy+.25+j*.17,sz,.21,.14,1.26,'#897955',22);
+ const shovelY=briarSurface(56.78,42);
+ b.beam([56.8,shovelY+.06,42],[56.3,shovelY+1.5,42],.027,'#b49a65',22,6);
+ b.box(56.78,shovelY+.15,42,.24,.3,.038,'#596958',42);
+}
+function briarVillageLife(b){
+ // An orchard ladder leans into the cultivated tree fork. Both feet touch turf.
+ const x=33,z=26,ground=briarSurface(x,z+1.12);
+ for(const side of[-1,1])b.beam([x+side*.31,ground+.04,z+1.12],[x+side*.23,ground+2.15,z+.22],.033,'#b5a17a',22,5);
+ for(let i=0;i<7;i++){const t=(i+.6)/7;b.beam([x-mix(.31,.23,t),ground+.04+t*2.11,z+1.12-t*.9],[x+mix(.31,.23,t),ground+.04+t*2.11,z+1.12-t*.9],.025,'#a29169',22,5);}
+ for(const [xx,zz]of[[32,27.3],[31.9,28]]){const y=briarSurface(xx,zz);briarCrate(b,xx,y+.03,zz,.62,.3,.53);for(let i=0;i<5;i++)b.sphere(xx+(i%3-1)*.14,y+.36,zz+(i%2-.5)*.18,.068,.06,.06,i%2?'#a86745':'#b2aa5a',23,5,3);}
+ // Laundry is kept in the weaver's back yard, clear of the lane and garden.
+ const ax=39.5,az=-.6,qx=42.6,qz=-.6,ya=briarSurface(ax,az),yq=briarSurface(qx,qz);
+ for(const [x,z,y]of[[ax,az,ya],[qx,qz,yq]])b.beam([x,y,z],[x,y+2.20,z],.035,'#8c7855',22,5);
+ const line=t=>[mix(ax,qx,t),mix(ya,yq,t)+2.1-.12*Math.sin(t*PI),az];
+ for(let i=0;i<8;i++)b.beam(line(i/8),line((i+1)/8),.008,'#a59979',23,4);
+ for(let i=0;i<3;i++){const a=line(.15+i*.26),q=line(.31+i*.26);b.quad(a,q,[q[0]+.02,q[1]-.80,az+.10],[a[0]-.05,a[1]-.76,az+.08],i===1?'#9eaba1':'#d5cdb2',23);}
+ // Split timber, bark and pale cut ends behind the smithy.
+ const lx=57.7,lz=25.35,ly=briarSurface(lx,lz);
+ for(let j=0;j<3;j++)for(let i=0;i<4-j;i++){
+  const xx=lx+(i-(3-j)/2)*.30,yy=ly+.14+j*.24;
+  b.beam([xx,yy,lz-.50],[xx,yy,lz+.50],.14,'#6c654c',22,6);
+  b.cylinder(xx,yy,lz+.512,.129,.129,.012,'#c2a774',22,6,PI/2);
+  b.beam([xx-.09,yy+.05,lz+.52],[xx+.07,yy-.08,lz+.52],.008,'#897147',22,4);
+ }
+}
+function briarRailwayPatina(b){
+ // Drainage stains and dressed joints live on the faces of the actual bridge.
+ for(let i=0;i<6;i++)for(const side of[-1,1]){
+  const x=-4+i*5.4,z=-43+side*1.383,y=briarSurface(x,z),top=BRIAR.highRail-2.1;
+  if(top<=y+.7)continue;
+  b.quad([x-.09,y+.3,z],[x+.14,y+.3,z],[x+.06,top,z],[x-.045,top,z],'#707e67',4);
+  for(let j=0;j<3;j++){const yy=mix(y+.3,top,(j+.5)/3);b.box(x,yy,z,.88,.023,.012,'#77826f',4);}
+ }
+ for(const side of[-1,1])for(let x=-3;x<22;x+=3.12){
+  // Iron washers at the covered bridge's upper/lower brace joints.
+  for(const y of[BRIAR.rail+.02,BRIAR.rail+2.65]){
+   b.box(x,y,-31+side*1.465,.20,.18,.035,'#4e5642',42);
+   b.cylinder(x,y,-31+side*1.491,.035,.035,.016,'#b4a784',41,6,PI/2);
+  }
+ }
+ // Tunnel soot follows the intrados crown; the opening remains actual air.
+ for(const [x,angle]of[[BRIAR_TUNNEL.x0,PI/2],[BRIAR_TUNNEL.x1,-PI/2]]){
+  b.push(x,BRIAR_TUNNEL.y-.22,-43,0,angle);
+  for(let i=0;i<12;i++){const a=i*PI/12,q=(i+1)*PI/12,r=1.76,R=1.95+.045*Math.sin(i*1.7);b.quad([r*Math.cos(a),1.54+r*Math.sin(a),.67],[r*Math.cos(q),1.54+r*Math.sin(q),.67],[R*Math.cos(q),1.54+R*Math.sin(q),.67],[R*Math.cos(a),1.54+R*Math.sin(a),.67],'#5a6455',4);}
+  b.pop();
+ }
+ // Whistle boards and boundary posts alternate with the route's actual bends.
+ for(const d of[26,87,185,266,344,453]){
+  const a=BRIAR_ROUTE.at(d),r=norm([a.f[2],0,-a.f[0]]),p=add(a.p,mul(r,1.85)),y=briarSurface(p[0],p[2]);
+  if(!briarInside(p[0],p[2],.6)||briarInTunnel(p[0],p[2],3)||y<a.p[1]-1.2||y>a.p[1]+.3)continue;
+  b.push(p[0],y,p[2],0,Math.atan2(a.f[0],a.f[2]));
+  b.box(0,.70,0,.075,1.40,.08,'#e0d4ac',23);b.box(0,1.35,0,.37,.38,.065,'#eadfc1',23);
+  b.beam([-.13,1.48,.042],[-.06,1.24,.042],.019,'#4c5b46',42,4);b.beam([-.06,1.24,.042],[0,1.42,.042],.019,'#4c5b46',42,4);b.beam([0,1.42,.042],[.06,1.24,.042],.019,'#4c5b46',42,4);b.beam([.06,1.24,.042],[.13,1.48,.042],.019,'#4c5b46',42,4);b.pop();
+ }
 }

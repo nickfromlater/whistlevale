@@ -46,6 +46,37 @@ Object.assign(report,state.run(`(()=>{
  for(const hero of BRIAR_HERO_TREES){const t=BRIAR_TREES.find(t=>t[0]===hero.x&&t[1]===hero.z);assert.ok(t,'each hero is an existing surveyed tree');const a=new Builder(),b=new Builder();briarTree(a,...t);briarTree(b,...t);assert.ok(a.data.length>0&&a.data.every(Number.isFinite));assert.deepEqual(a.data,b.data,'authored tree is deterministic');}
  return {heroTrees:7,adaptiveTrackSegments:ds.length-1,maximumTrackSurfaceDeviation:maxError};
 })()`));
+// The default is an estate finish of Tern, not a replacement catalogue family.
+Object.assign(report,state.run(`(()=>{
+ const initialSeed=seed,initialPaint=trainPaint,roster=JSON.stringify(TRAIN_ROSTER),mesh=Builder.prototype.mesh,dispose=disposeMesh;
+ let released=[],attempt=0;collectionStock.delete('briarwatch-estate');
+ try{
+  Builder.prototype.mesh=function(){if(++attempt===4)throw new Error('simulated estate stock upload');return {count:this.data.length/12};};
+  disposeMesh=q=>released.push(q);
+  assert.throws(()=>briarEstateStock(),/simulated estate stock upload/);assert.equal(released.length,3,'all partial stock uploads are released');
+  assert.ok(!collectionStock.has('briarwatch-estate'));assert.equal(seed,initialSeed);assert.equal(trainPaint,initialPaint);
+  Builder.prototype.mesh=function(){return {count:this.data.length/12,data:this.data.slice()};};
+  const stock=briarEstateStock();assert.equal(briarEstateStock(),stock,'one cached finish, never per-frame regeneration');
+  assert.equal(Object.keys(stock).length,6);assert.ok(stock.cab.count<stock.loco.count,'native cab cutaway remains open');
+  const counts={};for(const [name,q]of Object.entries(stock)){
+   counts[name]=q.count;assert.ok(q.data.every(Number.isFinite));
+   assert.ok(q.count<70000,'bounded estate stock part');
+   if(name!=='wheels')for(let i=0;i<q.data.length;i+=12){assert.ok(Math.abs(q.data[i])<.70,'existing train width preserved');assert.ok(q.data[i+1]<2.0,'no tall fittings enter the tunnel');assert.ok(Math.abs(q.data[i+2])<1.865,'coupling end clearance preserved');}
+  }
+  assert.ok(Object.values(counts).reduce((a,v)=>a+v,0)<180000,'entire cached stock finish budget');
+  assert.equal(seed,initialSeed);assert.equal(trainPaint,initialPaint);assert.equal(JSON.stringify(TRAIN_ROSTER),roster,'other train colors and labels are untouched');
+  assert.equal(getHouseScene('briarwatch').trains[0].finish,'briarwatch');assert.equal(getHouseScene('coast').trains[0].finish,undefined,'room-scoped finish');
+  return {estateTernVertices:counts};
+ }finally{Builder.prototype.mesh=mesh;disposeMesh=dispose;collectionStock.delete('briarwatch-estate');}
+})()`));
+
+state.run(`(()=>{
+ const terrain=new Builder();briarTerrain(terrain);
+ for(let i=0;i<terrain.data.length;i+=36)assert.ok(terrain.data[i+9]===terrain.data[i+21]&&terrain.data[i+9]===terrain.data[i+33],'terrain material is constant within each triangle');
+ const station=new Builder();briarWorkingRailway(station);let bottom=Infinity;
+ for(let i=0;i<station.data.length;i+=12){const [x,y,z]=station.data.slice(i,i+3);if(x>36.25&&x<37.4&&z>31.3&&z<32.5)bottom=Math.min(bottom,y);}
+ assert.ok(Math.abs(bottom-(BRIAR.rail-.03))<.0001,'milk churns touch the platform cap');
+})()`);
 let treeClearance=Infinity;
 for(let i=0;i<report.trees;i++){
  const c=state.run(`(()=>{const t=BRIAR_TREES[${i}],b=new Builder();if(briarRailNear(t[0],t[1]).distance>2)briarTree(b,...t);let c=Infinity;
@@ -57,7 +88,7 @@ assert.ok(treeClearance>1.2,'branches and roots clear rolling stock');report.min
 // New scenery is checked as emitted geometry, not only terrain samples. Clip
 // each candidate triangle against a swept train-sized box at half-unit steps.
 Object.assign(report,state.run(`(()=>{
- const b=new Builder();for(const build of[briarEscarpments,briarWoodlandFloor,briarWatchRuin,briarSpring,briarVillageGardens,briarFieldDetails])build(b);
+ const b=new Builder();for(const build of[briarEscarpments,briarWoodlandFloor,briarWatchRuin,briarSpring,briarVillageGardens,briarFieldDetails,briarWorkingRailway,briarVillageLife,briarRailwayPatina])build(b);
  const cells=new Map(),triangles=[];
  for(let j=0;j<b.data.length;j+=36){
   const t=[b.data.slice(j,j+3),b.data.slice(j+12,j+15),b.data.slice(j+24,j+27)],id=triangles.push(t)-1;

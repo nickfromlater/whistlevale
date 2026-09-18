@@ -48,8 +48,8 @@ function stockGauge(b,x,y,z,r){
  b.beam([x,y,z-.025],[x+r*.48,y+r*.39,z-.025],.004,'#303c35',42,5);
 }
 
-function stockTankEngine(key,roof=true){
- const b=new Builder(),q=TRAIN_ROSTER[key],saddle=key==='studio',black='#26332e',steel='#b0b7a6';
+function stockTankEngine(key,roof=true,finish=null){
+ const b=new Builder(),q=finish||TRAIN_ROSTER[key],saddle=key==='studio',black='#26332e',steel='#b0b7a6';
  b.box(0,.355,.05,.89,.13,3.11,black,42);
  for(const s of[-1,1]){
   b.box(s*.43,.52,.17,.19,.065,2.53,black,42);
@@ -134,12 +134,30 @@ function stockTankEngine(key,roof=true){
  b.beam([-.13,1.13,-.74],[.20,1.23,-.92],.017,q.line,41,8);
  for(const s of[-1,1]){b.beam([s*.24,.78,-.731],[s*.24,1.08,-.731],.012,q.line,41,8);ringZ(b,s*.24,.984,-.75,.036,.049,.013,'#a44832',40,14);}
  if(roof){b.push(0,0,-1.065);barrelRoof(b,.99,.99,1.499,'#253b36');b.box(0,1.806,0,.26,.033,.31,'#546052',41);for(const x of[-.558,.558])b.box(x,1.51,0,.02,.037,1.02,q.line,41);b.pop();}
+ if(finish){
+  // Estate-service fittings stay on Tern's existing running plate, not a new
+  // wheelbase. Fine doubled lining, injector pipes and cab roof beadings.
+  for(const side of[-1,1]){
+   for(const y of[.706,1.047])b.box(side*.487,y,-.05,.007,.006,1.48,'#bc794b',40);
+   for(const z of[-.75,.65])b.box(side*.487,.876,z,.007,.335,.006,'#bc794b',40);
+   for(const z of[-.68,-.40,.34,.57])b.cylinder(side*.485,1.045,z,.012,.012,.014,q.line,41,6,0,PI/2);
+   for(const z of[-.44,.52]){b.box(side*.528,.552,z,.09,.035,.17,'#364839',42);b.cylinder(side*.528,.586,z,.025,.025,.035,q.line,41,6);}
+   b.beam([side*.27,1.39,-.19],[side*.45,1.18,-.39],.013,'#ae774c',41,7);
+   b.beam([side*.45,1.18,-.39],[side*.48,.65,-.57],.013,'#ae774c',41,7);
+   for(let j=0;j<2;j++)for(let i=0;i<5;i++)b.box(side*.515,.448-j*.14,-1.46+i*.049,.19,.007,.010,'#828d7b',41);
+   if(roof)b.box(side*.53,1.513,-1.064,.009,.012,.96,q.line,41);
+  }
+  // A removable diamond headcode plate and slim smokebox handrail.
+  b.quad([-.11,.733,1.421],[0,.866,1.421],[.11,.733,1.421],[0,.601,1.421],q.line,41);
+  b.quad([-.078,.733,1.425],[0,.827,1.425],[.078,.733,1.425],[0,.639,1.425],q.body,40);
+  for(let i=0;i<12;i++){const a=(i/12)*PI*.85+.08,c=((i+1)/12)*PI*.85+.08;b.beam([Math.cos(a)*.338,.982+Math.sin(a)*.338,1.35],[Math.cos(c)*.338,.982+Math.sin(c)*.338,1.35],.008,q.line,41,5);}
+ }
  stockLamp(b,0,1.33,1.42,false,.069);stockLamp(b,-.29,.955,-1.51,true,.043);
  return b.mesh();
 }
 
-function stockCoach(key,tail=false){
- const b=new Builder(),q=TRAIN_ROSTER[key],studio=key==='studio',cream=studio?'#d7c29a':'#e2d6b5';
+function stockCoach(key,tail=false,finish=null){
+ const b=new Builder(),q=finish||TRAIN_ROSTER[key],studio=key==='studio',cream=studio?'#d7c29a':'#e2d6b5';
  const length=studio?2.20:2.65,half=length/2,windows=studio?5:6,pitch=(length-.24)/windows;
  b.box(0,.36,0,.91,.12,length,'#30443c',42);b.box(0,.44,0,.83,.046,length-.12,'#a88b60',22);
  for(const s of[-1,1]){
@@ -150,7 +168,7 @@ function stockCoach(key,tail=false){
   for(let i=0;i<=windows;i++)b.box(s*.431,1.149,-half+.12+i*pitch,.065,.412,.037,cream,0);
   for(let i=0;i<windows;i++){
    const z=-half+.12+(i+.5)*pitch;
-   b.box(s*.464,.675,z,.012,.315,pitch-.10,studio?'#9e784d':'#3f7877',studio?22:40);
+   b.box(s*.464,.675,z,.012,.315,pitch-.10,studio?'#9e784d':finish?'#683b3b':'#3f7877',studio?22:40);
    b.box(s*.31,.573,z,.22,.10,pitch*.66,studio?'#806753':'#a57860',23);
    b.box(s*.387,.722,z,.041,.28,pitch*.66,studio?'#6d614e':'#886352',23);
    if(i%3===1){b.sphere(s*.27,.820,z,.042,.051,.042,'#c7a480',0,8,5);b.sphere(s*.27,.723,z,.051,.074,.038,i%2?'#7c8c7b':'#8e7761',23,8,5);}
@@ -172,13 +190,25 @@ function stockCoach(key,tail=false){
   b.beam([0,.28,s*half],[0,.28,s*(half+.25)],.022,'#88947d',41,8);
  }
  b.cylinder(0,.26,0,.081,.081,.44,'#36473b',42,16,PI/2);
+ if(finish)for(const side of[-1,1]){
+  // Lined claret panels, tiny door handles, rain rails and underframe boxes.
+  for(let i=0;i<windows;i++){
+   const z=-half+.12+(i+.5)*pitch;
+   for(const y of[.544,.806])b.box(side*.474,y,z,.008,.008,pitch-.14,q.line,41);
+   for(const dz of[-1,1])b.box(side*.474,.675,z+dz*(pitch-.14)/2,.008,.27,.008,q.line,41);
+   b.box(side*.476,1.009,z+pitch*.28,.020,.011,.041,q.line,41);
+  }
+  b.box(side*.483,1.392,0,.024,.018,length-.12,'#abac91',41);
+  b.box(side*.25,.25,-.40,.30,.17,.42,'#384436',42);
+  b.beam([side*.38,.32,-half+.15],[side*.38,.32,half-.15],.011,'#998262',41,6);
+ }
  if(tail)for(const x of[-.31,.31])stockLamp(b,x,1.056,-half-.19,true,.038);
  return b.mesh();
 }
 
-function stockCoachRoof(key){
+function stockCoachRoof(key,finish=null){
  const b=new Builder(),studio=key==='studio',length=studio?2.24:2.70;
- barrelRoof(b,.985,length,1.409,studio?'#5b6052':'#61766f');
+ barrelRoof(b,.985,length,1.409,studio?'#5b6052':finish?'#4c5750':'#61766f');
  if(!studio){
   // A narrow clerestory makes the coastal coaches readable even at room scale.
   b.box(0,1.704,0,.28,.102,length-.35,'#dae0bf',0);
@@ -326,9 +356,23 @@ function collectionWheelPhase(train){
  return -motion.travel/.305;
 }
 
+// A room-scoped finish for the existing Tern family. User catalogue choices
+// bypass this default; neither the roster nor its atlas labels are mutated.
+function briarEstateStock(){
+ const key='briarwatch-estate';if(collectionStock.has(key))return collectionStock.get(key);
+ const previousSeed=seed,previousPaint=trainPaint,parts={},finish={...TRAIN_ROSTER.coast,body:'#2d4b3b',line:'#d5b67a',wheel:'#553d32',coach:'#703b3e'};
+ try{
+  seed=141414;trainPaint=()=>finish;
+  parts.loco=stockTankEngine('coast',true,finish);parts.cab=stockTankEngine('coast',false,finish);
+  parts.wheels=makeWheels();parts.coach=stockCoach('coast',false,finish);parts.tail=stockCoach('coast',true,finish);parts.roof=stockCoachRoof('coast',finish);
+  collectionStock.set(key,parts);return parts;
+ }catch(error){for(const mesh of Object.values(parts))disposeMesh(mesh);throw error;}
+ finally{seed=previousSeed;trainPaint=previousPaint;}
+}
+
 function drawHouseTrainFormation(scene,train,p){
  const electric=train.type==='mountain',key=train.stock||(electric?(scene.key==='studio'?'workshop':'alpine'):(collectionStock.has(scene.key)?scene.key:'coast'));
- const stock=collectionStock.get(key);if(!stock)return;
+ const stock=train.finish==='briarwatch'?briarEstateStock():collectionStock.get(key);if(!stock)return;
  const open=cutaway&&p===mainProgram,models=[],ends=[];
  for(let i=0;i<=train.cars;i++){
   const studio=key==='studio',off=electric?(i===0?0:3.48+(i-1)*3.26):i===0?0:(studio?3.15:3.43)+(i-1)*(studio?2.81:3.26);

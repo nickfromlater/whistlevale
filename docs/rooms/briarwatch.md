@@ -55,7 +55,35 @@ bridge, curves over a braced trestle, follows a cliff-side retaining balcony
 and passes through a short rock tunnel. A connected goods siding, loading
 crane, stationary wagon and modeled semaphore signals enrich the station.
 The siding and signals are scenic, not an interactive switching or dispatch
-simulation. The train uses the existing Tern steam family.
+simulation. The default train uses an estate finish of the existing Tern steam
+family: Brunswick-green tanks, claret-and-cream coaches, doubled lining,
+injector pipes, step treads and a diamond headcode plate. The original gauge,
+wheelbase, quartered valve gear, coupling offsets and native cab cutaway remain.
+User catalogue selections take precedence over this room-specific default.
+No new catalogue family, model portrait or label-atlas allocation is added.
+
+## Fieldcraft: trees, terrain and miniature life
+
+Seven surveyed hero trees distinguish the gate, quarry, trestle, mill, river,
+watch ridge and orchard. Bent, tapering trunks, splayed roots, uneven limbs,
+exposed broken branches and smaller edge foliage replace more uniform crowns.
+Oak, upright beech, cultivated apple, drooping willow and wind-combed pine
+have separate branching and crown profiles. The 56 placements remain fixed.
+Localized leaf litter, flower spikes, quarry spoil and moss connect the trees
+to their terrain rather than scattering detail uniformly.
+
+Woodland hummocks and drainage gullies are applied before engineered road,
+rail, river and village grading. Soil normals blend across neighboring terrain
+samples; rock faces retain sharper normals. Grassed railway fills no longer
+switch abruptly to white rock on alternating triangles. The surface sampler
+still matches the emitted collision triangles exactly.
+
+The station has a cast-iron water column, milk churns and luggage trolley.
+A small platelayer's hut, spare sleepers, shovel and whistle boards add a
+working right-of-way. Bridge joint plates, washers, pier seepage and crown
+soot follow the existing structures. Orchard ladder, fruit crates, laundry
+and cut timber provide a few separate village stories. These are scenic
+vignettes, not new interactive operations or simulated workers.
 
 ## The Lantern Gallery
 
@@ -115,6 +143,7 @@ railway, public viewpoints, automatic lighting settings and global mood presets.
   castle buildings, defenses and courtyard.
 - `src/rooms/briarwatch-village.js`: houses, station, gardens, vignettes and mill.
 - `src/railway.js`: opt-in estate, gallery-plaster, parquet and opal shading.
+- `src/trains.js`: optional Tern finish and its bounded shared stock cache.
 
 The three room scripts load before house startup and atlas construction.
 No new runtime dependency, imported model, texture, recording, atlas slot,
@@ -129,7 +158,7 @@ failed-build cleanup dispose its buffer with the other owned room resources.
 
 ## Geometry budgets
 
-The completed Lantern Gallery has **899,550 static scene vertices** against
+The complete fieldcraft scene has **890,385 static scene vertices** against
 the unchanged **900,000** ceiling. The four wall meshes contain **24,504 /
 3,468 / 3,468 / 8,076** vertices, totaling **39,516** against **40,000**.
 That wall total includes **132 clear-glass vertices** owned by the back wall;
@@ -140,6 +169,15 @@ the long walls and 324 on the side walls. Backs buried against existing solid
 geometry are omitted where appropriate. Geometry ceilings and test timeouts
 were not raised. These budgets do not establish physical-device frame rate.
 
+Adaptive track surface stations preserve the native route and sleeper layout
+while allocating fewer faces to straight sections. The main circuit uses 400
+surface intervals; maximum sampled outer-edge deviation is 0.024535 units
+against a 0.026 bound. Static geometry fell from the prior 899,550 despite the
+added scenery. The separately cached six-part estate Tern uses 90,552 vertices,
+including the alternative open-cab mesh; it shares the existing running gear.
+Partial upload failure releases already-built parts, and construction restores
+the shared seed and paint callback. The standard stock rebuild owns disposal.
+
 ## Checks and visual review
 
 Run `npm test`, `npm run test:geometry:full`, and
@@ -148,13 +186,17 @@ the full suite. Architectural glazing and lighting also have dedicated checks.
 
 Focused coverage includes finite/deterministic geometry, real castle and ruin
 openings, terrain contact, river and spring continuity, masonry backing for
-ivy and rainspouts, 7,416 scenic triangle/envelope checks, route closure/grade,
+ivy and rainspouts, 63,391 scenic triangle/envelope checks, route closure/grade,
 track and tree clearance, cabinet voids, portrait framing, reduced motion,
 wheel transform/draw, disposal, credits and script/map/export inclusion.
 Gallery checks cover open casements, sealed high-angle rays, wall-local UVs,
 curtain clearances and headings, clock orientation, floor-local parquet,
 fixture alignment, bounded opal radiance, cove/bench bounds, floor contact,
 solid supported cushions and correct textile material assignment.
+Fieldcraft checks add adaptive rail coverage/error bounds, deterministic hero
+trees, constant per-triangle terrain materials, new vignette envelope clipping,
+platform contact and estate-stock cache, bounds and partial-failure recovery.
+The original train catalogue keeps its independent isolation/selection tests.
 
 The 21-state Lantern Gallery browser review covers day/evening/night, dimmer-off,
 clock and lanterns, curtained estate, archive, survey table, marquetry, ceiling
