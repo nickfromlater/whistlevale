@@ -1,65 +1,67 @@
 # Morrow House & the Midnight Line
 
-A haunted Victorian estate inside a collector's candlelit parlour. The story is
-quietly uncanny rather than a jump-scare attraction: the station clock has
-stopped at 11:59; the house clock still moves; a tiny congregation waits by an
-open-air organ; the greenhouse seems to be keeping something in.
+## Second pass: the terraced estate
 
-## The miniature
+A haunted Victorian estate inside a collector's candlelit parlour. The station
+clock is fixed at 11:59 while the mansion clock runs backwards. Small apparitions
+wait in the graveyard, ruined abbey, winter garden and verandah. No jump scares
+or new external assets are introduced.
 
-An asymmetric Second-Empire mansion stands on a stone undercroft through which
-the railway actually passes. Its five projecting dormers, slate mansard,
-clock tower, octagonal oriel, widow's walk, parted curtains, cornices, turned
-verandah columns and ivy are native geometry, not a facade image.
+The estate is arranged as connected garden terraces, rather than separate
+buildings on a flat board. Four open front vaults replace the mansion's solid
+foundation facade. The original east and west railway portals remain aligned
+with the circuit. An arched gallery bridge joins the abbey to the verandah; a
+second arched stair descends toward the conservatory. A curved retaining wall
+and promenade give the family plot a substantial planted edge.
 
-The curved circuit visits a scalloped station canopy, ruined abbey with an
-open rose window and pipe organ, crooked family plot with an ajar mausoleum,
-a glass winter garden, a pond and skiff, raven fountain and broken hedge maze.
-Bare branching trees and wind-pruned yews leave air around the architecture.
-The scalloped walnut cabinet has turned supports. The larger room includes
-paneled walls, damask, velvet curtains, a modeled moon, silhouette portraits,
-a fireplace, grandfather clock and wingback chair.
+The mansion has staggered slate tiles, projecting ornamental dormers, turned
+porch columns, scroll brackets, a curved metal canopy, upstairs balconies,
+four clock faces, an oriel balcony and flowering ivy. The conservatory has a
+curved glazed dome, fretwork, a mosaic floor and a luminous botanical specimen.
+The ruined abbey has layered Gothic tracery, organ ranks, keyboards and pews.
+A hollow mausoleum and small weeping angel sit beside the family plot.
 
-Seven places are available through the existing room navigation, alongside
-the house's ordinary layout, trackside, locomotive, follow and cab views.
-Room key: `morrow`. No stable room-plot ID was requested, so placement is left
-to the registry-driven map rather than claiming an open plot.
+The foreground moonwater pond contains a hollow planked skiff and worn landing.
+Its stream continues beneath an actual railway bridge. The station platform is
+placed from the running rail, and a yew labyrinth surrounds a brass armillary.
+Nine viewpoints include the horologist's garden and moonwater landing.
+
+The larger parlour includes modeled bookcases and book spines, shaped curtain
+folds and tiebacks, a moon window, open fireplace, grandfather clock, leather
+chair and collector's desk. The scalloped walnut display cabinet retains the
+miniature exhibit identity.
 
 ## The Mourning Star, No. XIII
 
-Original 4-4-0 rolling stock in plum, blackened iron and brass, not a repaint
-of an existing train. The engine has a flared chimney, riveted smokebox,
-boiler bands, bell, cowcatcher, cab fittings and raised Roman numberplates.
-A coal tender leads clerestory observation coaches with upholstered seats,
-table lamps, sash windows and open end platforms.
+Original plum-and-brass 4-4-0 stock, not a recolored existing locomotive. The
+second pass replaces solid wheel discs with annular tires and open spokes.
+Carriage side windows have separate reveals, transparent panes and curtains;
+the cab side walls have openings. Underframe rods, upholstered seats, table
+lamps, clerestory roofs and open end platforms remain modeled.
 
-The house cutaway removes the cab and coach roofs. Wheel phase drives the
-spokes and quartered side rods. Leading and coach bogies follow their own
-positions along the circuit. Coupling links join the actual vehicle ends.
-The public `cars` value includes the tender, so the initial value of three
-means one tender and two coaches. Geometry is allocated during stock creation,
-never in the draw loop; replacement and failure paths dispose owned meshes.
+The room is explicitly marked `trainCollection: false` with its own steam-train
+metadata so the controls identify The Mourning Star rather than a fallback
+cabinet locomotive. The public `cars` value includes the tender: the default
+three vehicles behind the locomotive are one tender and two coaches.
 
-Four small apparitions, five bats, two tower-clock hands and eight steam puffs
-reuse cached meshes. Reduced motion freezes these decorative animations. No
-new interval, event listener, audio context, network fetch or persistence is
-introduced. Existing pause, sound and ambience controls remain in charge.
+Cab and coach roofs support the house cutaway. Wheels, quartered rods, bogies
+and couplings use the existing circuit transforms. Six apparitions, five bats,
+two clock hands and at most six steam puffs reuse cached meshes. Decorative
+haunting freezes under reduced motion; plume draws are omitted inside the crypt.
+There are no new animation listeners, intervals, network requests or storage.
 
-## Source and integration
+## Source and review
 
-- `src/rooms/morrow.js`: landscape, structures, shell, route, room registration.
-- `src/trains/morrow.js`: bespoke stock, moving parts and bounded haunting.
-- `scripts/morrow-qa.mjs`: actual shared-runtime geometry and motion checks.
-- `index.html`: the two classic scripts load after shared stock and before
-  startup. The standard public build discovers them through this entrypoint.
+- `src/rooms/morrow.js`: terrain, structures, shell, route and room registration.
+- `src/trains/morrow.js`: bespoke stock, motion and cached haunting geometry.
+- `scripts/morrow-qa.mjs`: checks against the actual shared repository runtime.
+- `index.html`: both classic modules load before house startup.
 
-Credit: **nickfromlater**, original design and implementation with agent
-assistance. No external models, textures, recordings or runtime libraries are
+Credit remains **nickfromlater**, original design and implementation with agent
+assistance. No third-party models, textures, recordings or runtime libraries are
 added. Existing repository licensing applies.
 
-## Review
-
-Run with Node 24 or newer:
+Use Node 24 or newer for the repository checks:
 
 ```sh
 npm run test:morrow
@@ -69,22 +71,17 @@ npm run check:contributions -- --json
 npm run dev
 ```
 
-The native QA checks script order, finite triangle data, bounded world geometry,
-a closed flat circuit, lateral portal clearance, coach height under the vault,
-stock construction, car counts, roof cutaway, reduced motion, real couplings
-and zero geometry allocation while drawing. The new checks do not loosen any
-existing budgets.
+The room-specific checks cover finite geometry, balanced transforms, nine
+viewpoints, locomotive labeling and power, transparent glazing, route closure,
+portal clearance, coach height, cutaways, coupling transforms, frozen reduced-
+motion poses and no geometry allocation while drawing. The original 650,000
+room-vertex budget is retained; an additional assertion applies that same limit
+to the room plus floor. Wall budgets are unchanged.
 
-Review the actual house at desktop, 390px and 320px widths, including the map,
-room changes, the undercroft from both sides, stock cutaway and cab view.
-Check actual phone performance separately. Do not infer phone frame rate from
-software-rendered Chromium.
-
-An independent single-file presentation harness was used to inspect the same
-new geometry locally. It renders successfully at desktop, 390px and 320px,
-with no page or WebGL errors in the recorded checks. Its lighting and camera
-adapter are not the house renderer; its screenshots are not evidence of
-end-to-end house integration. The measured presentation total is 803,034
-vertices, including all walls, furnishings and stock. Native measurements and
-full-suite results must be taken from the commands above, not substituted with
-those preview measurements.
+Use the current PR's CI results for the native measurements and check status.
+The independent presentation harness is not the native Whistlevale renderer.
+Reference images and software geometry-review renders do not establish native
+browser appearance or physical-phone performance. The second pass still needs
+native-browser visual review at desktop, 390px and 320px, including map entry,
+room changes, both crypt portals, cab view and roof cutaway. Physical iPhone
+performance remains a separate review. Publishing the PR does not merge it.

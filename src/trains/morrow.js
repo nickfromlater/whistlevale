@@ -12,8 +12,13 @@ function mtRail(b,x,z0,z1,y=1.13){
 }
 function mtBuffers(b,z){const s=Math.sign(z)||1;b.box(0,.40,z,1.02,.17,.11,MT.plum,40);for(const x of[-.35,.35]){b.cylinder(x,.4,z+s*.12,.044,.044,.23,MT.black,42,10,PI/2);b.cylinder(x,.4,z+s*.24,.083,.083,.035,MT.steel,41,16,PI/2);}}
 function mtCoachWindow(b,x,z,w=.45,h=.57,y=1.40){
- const s=Math.sign(x);b.box(x,y,z,.045,h+.10,w+.1,MT.brass,41);b.box(x+s*.027,y,z,.014,h,w,MT.light,6);b.box(x+s*.04,y+.025,z,.013,.022,w,MT.plum,40);b.box(x+s*.04,y,z,.013,h,.02,MT.plum,40);
- for(const side of[-1,1])b.box(x+s*.038,y,z+side*(w/2-.038),.02,h,.065,MT.velvet,23);
+ const s=Math.sign(x);
+ // Four independent reveals surround a real aperture, not an opaque gold slab.
+ for(const zz of[-w/2-.018,w/2+.018])b.box(x,y,z+zz,.048,h+.1,.042,MT.brass,41);
+ for(const yy of[-h/2-.022,h/2+.022])b.box(x,y+yy,z,.048,.045,w+.08,MT.brass,41);
+ b.quad([x+s*.026,y-h/2,z-w/2],[x+s*.026,y+h/2,z-w/2],[x+s*.026,y+h/2,z+w/2],[x+s*.026,y-h/2,z+w/2],MT.glass,76);
+ b.box(x+s*.04,y+.025,z,.018,.025,w,MT.plum,40);b.box(x+s*.04,y,z,.018,h,.019,MT.plum,40);
+ for(const side of[-1,1])b.box(x-s*.029,y,z+side*(w/2-.035),.055,h,.060,MT.velvet,23);
 }
 function mtEngine(b,roof=false){
  if(roof){
@@ -32,7 +37,7 @@ function mtEngine(b,roof=false){
  for(const z of[-.49,.35]){b.cylinder(0,1.45,z,.18,.14,.25,MT.brass,41,18);b.sphere(0,1.60,z,.15,.13,.15,MT.gold,41,16,8);}
  // A working cab with two quarterlights, firebox, gauges, levers and bench.
  b.box(0,.69,-1.54,1.12,.13,1.10,MT.wood,22);for(const side of[-1,1])b.box(side*.52,1.0,-1.54,.10,.52,1.10,MT.plum,40);b.box(0,1.54,-2.10,1.07,.91,.10,MT.plum,40);b.box(0,1.55,-2.16,.76,.53,.015,MT.light,6);
- for(const s of[-1,1]){b.box(s*.55,1.57,-1.55,.07,.8,1.2,MT.plum,40);mtCoachWindow(b,s*.596,-1.63,.53,.55,1.63);b.box(s*.28,1.64,-.98,.38,.52,.09,MT.brass,41);b.box(s*.28,1.64,-.922,.29,.43,.015,MT.glass,76);b.box(s*.61,.43,-1.77,.21,.10,.45,MT.black,42);b.box(s*.63,.27,-1.77,.21,.08,.45,MT.brass,41);}
+ for(const s of[-1,1]){b.box(s*.55,1.94,-1.55,.07,.08,1.2,MT.plum,40);for(const z of[-2.10,-1.0])b.box(s*.55,1.57,z,.07,.8,.10,MT.plum,40);mtCoachWindow(b,s*.596,-1.63,.53,.55,1.63);b.box(s*.28,1.64,-.98,.38,.52,.09,MT.brass,41);b.box(s*.28,1.64,-.922,.29,.43,.015,MT.glass,76);b.box(s*.61,.43,-1.77,.21,.10,.45,MT.black,42);b.box(s*.63,.27,-1.77,.21,.08,.45,MT.brass,41);}
  b.box(0,1.05,-1.18,.47,.47,.13,MT.black,42);b.box(0,.99,-1.26,.25,.18,.013,'#ffc889',6);for(const x of[-.17,.17])b.cylinder(x,1.44,-1.28,.06,.06,.018,MT.gold,41,12,PI/2);
  for(const x of[-.4,.4])b.beam([x,.77,-1.76],[x,1.14,-1.68],.015,MT.brass,41,6);
  // Polished handrails, the front lamp, a bell, a slatted cowcatcher.
@@ -58,6 +63,7 @@ function mtCoach(b,roof=false){
  }
  b.box(0,.48,0,.88,.14,4.04,MT.black,42);b.box(0,.67,0,1.12,.10,3.58,MT.wood,22);for(const side of[-1,1])b.box(side*.56,.93,0,.08,.54,3.40,MT.plum,40);
  for(const s of[-1,1]){
+  b.beam([s*.40,.42,-1.45],[s*.40,.27,0],.015,MT.brass,41,5);b.beam([s*.40,.27,0],[s*.40,.42,1.45],.015,MT.brass,41,5);
   for(const yy of[.75,1.15,1.82,1.93])b.box(s*.618,yy,0,.023,.028,3.48,MT.gold,41);
   for(let i=0;i<6;i++){const z=-1.39+i*.56;mtCoachWindow(b,s*.607,z,.43,.57,1.49);b.box(s*.625,.96,z,.025,.28,.41,MT.brass,41);b.box(s*.642,.96,z,.011,.235,.355,MT.plum,40);}
   // Upholstered facing seats and miniature brass table lamps.
@@ -67,20 +73,29 @@ function mtCoach(b,roof=false){
  for(const z of[lo,hi]){b.box(0,1.35,z,1.10,1.28,.08,MT.plum,40);b.box(0,1.48,z+Math.sign(z)*.052,.43,.75,.025,MT.glass,76);b.box(0,.64,z+Math.sign(z)*.20,1.12,.10,.37,MT.wood,22);for(const s of[-1,1])mtRail(b,s*.53,z,z+Math.sign(z)*.30,1.22);b.beam([-.51,1.22,z+Math.sign(z)*.32],[.51,1.22,z+Math.sign(z)*.32],.017,MT.brass,41,6);for(let i=-2;i<=2;i++)b.beam([i*.2,.7,z+Math.sign(z)*.32],[i*.2,1.22,z+Math.sign(z)*.32],.012,MT.brass,41,5);mtBuffers(b,z+Math.sign(z)*.32);}
 }
 function mtWheel(b,r=.38){
- // Wheel plane is YZ. The axle and side rods rotate together around local X.
- b.cylinder(0,0,0,r,r,.072,MT.black,42,24,0,PI/2);b.cylinder(.044,0,0,r*.90,r*.90,.018,MT.steel,41,24,0,PI/2);b.cylinder(.057,0,0,r*.73,r*.73,.02,MT.plum,40,20,0,PI/2);
- for(let i=0;i<12;i++){const a=i*TAU/12;b.beam([.073,0,0],[.073,Math.cos(a)*r*.78,Math.sin(a)*r*.78],.016,MT.brass,41,5);}b.cylinder(.071,0,0,r*.20,r*.20,.044,MT.brass,41,16,0,PI/2);b.cylinder(.080,r*.51,0,r*.075,r*.075,.063,MT.gold,41,10,0,PI/2);
+ // An annular tire and forged spokes leave genuine air through each driver.
+ const n=28,inner=r*.79;
+ for(let i=0;i<n;i++){
+  const a=i*TAU/n,q=(i+1)*TAU/n,p=(x,r,a)=>[x,Math.cos(a)*r,Math.sin(a)*r];
+  b.quad(p(-.036,r,a),p(.036,r,a),p(.036,r,q),p(-.036,r,q),MT.steel,41);
+  b.quad(p(.036,r,a),p(.042,inner,a),p(.042,inner,q),p(.036,r,q),MT.plum,40);
+  b.quad(p(-.036,inner,a),p(-.036,r,a),p(-.036,r,q),p(-.036,inner,q),MT.black,42);
+  b.quad(p(.042,inner,a),p(-.036,inner,a),p(-.036,inner,q),p(.042,inner,q),MT.black,42);
+ }
+ for(let i=0;i<12;i++){
+  const a=i*TAU/12; b.beam([.035,Math.cos(a)*r*.16,Math.sin(a)*r*.16],[.035,Math.cos(a)*inner,Math.sin(a)*inner],.016,MT.plumLight,40,5);
+ }
+ b.cylinder(.041,0,0,r*.20,r*.20,.094,MT.brass,41,16,0,PI/2);
+ b.cylinder(.072,r*.51,0,r*.075,r*.075,.062,MT.gold,41,10,0,PI/2);
 }
 function mtBogie(b){
  for(const s of[-1,1]){b.box(s*.34,.27,0,.11,.10,.80,MT.black,42);for(let i=0;i<4;i++)b.box(s*.406,.28+i*.024,0,.012,.016,.44-i*.055,MT.steel,41);}b.box(0,.33,0,.62,.07,.49,MT.black,42);
 }
 function mtGhost(b){
- // Deliberately small: a lifted sheet, scalloped hem, one face, no giant mascot.
- const n=20,rows=9;for(let j=0;j<rows;j++)for(let i=0;i<n;i++){
-  const point=(i,j)=>{const a=i*TAU/n,t=j/rows,r=.11+.44*Math.sin(t*PI*.62);return[Math.cos(a)*r,(1-t)*1.48+.06*Math.sin(a*5)*t,Math.sin(a)*r*.72];};
-  b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),'#a6d2c6',76);
- }
- b.sphere(0,1.37,0,.19,.22,.18,'#a6d2c6',76,12,7);for(const s of[-1,1])b.sphere(s*.072,1.40,.17,.025,.041,.017,'#273f47',42,8,5);
+ // Long tapered folds, an irregular hem and a bowed head, all miniature scale.
+ const n=24,rows=12,point=(i,j)=>{const a=i*TAU/n,t=j/rows,r=(.13+.36*Math.sin(t*PI*.61))*(1+.035*Math.sin(a*6));return[Math.cos(a)*r,(1-t)*1.43+.05*Math.sin(a*5+.3)*t,Math.sin(a)*r*.73+.09*(1-t)];};
+ for(let j=0;j<rows;j++)for(let i=0;i<n;i++)b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),shade('#b7c8b7',.88+.08*Math.cos(i*TAU/n*6)),76);
+ b.sphere(0,1.43,.10,.17,.21,.17,'#b7c8b7',76,12,7);for(const s of[-1,1])b.sphere(s*.061,1.45,.249,.019,.030,.012,'#3c5452',42,7,4);
 }
 function buildMorrowStock(){
  const stock={},make=(key,fn)=>{const b=new Builder();fn(b);stock[key]=b.mesh();};
@@ -97,15 +112,16 @@ const morrowBuildCollectionStock=buildCollectionStock;
 buildCollectionStock=function(){const previous=collectionStock.get('morrow');morrowBuildCollectionStock();const next=buildMorrowStock();if(previous&&collectionStock.get('morrow')===previous)for(const mesh of Object.values(previous))disposeMesh(mesh);collectionStock.set('morrow',next);};
 function morrowDrawHaunt(stock,p){
  const t=reduceMotion?0:clock;
- for(const [i,x,y,z,s]of[[0,-25,2.0,12,.65],[1,-28,2.6,10,.48],[2,-30,2.2,-4,.65],[3,25,4.3,-6,.34]]){
-  const motion=reduceMotion?0:Math.sin(t*.7+i*2)*.23;
-  draw(stock.ghost,mm(trans(x,y+motion,z),mm(ry(Math.sin(t*.19+i)*.17),scaling(s))),p);
+ for(const [i,x,y,z,s]of[[0,-25,2.90,12,.65],[1,-28,3.04,10,.48],[2,-30,4.12,-4,.65],[3,27,4.3,-5.3,.34],[4,1.1,7.6,-7.4,.55],[5,5.0,7.6,-7.4,.52]]){
+  const sway=reduceMotion?0:Math.sin(t*.53+i*2)*.14;
+  draw(stock.ghost,mm(trans(x+sway*.4,y+sway,z),mm(ry(Math.sin(t*.17+i)*.17),scaling(s))),p);
  }
- const clockBase=trans(-7.5,MORROW.deckY+15.55,-9.43);
- draw(stock.clockHand,mm(clockBase,mm(rz(-t*.022-.13),scaling(.65,.82,1))),p);draw(stock.clockHand,mm(clockBase,mm(rz(-t*.003-1.1),scaling(.85,.51,1))),p);
+ // The tower runs backwards. The platform clock never gets beyond 11:59.
+ const clockBase=trans(-7.5,MORROW.deckY+15.55,-9.45);
+ draw(stock.clockHand,mm(clockBase,mm(rz(t*.022-.13),scaling(.65,.82,1))),p);draw(stock.clockHand,mm(clockBase,mm(rz(t*.003-1.1),scaling(.85,.51,1))),p);
  for(let i=0;i<5;i++){
   const a=t*.21+i*1.256,base=mm(trans(-6+Math.cos(a)*8,28+Math.sin(a*2+i)*.7,-14+Math.sin(a)*5),ry(-a));draw(stock.batBody,base,p);
-  for(const s of[-1,1])draw(stock.batWing,mm(base,mm(rz(s*(reduceMotion ? .3 : Math.sin(t*5+i)*.55)),scaling(s,1,1))),p);
+  for(const s of[-1,1])draw(stock.batWing,mm(base,mm(rz(s*(reduceMotion?.3:Math.sin(t*5+i)*.55)),scaling(s,1,1))),p);
  }
 }
 function morrowDrawFormation(scene,train,p){
@@ -130,7 +146,7 @@ function morrowDrawFormation(scene,train,p){
  }
  // A small, slow plume, reused from one translucent mesh. It remains below
  // the crypt ceiling and freezes with the reduced-motion preference.
- for(let i=0;i<8;i++){const t=((reduceMotion?0:clock*.18)+i/8)%1,s=.15+Math.sin(t*PI)*.62,base=circuitMatrix(train.edge,train.distance+1.34-t*1.85);draw(stock.steam,mm(base,mm(trans(Math.sin(t*4+i)*.10,2.58+t*1.70,0),scaling(s))),p);}
+ for(let i=0;i<6;i++){const t=((reduceMotion?0:clock*.18)+i/6)%1,s=.12+Math.sin(t*PI)*.42,base=circuitMatrix(train.edge,train.distance+1.34-t*1.60);if(base[12]>-13&&base[12]<19&&base[14]>-20&&base[14]<-12)continue;draw(stock.steam,mm(base,mm(trans(Math.sin(t*4+i)*.08,2.53+t*1.25,0),scaling(s))),p);}
  morrowDrawHaunt(stock,p);
 }
 // Add the slim moving rods to the same disposable stock cache.
