@@ -3,7 +3,7 @@ import {communityContext,loadContributionDefinitions,prepareCommunityGeometry,re
 
 // Exercise the actual shared Builder, Edge, room registry and train wrappers.
 // This deliberately does not import the independent presentation harness.
-const index=await read('index.html');
+const index=await read('index.html'),railwaySource=await read('src/railway.js');
 for(const file of ['src/rooms/morrow.js','src/trains/morrow.js'])assert.equal(index.split(`src="${file}"`).length-1,1,`${file} loads once`);
 assert.ok(index.indexOf('src/rooms/morrow.js')<index.indexOf('src/trains/morrow.js'));
 assert.ok(index.indexOf('src/trains.js')<index.indexOf('src/trains/morrow.js'));
@@ -42,8 +42,13 @@ const report=run(`(()=>{
  assert.ok(room.count<650000,'static room budget');assert.ok(walls.every(w=>w.mesh.count<120000),'wall budgets');
  assert.ok(room.count+floor.count<650000,'room including floor remains inside the existing budget');
  assert.ok(stock.engine.materials[76]>0&&stock.coach.materials[76]>=72,'cab and coach glazing remains transparent');
- assert.ok(stock.projectionBright.materials[84]>0&&stock.projectorBeam.materials[84]>0,'projection beam is transparent');
- assert.ok(stock.glowWarm.materials[84]>0&&stock.glowCold.materials[84]>0&&stock.watchingEyes.materials[84]>0,'haunting light effects use the transparent effect path');
+ assert.ok(stock.projectionBright.materials[92]>0&&stock.projectionAura.materials[93]>0,'projection and aura use dedicated spectral materials');
+ assert.ok(stock.projectorBeam.materials[93]>0&&stock.projectorCore.materials[93]>0,'projection beams use dedicated volumetric haze');
+ assert.ok(stock.glowWarm.materials[93]>0&&stock.glowCold.materials[93]>0&&stock.watchingEyes.materials[92]>0,'haunting lights use dedicated transparent passes');
+ assert.ok(stock.windowWarm.materials[92]>0&&stock.windowCold.materials[92]>0&&stock.cryptMist.materials[93]>0,'windows and crypt mist use spectral materials');
+ assert.match(railwaySource,/if\(m==92\.\)/,'spectral shader is present');
+ assert.match(railwaySource,/if\(m==93\.\)/,'spectral haze shader is present');
+ assert.match(railwaySource,/m===92\|\|m===93/,'spectral materials enter the transparent sorter');
  assert.ok(stock.engine.count>1000&&stock.coach.count>1000,'bespoke stock exists');
  assert.ok(room.bounds.max[1]<34&&room.bounds.min[1]>=FLOOR-.01,'world vertical bounds');
  assert.ok(len(sub(MORROW_ROUTE.at(0).p,MORROW_ROUTE.at(MORROW_ROUTE.length).p))<.02,'closed circuit');
@@ -74,5 +79,5 @@ const allocations=meshes.length;
 run('morrowDrawFormation({},{edge:MORROW_ROUTE,distance:42,cars:3},mainProgram);');
 assert.equal(meshes.length,allocations,'drawing never allocates geometry');
 assert.ok(draws.length>100&&links.length>0,'stock draws and real couplings are exercised');
-console.log('Morrow House: native geometry, route, portal, stock, labeling, glazing, phantasmagoria and motion checks passed.');
+console.log('Morrow House: native geometry, route, portal, stock, labeling, glazing, visible spectral rendering, phantasmagoria and motion checks passed.');
 console.log(JSON.stringify({...report,draws:draws.length,couplings:links.length,totalVertices:meshes.reduce((n,m)=>n+m.count,0)},null,2));

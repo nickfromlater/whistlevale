@@ -99,17 +99,22 @@ function mtGhost(b){
 }
 
 function mtProjectionBody(b,color='#9fd0bf'){
- b.sphere(0,1.36,0,.22,.27,.018,color,84,14,8);
- b.tri([-.22,1.20,0],[.22,1.20,0],[.52,-.95,0],color,84);b.tri([-.22,1.20,0],[.52,-.95,0],[-.56,-.95,0],color,84);
- for(const s of[-1,1]){b.tri([s*.16,1.05,.002],[s*.54,.58,.002],[s*.28,.38,.002],color,84);b.sphere(s*.55,.57,.002,.09,.12,.012,color,84,8,5);}
- for(let i=0;i<7;i++){const x=-.39+i*.13;b.box(x,-.18,.004,.025,1.16,.006,i%2?color:'#7fa99f',84);}
+ b.sphere(0,1.36,0,.22,.27,.018,color,92,14,8);
+ b.tri([-.22,1.20,0],[.22,1.20,0],[.52,-.95,0],color,92);b.tri([-.22,1.20,0],[.52,-.95,0],[-.56,-.95,0],color,92);
+ for(const s of[-1,1]){b.tri([s*.16,1.05,.002],[s*.54,.58,.002],[s*.28,.38,.002],color,92);b.sphere(s*.55,.57,.002,.09,.12,.012,color,92,8,5);}
+ for(let i=0;i<7;i++){const x=-.39+i*.13;b.box(x,-.18,.004,.025,1.16,.006,i%2?color:'#7fa99f',92);}
 }
-function mtProjectionArm(b,color='#a8d8c7'){b.quad([-.04,-.04,0],[.10,-.04,0],[.54,.63,0],[.41,.69,0],color,84);b.sphere(.51,.66,.002,.09,.11,.012,color,84,8,5);}
-function mtProjectorBeam(b,color='#86b5aa'){
- const near=.025,far=.30,z0=-.5,z1=.5;for(let i=0;i<8;i++){const a=i*TAU/8,q=(i+1)*TAU/8;b.quad([Math.cos(a)*near,Math.sin(a)*near,z0],[Math.cos(q)*near,Math.sin(q)*near,z0],[Math.cos(q)*far,Math.sin(q)*far,z1],[Math.cos(a)*far,Math.sin(a)*far,z1],color,84);}
+function mtProjectionArm(b,color='#a8d8c7'){b.quad([-.04,-.04,0],[.10,-.04,0],[.54,.63,0],[.41,.69,0],color,92);b.sphere(.51,.66,.002,.09,.11,.012,color,92,8,5);}
+function mtProjectorBeam(b,color='#86b5aa',far=1.38){
+ const near=.045,z0=-.5,z1=.5;for(let i=0;i<12;i++){const a=i*TAU/12,q=(i+1)*TAU/12;b.quad([Math.cos(a)*near,Math.sin(a)*near,z0],[Math.cos(q)*near,Math.sin(q)*near,z0],[Math.cos(q)*far,Math.sin(q)*far,z1],[Math.cos(a)*far,Math.sin(a)*far,z1],color,93);}
 }
-function mtHauntGlow(b,color){b.sphere(0,0,0,.52,.52,.52,color,84,10,6);b.sphere(0,0,0,.22,.22,.22,color,84,8,5);}
-function mtWatchingEyes(b){for(const s of[-1,1]){b.sphere(s*.09,0,0,.032,.021,.008,'#b8e3d0',84,7,4);b.sphere(s*.09,0,.006,.011,.011,.005,'#e6f3ce',84,6,4);}}
+function mtProjectionAura(b){
+ const n=40,inner=.72,outer=1.;for(let i=0;i<n;i++){const a=i*TAU/n,q=(i+1)*TAU/n;b.quad([Math.cos(a)*inner,Math.sin(a)*inner,0],[Math.cos(q)*inner,Math.sin(q)*inner,0],[Math.cos(q)*outer,Math.sin(q)*outer,0],[Math.cos(a)*outer,Math.sin(a)*outer,0],'#80b3aa',93);}
+}
+function mtHauntGlow(b,color){b.sphere(0,0,0,.68,.68,.68,color,93,12,7);b.sphere(0,0,0,.28,.28,.28,color,93,10,6);}
+function mtWindowGlow(b,color){b.quad([-.48,-1.0,0],[.48,-1.0,0],[.48,1.0,0],[-.48,1.0,0],color,92);}
+function mtCryptMist(b){b.sphere(0,0,0,1.0,.32,.72,'#729d92',93,12,7);b.sphere(.55,.06,-.25,.75,.22,.52,'#92bbae',93,10,6);}
+function mtWatchingEyes(b){for(const s of[-1,1]){b.sphere(s*.09,0,0,.042,.030,.010,'#c8f3df',92,8,5);b.sphere(s*.09,0,.008,.014,.014,.006,'#f0ffcf',92,7,4);}}
 function buildMorrowStock(){
  const stock={},make=(key,fn)=>{const b=new Builder();fn(b);stock[key]=b.mesh();};
  try{
@@ -118,8 +123,9 @@ function buildMorrowStock(){
   make('clockHand',b=>{b.beam([0,0,0],[0,1,0],.035,MH.iron,41,6);b.sphere(0,0,0,.09,.09,.055,MH.brass,41,10,5);});
   make('batBody',b=>b.sphere(0,0,0,.10,.07,.26,MH.iron,42,8,5));
   make('batWing',b=>{b.tri([0,0,.12],[.9,.09,.08],[.5,-.10,-.30],MH.iron,42);b.tri([0,0,.12],[.5,-.10,-.30],[.26,-.02,-.16],MH.iron,42);});
-  make('projectionBright',b=>mtProjectionBody(b,'#a9d9c8'));make('projectionDim',b=>mtProjectionBody(b,'#789e98'));make('projectionArm',b=>mtProjectionArm(b));
-  make('projectorBeam',b=>mtProjectorBeam(b));make('glowWarm',b=>mtHauntGlow(b,'#d8b27a'));make('glowCold',b=>mtHauntGlow(b,'#8ec8b7'));make('watchingEyes',mtWatchingEyes);
+  make('projectionBright',b=>mtProjectionBody(b,'#c1f1d8'));make('projectionDim',b=>mtProjectionBody(b,'#82b5aa'));make('projectionArm',b=>mtProjectionArm(b,'#bcebd4'));make('projectionAura',mtProjectionAura);
+  make('projectorBeam',b=>mtProjectorBeam(b,'#94c9bc',1.38));make('projectorCore',b=>mtProjectorBeam(b,'#d5f3dc',.56));
+  make('glowWarm',b=>mtHauntGlow(b,'#f0c17c'));make('glowCold',b=>mtHauntGlow(b,'#83d6c3'));make('windowWarm',b=>mtWindowGlow(b,'#ffc878'));make('windowCold',b=>mtWindowGlow(b,'#91e5cf'));make('cryptMist',mtCryptMist);make('watchingEyes',mtWatchingEyes);
  }catch(error){for(const mesh of Object.values(stock))disposeMesh(mesh);throw error;}
  return stock;
 }
@@ -146,14 +152,26 @@ function morrowDrawHaunt(stock,p){
    const f=reduceMotion?.88:.76+.20*Math.sin(t*(6.1+seed*.07)+seed)+.09*Math.sin(t*(17.0+seed*.11)+seed*2.3),cold=!reduceMotion&&Math.sin(t*.43+seed*1.7)>.94;
    draw(cold?stock.glowCold:stock.glowWarm,mm(trans(x,y,z),scaling(Math.max(.45,f))),p);
   }
-  const projector=[-14.25,7.25,-1.83],target=[1.4,14.15,-10.12],dir=sub(target,projector),mid=mul(add(projector,target),.5),dist=len(dir),flutter=reduceMotion?0:Math.sin(t*7.3)+.43*Math.sin(t*16.7+1.2),visible=reduceMotion||flutter>-1.17;
-  if(visible){
-   draw(stock.projectorBeam,mm(basis(mid,dir),scaling(.72,.72,dist)),p);
-   const s=reduceMotion?2.55:2.48+.08*Math.sin(t*2.1)+.035*Math.sin(t*13.2),projection=flutter>.28?stock.projectionBright:stock.projectionDim;
-   draw(projection,mm(trans(target[0]+(reduceMotion?0:.035*Math.sin(t*11)),target[1]+(reduceMotion?0:.045*Math.sin(t*5.7)),target[2]),mm(rz(reduceMotion?-.04:-.04+.018*Math.sin(t*1.3)),scaling(s))),p);
-   const wave=reduceMotion?.18:.10+.42*smooth(-1,1,Math.sin(t*.74));draw(stock.projectionArm,mm(trans(target[0]-.28*s,target[1]+.53*s,target[2]+.006),mm(rz(wave),scaling(s*.83))),p);
-  }
-  const eyePhase=reduceMotion?-1:(t%17);if(eyePhase>12.8&&eyePhase<15.3)draw(stock.watchingEyes,mm(trans(11.1,13.48,-10.14),scaling(1.35)),p);
+  const projector=[-14.25,7.25,-1.83],target=[2.6,14.15,-10.03],dir=sub(target,projector),mid=mul(add(projector,target),.5),dist=len(dir),flutter=reduceMotion?0:Math.sin(t*5.1)+.30*Math.sin(t*12.7+1.2);
+  // Always-on, unmistakable phantasmagoria: broad haze, a bright core and
+  // a large projected figure with a corona across the mansion facade.
+  draw(stock.projectorBeam,mm(basis(mid,dir),scaling(1,1,dist)),p);
+  draw(stock.projectorCore,mm(basis(mid,dir),scaling(.64,.64,dist)),p);
+  const s=reduceMotion?3.28:3.20+.10*Math.sin(t*1.7)+.05*Math.sin(t*7.2),projection=flutter>.05?stock.projectionBright:stock.projectionDim;
+  draw(stock.projectionAura,mm(trans(target[0],target[1]+.15,target[2]-.008),scaling(3.55,4.35,1)),p);
+  draw(projection,mm(trans(target[0]+(reduceMotion?0:.07*Math.sin(t*8.4)),target[1]+(reduceMotion?0:.07*Math.sin(t*4.1)),target[2]),mm(rz(reduceMotion?-.03:-.03+.025*Math.sin(t*1.1)),scaling(s))),p);
+  const wave=reduceMotion?.22:.18+.48*smooth(-1,1,Math.sin(t*.62));
+  draw(stock.projectionArm,mm(trans(target[0]-.28*s,target[1]+.53*s,target[2]+.012),mm(rz(wave),scaling(s*.90))),p);
+  draw(stock.projectionArm,mm(trans(target[0]+.28*s,target[1]+.53*s,target[2]+.011),mm(rz(-wave),scaling(-s*.90,s*.90,s*.90))),p);
+  // Six facade windows flicker independently. A brief cold-green surge ties
+  // them together without becoming a strobe.
+  const surgePhase=reduceMotion?0:t%13,surge=!reduceMotion&&surgePhase>9.2&&surgePhase<11.0;
+  const windows=[[-4.15,13.43,-10.17,0],[-1.42,13.43,-10.17,2],[4.04,13.43,-10.17,4],[9.50,13.43,-10.17,6],[-1.42,9.35,-10.17,9],[6.77,9.35,-10.17,12]];
+  for(const [x,y,z,seed]of windows){const f=reduceMotion?.92:.82+.18*Math.sin(t*(3.1+seed*.04)+seed*1.7)+.08*Math.sin(t*(8.7+seed*.03));draw(surge||Math.sin(t*.31+seed)>.88?stock.windowCold:stock.windowWarm,mm(trans(x,y,z),scaling(.88,Math.max(.70,f),1)),p);}
+  // Ectoplasmic vapour now makes both undercroft mouths read as haunted even
+  // when the projection is out of frame.
+  for(const [x,z,seed]of[[-11.2,-16,1],[17.0,-16,5],[3,-16,9]]){const drift=reduceMotion?0:Math.sin(t*.37+seed)*.34;draw(stock.cryptMist,mm(trans(x+drift,2.0,z),scaling(1.15+seed*.025,.72,1.30)),p);}
+  const eyePhase=reduceMotion?-1:(t%12);if(eyePhase>7.6&&eyePhase<10.2)draw(stock.watchingEyes,mm(trans(11.1,13.48,-10.05),scaling(2.6)),p);
  }
 }
 function morrowDrawFormation(scene,train,p){

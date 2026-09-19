@@ -1,5 +1,27 @@
 # Morrow House & the Midnight Line
 
+## Fourth pass: visible spectral rendering
+
+The previous phantasmagoria geometry was present but used material 84. That
+material belongs to Moonlight Drive-In's film-beam shader and deliberately
+returns zero alpha when the cinema film texture is not active. The effect could
+therefore pass geometry tests and still be invisible in Morrow House.
+
+Morrow now has two dedicated transparent renderer materials: 92 for luminous
+spectral forms and 93 for volumetric haze. They are routed through the existing
+sorted transparent pass, do not cast opaque shadows, and are independent of
+Moonlight media state. The shaders are intentionally time-independent so
+reduced-motion mode remains genuinely frozen.
+
+The Mourning Lady is now staged as a dominant facade event rather than an
+easter egg: an enlarged projected figure, a luminous corona, a broad outer
+beam and a brighter inner beam remain visible continuously. Both arms rise and
+fall slowly. Six mansion windows flicker independently, with a synchronized
+cold-green surge during a short part of a thirteen-second cycle. Three pools of
+spectral vapour inhabit the undercroft portals, and the watching eyes are larger
+and recur during a longer visible interval. Existing cemetery procession,
+backwards clock and bats remain.
+
 ## Third pass: the living phantasmagoria
 
 The haunting now behaves like part of the miniature rather than a layer of
@@ -23,8 +45,10 @@ than announce every trick immediately.
 The phantasmagoria is a tenth named viewpoint. No timers, frame listeners,
 runtime geometry allocation, images, audio assets, network requests or storage
 were added. All moving haunting pieces reuse the room's existing frame clock and
-cached stock meshes; transparent projection, beam, halos and watching eyes use
-the renderer's existing material-84 effect path.
+cached stock meshes. Projection forms and window light use dedicated material
+92; volumetric beams, lamp halos and crypt vapour use material 93. Both flow
+through the renderer's existing sorted transparent path without relying on the
+Moonlight film texture.
 
 ## Second pass: the terraced estate
 
@@ -98,7 +122,7 @@ npm run dev
 ```
 
 The room-specific checks cover finite geometry, balanced transforms, ten
-viewpoints, locomotive labeling and power, transparent glazing, projection/effect materials, route closure,
+viewpoints, locomotive labeling and power, transparent glazing, dedicated spectral shaders and transparent routing, route closure,
 portal clearance, coach height, cutaways, coupling transforms, frozen reduced-
 motion poses and no geometry allocation while drawing. The original 650,000
 room-vertex budget is retained; an additional assertion applies that same limit
