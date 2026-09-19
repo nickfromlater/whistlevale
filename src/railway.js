@@ -345,14 +345,13 @@ function uploadTriangles(data,compact=true,owned=false){
 // projector haze; 92/93 are Morrow spectral light and volumetric haze.
 // Transparent triangles keep a separate, sortable stream; opaque triangles
 // share identical vertices without changing their emitted order or attributes.
-const transparentMaterial=m=>m===76||(m>=78&&m<=80)||m===82||m===84||m===92||m===93;
 function upload(data,compact=true){
- let first=-1;for(let i=9;i<data.length;i+=36)if(transparentMaterial(data[i])){first=i-9;break;}
+ let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84||data[i]===92||data[i]===93){first=i-9;break;}
  if(first<0)return uploadTriangles(data,compact);
  // A few transparent panes must not duplicate the entire scenery in JS arrays.
- let clearLength=0;for(let i=9;i<data.length;i+=36)if(transparentMaterial(data[i]))clearLength+=36;
+ let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84||data[i]===92||data[i]===93)clearLength+=36;
  const opaque=new Float32Array(data.length-clearLength),clear=[];let offset=0;
- for(let i=0;i<data.length;i+=36){const transparent=transparentMaterial(data[i+9]);for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
+ for(let i=0;i<data.length;i+=36){const m=data[i+9],transparent=m===76||(m>=78&&m<=80)||m===82||m===84||m===92||m===93;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
  let mesh,glass;
  try{
   mesh=uploadTriangles(opaque,compact,true);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
