@@ -211,6 +211,11 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  vec3 p=vPos,base=vColor;float rough=.78,metal=0.,em=0.;
  if(m==83.){frag=vec4(moonlightPicture(vUV,uTime),1.);return;}
  if(m==84.){frag=moonlightBeam(vUV,uNight);return;}
+ // Dedicated Morrow effects. Material 84 is Moonlight film haze and can be
+ // fully transparent when that film is not active, so the haunted room must
+ // never reuse it for its own apparitions.
+ if(m==92.){float grain=.82+.18*noise(p*5.7);float alpha=clamp((.62+.10*uNight)*grain,.48,.82);vec3 ghost=pow(max(base,vec3(.001)),vec3(1.18))*(1.75+1.35*uNight);frag=vec4(min(ghost,vec3(2.35)),alpha);return;}
+ if(m==93.){float grain=.72+.28*noise(p*2.15);float alpha=(.12+.10*uNight)*grain;vec3 haze=pow(max(base,vec3(.001)),vec3(1.22))*(1.35+1.10*uNight);frag=vec4(min(haze,vec3(1.85)),alpha);return;}
  float dusk=smoothstep(.08,.62,uNight),deepNight=smoothstep(.70,1.,uNight),sunlight=pow(1.-dusk,1.7);
  if(m==1.||m==11.){rough=.3;metal=.72;}
  if(m==2.){float w=noise(vec3(p.x*.75,p.y*12.,p.z*8.));base*=.87+.21*w;rough=.55;}
@@ -336,16 +341,17 @@ function uploadTriangles(data,compact=true,owned=false){
   return mesh;
  }catch(error){disposeMesh(mesh);throw error;}finally{gl.bindVertexArray(null);}
 }
-// Material 76 is glazing; 78–80/82 are celestial effects; 84 is projector haze.
+// Material 76 is glazing; 78–80/82 are celestial effects; 84 is Moonlight
+// projector haze; 92/93 are Morrow spectral light and volumetric haze.
 // Transparent triangles keep a separate, sortable stream; opaque triangles
 // share identical vertices without changing their emitted order or attributes.
 function upload(data,compact=true){
- let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84){first=i-9;break;}
+ let first=-1;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84||data[i]===92||data[i]===93){first=i-9;break;}
  if(first<0)return uploadTriangles(data,compact);
  // A few transparent panes must not duplicate the entire scenery in JS arrays.
- let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84)clearLength+=36;
+ let clearLength=0;for(let i=9;i<data.length;i+=36)if(data[i]===76||(data[i]>=78&&data[i]<=80)||data[i]===82||data[i]===84||data[i]===92||data[i]===93)clearLength+=36;
  const opaque=new Float32Array(data.length-clearLength),clear=[];let offset=0;
- for(let i=0;i<data.length;i+=36){const transparent=data[i+9]===76||(data[i+9]>=78&&data[i+9]<=80)||data[i+9]===82||data[i+9]===84;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
+ for(let i=0;i<data.length;i+=36){const m=data[i+9],transparent=m===76||(m>=78&&m<=80)||m===82||m===84||m===92||m===93;for(let j=0;j<36;j++)if(transparent)clear.push(data[i+j]);else opaque[offset++]=data[i+j];}
  let mesh,glass;
  try{
   mesh=uploadTriangles(opaque,compact,true);glass=uploadTriangles(clear,false);mesh.opaqueCount=mesh.count;mesh.count=data.length/12;mesh.glass=glass;mesh.bytes+=glass.bytes;
