@@ -35,6 +35,7 @@ const report=run(`(()=>{
  assert.ok(scene.spots.some(s=>s.name==='The horologist’s garden'));
  assert.ok(scene.spots.some(s=>s.name==='The moonwater landing'));
  assert.ok(scene.spots.some(s=>s.name==='The phantasmagoria'));
+ const phantasmagoria=scene.spots.find(s=>s.name==='The phantasmagoria');assert.ok(phantasmagoria.target[1]>10&&phantasmagoria.distance<=40,'phantasmagoria viewpoint frames the facade event closely');
  assert.equal(b.stack.length,0,'room transform stack balanced');assert.equal(floorBuilder.stack.length,0,'shell transform stack balanced');
  assert.equal(HOUSE_ROOMS.morrow.trainCollection,false,'bespoke stock is not replaced by the cabinet');
  assert.equal(collectionTrainLabel('morrow').name,'The Mourning Star','correct locomotive label');

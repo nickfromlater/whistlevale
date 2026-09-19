@@ -756,7 +756,7 @@ function morrowRoom(scene,b){
   {name:'The undercroft',target:[18,4,-16],distance:20,phoneDistance:34,pitch:.18,yaw:1.32,detail:'A genuine railway passage through the house, with clear portals, vaulted stonework and no painted-on darkness.'},
   {name:'The horologist’s garden',target:[30,3,12],distance:29,phoneDistance:52,pitch:.68,yaw:.42,detail:'A labyrinth in yew around a brass armillary. The way in is clear; the way out deserves another look.'},
   {name:'The moonwater landing',target:[-1,1,16],distance:32,phoneDistance:57,pitch:.31,yaw:.14,detail:'A moored skiff, worn landing and a narrow stream beneath a real railway bridge. No one has come for the boat.'},
-  {name:'The phantasmagoria',target:[-10,8,-7],distance:28,phoneDistance:49,pitch:.31,yaw:-.48,detail:'A brass magic lantern wakes by itself, throwing a moving Mourning Lady across the mansion while its glass slides sit untouched.'},
+  {name:'The phantasmagoria',target:[-3.8,11.7,-7.8],distance:38,phoneDistance:62,pitch:.24,yaw:.16,phonePitch:.34,phoneYaw:.08,detail:'A brass magic lantern wakes by itself. Its broad spectral beam, facade-scale Mourning Lady and flickering windows now fill the view together.'},
   {name:'The haunted parlour',target:[0,1,-6],distance:167,phoneDistance:420,pitch:.52,yaw:.28,detail:'A miniature estate in a Victorian collector’s room. Moonlit curtains, portraits, a grandfather clock and a fire still burning.'}
  ];
 }

@@ -13,8 +13,9 @@ sorted transparent pass, do not cast opaque shadows, and are independent of
 Moonlight media state. The shaders are intentionally time-independent so
 reduced-motion mode remains genuinely frozen.
 
-The Mourning Lady is now staged as a dominant facade event rather than an
-easter egg: an enlarged projected figure, a luminous corona, a broad outer
+The named Phantasmagoria viewpoint is reframed to hold the physical magic
+lantern and projected facade together on desktop and phone. The Mourning Lady
+is now staged as a dominant facade event rather than an easter egg: an enlarged projected figure, a luminous corona, a broad outer
 beam and a brighter inner beam remain visible continuously. Both arms rise and
 fall slowly. Six mansion windows flicker independently, with a synchronized
 cold-green surge during a short part of a thirteen-second cycle. Three pools of
