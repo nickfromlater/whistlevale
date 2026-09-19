@@ -97,6 +97,19 @@ function mtGhost(b){
  for(let j=0;j<rows;j++)for(let i=0;i<n;i++)b.quad(point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),shade('#b7c8b7',.88+.08*Math.cos(i*TAU/n*6)),76);
  b.sphere(0,1.43,.10,.17,.21,.17,'#b7c8b7',76,12,7);for(const s of[-1,1])b.sphere(s*.061,1.45,.249,.019,.030,.012,'#3c5452',42,7,4);
 }
+
+function mtProjectionBody(b,color='#9fd0bf'){
+ b.sphere(0,1.36,0,.22,.27,.018,color,84,14,8);
+ b.tri([-.22,1.20,0],[.22,1.20,0],[.52,-.95,0],color,84);b.tri([-.22,1.20,0],[.52,-.95,0],[-.56,-.95,0],color,84);
+ for(const s of[-1,1]){b.tri([s*.16,1.05,.002],[s*.54,.58,.002],[s*.28,.38,.002],color,84);b.sphere(s*.55,.57,.002,.09,.12,.012,color,84,8,5);}
+ for(let i=0;i<7;i++){const x=-.39+i*.13;b.box(x,-.18,.004,.025,1.16,.006,i%2?color:'#7fa99f',84);}
+}
+function mtProjectionArm(b,color='#a8d8c7'){b.quad([-.04,-.04,0],[.10,-.04,0],[.54,.63,0],[.41,.69,0],color,84);b.sphere(.51,.66,.002,.09,.11,.012,color,84,8,5);}
+function mtProjectorBeam(b,color='#86b5aa'){
+ const near=.025,far=.30,z0=-.5,z1=.5;for(let i=0;i<8;i++){const a=i*TAU/8,q=(i+1)*TAU/8;b.quad([Math.cos(a)*near,Math.sin(a)*near,z0],[Math.cos(q)*near,Math.sin(q)*near,z0],[Math.cos(q)*far,Math.sin(q)*far,z1],[Math.cos(a)*far,Math.sin(a)*far,z1],color,84);}
+}
+function mtHauntGlow(b,color){b.sphere(0,0,0,.52,.52,.52,color,84,10,6);b.sphere(0,0,0,.22,.22,.22,color,84,8,5);}
+function mtWatchingEyes(b){for(const s of[-1,1]){b.sphere(s*.09,0,0,.032,.021,.008,'#b8e3d0',84,7,4);b.sphere(s*.09,0,.006,.011,.011,.005,'#e6f3ce',84,6,4);}}
 function buildMorrowStock(){
  const stock={},make=(key,fn)=>{const b=new Builder();fn(b);stock[key]=b.mesh();};
  try{
@@ -105,6 +118,8 @@ function buildMorrowStock(){
   make('clockHand',b=>{b.beam([0,0,0],[0,1,0],.035,MH.iron,41,6);b.sphere(0,0,0,.09,.09,.055,MH.brass,41,10,5);});
   make('batBody',b=>b.sphere(0,0,0,.10,.07,.26,MH.iron,42,8,5));
   make('batWing',b=>{b.tri([0,0,.12],[.9,.09,.08],[.5,-.10,-.30],MH.iron,42);b.tri([0,0,.12],[.5,-.10,-.30],[.26,-.02,-.16],MH.iron,42);});
+  make('projectionBright',b=>mtProjectionBody(b,'#a9d9c8'));make('projectionDim',b=>mtProjectionBody(b,'#789e98'));make('projectionArm',b=>mtProjectionArm(b));
+  make('projectorBeam',b=>mtProjectorBeam(b));make('glowWarm',b=>mtHauntGlow(b,'#d8b27a'));make('glowCold',b=>mtHauntGlow(b,'#8ec8b7'));make('watchingEyes',mtWatchingEyes);
  }catch(error){for(const mesh of Object.values(stock))disposeMesh(mesh);throw error;}
  return stock;
 }
@@ -122,6 +137,23 @@ function morrowDrawHaunt(stock,p){
  for(let i=0;i<5;i++){
   const a=t*.21+i*1.256,base=mm(trans(-6+Math.cos(a)*8,28+Math.sin(a*2+i)*.7,-14+Math.sin(a)*5),ry(-a));draw(stock.batBody,base,p);
   for(const s of[-1,1])draw(stock.batWing,mm(base,mm(rz(s*(reduceMotion?.3:Math.sin(t*5+i)*.55)),scaling(s,1,1))),p);
+ }
+ const walk=reduceMotion?.42:(t*.028)%1,processX=mix(-34,-19,smooth(0,1,walk)),processZ=10.8+Math.sin(walk*PI)*2.1;
+ draw(stock.ghost,mm(trans(processX,3.12,processZ),mm(ry(-.72+.18*Math.sin(t*.2)),scaling(.42))),p);
+ if(p===mainProgram){
+  const lamps=[[-1.55,3.85,4.3,0],[7.55,3.85,4.3,2],[-32.8,5.25,-1.22,5],[27,7.6,-5.3,7],[-23,4.3,21,11],[39.3,3.9,17.9,13],[-15.8,4.15,-3.7,17]];
+  for(const [x,y,z,seed]of lamps){
+   const f=reduceMotion?.88:.76+.20*Math.sin(t*(6.1+seed*.07)+seed)+.09*Math.sin(t*(17.0+seed*.11)+seed*2.3),cold=!reduceMotion&&Math.sin(t*.43+seed*1.7)>.94;
+   draw(cold?stock.glowCold:stock.glowWarm,mm(trans(x,y,z),scaling(Math.max(.45,f))),p);
+  }
+  const projector=[-14.25,7.25,-1.83],target=[1.4,14.15,-10.12],dir=sub(target,projector),mid=mul(add(projector,target),.5),dist=len(dir),flutter=reduceMotion?0:Math.sin(t*7.3)+.43*Math.sin(t*16.7+1.2),visible=reduceMotion||flutter>-1.17;
+  if(visible){
+   draw(stock.projectorBeam,mm(basis(mid,dir),scaling(.72,.72,dist)),p);
+   const s=reduceMotion?2.55:2.48+.08*Math.sin(t*2.1)+.035*Math.sin(t*13.2),projection=flutter>.28?stock.projectionBright:stock.projectionDim;
+   draw(projection,mm(trans(target[0]+(reduceMotion?0:.035*Math.sin(t*11)),target[1]+(reduceMotion?0:.045*Math.sin(t*5.7)),target[2]),mm(rz(reduceMotion?-.04:-.04+.018*Math.sin(t*1.3)),scaling(s))),p);
+   const wave=reduceMotion?.18:.10+.42*smooth(-1,1,Math.sin(t*.74));draw(stock.projectionArm,mm(trans(target[0]-.28*s,target[1]+.53*s,target[2]+.006),mm(rz(wave),scaling(s*.83))),p);
+  }
+  const eyePhase=reduceMotion?-1:(t%17);if(eyePhase>12.8&&eyePhase<15.3)draw(stock.watchingEyes,mm(trans(11.1,13.48,-10.14),scaling(1.35)),p);
  }
 }
 function morrowDrawFormation(scene,train,p){

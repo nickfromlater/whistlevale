@@ -1,5 +1,31 @@
 # Morrow House & the Midnight Line
 
+## Third pass: the living phantasmagoria
+
+The haunting now behaves like part of the miniature rather than a layer of
+generic effects. A fully modeled Victorian magic lantern sits on the old
+sacristy terrace with turned tripod legs, a walnut table, chimney, focusing
+bellows, glass lens, hand crank, slide gate, operator's stool and a box of
+painted glass plates. Its active beam is a cached translucent mesh aimed at the
+mansion facade, where the projected Mourning Lady flickers between bright and
+dim registrations, drifts slightly and raises one hand. The projection and beam
+freeze to a stable pose when reduced motion is enabled.
+
+Seven important gas and oil sources now receive independent cached halos. Their
+flicker uses different frequencies and phases so the estate never pulses in
+lockstep. Rare beats shift individual lamps to a corpse-green glow, suggesting
+the magic lantern is drawing something other than electricity. A separate
+apparition makes a slow procession through the family plot, while a pair of eyes
+appears in an unlit east window only during a short interval of a much longer
+cycle. The infrequency is deliberate: the room should reward lingering rather
+than announce every trick immediately.
+
+The phantasmagoria is a tenth named viewpoint. No timers, frame listeners,
+runtime geometry allocation, images, audio assets, network requests or storage
+were added. All moving haunting pieces reuse the room's existing frame clock and
+cached stock meshes; transparent projection, beam, halos and watching eyes use
+the renderer's existing material-84 effect path.
+
 ## Second pass: the terraced estate
 
 A haunted Victorian estate inside a collector's candlelit parlour. The station
@@ -24,7 +50,7 @@ A hollow mausoleum and small weeping angel sit beside the family plot.
 The foreground moonwater pond contains a hollow planked skiff and worn landing.
 Its stream continues beneath an actual railway bridge. The station platform is
 placed from the running rail, and a yew labyrinth surrounds a brass armillary.
-Nine viewpoints include the horologist's garden and moonwater landing.
+Ten viewpoints include the horologist's garden, moonwater landing and the phantasmagoria terrace.
 
 The larger parlour includes modeled bookcases and book spines, shaped curtain
 folds and tiebacks, a moon window, open fireplace, grandfather clock, leather
@@ -45,7 +71,7 @@ cabinet locomotive. The public `cars` value includes the tender: the default
 three vehicles behind the locomotive are one tender and two coaches.
 
 Cab and coach roofs support the house cutaway. Wheels, quartered rods, bogies
-and couplings use the existing circuit transforms. Six apparitions, five bats,
+and couplings use the existing circuit transforms. Seven apparitions, five bats,
 two clock hands and at most six steam puffs reuse cached meshes. Decorative
 haunting freezes under reduced motion; plume draws are omitted inside the crypt.
 There are no new animation listeners, intervals, network requests or storage.
@@ -53,7 +79,7 @@ There are no new animation listeners, intervals, network requests or storage.
 ## Source and review
 
 - `src/rooms/morrow.js`: terrain, structures, shell, route and room registration.
-- `src/trains/morrow.js`: bespoke stock, motion and cached haunting geometry.
+- `src/trains/morrow.js`: bespoke stock, motion, cached haunting geometry and phantasmagoria effects.
 - `scripts/morrow-qa.mjs`: checks against the actual shared repository runtime.
 - `index.html`: both classic modules load before house startup.
 
@@ -71,8 +97,8 @@ npm run check:contributions -- --json
 npm run dev
 ```
 
-The room-specific checks cover finite geometry, balanced transforms, nine
-viewpoints, locomotive labeling and power, transparent glazing, route closure,
+The room-specific checks cover finite geometry, balanced transforms, ten
+viewpoints, locomotive labeling and power, transparent glazing, projection/effect materials, route closure,
 portal clearance, coach height, cutaways, coupling transforms, frozen reduced-
 motion poses and no geometry allocation while drawing. The original 650,000
 room-vertex budget is retained; an additional assertion applies that same limit

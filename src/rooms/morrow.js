@@ -714,8 +714,30 @@ function mhOvergrowth(b){
  b.beam([x,y+3.05,z+.15],[x,y+3.04,z+.36],.032,MH.brass,41,5);
  for(const [xx,zz]of[[10.7,8],[17.3,8]])mhLantern(b,xx,morrowHeight(xx,zz),zz,2.3,.6);
 }
+
+function mhPhantasmagoria(b){
+ // A working miniature phantasmagoria lantern occupies the old sacristy terrace.
+ // Its moving beam and apparition are drawn from cached meshes in the stock module.
+ const x=-15.8,z=-3.7,y=morrowHeight(x,z)+.18;b.push(x,y,z,0,.92);
+ b.box(0,.12,0,4.8,.24,3.7,MH.stone,4);for(const s of[-1,1])b.box(s*2.18,.62,0,.34,1.15,3.4,MH.stoneLight,4);
+ for(const s of[-1,1])for(const q of[-1,1])mhFinial(b,s*2.20,1.22,q*1.48,.36);
+ for(const [xx,zz]of[[-1.15,-.72],[1.15,-.72],[0,.94]])mhLathe(b,xx,.2,zz,[[0,.17],[.18,.22],[.50,.10],[1.25,.09],[1.43,.20]],MH.wood,22,8);
+ b.box(0,1.72,0,3.25,.22,2.15,MH.wood,22);for(const s of[-1,1])b.box(s*1.48,1.91,0,.05,.38,2.05,MH.brass,41);
+ b.box(0,2.55,.05,1.38,1.25,1.75,'#4b353b',22);b.box(0,2.55,.95,1.05,.92,.08,MH.brass,41);
+ for(const s of[-1,1])b.box(s*.58,2.55,.08,.08,1.08,1.58,MH.brass,41);
+ b.cylinder(0,3.52,-.20,.23,.17,1.12,MH.iron,41,10);b.cylinder(0,4.12,-.20,.34,.18,.20,MH.brass,41,10);
+ for(let i=0;i<4;i++)b.box(0,2.55,1.12+i*.14,1.12-i*.12,.78-i*.08,.10,i%2?MH.iron:'#705463',22);
+ b.cylinder(0,2.55,1.72,.43,.31,.62,MH.brass,41,18,PI/2);b.cylinder(0,2.55,2.05,.27,.27,.05,'#9ac1b2',76,18,PI/2);
+ mhRing(b,0,2.55,2.10,.31,.045,MH.gold,41,22);
+ mhRing(b,-.93,2.72,-.55,.52,.035,MH.brass,41,18);for(let i=0;i<8;i++){const a=i*TAU/8;b.beam([-.93,2.72,-.55],[-.93+Math.cos(a)*.48,2.72+Math.sin(a)*.48,-.55],.020,MH.brass,41,5);}
+ b.beam([-1.45,2.72,-.55],[-1.78,2.72,-.55],.07,MH.wood,22,7);b.sphere(-1.92,2.72,-.55,.14,.14,.14,MH.wood,22,8,5);
+ b.box(.95,2.55,-.53,.45,.86,.10,MH.brass,41);for(let j=0;j<3;j++)b.box(1.10,2.30+j*.25,-.47,.46,.14,.035,'#8e6a54',22);
+ b.cylinder(-1.55,.72,.98,.56,.56,.18,'#654051',23,14);for(const s of[-1,1])b.box(-1.55+s*.40,.35,.98,.09,.70,.09,MH.iron,41);
+ b.box(1.48,.53,.87,1.20,.70,.84,MH.wood,22);for(let i=0;i<5;i++)b.box(1.10+i*.18,.93,.87,.11,.55,.62,i%2?'#74867f':'#8d6756',76);
+ mhLantern(b,-2.65,.05,-1.25,2.0,.58);b.pop();
+}
 function morrowRoom(scene,b){
- mhParlour(b);mhTerrain(b);mhPaths(b);mhRails(b);mhCrypt(b);mhMansion(b);mhConservatory(b);mhAbbey(b);mhGraveyard(b);mhPond(b);mhStation(b);mhOvergrowth(b);mhMaze(b);mhWillow(b);mhTerraceGarden(b);mhGalleryBridge(b);mhEstatePlanting(b);
+ mhParlour(b);mhTerrain(b);mhPaths(b);mhRails(b);mhCrypt(b);mhMansion(b);mhConservatory(b);mhAbbey(b);mhGraveyard(b);mhPond(b);mhStation(b);mhOvergrowth(b);mhMaze(b);mhWillow(b);mhTerraceGarden(b);mhGalleryBridge(b);mhEstatePlanting(b);mhPhantasmagoria(b);
  for(const [x,z,h,s]of[[-43,-20,10,2],[-22,-28,8,6],[23,-28,9,4],[44,-14,9,3],[45,10,8,6],[-49,7,6,8],[36,28,6,9],[-9,-29,7,1]]){if(morrowRailDistance(x,z)>2)mhTree(b,x,morrowHeight(x,z),z,h,s);}
  // Hand-placed small stories: mushrooms, fallen masonry, autumn leaves.
  for(let i=0;i<110;i++){
@@ -734,6 +756,7 @@ function morrowRoom(scene,b){
   {name:'The undercroft',target:[18,4,-16],distance:20,phoneDistance:34,pitch:.18,yaw:1.32,detail:'A genuine railway passage through the house, with clear portals, vaulted stonework and no painted-on darkness.'},
   {name:'The horologist’s garden',target:[30,3,12],distance:29,phoneDistance:52,pitch:.68,yaw:.42,detail:'A labyrinth in yew around a brass armillary. The way in is clear; the way out deserves another look.'},
   {name:'The moonwater landing',target:[-1,1,16],distance:32,phoneDistance:57,pitch:.31,yaw:.14,detail:'A moored skiff, worn landing and a narrow stream beneath a real railway bridge. No one has come for the boat.'},
+  {name:'The phantasmagoria',target:[-10,8,-7],distance:28,phoneDistance:49,pitch:.31,yaw:-.48,detail:'A brass magic lantern wakes by itself, throwing a moving Mourning Lady across the mansion while its glass slides sit untouched.'},
   {name:'The haunted parlour',target:[0,1,-6],distance:167,phoneDistance:420,pitch:.52,yaw:.28,detail:'A miniature estate in a Victorian collector’s room. Moonlit curtains, portraits, a grandfather clock and a fire still burning.'}
  ];
 }
