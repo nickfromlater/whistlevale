@@ -47,9 +47,9 @@ const report=run(`(()=>{
  assert.ok(stock.projectorBeam.materials[93]>0&&stock.projectorCore.materials[93]>0,'projection beams use dedicated volumetric haze');
  assert.ok(stock.glowWarm.materials[93]>0&&stock.glowCold.materials[93]>0&&stock.watchingEyes.materials[92]>0,'haunting lights use dedicated transparent passes');
  assert.ok(stock.windowWarm.materials[92]>0&&stock.windowCold.materials[92]>0&&stock.cryptMist.materials[93]>0,'windows and crypt mist use spectral materials');
- assert.match(railwaySource,/if\(m==92\.\)/,'spectral shader is present');
- assert.match(railwaySource,/if\(m==93\.\)/,'spectral haze shader is present');
- assert.match(railwaySource,/m===92\|\|m===93/,'spectral materials enter the transparent sorter');
+ assert.ok(railwaySource.includes('if(m==92.)'),'spectral shader is present');
+ assert.ok(railwaySource.includes('if(m==93.)'),'spectral haze shader is present');
+ assert.ok(railwaySource.includes('m===92||m===93'),'spectral materials enter the transparent sorter');
  assert.ok(stock.engine.count>1000&&stock.coach.count>1000,'bespoke stock exists');
  assert.ok(room.bounds.max[1]<34&&room.bounds.min[1]>=FLOOR-.01,'world vertical bounds');
  assert.ok(len(sub(MORROW_ROUTE.at(0).p,MORROW_ROUTE.at(MORROW_ROUTE.length).p))<.02,'closed circuit');
