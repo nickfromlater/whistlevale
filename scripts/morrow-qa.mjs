@@ -12,7 +12,7 @@ const runtime=await communityContext();
 await loadContributionDefinitions(runtime,JSON.parse(await read('contributions/world.json')));
 prepareCommunityGeometry(runtime);
 const {context,run}=runtime,meshes=[],draws=[],links=[];
-context.assert=assert;
+context.assert=assert;context.railwaySource=railwaySource;
 context.morrowUpload=data=>{
  assert.equal(data.length%36,0,'complete triangles');
  assert.ok(data.length>0&&data.every(Number.isFinite),'finite geometry');
