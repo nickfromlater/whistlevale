@@ -1,0 +1,25 @@
+name: Orrery native room review
+on:
+  push:
+    branches: [codex/orrery-rollercoaster-room]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Temporary bootstrap for the isolated offline review workstation.
+      # This contains tracked public source only, never .git or runner credentials.
+      - name: Package tracked public review source
+        run: git archive --format=tar.gz HEAD > /tmp/orrery-review-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orrery-review-source
+          path: /tmp/orrery-review-source.tar.gz
+          retention-days: 1
+      - run: npm test
