@@ -141,7 +141,7 @@ registerHouseRoom('venetian',{
  description:'A winding turquoise canal, covered bridges, copper domes and quietly passing gondolas. The lagoon railway circles a Venetian city in miniature.',
  color:'#6fa9a2',ambient:'coast',target:[0,4,0],distance:160,phoneDistance:280,pitch:.60,yaw:.20,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Venetian miniature and salon, with agent assistance.'}],
- map:{plot:'east-6',scale:.40,footprint:[158,130],focus:[0,4,0]},
+ map:{plot:'east-7',scale:.40,footprint:[158,130],focus:[0,4,0]},
  // Fill every shader light slot: entering from another room must not retain its lights.
  lights:[[-34,28,-8],[34,28,-8],[0,28,29],[-68,4,-43],[68,4,-43],[0,26,29]],
  layoutLights:[[0,6.8,0],[-28,4.9,venetianCenter(-28)-8.4],[36,4.9,venetianCenter(36)+8.4],[19,8,-14],[35,23,-24],[-30,5,19],[-39,5,-14],[43,5,14]],

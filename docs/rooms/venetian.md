@@ -1,7 +1,7 @@
 # The Venetian Salon · La Serenissima
 
 Open `index.html?room=venetian`, select **The Venetian Salon** in the room
-picker, or enter its **east-6** plot on the live house map. This is an original,
+picker, or enter its **east-7** plot on the live house map. This is an original,
 compressed Venetian fantasy in a collector's salon, not a reconstruction of
 Venice, a geographically accurate Rialto or a historical railway claim.
 

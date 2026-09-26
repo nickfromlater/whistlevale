@@ -12,7 +12,7 @@ const sceneReport=state.run(`(()=>{
  assert.equal(new Set(s.movingParts.map(p=>p.mesh)).size,13,'each part owns a distinct mesh');
  assert.ok(s.spots.every(p=>p.phoneDistance>p.distance&&p.target.every(Number.isFinite)));
  assert.ok(validateCredits(HOUSE_ROOMS.venetian.credits).some(c=>c.handle==='nickfromlater'));
- assert.equal(HOUSE_ROOMS.venetian.map.plot,'east-6');assert.equal(HOUSE_ROOMS.venetian.ambient,'coast');
+ assert.equal(HOUSE_ROOMS.venetian.map.plot,'east-7');assert.equal(HOUSE_ROOMS.venetian.ambient,'coast');
  assert.equal(houseRoomLights('venetian').length,6,'overwrite every room-light uniform slot');assert.equal(houseLayoutLights('venetian').length,8,'overwrite every miniature-light uniform slot');
  assert.ok([...houseRoomLights('venetian').flat(),...houseLayoutLights('venetian').flat()].every(Number.isFinite),'finite authored lights');
  assert.equal(s.trains[0].stock,'coast');assert.equal(s.trains[0].type,'steam');
