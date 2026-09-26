@@ -1,9 +1,7 @@
 name: Venetian room review
 on:
-  push:
-    branches: [codex/venetian-canal-room]
   pull_request:
-    paths: ['src/rooms/venetian*.js', 'scripts/venetian-*.mjs', 'scripts/venetian-*.cjs', '.github/workflows/venetian-review.yml']
+    paths: ['src/rooms/venetian*.js', 'scripts/venetian-*.mjs', 'scripts/venetian-*.cjs', '.github/workflows/venetian-review.yml', 'index.html', 'src/railway.js']
 permissions:
   contents: read
 concurrency:
@@ -12,11 +10,18 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Snapshot tracked source for reproducible native review
+        run: git archive --format=tar.gz --output=/tmp/whistlevale-source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: venetian-source
+          path: /tmp/whistlevale-source.tar.gz
+          retention-days: 1
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -40,9 +45,20 @@ jobs:
           name: venetian-native-views
           path: evidence/venetian/
           retention-days: 14
+  geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
       - name: Full checks and byte-exact geometry comparison
-        if: ${{ !cancelled() }}
         run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
           npm test > evidence/venetian/npm-test.txt 2>&1
           npm run test:geometry:full > evidence/venetian/geometry-full.txt 2>&1
           npm run check:contributions -- --json > evidence/venetian/contributions.txt
