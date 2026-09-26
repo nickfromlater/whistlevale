@@ -110,12 +110,23 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   const download=await downloading,saved=path.resolve(out,'whistlevale.html');await download.saveAs(saved);
   const packed=fs.readFileSync(saved,'utf8');
   assert.ok(packed.includes('orreryBoardFromStation')&&packed.includes('orreryClockwork'));
+  // Release the all-room review context before opening another full house.
+  // Keep the file page foregrounded so its native entry transition receives RAF.
+  await context.close();
   const portableContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1});
   await portableContext.addInitScript(()=>{const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=fn=>fn.name==='animate'?0:raf(fn);});
   await portableContext.setOffline(true);const portable=await portableContext.newPage();portable.setDefaultTimeout(120000);
   portable.on('pageerror',error=>errors.push('portable: '+String(error)));
+  const portableConsole=[];portable.on('console',message=>{if(['error','warning'].includes(message.type()))portableConsole.push(message.text());});
   await portable.goto(pathToFileURL(saved).href+'?room=orrery',{waitUntil:'load',timeout:120000});
-  await portable.waitForFunction(()=>window.READY&&hobby.room==='orrery'&&!hobby.transition,null,{timeout:120000});
+  await portable.bringToFront();
+  try{
+   await portable.waitForFunction(()=>window.READY&&hobby.room==='orrery'&&!hobby.transition,null,{timeout:120000});
+  }catch(error){
+   report.portableFailure={console:portableConsole,state:await portable.evaluate(()=>({url:location.href,ready:!!window.READY,bodyRoom:document.body.dataset.room,room:typeof hobby==='undefined'?null:hobby.room,transition:typeof hobby==='undefined'?null:hobby.transition,houseReady:typeof hobby==='undefined'?null:hobby.ready,error:document.getElementById('error')?.textContent,visibility:document.visibilityState,scripts:document.scripts.length,loader:document.getElementById('loader')?.className})).catch(e=>({failure:String(e)}))};
+   await portable.screenshot({path:`${out}/offline-startup-failure.png`,timeout:120000}).catch(()=>{});
+   throw error;
+  }
   if(await portable.locator('#dismissHallInvitation').isVisible())await portable.locator('#dismissHallInvitation').click();
   assert.equal(await portable.locator('#orreryTicket').count(),1);assert.equal(await portable.locator('#orrerySeat').count(),1);
   assert.equal(await portable.evaluate(()=>orreryRide.trip),null);
