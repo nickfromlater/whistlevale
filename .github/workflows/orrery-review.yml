@@ -13,6 +13,16 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+      - name: Preserve the exact tracked review source
+        run: |
+          mkdir -p /tmp/orrery-source
+          git archive --format=tar.gz HEAD > /tmp/orrery-source/source.tar.gz
+          git rev-parse HEAD > /tmp/orrery-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orrery-review-source
+          path: /tmp/orrery-source/
+          retention-days: 7
       - name: Native geometry and source checks
         run: |
           mkdir -p evidence/orrery
