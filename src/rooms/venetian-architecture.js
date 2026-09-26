@@ -165,19 +165,18 @@ function venetianCompass(b,x,z,r,y=1.23){
 }
 function venetianArchitecture(scene,b){
  const P=[
-  {x:-45,w:7.5,h:8.2,color:'#d0a479'},{x:-35,w:8.4,h:11.0,color:'#c78f86'},
-  {x:-23.5,w:8.9,h:9.2,color:'#c6b497'},{x:-13,w:7.1,h:7.1,color:'#97b1a5'},
-  {x:46,w:8,h:10.4,color:'#bf9984'}
+  {x:-45,w:7.5,h:11.4,color:'#d0a479'},{x:-35,w:8.4,h:14.2,color:'#c78f86'},
+  {x:-23.5,w:8.9,h:10.8,color:'#c6b497'},{x:-13,w:7.1,h:13.0,color:'#97b1a5'},
+  {x:46,w:8,h:14.8,color:'#bf9984'}
  ];
- for(const [i,p]of P.entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)-11.5,variant:i});
- for(const [i,p]of[{x:-44,w:7.8,h:6.5,color:'#8eafa5'},{x:-33,w:8.4,h:7,color:'#caa28e'},{x:-19,w:7.8,h:6.9,color:'#d0b390'},{x:19,w:8.4,h:7.2,color:'#c69082'},{x:28.8,w:7,h:6.6,color:'#9caf9e'},{x:46,w:7.5,h:7.1,color:'#d0ad83'}].entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)+12.0,angle:PI,variant:i+1});
+ for(const [i,p]of P.entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)-10.75,variant:i});
+ for(const [i,p]of[{x:-44,w:7.8,h:10.5,color:'#8eafa5'},{x:-33,w:8.4,h:12.8,color:'#caa28e'},{x:-19,w:7.8,h:9.8,color:'#d0b390'},{x:19,w:8.4,h:12.4,color:'#c69082'},{x:28.8,w:7,h:10.9,color:'#9caf9e'},{x:46,w:7.5,h:13.1,color:'#d0ad83'}].entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)+10.85,angle:PI,variant:i+1});
  venetianPiazzas(b);venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
  venetianCompass(b,17.8,-12.1,3.6);venetianCompass(b,6.5,23,5.0);venetianWell(b,6.5,23);
  venetianMarket(b,39.5,26.5,0);venetianMarket(b,46,30.3,1);
- // Colonnaded garden and cypress silhouettes behind the little city.
+ // A compressed campo wall behind the canal keeps the skyline architectural rather than garden-like.
  for(const x of[-45,-36,-27,-18,-9]){
-  b.box(x,1.5,-29,4.6,.6,4.8,'#bbae95',24);b.cylinder(x,3.1,-29,.17,.13,3.4,'#776c51',2,8);
-  b.sphere(x,6,-29,1.18,3.5,1.12,'#527d6c',8,9,7);
+  b.box(x,2.45,-29,4.6,4.9,4.8,'#c5b294',24);
  }
  for(const [x,z]of[[-53,19],[-51,-23],[51,-26],[52,22],[11,28],[27,25]]){
   b.cylinder(x,1.58,z,.6,.8,.78,'#ab7d64',24,10);b.sphere(x,2.88,z,1.15,1.45,1.1,'#6d9277',8,10,7);
