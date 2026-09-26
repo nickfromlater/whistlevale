@@ -4,7 +4,7 @@
 // Original scene and architecture: nickfromlater, with agent assistance.
 // Native house geometry, materials, stock, camera and lifecycle; no guest renderer.
 const VENETIAN={water:-.65,quay:1.2,rail:1.58,halfWidth:66,halfDepth:46,canalHalf:7.2,canalEnd:48,lane:2.45};
-const VENETIAN_COLORS={stone:'#e4d4b1',paving:'#b2afa1',shadow:'#b5ad98',brick:'#b57968',gold:'#c7a36a',ink:'#284b51',water:'#3faaa4',roof:'#a76550',green:'#73a99a'};
+const VENETIAN_COLORS={stone:'#e4d4b1',paving:'#929e9c',shadow:'#b5ad98',brick:'#b57968',gold:'#c7a36a',ink:'#284b51',water:'#3faaa4',roof:'#a76550',green:'#73a99a'};
 const VENETIAN_BRIDGES=[{x:-28,width:2.8,covered:false},{x:0,width:8.4,covered:true},{x:36,width:2.6,covered:false}];
 function venetianCenter(x){const a=clamp(x,-48,48);return 7*Math.sin(a*.055)*Math.cos(a*PI/96)**2;}
 function venetianWaterBounds(x){
@@ -45,7 +45,7 @@ function venetianWaterTint(x,z){
  return lerpV(water,tint,weight);
 }
 function venetianBase(b){
- const C=VENETIAN_COLORS;
+ const C=VENETIAN_COLORS,start=b.data.length;
  slab(b,134,94,2.4,-3.1,4.5,'#24474c',22);
  slab(b,135,95,.30,-1.79,4.7,C.gold,41);slab(b,133.8,93.8,.36,-1.49,4.2,'#456970',22);
  for(const side of[-1,1]){b.box(0,-3.1,side*47.02,116,.10,.05,C.gold,41);b.box(side*67.02,-3.1,0,.05,.10,76,C.gold,41);}
@@ -57,13 +57,13 @@ function venetianBase(b){
  // No land plane is placed under the canal surface. Both shores and the water
  // share exact sample boundaries, including rounded turning basins at the ends.
  const samples=[-66];for(let i=0;i<=240;i++)samples.push(-55.2+110.4*i/240);samples.push(66);
- const land=(x,a,z,d)=>b.quad([x,VENETIAN.quay,a],[x,VENETIAN.quay,z],[d,VENETIAN.quay,z],[d,VENETIAN.quay,a],C.paving,24,[0,1,0]);
+ const land=(x,a,z,d)=>b.quad([x,VENETIAN.quay,a],[x,VENETIAN.quay,z],[d,VENETIAN.quay,z],[d,VENETIAN.quay,a],C.paving,105,[0,1,0]);
  for(let i=1;i<samples.length;i++){
   const x=samples[i-1],q=samples[i],A=venetianWaterBounds(x),B=venetianWaterBounds(q);
   if(!A&&!B){land(x,-46,46,q);continue;}
   const aa=A||[venetianCenter(x),venetianCenter(x)],bb=B||[venetianCenter(q),venetianCenter(q)];
-  b.quad([x,1.2,-46],[x,1.2,aa[0]],[q,1.2,bb[0]],[q,1.2,-46],C.paving,24,[0,1,0]);
-  b.quad([x,1.2,aa[1]],[x,1.2,46],[q,1.2,46],[q,1.2,bb[1]],C.paving,24,[0,1,0]);
+  b.quad([x,1.2,-46],[x,1.2,aa[0]],[q,1.2,bb[0]],[q,1.2,-46],C.paving,105,[0,1,0]);
+  b.quad([x,1.2,aa[1]],[x,1.2,46],[q,1.2,46],[q,1.2,bb[1]],C.paving,105,[0,1,0]);
   for(let lane=0;lane<12;lane++){
    const f=lane/12,g=(lane+1)/12,A=[x,VENETIAN.water,mix(...aa,f)],B=[x,VENETIAN.water,mix(...aa,g)],D=[q,VENETIAN.water,mix(...bb,g)],E=[q,VENETIAN.water,mix(...bb,f)];
    // Authored bank colour is carried by the existing vertex-colour channel.
@@ -81,6 +81,8 @@ function venetianBase(b){
  // Solid perimeter edge remains visible above the lacquered cabinet.
  for(const [x,z,w,d]of[[0,-46,132,.20],[0,46,132,.20],[-66,0,.20,92],[66,0,.20,92]])b.box(x,-.03,z,w,2.48,d,'#c5b69b',4);
  for(const z of[-43.2,43.2])b.box(0,1.22,z,125,.035,.14,C.gold,41);
+ // Store local coordinates before the house map transforms the entire room.
+ for(let i=start;i<b.data.length;i+=12)if(b.data[i+9]===105){b.data[i+10]=b.data[i];b.data[i+11]=b.data[i+2];}
 }
 function venetianBridgeHeight(x){const a=Math.abs(x);return a<=3?4.95:mix(4.95,1.2,clamp((a-3)/8.4));}
 function venetianBridge(b,bridge){
@@ -122,9 +124,10 @@ function venetianStation(b){
  b.pop();
 }
 function buildVenetianRoom(scene,b){
+ const start=b.data.length;
  venetianBase(b);venetianTrack(b);
  for(const bridge of VENETIAN_BRIDGES)venetianBridge(b,bridge);
- venetianArchitecture(scene,b);venetianCityEnsemble(b);venetianQuays(b);venetianStation(b);venetianBuildLife(scene,b);
+ venetianArchitecture(scene,b);venetianCityEnsemble(b);venetianQuays(b);venetianStation(b);venetianBuildLife(scene,b);venetianPiazzaMonument(b);venetianBakeMasonry(b,start);
  scene.routes=[VENETIAN_RAIL];scene.trains=[{edge:VENETIAN_RAIL,distance:60,speed:1.04,type:'steam',stock:'coast',cars:3}];
  scene.height=(x,z)=>Math.abs(x)>66||Math.abs(z)>46?FLOOR:venetianIsWater(x,z)?VENETIAN.water:VENETIAN.quay;
  scene.canPlace=()=>false;
@@ -138,7 +141,8 @@ function buildVenetianRoom(scene,b){
   {name:'The lagoon railway',detail:'The house’s coastal steam locomotive brings the last visitors home.',target:[-24,2,36],distance:38,phoneDistance:64,pitch:.35,yaw:.28},
   {name:'The collector’s salon',detail:'Gilt moldings, sea-glass chandeliers and a miniature gondola workshop.',target:[0,-1,0],distance:192,phoneDistance:331,pitch:.64,yaw:-.44},
   {name:'The golden loggia',detail:'Look through the carved stone gallery into the shaded rooms of Palazzo Oro.',target:[-20.6,7.3,-13],distance:28,phoneDistance:52,pitch:.43,yaw:.56},
-  {name:'The lace palace',detail:'Quatrefoils, open colonnades and pink marble above the water.',target:[17.5,5.5,-7],distance:24,phoneDistance:72,phonePitch:.65,phoneYaw:-.47,pitch:.15,yaw:-.47}
+  {name:'The lace palace',detail:'Quatrefoils, open colonnades and pink marble above the water.',target:[17.5,5.5,-7],distance:24,phoneDistance:72,phonePitch:.65,phoneYaw:-.47,pitch:.15,yaw:-.47},
+  {name:'The lion of the lagoon',detail:'A bronze winged lion, open book and garnet banners mark the little campo.',target:[9.2,4.6,18.1],distance:18,phoneDistance:32,pitch:.35,yaw:-.55}
  ];
 }
 registerHouseRoom('venetian',{

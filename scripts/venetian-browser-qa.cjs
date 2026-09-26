@@ -36,7 +36,7 @@ const {execFileSync}=require('node:child_process');
    return {allocated:!!r&&!r.failed,width:r?.width,height:r?.height,passes,cached:r?.passes===passes,mirroredEyeRestored:Array.from(gl.getUniform(mainProgram,uniform(mainProgram,'uEye'))).every((v,i)=>Math.abs(v-cameraPos[i])<1e-4),windingRestored:gl.getParameter(gl.FRONT_FACE)===gl.CCW,glError:gl.getError()};
   });
   if(!report.reflection.allocated||!report.reflection.cached||!report.reflection.mirroredEyeRestored||!report.reflection.windingRestored||report.reflection.glError)throw new Error('Planar reflection lifecycle/state failed');
-  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas'],[8,'10-golden-loggia'],[9,'14-lace-palace']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
+  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas'],[8,'10-golden-loggia'],[9,'14-lace-palace'],[10,'18-lion-of-lagoon']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
   await page.evaluate(()=>{setView('room',false);setMood('evening',{immediate:true});});await shot('06-lamplight');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('07-night');
   await page.evaluate(()=>{setMood('day',{immediate:true});enterCinema();paused=true;hobby.shot='drift';});await shot('08-gondola-ride');

@@ -299,6 +299,13 @@ void main(){
   base=mix(base,base*vec3(.68,.75,.69),damp*.38);rough=.94;
  }
  if(m==104.){base*=.92+.12*noise(p*1.8);rough=.76;}
+ // Venetian masegni, anchored to the authored room rather than the map.
+ if(m==105.){
+  vec2 q=vUV;float row=floor(q.y/.64),course=q.x/1.08+mod(row,2.)*.5;
+  float joint=max(surfaceCourse(course,.018),surfaceCourse(q.y/.64,.023));
+  float tile=meridianHash(vec2(floor(course),row));
+  base*=mix(.91,1.07,tile)*(1.-joint*.22);rough=.88;
+ }
  if(m==21.){
   vec2 q=p.xz;float row=floor(q.x/2.6);float joint=fract((q.y+mod(row,3.)*4.1)/13.);float side=fract(q.x/2.6);float seam=min(min(joint,1.-joint)*13.,min(side,1.-side)*2.6);
   float cell=hash(vec3(row,floor((q.y+mod(row,3.)*4.1)/13.),1.));float grain=noise(vec3(q.x*7.,q.y*.075,cell*4.));base=mix(vec3(.43,.32,.21),vec3(.68,.53,.35),cell*.65+grain*.30);float seamAA=max(fwidth(seam),.004);base*=1.-.30*(1.-smoothstep(.008-seamAA,.026+seamAA,seam));base*=.93+.10*noise(vec3(q.x*21.,0.,q.y*.32));rough=.47;metal=.045;
@@ -345,6 +352,8 @@ void main(){
  vec3 ambient=mix(vec3(.33,.37,.31),eveningAmbient,dusk);float hemi=dot(n,vec3(0,1,0))*.5+.5;
  vec3 albedo=pow(max(base,vec3(0)),vec3(2.2));float ao=1.;
  if(p.y< -9.){float under=(1.-smoothstep(49.,60.,abs(p.x)))*(1.-smoothstep(30.,40.,abs(p.z)));ao*=1.-under*.57*(1.-smoothstep(-24.,-8.,p.y));}
+ // Room-baked approximate sky exposure affects fill only, not direct sun.
+ if((m==103.||m==104.)&&vUV.x>0.)ao*=clamp(vUV.x,.52,1.);
  vec3 lit=albedo*(ambient*(.44+.62*hemi)*ao+lightColor*nl*sh);
  float spec=m==91.?0.:pow(max(dot(n,h),0.),mix(10.,145.,1.-rough))*mix(.045,.67,metal);lit+=lightColor*spec*sh*mix(vec3(1),albedo,.48*metal);
  lit+=albedo*ambient*.13*(1.-hemi)*ao;lit+=albedo*vec3(.10,.082,.055)*max(n.z,0.)*ao*mix(1.,.18,dusk);

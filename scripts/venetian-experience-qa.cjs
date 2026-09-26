@@ -58,7 +58,7 @@ const {pathToFileURL}=require('node:url');
    return {room:hobby.room,views:hobby.scene.spots.length,parts:hobby.scene.movingParts.length,reflection:!!venetianReflection&&!venetianReflection.failed,boatsAdvanced:hobby.scene.venetian.time>before,credit:HOUSE_ROOMS.venetian.credits.some(c=>c.handle==='nickfromlater'),glError:gl.getError()};
   });
   report.portable.bytes=fs.statSync(portablePath).size;report.portable.networkRequests=requests;
-  if(report.portable.room!=='venetian'||report.portable.views!==10||report.portable.parts!==29||!report.portable.reflection||!report.portable.boatsAdvanced||!report.portable.credit||report.portable.glError||requests.length)throw new Error('Downloaded standalone playback failed');
+  if(report.portable.room!=='venetian'||report.portable.views!==11||report.portable.parts!==29||!report.portable.reflection||!report.portable.boatsAdvanced||!report.portable.credit||report.portable.glError||requests.length)throw new Error('Downloaded standalone playback failed');
   const png=await exported.evaluate(()=>canvas.toDataURL('image/png'));fs.writeFileSync(root+'/17-standalone-night.png',Buffer.from(png.split(',')[1],'base64'));await offline.close();
   // This is a rendered sequence of actual simulation steps, not a GPU benchmark.
   if(process.env.VENETIAN_CAPTURE_FILM==='1'){

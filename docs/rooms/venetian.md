@@ -15,7 +15,7 @@ campanile, cafe, market arcade, well and piazzas retain their distinct places.
 The new palace has nine lower colonnade bays, an open pointed-arch upper gallery,
 a band of actual four-lobed openings through thick stone, and a pink/ivory attic
 storey. Floors, benches and tiny figures are visible inside. Its openings are
-geometry, not black window images pasted onto an opaque facade. The ten named
+geometry, not black window images pasted onto an opaque facade. The eleven named
 views include **The lace palace**; triangle-ray tests check three facade
 sightlines from the authored desktop camera. Portrait framing remains a separate
 lengthwise composition, and browser checks project the board corners and tower.
@@ -40,6 +40,31 @@ canal and the existing perimeter railway. This railway uses coastal steam stock
 with normal throttle, pause, train selection and removable roofs; it is not a
 new locomotive model. The salon has darker blue-green walls, sea-glass
 chandeliers, gilt molding, lagoon-window geometry and the boatbuilding bench.
+
+## The campo and stonework
+
+A winged bronze lion above an open book crowns a fluted column in the main
+square. Its mane, curled tail, forepaws and individual feather shells are real
+native geometry. Two garnet-and-gold gonfalons are draped from brass crossbars;
+these cloth sculptures are static, not a cloth simulation. **The lion of the
+lagoon** is an additional close viewpoint. The monument is clear of the well,
+bridge approach and railway; complete-geometry footing checks cover the new work.
+
+Room-local material **105** gives the cool grey street paving staggered,
+anti-aliased stone joints and restrained tile variation. Quays and patterned
+piazzas retain contrasting pale limestone. Darker terracotta interior floors
+make the palace galleries read as spaces rather than bright facade cutouts.
+Broad carved roof modillions replace dense tiny cuboids, paying for the new
+centerpiece without increasing any geometry ceiling.
+
+A deterministic build-time pass stores approximate sky exposure in masonry
+UV.x. It uses the authored building masses, not an extra shadow map or ray
+traced ambient occlusion. The value reduces ambient and practical fill on
+interiors and facing walls, leaves the actual directional sun/shadows intact,
+and stays attached when the room moves on the house map. Existing shaders use
+the default unoccluded path when this opt-in value is absent. No additional
+per-frame loop, texture, uniform, framebuffer or draw call is needed for it.
+The separately owned salon geometry and all water/texture UVs remain untouched.
 
 ## Rowing and camera experience
 
@@ -130,8 +155,8 @@ phases, paused/reduced motion, no animation-time mesh creation, registration,
 credits and normal/failed-build disposal. District tests check actual pierced
 openings, building envelopes, camera occlusion and reflection projection.
 
-Measured geometry: **549,201** static room/floor/furnishing vertices, **25,500**
-wall vertices and **34,188** moving vertices, **608,889** combined, excluding
+Measured geometry: **547,947** static room/floor/furnishing vertices, **25,500**
+wall vertices and **34,188** moving vertices, **607,635** combined, excluding
 shared train stock. Existing static/moving/combined ceilings remain **550,000 /
 40,000 / 620,000**. Redundant roof-seam and straight-handrail geometry was reduced
 rather than increasing the budgets. Sampled minimum hull-to-bank clearance is

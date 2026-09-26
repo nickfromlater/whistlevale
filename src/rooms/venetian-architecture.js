@@ -134,7 +134,11 @@ function venetianRoof(b,w,d,y,rise,variant){
    b.quad([x-.018,y+.018,side*Z],[x+.018,y+.018,side*Z],[x*.82+.018,y+rise*.62+.018,side*Z*.38],[x*.82-.018,y+rise*.62+.018,side*Z*.38],shade(color,1.14),5);
   }
   b.box(0,y-.11,side*(Z-.07),w+.58,.22,.20,C.stone,24);
-  for(let x=-w/2+.25;x<w/2;x+=.62)b.box(x,y-.30,side*(Z-.11),.15,.28,.28,C.stone,24);
+  // Broad carved modillions replace a dense line of tiny cuboids.
+  for(let x=-w/2+.35;x<w/2;x+=.90){
+   const z=side*(Z-.11),a=[x-.10,y-.43,z-side*.06],q=[x+.10,y-.43,z-side*.06],c=[x+.10,y-.16,z+side*.18],d=[x-.10,y-.16,z+side*.18];
+   b.quad(a,q,c,d,C.stone,24);b.tri(a,d,[x-.10,y-.16,z-side*.06],C.shadow,24);b.tri(q,[x+.10,y-.16,z-side*.06],c,C.shadow,24);
+  }
  }
  // Bell-mouthed Venetian chimney pots. Each is modeled as a flared stack.
  for(const x of[-w*.31,w*.31]){
@@ -167,7 +171,7 @@ function venetianPalazzo(b,block){
  b.box(0,.20,0,w+.12,.40,d+.12,'#b6aa92',24);
  const step=(h-.45)/floors;
  // Subtle interior floors make the open arcades legible from a moving boat.
- for(let k=0;k<=floors;k++)b.box(0,.43+k*step,0,w,.14,d,'#b9a78a',24);
+ for(let k=0;k<=floors;k++)b.box(0,.43+k*step,0,w,.14,d,'#8e7163',104);
  for(let face=0;face<4;face++){
   const width=face%2?d:w,depth=face%2?w:d,hero=face===0&&loggia,bays=hero?5:face%2?1:width>8?3:2,pitch=width/bays;
   b.push(0,0,0,0,face*PI/2);
@@ -187,7 +191,7 @@ function venetianPalazzo(b,block){
    b.box(0,y1-.03,depth/2+.08,width+.24,.13,.25,C.stone,24);
    if(hero&&floor===1){
     venetianBalcony(b,0,y0+.49,depth/2,width-.3,true);
-    b.box(0,y0+.50,depth/2-1.0,width-.6,.16,2.2,C.stone,24);
+    b.box(0,y0+.50,depth/2-1.0,width-.6,.16,2.2,'#b39378',104);
     b.box(-width*.24,y0+1.15,depth/2-1.55,1.1,1.25,.45,'#865d56',23);
     venetianFlowers(b,width*.31,y0+.81,depth/2+.67,1.65);
    }
