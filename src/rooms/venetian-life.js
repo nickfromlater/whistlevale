@@ -50,9 +50,14 @@ function venetianGondola(b,index){
  b.box(0,.10,0,.87,.10,3.6,'#6b5a48',22);
  for(const z of[-.72,.63]){b.box(0,.27,z,1.0,.24,.55,index%2?'#a36569':'#9b5360',23);b.box(0,.49,z-.28,1.02,.54,.13,index%2?'#b17674':'#a6636b',23);}
  b.box(0,.16,-2.07,.74,.12,.63,'#61766b',22);
- // The characteristic iron bow comb and a rising stern are actual thin geometry.
- b.beam([0,.56,3.28],[0,1.12,3.43],.035,'#c5c5b0',41,8);
- for(let i=0;i<6;i++)b.beam([0,.62+i*.073,3.30+i*.019],[.27,.62+i*.073,3.30+i*.019],.022,'#c5c5b0',41,6);
+ // A thin, curved ferro lies in the boat's longitudinal plane. The six
+ // forward teeth are not a transverse ladder across the passenger's view.
+ const profile=[[.52,3.24],[.76,3.31],[1.02,3.34],[1.22,3.40],[1.36,3.31],[1.31,3.18]];
+ for(let j=1;j<profile.length;j++){
+  const a=profile[j-1],q=profile[j];
+  for(const side of[-1,1])b.quad([side*.028,a[0],a[1]],[side*.028,q[0],q[1]],[side*.028,q[0]+.06,q[1]-.04],[side*.028,a[0]+.06,a[1]-.04],'#b7c1b4',41);
+ }
+ for(let j=0;j<6;j++)b.box(0,.62+j*.083,3.44+j*.012,.060,.032,.26,'#c5c9bb',41);
  b.beam([0,.58,-3.28],[0,.86,-3.47],.035,C.gold,41,7);
  venetianPerson(b,0,.23,-2.03,0,'#e1dac0');
  for(let i=0;i<4;i++)b.box(0,.88+i*.095,-1.825,.38,.035,.014,'#425e62',23);
@@ -76,6 +81,7 @@ function venetianUpdate(scene,dt){
  if(!scene.venetian||reduceMotion||!Number.isFinite(dt)||dt<=0)return;
  scene.venetian.time+=Math.min(dt,.1);
 }
+const VENETIAN_OAR_BLADE=[[1.16,-.58,.18],[1.45,-.74,.08],[1.64,-.80,.17],[1.56,-.82,.38],[1.30,-.66,.40]];
 function venetianBuildLife(scene,b){
  const C=VENETIAN_COLORS;
  scene.venetian={time:0,route:venetianCanalRoute()};scene.movingParts=[];
@@ -84,7 +90,7 @@ function venetianBuildLife(scene,b){
  const part=(builder,model)=>scene.movingParts.push({mesh:builder.mesh(),model});
  for(let i=0;i<4;i++){
   const hull=new Builder();venetianGondola(hull,i);part(hull,current=>venetianBoatPose(current,i).model);
-  const oar=new Builder();oar.beam([0,0,0],[1.30,-.64,.24],.025,'#a78d66',22,8);oar.box(1.40,-.69,.26,.32,.11,.21,'#b7986a',22);
+  const oar=new Builder();oar.beam([0,0,0],[1.30,-.64,.24],.025,'#a78d66',22,8);for(let j=1;j<VENETIAN_OAR_BLADE.length-1;j++)oar.tri(VENETIAN_OAR_BLADE[0],VENETIAN_OAR_BLADE[j],VENETIAN_OAR_BLADE[j+1],'#b7986a',22);
   part(oar,current=>{const pose=venetianBoatPose(current,i),t=reduceMotion?0:current.venetian.time;return mm(pose.model,mm(trans(.71,.86,-1.62),ry(Math.sin(t*1.25+i)*.29)));});
   const wake=new Builder();venetianWake(wake);part(wake,current=>{const q=venetianBoatPose(current,i);return basis([q.position[0],VENETIAN.water,q.position[2]],q.f);});
  }
@@ -106,12 +112,7 @@ function venetianBuildLife(scene,b){
  for(const [x,y,z,a,c]of VENETIAN_PEDESTRIANS)venetianPerson(b,x,y,z,a,c);
  for(const x of[-1.1,1.3])venetianPerson(b,x,4.98,0,PI/2,'#b8b9a6');
  scene.population=22;
- // Reflected lantern glints: restrained strips on the water, not a second world
- // render. The house water shader supplies the actual ripple/specular motion.
- for(const x of[-45,-36,-17,12,25,46])for(const side of[-1,1]){
-  const z=venetianCenter(x)+side*5.9;
-  for(let j=0;j<8;j++){const xx=x+Math.sin(j*2.1+x)*.1,w=.32*(1-j/10);b.quad([xx-w,-.623,z-side*j*.18],[xx+w,-.623,z-side*j*.18],[xx+w,-.623,z-side*(j*.18+.055)],[xx-w,-.623,z-side*(j*.18+.055)],'#c9b99a',6,[0,1,0]);}
- }
+
 }
 function venetianCinemaView(scene,shot){
  if(!scene?.venetian)return null;

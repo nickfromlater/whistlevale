@@ -29,48 +29,208 @@ function venetianFlowers(b,x,y,z,w=1.6){
  b.box(x,y,z,w,.24,.38,'#a26652',24);
  for(let i=0;i<7;i++){const xx=x-w*.43+i*w*.86/6,h=.15+hash(i,x)*.14;b.sphere(xx,y+h,z,.19,.18,.23,i%3?'#6d8765':'#497f69',8,6,3);b.sphere(xx,y+h+.12,z+.08,.13,.10,.12,i%2?'#d59b9b':'#e4c6a6',0,6,3);}
 }
-function venetianPalazzo(b,{x,z,w=8,d=6,h=9,color='#ce9a88',angle=0,variant=0}){
- const C=VENETIAN_COLORS;
- b.push(x,VENETIAN.quay,z,0,angle);
- b.box(0,.25,0,w+.25,.5,d+.2,C.shadow,24);b.box(0,h/2+.45,0,w,h,d,color,20);
- for(const y of[.7,3.1,h+.35,h+.70])b.box(0,y,0,w+.36,.18,d+.34,C.stone,24);
- for(const side of[-1,1]){
-  for(let i=0;i<Math.floor(h/.65);i++)b.box(side*(w/2-.19),.9+i*.65,d/2+.08,.41,.30,.19,shade(C.stone,i%2?.94:1),24);
+// Every storey is built around openings. There is no opaque building box
+// behind the loggias: the soffits, jambs and internal floors have real depth.
+const VENETIAN_BLOCKS=[
+ {id:'salvia',x:-46,side:-1,w:7.4,d:6.0,h:11.3,color:'#b7b596',floors:3,variant:0},
+ {id:'rosa',x:-36.8,side:-1,w:8.0,d:6.6,h:14.2,color:'#bd8074',floors:4,variant:1,terrace:true},
+ {id:'oro',x:-20.6,side:-1,w:10.0,d:7.1,h:13.3,color:'#dfc5a2',floors:3,variant:2,loggia:true},
+ {id:'acqua',x:-10.4,side:-1,w:6.8,d:6.0,h:11.7,color:'#7c9b91',floors:3,variant:3},
+ {id:'levante',x:46,side:-1,w:8,d:6.4,h:14.6,color:'#d0a582',floors:4,variant:4,terrace:true},
+ {id:'sale',x:-46,side:1,w:7.4,d:6,h:10.6,color:'#8dada2',floors:3,variant:5},
+ {id:'corallo',x:-35.8,side:1,w:8.2,d:6,h:12.7,color:'#c99b88',floors:3,variant:6},
+ {id:'mercante',x:-20.8,side:1,w:10,d:6.1,h:11.6,color:'#c5af8b',floors:3,variant:7,loggia:true},
+ {id:'dogana',x:17.4,side:1,w:9.6,d:6.7,h:13.2,color:'#c69387',floors:3,variant:8,loggia:true},
+ {id:'giada',x:28.4,side:1,w:7,d:6,h:10.8,color:'#9daa92',floors:3,variant:9,terrace:true},
+ {id:'tramonto',x:46,side:1,w:8,d:6.6,h:14.1,color:'#ceaa80',floors:4,variant:10}
+];
+function venetianBuildingSpec(block){
+ // Set back from the ENTIRE curved frontage, not just its centre. Include
+ // the projecting balcony, coping and roof in the dry-land clearance margin.
+ let edge=block.side<0?Infinity:-Infinity;
+ for(let i=0;i<=20;i++){
+  const x=block.x+(i/20-.5)*(block.w+.9),bounds=venetianWaterBounds(x);
+  if(bounds)edge=block.side<0?Math.min(edge,bounds[0]):Math.max(edge,bounds[1]);
  }
- const bays=w>8?3:2;
- for(let i=0;i<bays;i++){
-  const xx=(i-(bays-1)/2)*(w/(bays+.25));
-  venetianWindow(b,xx,1.85,d/2+.09,1.35,2.2,false,i%2===0);
-  venetianWindow(b,xx,4.65,d/2+.11,1.18,2.0,true,(i+variant)%3!==0);
-  if(h>8)venetianWindow(b,xx,7.45,d/2+.11,1.18,1.78,false,(i+variant)%2===0);
-  for(const side of[-1,1]){
-   b.push(xx+side*.9,4.7,d/2+.22,0,side*.13);b.box(0,0,0,.45,1.9,.12,['#618d7c','#577b7a','#8b9987'][variant%3],22);
-   for(let j=0;j<7;j++)b.box(0,-.76+j*.25,.065,.38,.044,.02,'#335d58',22);b.pop();
+ return {...block,z:edge+block.side*(1.38+block.d/2),angle:block.side<0?0:PI};
+}
+function venetianFaceRect(b,x0,y0,x1,y1,z,c,mat=20){
+ if(x1-x0<.0001||y1-y0<.0001)return;
+ b.quad([x0,y0,z],[x1,y0,z],[x1,y1,z],[x0,y1,z],c,mat,[0,0,1]);
+}
+function venetianOpeningProfile(t,r,spring,rise,pointed){
+ const x=-r+2*r*t,u=Math.abs(x/r);
+ return [x,spring+rise*(pointed?Math.sqrt(Math.max(0,1-((u+1)/2)**2))/Math.sqrt(.75):Math.sqrt(Math.max(0,1-u*u)))];
+}
+function venetianFacadeCell(b,{x,y0,y1,pitch,r,front,color,variant,open=false,pointed=false,door=false,segments=10}){
+ const C=VENETIAN_COLORS,sill=y0+(door?.08:.58),rise=pointed?r*1.22:r*.9,spring=y1-.42-rise,n=segments;
+ const wall=(a,c,d,e)=>venetianFaceRect(b,a,c,d,e,front,color);
+ wall(x-pitch/2,y0,x-r,y1);wall(x+r,y0,x+pitch/2,y1);wall(x-r,y0,x+r,sill);
+ for(let i=0;i<n;i++){
+  const A=venetianOpeningProfile(i/n,r,spring,rise,pointed),B=venetianOpeningProfile((i+1)/n,r,spring,rise,pointed);
+  b.quad([x+A[0],A[1],front],[x+B[0],B[1],front],[x+B[0],y1,front],[x+A[0],y1,front],color,20,[0,0,1]);
+  // Thick, shaded masonry intrados. Its silhouette also casts a real shadow.
+  b.quad([x+A[0],A[1],front],[x+A[0],A[1],front-.30],[x+B[0],B[1],front-.30],[x+B[0],B[1],front],C.shadow,24);
+  const a=venetianOpeningProfile(i/n,r+.10,spring,rise+.12,pointed),q=venetianOpeningProfile((i+1)/n,r+.10,spring,rise+.12,pointed);
+  b.quad([x+A[0],A[1],front+.05],[x+B[0],B[1],front+.05],[x+q[0],q[1],front+.05],[x+a[0],a[1],front+.05],C.stone,24,[0,0,1]);
+ }
+ for(const side of[-1,1]){
+  b.quad([x+side*r,sill,front],[x+side*r,spring,front],[x+side*r,spring,front-.30],[x+side*r,sill,front-.30],C.shadow,24);
+  b.box(x+side*(r+.052),(sill+spring)/2,front+.035,.10,spring-sill,.12,C.stone,24);
+ }
+ b.box(x,sill-.045,front-.02,r*2+.28,.13,.52,C.stone,24);
+ if(open)return;
+ // Dark saloon behind glass, with different curtain openings and occasional
+ // warm windows. No luminous solid card on the exterior wall plane.
+ const back=front-.38,lit=variant%4===0;
+ venetianFaceRect(b,x-r,sill,x+r,spring,back,lit?'#ab9474':'#304a49',lit?6:43);
+ for(let i=0;i<n;i++){
+  const a=venetianOpeningProfile(i/n,r,spring,rise,pointed),q=venetianOpeningProfile((i+1)/n,r,spring,rise,pointed);
+  b.tri([x,spring,back],[x+q[0],q[1],back],[x+a[0],a[1],back],lit?'#ad977d':'#304a49',lit?6:43);
+ }
+ if(door){
+  for(const side of[-1,1]){b.box(x+side*r*.51,(sill+spring)/2,front-.32,r*.89,spring-sill,.08,'#49665f',22);b.box(x+side*.12,sill+.98,front-.25,.035,.32,.06,C.gold,41);}
+ }else{
+  b.box(x,(sill+spring+rise)/2,front-.18,.055,spring+rise-sill,.06,C.stone,24);
+  b.box(x,spring-.30,front-.18,r*2,.05,.07,C.stone,24);
+  if(variant%3===0)for(const side of[-1,1])b.box(x+side*r*.78,(sill+spring)/2,front-.27,r*.32,spring-sill,.035,'#d4c6a7',23);
+ }
+}
+function venetianBalcony(b,x,y,z,w,stone=false){
+ const C=VENETIAN_COLORS,c=stone?C.stone:'#36514d';
+ b.box(x,y-.12,z+.27,w+.30,.18,.90,C.stone,24);
+ for(const side of[-1,1]){
+  b.beam([x+side*w*.34,y-.65,z-.12],[x+side*w*.34,y-.18,z+.53],.072,C.stone,24,5);
+  b.box(x+side*(w/2+.03),y+.38,z+.27,.065,.82,.82,c,stone?24:41);
+ }
+ for(let i=0;i<=Math.ceil(w/.29);i++){
+  const xx=x-w/2+i*w/Math.ceil(w/.29);
+  b.box(xx,y+.40,z+.70,stone?.072:.029,.84,.055,c,stone?24:41);
+  if(stone)b.cylinder(xx,y+.27,z+.70,.077,.047,.27,C.stone,24,6);
+ }
+ b.box(x,y+.85,z+.70,w+.18,.065,.085,c,stone?24:41);
+}
+function venetianShutters(b,x,y,z,r,h,variant){
+ const c=['#547a69','#365e58','#75877c'][variant%3];
+ for(const side of[-1,1]){
+  b.push(x+side*(r+.14),y,z,0,-side*.22);
+  b.box(side*.21,0,0,.43,h,.07,c,22);
+  for(let k=0;k<6;k++)venetianFaceRect(b,side*.21-.16,-h*.40+k*h*.15,side*.21+.16,-h*.40+k*h*.15+.036,.04,'#274f48',22);
+  b.pop();
+ }
+}
+function venetianRoof(b,w,d,y,rise,variant){
+ const C=VENETIAN_COLORS,X=w/2+.28,Z=d/2+.28,R=Math.max(.65,X-Z*.62),color=['#98624f','#ab7057','#9f6d55'][variant%3];
+ const A=[-X,y,Z],B=[X,y,Z],D=[-X,y,-Z],E=[X,y,-Z],L=[-R,y+rise,0],Q=[R,y+rise,0];
+ b.quad(A,B,Q,L,color,5);b.quad(E,D,L,Q,shade(color,.88),5);b.tri(D,A,L,shade(color,.92),5);b.tri(B,E,Q,shade(color,1.02),5);
+ // Curved cap tiles sit above the hipped roof instead of a single flat gable.
+ const cap=(a,q)=>{const v=sub(q,a),r=norm(cross(v,[0,1,0]));
+  for(let j=0;j<5;j++){const t=j*PI/5,u=(j+1)*PI/5,p=(s,h)=>add(add(s,mul(r,Math.cos(h)*.085)),[0,.027+Math.sin(h)*.085,0]);b.quad(p(a,t),p(q,t),p(q,u),p(a,u),shade(color,1.15),5);}
+ };
+ cap(L,Q);for(const [a,q]of[[A,L],[D,L],[B,Q],[E,Q]])cap(a,q);
+ for(const side of[-1,1]){
+  for(let i=0;i<Math.floor(w/.43);i++){
+   const x=-w/2+(i+.5)*w/Math.floor(w/.43);
+   b.beam([x,y+.012,side*Z],[x*.82,y+rise*.62,side*Z*.38],.018,shade(color,1.14),5,4);
   }
-  if(i%2===0)venetianFlowers(b,xx,3.76,d/2+1.04,1.55);
+  b.box(0,y-.11,side*(Z-.07),w+.58,.22,.20,C.stone,24);
+  for(let x=-w/2+.25;x<w/2;x+=.62)b.box(x,y-.30,side*(Z-.11),.15,.28,.28,C.stone,24);
  }
- // The city is viewed from every side. Rear calle facades have their own
- // occupied windows instead of exposing blank box backs in the arrival view.
- b.push(0,0,-d/2-.07,0,PI);
- for(let i=0;i<bays;i++){
-  const xx=(i-(bays-1)/2)*(w/(bays+.25));
-  for(const yy of[1.8,4.65,...(h>8?[7.4]:[])])venetianWindow(b,xx,yy,0,1.04,1.78,false,(i+variant+Math.floor(yy))%3!==0);
-  for(const side of[-1,1])b.box(xx+side*.74,4.65,.12,.30,1.76,.14,variant%2?'#577b7a':'#698d7b',22);
+ // Bell-mouthed Venetian chimney pots. Each is modeled as a flared stack.
+ for(const x of[-w*.31,w*.31]){
+  b.box(x,y+.70,-d*.22,.43,1.32,.48,C.brick,4);
+  b.push(x,y+1.43,-d*.22,0,PI/4);b.cylinder(0,0,0,.36,.57,.56,'#c18f73',4,4);b.pop();
+  b.box(x,y+1.78,-d*.22,.86,.15,.86,C.stone,24);
+  b.box(x,y+1.87,-d*.22,.47,.06,.47,'#3e4942',0);
  }
- if(variant%3===0)venetianFlowers(b,0,3.67,.34,1.5);
- b.pop();
- // Side windows are recessed, too: orbiting does not reveal a blank cardboard facade.
+}
+function venetianAltana(b,w,d,y,variant){
+ const C=VENETIAN_COLORS,W=Math.min(4.5,w*.55),D=Math.min(3,d*.55),z=-.4;
+ for(const x of[-W/2,W/2])for(const q of[-D/2,D/2]){
+  const X=w/2+.28,Z=d/2+.28,R=Math.max(.65,X-Z*.62),foot=y-1.1+1.45*clamp(Math.min(1-Math.abs(z+q)/Z,(X-Math.abs(x))/(X-R)))-.035,top=y+1.94;
+  b.box(x,(foot+top)/2,z+q,.11,top-foot,.11,'#6f7155',22);
+ }
+ b.box(0,y+.58,z,W+.25,.16,D+.25,'#8c8060',22);
  for(const side of[-1,1]){
-  b.push(side*(w/2+.03),0,0,0,side*PI/2);
-  for(const zz of[-1.6,1.6])for(const yy of[4.6,...(h>8?[7.4]:[])])venetianWindow(b,zz,yy,0,.95,1.7,false,false);b.pop();
+  b.box(0,y+1.43,z+side*D/2,W+.22,.08,.09,C.ink,41);
+  for(let i=0;i<=7;i++)b.box(-W/2+i*W/7,y+1.03,z+side*D/2,.045,.8,.045,C.ink,41);
+  b.box(side*W/2,y+1.43,z,.09,.08,D,C.ink,41);
  }
- gable(b,w+.35,d+.3,h+.86,1.25,C.roof);
- for(const xx of[-w*.31,w*.31]){b.box(xx,h+1.3,-.7,.55,1.1,.6,C.brick,4);b.box(xx,h+1.92,-.7,.78,.17,.82,C.stone,24);}
- if(variant%2===0){
-  b.box(0,2.86,d/2+.36,w*.78,.53,.10,C.ink,22);hudsonText(b,['PALAZZO LUNA','CASA DEL MARE','AL VENTO'][variant%3],0,2.82,d/2+.42,w*.68,C.stone);
+ for(let i=0;i<6;i++)b.box(-W/2+i*W/5,y+1.87,z,.12,.12,D+.48,'#797453',22);
+ for(const x of[-W*.34,W*.34]){
+  b.cylinder(x,y+.89,z+.52,.24,.32,.51,'#b88668',24,8);b.sphere(x,y+1.29,z+.52,.45,.52,.40,'#64846e',8,7,4);
+ }
+}
+function venetianPalazzo(b,block){
+ const {x,z,w=8,d=6,h=11,color='#ce9a88',angle=0,variant=0,floors=3,loggia=false,terrace=false}=block,C=VENETIAN_COLORS;
+ b.push(x,VENETIAN.quay,z,0,angle);
+ b.box(0,.20,0,w+.12,.40,d+.12,'#b6aa92',24);
+ const step=(h-.45)/floors;
+ // Subtle interior floors make the open arcades legible from a moving boat.
+ for(let k=0;k<=floors;k++)b.box(0,.43+k*step,0,w,.14,d,'#b9a78a',24);
+ for(let face=0;face<4;face++){
+  const width=face%2?d:w,depth=face%2?w:d,hero=face===0&&loggia,bays=hero?5:face%2?1:width>8?3:2,pitch=width/bays;
+  b.push(0,0,0,0,face*PI/2);
+  for(let floor=0;floor<floors;floor++){
+   const y0=.45+floor*step,y1=y0+step;
+   for(let i=0;i<bays;i++){
+    const xx=(i-(bays-1)/2)*pitch,open=hero&&floor===1,r=Math.min(pitch*.34,open?.74:.63),v=variant+i+floor*3+face;
+    venetianFacadeCell(b,{x:xx,y0,y1,pitch,r,front:depth/2,color:face===0?color:shade(color,.94),variant:v,open,pointed:hero||variant%3===1,door:floor===0&&i===Math.floor(bays/2),segments:face===0?10:6});
+    if(open){
+     b.cylinder(xx-pitch/2+.07,y0+1.10,depth/2-.02,.075,.062,1.35,C.stone,24,7);
+     b.box(xx-pitch/2+.07,y0+1.80,depth/2,.29,.16,.32,C.stone,24);
+    }else if(floor>0&&face===0&&variant%3!==2){
+     venetianShutters(b,xx,(y0+y1)/2,depth/2+.10,r,step-1.02,variant+floor);
+    }
+    if(face===0&&floor===1&&!hero&&i%2===variant%2){venetianBalcony(b,xx,y0+.55,depth/2,r*2+.28);venetianFlowers(b,xx,y0+.86,depth/2+.66,r*1.7);}
+   }
+   b.box(0,y1-.03,depth/2+.08,width+.24,.13,.25,C.stone,24);
+   if(hero&&floor===1){
+    venetianBalcony(b,0,y0+.49,depth/2,width-.3,true);
+    b.box(0,y0+.50,depth/2-1.0,width-.6,.16,2.2,C.stone,24);
+    b.box(-width*.24,y0+1.15,depth/2-1.55,1.1,1.25,.45,'#865d56',23);
+    venetianFlowers(b,width*.31,y0+.81,depth/2+.67,1.65);
+   }
+  }
+  // Patches of exposed masonry, drainpipes and uneven cornice blocks reward
+  // close inspection without random clutter or another texture atlas.
+  for(const side of[-1,1]){
+   b.box(side*(width/2-.095),h/2+.4,depth/2+.035,.18,h-.3,.13,C.stone,24);
+   if(face===0)b.beam([side*(width/2-.36),.55,depth/2+.20],[side*(width/2-.36),h-.1,depth/2+.20],.037,'#6e7e6c',41,5);
+  }
+  if(face===0){
+   for(let j=0;j<3;j++){const xx=-width/2+.55+j*.36;venetianFaceRect(b,xx,.53+j*.1,xx+.30,1.1+j*.1,depth/2+.006,'#af8871',4);}
+   if(loggia)for(let i=0;i<9;i++){
+    const xx=-width*.42+i*width*.84/8,yy=h-.45;
+    b.quad([xx-.20,yy,depth/2+.06],[xx,yy-.20,depth/2+.06],[xx+.20,yy,depth/2+.06],[xx,yy+.20,depth/2+.06],variant===8?'#8c7368':C.gold,24,[0,0,1]);
+   }
+  }
+  b.pop();
+ }
+ venetianRoof(b,w,d,h+.20,1.45,variant);
+ if(terrace)venetianAltana(b,w,d,h+1.3,variant);
+ if(loggia){
+  for(let i=0;i<7;i++){
+   const xx=-w*.44+i*w*.88/6;b.cylinder(xx,h+.58,d/2+.06,.08,.04,.55,C.stone,24,6);b.sphere(xx,h+.91,d/2+.06,.14,.19,.14,C.stone,24,7,4);
+  }
  }
  b.pop();
 }
+function venetianFondaco(b){
+ const C=VENETIAN_COLORS;b.push(-28,1.2,-30.4);
+ // Deep arched market arcade, with a shaded garden behind its columns.
+ b.box(0,.09,0,44,.18,5.4,'#bbbaa2',24);b.box(0,2.6,-2.2,44,5.2,.32,'#bcaa8b',20);
+ for(let i=0;i<10;i++){
+  const x=-20+i*4.4;
+  for(const side of[-1,1])b.box(x+side*1.92,1.43,1.8,.34,2.85,.50,C.stone,24);
+  venetianArch(b,x,2.65,1.8,1.75,1.60,.22,.55,C.stone);
+  b.box(x,4.70,1.8,4.4,.90,.55,'#c4ae8b',20);
+  if(i%2===0){b.box(x,.7,-.8,2.6,1.3,.9,'#7b8162',22);b.sphere(x,1.80,-.8,.68,.84,.56,'#658069',8,8,5);}
+ }
+ venetianRoof(b,44,5.1,5.22,1.0,2);
+ b.pop();
+}
+
 function venetianDome(b,x,y,z,r,h){
  const C=VENETIAN_COLORS;
  b.cylinder(x,y+.36,z,r*.97,r*.97,.72,C.stone,24,24);
@@ -79,7 +239,13 @@ function venetianDome(b,x,y,z,r,h){
   const a=i*TAU/28,q=(i+1)*TAU/28,t=j*PI/18,u=(j+1)*PI/18;
   b.quad(point(a,t),point(q,t),point(q,u),point(a,u),shade(C.green,i%2?.94:1.05),41);
  }
- for(let i=0;i<14;i++)for(let j=0;j<10;j++){const a=i*TAU/14;b.beam(point(a,j*PI/20),point(a,(j+1)*PI/20),.035,'#9eb5a0',41,5);}
+ // Raised copper seams share the dome surface. Open-backed ribbons avoid
+ // spending most of the roof budget on hidden cylindrical faces.
+ for(let i=0;i<14;i++)for(let j=0;j<9;j++){
+  const a=i*TAU/14,t=j*PI/18,u=(j+1)*PI/18,p=(angle,phi,up)=>add(point(angle,phi),[0,up,0]);
+  b.quad(p(a-.009,t,.027),p(a+.009,t,.027),p(a+.009,u,.027),p(a-.009,u,.027),'#a2b19a',41);
+  for(const side of[-1,1])b.quad(p(a+side*.009,t,0),p(a+side*.009,t,.027),p(a+side*.009,u,.027),p(a+side*.009,u,0),'#7b9988',41);
+ }
  b.cylinder(x,y+h+1.0,z,.22,.16,.72,C.gold,41,10);b.sphere(x,y+h+1.5,z,.21,.21,.21,C.gold,41,10,6);
  b.beam([x,y+h+1.5,z],[x,y+h+2.25,z],.037,C.gold,41,6);b.beam([x-.23,y+h+1.99,z],[x+.23,y+h+1.99,z],.037,C.gold,41,6);
 }
@@ -164,20 +330,11 @@ function venetianCompass(b,x,z,r,y=1.23){
  for(let i=0;i<64;i++){const a=i*TAU/64,q=(i+1)*TAU/64;b.beam([x+Math.sin(a)*r,y,z+Math.cos(a)*r],[x+Math.sin(q)*r,y,z+Math.cos(q)*r],.035,'#c2a276',41,5);}
 }
 function venetianArchitecture(scene,b){
- const P=[
-  {x:-45,w:7.5,h:11.4,color:'#d0a479'},{x:-35,w:8.4,h:14.2,color:'#c78f86'},
-  {x:-23.5,w:8.9,h:10.8,color:'#c6b497'},{x:-13,w:7.1,h:13.0,color:'#97b1a5'},
-  {x:46,w:8,h:14.8,color:'#bf9984'}
- ];
- for(const [i,p]of P.entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)-10.75,variant:i});
- for(const [i,p]of[{x:-44,w:7.8,h:10.5,color:'#8eafa5'},{x:-33,w:8.4,h:12.8,color:'#caa28e'},{x:-19,w:7.8,h:9.8,color:'#d0b390'},{x:19,w:8.4,h:12.4,color:'#c69082'},{x:28.8,w:7,h:10.9,color:'#9caf9e'},{x:46,w:7.5,h:13.1,color:'#d0ad83'}].entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)+10.85,angle:PI,variant:i+1});
+ for(const block of VENETIAN_BLOCKS)venetianPalazzo(b,venetianBuildingSpec(block));
  venetianPiazzas(b);venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
  venetianCompass(b,17.8,-12.1,3.6);venetianCompass(b,6.5,23,5.0);venetianWell(b,6.5,23);
  venetianMarket(b,39.5,26.5,0);venetianMarket(b,46,30.3,1);
- // A compressed campo wall behind the canal keeps the skyline architectural rather than garden-like.
- for(const x of[-45,-36,-27,-18,-9]){
-  b.box(x,2.45,-29,4.6,4.9,4.8,'#c5b294',24);
- }
+ venetianFondaco(b);
  for(const [x,z]of[[-53,19],[-51,-23],[51,-26],[52,22],[11,28],[27,25]]){
   b.cylinder(x,1.58,z,.6,.8,.78,'#ab7d64',24,10);b.sphere(x,2.88,z,1.15,1.45,1.1,'#6d9277',8,10,7);
  }
@@ -203,7 +360,7 @@ function venetianChandelier(b,x,y,z,s=1){
 function venetianShell(b){
  const C=VENETIAN_COLORS,walls=[];
  b.box(0,FLOOR-.3,0,158,.6,130,'#adbdad',24);
- for(let x=-75;x<78;x+=6)for(let z=-61;z<64;z+=6){b.push(x,FLOOR+.025,z,0,PI/4);b.box(0,0,0,3.8,.035,3.8,(Math.round(x+z)/6)%2?'#a7b9aa':'#c7cbb6',24);b.pop();}
+ for(let x=-75;x<78;x+=6)for(let z=-61;z<64;z+=6){b.push(x,FLOOR+.025,z,0,PI/4);b.quad([-1.9,.018,-1.9],[-1.9,.018,1.9],[1.9,.018,1.9],[1.9,.018,-1.9],(Math.round(x+z)/6)%2?'#a7b9aa':'#c7cbb6',24,[0,1,0]);b.pop();}
  for(const z of[-59,59])b.box(0,FLOOR+.045,z,146,.045,.18,C.gold,41);
  for(const x of[-73,73])b.box(x,FLOOR+.045,0,.18,.045,118,C.gold,41);
  venetianCompass(b,0,55,6.5,FLOOR+.09);
@@ -296,4 +453,24 @@ function venetianMarket(b,x,z,variant){
   for(let i=0;i<7;i++){const dx=xx+((i%3)-1)*.30,dz=(Math.floor(i/3)-1)*.40;b.sphere(dx,1.47,dz,.16,.17,.16,variant?'#bc867e':i%2?'#c6aa60':'#8fa77d',0,7,4);}
  }
  b.box(0,2.7,1.2,3.2,.40,.075,C.ink,22);hudsonText(b,variant?'FIORI':'MERCATO',0,2.69,1.246,2.8,C.stone);b.pop();
+}
+
+function venetianQuays(b){
+ const C=VENETIAN_COLORS;
+ // Individually cut paving follows the finished bank, with transverse seams
+ // and a continuous walking strip between the coping and the palazzo doors.
+ for(let i=0;i<82;i++){
+  const x=-53+i*106/82,q=x+106/82-.055,A=venetianWaterBounds(x),B=venetianWaterBounds(q);if(!A||!B)continue;
+  for(const side of[-1,1])for(let row=0;row<2;row++){
+   const j=side<0?0:1,a=A[j]+side*(.48+row*.43),c=B[j]+side*(.48+row*.43),w=side*.39;
+   b.quad([x,1.232,a],[q,1.232,c],[q,1.232,c+w],[x,1.232,a+w],['#c8bda3','#d4c7ac','#c0b79f'][(i+row)%3],24,[0,1,0]);
+  }
+ }
+ // Recessed stone water-steps occupy only the outer 0.6 of the canal. Their
+ // geometry is included in the occupied-water clearance test.
+ for(const [x,side]of[[-12,-1],[14,1]]){
+  const bounds=venetianWaterBounds(x),edge=bounds[side<0?0:1];
+  for(let j=0;j<5;j++)b.box(x,1.09-j*.29,edge+side*(.40-j*.19),1.7,.22,.34,shade(C.stone,.98-j*.035),24);
+  for(const dx of[-1,1])b.box(x+dx,1.33,edge+side*.55,.20,.56,.65,C.stone,24);
+ }
 }

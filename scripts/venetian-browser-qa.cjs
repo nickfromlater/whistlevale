@@ -30,10 +30,13 @@ const fs=require('node:fs');
   });
   if(!Object.values(report.motion).every(Boolean))throw new Error('Native boat motion/pause/reduced-motion integration failed');
   await shot('01-arrival');
-  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
+  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas'],[8,'10-golden-loggia']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
   await page.evaluate(()=>{setView('room',false);setMood('evening',{immediate:true});});await shot('06-lamplight');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('07-night');
   await page.evaluate(()=>{setMood('day',{immediate:true});enterCinema();paused=true;hobby.shot='drift';});await shot('08-gondola-ride');
+  await page.evaluate(()=>{hobby.scene.venetian.time=88;clock=12;});await shot('11-return-canal');
+  await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('12-lantern-water');
+  await page.evaluate(()=>{setMood('day',{immediate:true});});
   report.cinema=await page.evaluate(()=>{beginCinemaOrbit();const manual=!!cinemaOrbit.manual;resumeCinemaCamera();const automatic=!cinemaOrbit.manual;leaveCinema();return {manual,automatic,exited:!hobby.cinema};});
   if(!report.cinema.manual||!report.cinema.automatic||!report.cinema.exited)throw new Error('Cinema lifecycle failure');
   for(const width of[390,320]){

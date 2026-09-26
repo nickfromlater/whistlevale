@@ -355,6 +355,35 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   vec3 water=pow(base,vec3(2.2))*.48+vec3(.008,.030,.028);lit=water*mix(.7,mix(.25,.16,deepNight),dusk)*(.75+.25*sh)+mix(vec3(.30,.43,.37),vec3(.035,.07,.10),dusk)*fres*.7;
   lit+=lightColor*sparkle*sh*.8;for(int i=0;i<2;i++){vec3 lp=normalize(uRoomLights[i]-p);float ss=pow(max(dot(n,normalize(lp+v)),0.),240.);lit+=vec3(1.,.68,.29)*ss*.65*uRoomLevel;}
  }
+ // Venetian-only lagoon water. UVs are room-local metres, so the ripple scale
+ // stays identical in the entered room and its transformed house-map model.
+ // These are stylized bank-colour and practical-light reflections, not SSR.
+ if(m==102.){
+  vec2 q=vUV,dx=dFdx(q),dy=dFdy(q);vec3 px=dFdx(p),py=dFdy(p);
+  float determinant=dx.x*dy.y-dx.y*dy.x;
+  vec3 tx=abs(determinant)>.0000001?normalize((px*dy.y-py*dx.y)/determinant):vec3(1.,0.,0.);
+  vec3 tz=abs(determinant)>.0000001?normalize((py*dx.x-px*dy.x)/determinant):vec3(0.,0.,1.);
+  float detail=1.-smoothstep(.45,1.8,max(length(dx),length(dy))),t=uTime*.36;
+  vec2 swell=vec2(sin(q.x*.71+q.y*1.43-t)+.42*sin(q.x*2.17-q.y*.84+t*.67),cos(q.y*.93-q.x*.47+t*.83)+.37*sin(q.y*2.91+q.x*.92-t*.76));
+  n=normalize(n+tx*swell.x*.024*detail+tz*swell.y*.018*detail);
+  float fres=pow(1.-max(dot(n,v),0.),4.);
+  vec3 lagoon=pow(base,vec3(2.2))*.44+vec3(.006,.023,.021);
+  vec3 sky=mix(vec3(.17,.30,.27),vec3(.012,.031,.046),dusk);
+  lit=lagoon*(.73+.27*sh)*mix(.94,.22,dusk)+sky*(.08+.48*fres);
+  float sparkle=pow(max(dot(n,normalize(l+v)),0.),155.);
+  lit+=lightColor*sparkle*sh*.43;
+  // The reflected point lights break into ribbons across the slow, intersecting
+  // wave trains. Only existing native lights are sampled; no extra framebuffer.
+  for(int i=0;i<8;i++){
+   vec3 delta=uLamps[i]-p;float fall=1./(1.+dot(delta,delta)*.035);
+   float glint=pow(max(dot(n,normalize(normalize(delta)+v)),0.),92.);
+   lit+=vec3(1.,.56,.24)*glint*fall*dusk*1.7;
+  }
+  for(int i=0;i<2;i++){
+   float glint=pow(max(dot(n,normalize(normalize(uRoomLights[i]-p)+v)),0.),130.);
+   lit+=vec3(.88,.63,.32)*glint*uRoomLevel*.24;
+  }
+ }
  if(uDragonLight.w>0.){
   vec3 axis=uDragonLightEnd-uDragonLight.xyz;float along=clamp(dot(p-uDragonLight.xyz,axis)/max(dot(axis,axis),.01),0.,1.);
   vec3 delta=mix(uDragonLight.xyz,uDragonLightEnd,along)-p;float d2=dot(delta,delta);vec3 direction=delta*inversesqrt(max(d2,.01));
