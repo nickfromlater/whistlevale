@@ -13,7 +13,7 @@ around a ringed planet, and a low return underneath the departure track. The
 miniature has a walnut plinth, enamel rails, gold ties, supported elevated track,
 a striped station canopy, ticket booth, tiny visitors, lunar rock gardens,
 practical lamps, a crescent sculpture and a clockmaker's star-lined gallery.
-Seven authored viewpoints include explicit portrait framing. Connected cream-edged
+Nine authored viewpoints include explicit portrait framing. Connected cream-edged
 promenades join the kiosk, station stair and eastern lookout. The planet now
 stands over three physical open-spoked, counter-rotating gears. A graduated
 dispatch clock and five swinging boarding gates make the station operational.
@@ -40,7 +40,7 @@ when it was zero. Other nonzero throttle choices are respected.
 - `src/rooms/orrery-track.js`: sampled closed 3D ribbon, inversion-safe frames,
   physical arc distance and a monotone dispatch timetable.
 - `src/rooms/orrery.js`: authored room, native map registration, static scenery,
-  structural members, seven views and ten owned cached mechanism meshes.
+  structural members, nine views and twelve owned cached mechanism meshes.
 - `src/trains/orrery.js`: original fixed Comet stock with moving load/upstop/guide
   wheels, open seating, restraint mechanism and physical car separation.
 - `src/orrery-ride.js` and `.css`: room-scoped camera and accessible controls.
@@ -89,9 +89,61 @@ and the native live map. It also downloads the actual playable export and opens
 it offline, checking dispatch, controls and mechanism ownership. Its
 screenshots and JSON report are uploaded as a review artifact.
 
-Local review environment: Node 22, finite geometry checks available; Chromium
-was unable to create a WebGL 2 context. Native browser screenshots must therefore
-come from the Node 24 review runner rather than be represented as local renders.
+Local review environment: Node 22. The Node 24 review runner captures native
+browser evidence; local Chromium navigation is restricted, so no local-browser
+performance or visual acceptance is claimed.
 A physical iPhone's gesture behavior, GPU performance and long-duration thermal
 behavior remain device checks. A resized desktop is not device evidence. The workflow reports standalone playback only after its offline reopen check
 actually passes; source inclusion alone is not playback evidence.
+
+
+## Third pass: the celestial pleasure garden
+
+The station is now a coral-and-cream clock pavilion, with an octagonal copper
+cupola, ribbed canopy, a tiled switchback queue, open approach to the western
+stair, admission arch, working operator's desk, departure placard, ticket punch,
+ticket stacks and cases. Queue rails are deliberately open at opposite ends;
+they are not a sealed decorative rectangle.
+
+The **Stardust Gallery** is an elevated, open-ended ride passage with brass ribs,
+paneled roof sectors, luminous stars and two large star portals. Piers are splayed
+when necessary to miss the lower Comet Trail. The **Lunar Court** puts a pearl
+basin and still blue-green enamel water under the inversion, with a separate
+Moon Gate on the approach. **Moonwatch** adds an octagonal observatory, copper dome,
+a real open telescope slit, raised balcony and approach stairs at the rear.
+The two new viewpoints frame the gallery and observatory; the original seven
+view IDs/order are retained.
+
+Eight authored visitor vignettes replace the old evenly spaced row: queue,
+ticket desk, lunar court, promenade, Moonwatch, lookout, gardener and station.
+The overall 28-person population stays fixed, but poses, heights and grouping
+now tell different stories. Topiary, flower beds, benches, lanterns, wayfinding,
+a sundial, telescope crate and a gardener's cart give paths destinations. The
+collector's room gains pilasters, relief star charts and instrument shelves.
+
+A garden armillary rotates through the existing moving-parts path. An operational
+semaphore changes with the same restraint state as the platform gates. Reduced
+motion parks ornaments but keeps the gate and semaphore state changes immediate.
+All twelve mechanisms retain the original 16,000-vertex combined ceiling; the
+original moon retains its separate 4,000 ceiling.
+
+### Geometry and clearance
+
+The room and walls keep their 550,000 and 65,000 ceilings. Adaptive longitudinal
+rail tessellation preserves the eight-sided tube profile and every authored
+section boundary, with a measured maximum cross-section chord deviation below
+0.008 scene units. Vehicle motion still samples the unchanged original route.
+Repeated diagonal braces omit only end caps buried inside larger joints; stamped
+cross ties use rectangular sections. Tiny wall stars use opaque luminous diamond
+faces rather than largely hidden spheres. These changes buy scenery within the
+existing budgets; they do not delete the ride or its structural members.
+
+`orrery-scenery-qa.mjs` tests the actual new scenic triangles and all visitor
+vignettes against an independently sampled, oriented occupied-car envelope.
+It uses sparse world bins plus triangle/box separating-axis tests at 0.35-unit
+route intervals, in addition to the original structural-support checks. It also
+measures adaptive rail error at 19 interior samples per segment. These are
+sampled geometric regressions, not a real-world engineering safety certificate.
+The browser harness captures both added viewpoints and the actual front-seat
+star passage, then repeats boarding, dispatch, arrival, inversion, narrow-screen,
+map, reduced-motion and offline-export checks on the same production geometry.

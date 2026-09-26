@@ -35,7 +35,7 @@
     "test:queens": "node scripts/queens-scores-qa.mjs && node scripts/queens-qa.mjs",
     "test:safari": "node scripts/safari-qa.mjs && node scripts/safari-passenger-qa.mjs && node scripts/safari-giraffe-qa.mjs && node scripts/safari-behavior-qa.mjs && node scripts/safari-companions-qa.mjs",
     "test:briarwatch": "node scripts/briarwatch-qa.mjs && node scripts/briarwatch-dragon-qa.mjs",
-    "test:orrery": "node scripts/orrery-qa.mjs && node scripts/orrery-ride-qa.mjs"
+    "test:orrery": "node scripts/orrery-qa.mjs && node scripts/orrery-ride-qa.mjs && node scripts/orrery-scenery-qa.mjs"
   },
   "license": "MIT",
   "engines": {

@@ -29,7 +29,7 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   report.scene=await page.evaluate(()=>({vertices:hobby.scene.mesh.count,room:hobby.room,routeLength:ORRERY_ROUTE.track.length,seconds:ORRERY_ROUTE.seconds,renderer:gl.getParameter(gl.RENDERER)}));
   await capture('overview');
   await page.evaluate(()=>{setMood('day',{immediate:true,persist:false});});await capture('day');
-  for(const [name,index]of [['loop',2],['planet',3],['station',4],['clockwork',6]]){
+  for(const [name,index]of [['loop',2],['planet',3],['station',4],['clockwork',6],['stardust-gallery',7],['moonwatch',8]]){
    await page.evaluate(i=>{document.querySelectorAll('#roomPlaces button')[i].click();updateCamera(10);},index);await capture(name);
   }
   await page.locator('#orreryBoard').click();
@@ -53,6 +53,7 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{paused=true;});report.checks.push('ticket enters a waiting front seat and explicit dispatch starts a complete trip');
   await page.evaluate(()=>{const t=hobby.scene.trains[0];for(let d=0;d<t.edge.length;d+=.03)if(t.edge.motionAt(d).phase==='Stardrop'){t.distance=d;break;}orreryRide.moving=true;updateCamera(10);updateUI();});
   await capture('front-row');
+  await page.evaluate(()=>{const t=hobby.scene.trains[0],target=hobby.scene.orreryTunnel.start+2;let best=Infinity;for(let d=0;d<t.edge.length;d+=.02){const delta=Math.abs(t.edge.motionAt(d).s-target);if(delta<best){best=delta;t.distance=d;}}});await capture('front-row-stardust');
   await page.evaluate(()=>{const t=hobby.scene.trains[0],section=t.edge.track.sections[5],target=(section.start+section.end)/2;let best=Infinity;for(let d=0;d<t.edge.length;d+=.03){const delta=Math.abs(t.edge.motionAt(d).s-target);if(delta<best){best=delta;t.distance=d;}}});
   assert.ok(await page.evaluate(()=>orrerySeatPose(hobby.scene.trains[0]).up[1]<-.95));await capture('front-row-inversion');report.checks.push('actual inverted front-seat pose and native render');
   await page.locator('#world').focus();await page.keyboard.press('ArrowRight');
@@ -109,7 +110,7 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>exportPlayable());
   const download=await downloading,saved=path.resolve(out,'whistlevale.html');await download.saveAs(saved);
   const packed=fs.readFileSync(saved,'utf8');
-  assert.ok(packed.includes('orreryBoardFromStation')&&packed.includes('orreryClockwork'));
+  assert.ok(packed.includes('orreryBoardFromStation')&&packed.includes('orreryClockwork')&&packed.includes('orreryStarTunnel')&&packed.includes('orreryMoonwatch'));
   // Release the all-room review context before opening another full house.
   // Keep the file page foregrounded so its native entry transition receives RAF.
   await context.close();
@@ -132,7 +133,7 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   assert.equal(await portable.evaluate(()=>orreryRide.trip),null);
   await portable.locator('#orreryBoard').click();await portable.locator('#orreryDispatch').click();
   const portableTrip=await portable.evaluate(()=>{const t=hobby.scene.trains[0],d=t.distance;updateSimulation(.5);updateUI();return {moving:t.distance>d,state:orreryRide.trip.state,mechanisms:hobby.scene.movingParts.length};});
-  assert.deepEqual(portableTrip,{moving:true,state:'riding',mechanisms:10});
+  assert.deepEqual(portableTrip,{moving:true,state:'riding',mechanisms:12});
   await capture('offline-portable-seat',portable);await portableContext.close();
   report.checks.push('actual downloaded standalone HTML reopened offline: one control set, fresh trip, working dispatch, native motion and all mechanisms');
   assert.deepEqual(errors,[],'uncaught browser errors');report.checks.push('no uncaught browser errors');

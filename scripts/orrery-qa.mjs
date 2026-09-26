@@ -31,9 +31,9 @@ const report=state.run(`(()=>{
 })()`);
 Object.assign(report,state.run(`(()=>{
  const before=seed,s=getHouseScene('orrery');assert.equal(seed,before);assert.equal(getHouseScene('orrery'),s);
- assert.equal(s.trains.length,1);assert.equal(s.trains[0].cars,4);assert.equal(s.trains[0].stock,'orrery');assert.equal(s.routes.length,1);assert.equal(s.walls.length,4);assert.equal(s.spots.length,7);
+ assert.equal(s.trains.length,1);assert.equal(s.trains[0].cars,4);assert.equal(s.trains[0].stock,'orrery');assert.equal(s.routes.length,1);assert.equal(s.walls.length,4);assert.equal(s.spots.length,9);
  assert.ok(s.mesh.count<550000,'fixed new-room geometry ceiling');assert.ok(s.walls.reduce((a,w)=>a+w.mesh.count,0)<65000,'shell ceiling');
- assert.ok(s.movingParts[0].mesh.count<4000);assert.equal(s.movingParts.length,10);assert.ok(s.movingParts.reduce((n,p)=>n+p.mesh.count,0)<16000,'bounded complete mechanisms');assert.equal(s.orreryGates.length,5);assert.equal(s.orreryGears.length,3);assert.ok(s.orrerySupports.length>100,'real structural supports');
+ assert.ok(s.movingParts[0].mesh.count<4000);assert.equal(s.movingParts.length,12);assert.ok(s.movingParts.reduce((n,p)=>n+p.mesh.count,0)<16000,'bounded complete mechanisms');assert.equal(s.orreryGates.length,5);assert.equal(s.orreryGears.length,3);assert.ok(s.orrerySupports.length>100,'real structural supports');
  assert.ok(s.spots.every(p=>p.phoneDistance>p.distance));assert.ok(s.spots[2].yaw<0,'lunar loop viewed from the clear west side, not through the planet');assert.equal(HOUSE_ROOMS.orrery.trainCollection,false);
  assert.ok(validateCredits(HOUSE_ROOMS.orrery.credits).some(c=>c.handle==='nickfromlater'));
  // Every accepted support is checked again with a finer sampling interval.
@@ -68,14 +68,16 @@ state.run(`(()=>{
  try{
   for(const part of s.movingParts){const a=part.model(s);assert.ok([...a].every(Number.isFinite));s.trains[0].distance+=2;assert.ok([...part.model(s)].every(Number.isFinite));s.trains[0].distance-=2;}
   reduceMotion=true;
-  for(const part of s.movingParts.filter(p=>p.kind!=='boarding-gate')){const a=part.model(s);s.trains[0].distance+=5;assert.deepEqual(part.model(s),a,'ornaments park under reduced motion');s.trains[0].distance-=5;}
+  for(const part of s.movingParts.filter(p=>!['boarding-gate','dispatch-signal'].includes(p.kind))){const a=part.model(s);s.trains[0].distance+=5;assert.deepEqual(part.model(s),a,'ornaments park under reduced motion');s.trains[0].distance-=5;}
   const e=ORRERY_ROUTE;s.trains[0].distance=(e.boarding+1.3)*e.normalDrive;
+  const signal=s.movingParts.find(p=>p.kind==='dispatch-signal'),stopSignal=signal.model(s);assert.ok(Math.abs(stopSignal[0]-1)<1e-6,'signal holds at the open platform');
   for(const [i,gate]of s.movingParts.filter(p=>p.kind==='boarding-gate').entries()){
    const g=s.orreryGates[i],m=gate.model(s),tip=transform([g.width,0,0],m);
    assert.ok(tip[2]>g.z+1.5,'boarding gates open AWAY from the running line');
   }
   s.trains[0].distance=(e.boarding+e.dwell+.2)*e.normalDrive;
   for(const [i,gate]of s.movingParts.filter(p=>p.kind==='boarding-gate').entries())assert.ok(Math.abs(transform([1.6,0,0],gate.model(s))[2]-s.orreryGates[i].z)<1e-5,'gates closed before departure');
+  assert.ok(Math.abs(signal.model(s)[0]-.5)<1e-6,'signal explicitly changes to departure with reduced motion');
   assert.equal(s.orreryGears[0].teeth*s.orreryGears[0].ratio+s.orreryGears[1].teeth*s.orreryGears[1].ratio,0,'intermeshing tooth speed');
  }finally{s.trains[0].distance=oldDistance;reduceMotion=oldMotion;}
  // Partial scene failure after some of the new mechanisms have been uploaded.
