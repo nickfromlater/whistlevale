@@ -29,8 +29,8 @@ materials in other rooms are unchanged.
 
 The central **Ponte delle Lanterne** is wider and has eight stepped shops, four
 on either side of an open stair aisle. Each shop has a supported masonry wedge,
-real side/back walls, an open counter and small displayed wares beneath its
-individual tiled roof. An open upper portico joins the shop rows. The original
+real side/back walls, an aisle-facing open counter and small displayed wares beneath its
+individual tiled roof. Framed windows articulate the canal-facing backs. An open upper portico joins the shop rows. The original
 elliptic arch remains navigable underneath, and both smaller bridges remain.
 
 Cut-stone quays, recessed water stairs, moorings, landings, inlaid piazzas,
@@ -130,8 +130,8 @@ phases, paused/reduced motion, no animation-time mesh creation, registration,
 credits and normal/failed-build disposal. District tests check actual pierced
 openings, building envelopes, camera occlusion and reflection projection.
 
-Measured geometry: **548,913** static room/floor/furnishing vertices, **25,500**
-wall vertices and **34,188** moving vertices, **608,601** combined, excluding
+Measured geometry: **549,201** static room/floor/furnishing vertices, **25,500**
+wall vertices and **34,188** moving vertices, **608,889** combined, excluding
 shared train stock. Existing static/moving/combined ceilings remain **550,000 /
 40,000 / 620,000**. Redundant roof-seam and straight-handrail geometry was reduced
 rather than increasing the budgets. Sampled minimum hull-to-bank clearance is
