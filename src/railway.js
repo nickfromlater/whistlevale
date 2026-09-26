@@ -103,6 +103,10 @@ precision highp float;
 in vec3 vPos,vNormal,vColor;in float vMat;in vec2 vUV;in vec4 vShadow;
 uniform sampler2D uShadow,uAtlas,uRoomAtlas,uMoonlightFilm,uMoonlightNameplate,uWildlifeCoat;
 uniform float uMoonlightReady;
+uniform sampler2D uVenetianReflection;
+uniform mat4 uVenetianReflectionVP;
+uniform vec2 uVenetianReflectionTexel;
+uniform float uVenetianReflectionPass,uVenetianReflectionReady;
 uniform vec4 uDragonLight;uniform vec3 uDragonLightEnd;uniform float uDragonLightScale;
 uniform vec3 uEye,uSun,uHead,uForward,uLamps[8],uRoomLights[6];
 uniform float uNight,uTime,uRoomLevel,uRain,uPreview,uInvalid;out vec4 frag;
@@ -236,7 +240,8 @@ float briarPracticalWash(float material,vec2 uv){
  return exp(-dot(q,q)*1.35);
 }
 // BRIARWATCH_ATMOSPHERE_END
-void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;
+void main(){
+ if(uVenetianReflectionPass>.5&&(vPos.y<-.64||abs(vMat-102.)<.1||abs(vMat-7.)<.1))discard;float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;
  // Rock and concrete use the emitted triangle's actual face normal. Smoothing
  // across a sharp ledge lights geometrically back-facing triangles, producing
  // a striped shadow terminator that extra depth precision cannot correct.
@@ -286,6 +291,14 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
  if(m==15.){base=texture(uAtlas,vUV).rgb;rough=.79;}
  if(m==85.){base=texture(uMoonlightNameplate,vUV).rgb;rough=.65;em=.06+.15*uNight;}
  if(m==20.||(m>=94.&&m<=96.)){base*=.955+.06*noise(p*1.4);rough=.95;}
+ // Venetian plaster and Istrian stone keep broad age variation instead of
+ // noisy screen-space speckle. Only the room's opted-in materials use these.
+ if(m==103.){
+  float grain=noise(p*.85),weather=noise(vec3(p.x*.19,p.y*.24,p.z*.19));
+  float damp=1.-smoothstep(1.2,3.4,p.y);base*=.90+.13*grain+.07*weather;
+  base=mix(base,base*vec3(.68,.75,.69),damp*.38);rough=.94;
+ }
+ if(m==104.){base*=.92+.12*noise(p*1.8);rough=.76;}
  if(m==21.){
   vec2 q=p.xz;float row=floor(q.x/2.6);float joint=fract((q.y+mod(row,3.)*4.1)/13.);float side=fract(q.x/2.6);float seam=min(min(joint,1.-joint)*13.,min(side,1.-side)*2.6);
   float cell=hash(vec3(row,floor((q.y+mod(row,3.)*4.1)/13.),1.));float grain=noise(vec3(q.x*7.,q.y*.075,cell*4.));base=mix(vec3(.43,.32,.21),vec3(.68,.53,.35),cell*.65+grain*.30);float seamAA=max(fwidth(seam),.004);base*=1.-.30*(1.-smoothstep(.008-seamAA,.026+seamAA,seam));base*=.93+.10*noise(vec3(q.x*21.,0.,q.y*.32));rough=.47;metal=.045;
@@ -370,6 +383,18 @@ void main(){float m=floor(vMat+.5);vec3 n=normalize(vNormal);if(!gl_FrontFacing)
   vec3 lagoon=pow(base,vec3(2.2))*.44+vec3(.006,.023,.021);
   vec3 sky=mix(vec3(.17,.30,.27),vec3(.012,.031,.046),dusk);
   lit=lagoon*(.73+.27*sh)*mix(.94,.22,dusk)+sky*(.08+.48*fres);
+  if(uVenetianReflectionReady>.5){
+   vec4 clip=uVenetianReflectionVP*vec4(p,1.);
+   vec2 uv=clip.xy/max(clip.w,.00001)*.5+.5;
+   vec2 distort=swell*.0038*detail;
+   vec2 edge=min(uv,1.-uv);float valid=smoothstep(0.,.035,min(edge.x,edge.y))*step(.0001,clip.w);
+   vec2 sampleUV=clamp(uv+distort,vec2(.002),vec2(.998));
+   vec2 blur=uVenetianReflectionTexel*vec2(1.3,2.1);
+   vec3 reflected=texture(uVenetianReflection,sampleUV).rgb*.50;
+   reflected+=texture(uVenetianReflection,clamp(sampleUV+blur,vec2(.002),vec2(.998))).rgb*.25;
+   reflected+=texture(uVenetianReflection,clamp(sampleUV-blur,vec2(.002),vec2(.998))).rgb*.25;
+   lit=mix(lit,reflected,valid*(.26+.62*fres));
+  }
   float sparkle=pow(max(dot(n,normalize(l+v)),0.),155.);
   lit+=lightColor*sparkle*sh*.43;
   // The reflected point lights break into ribbons across the slow, intersecting
@@ -478,7 +503,7 @@ function resize(){let maxRatio=innerWidth<700?1.6:1.5,ratio=Math.min(devicePixel
  const hdr=!!gl.getExtension('EXT_color_buffer_float');let fmt=hdr?gl.RGBA16F:gl.RGBA8;let allowed=gl.getInternalformatParameter(gl.RENDERBUFFER,fmt,gl.SAMPLES);msaaSamples=Math.min(msaaSamples,allowed?.[0]||0);
  if(msaaSamples>=2){msaaColor=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,msaaColor);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,msaaSamples,fmt,w,h);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,msaaColor);msaaDepth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,msaaDepth);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,msaaSamples,gl.DEPTH_COMPONENT24,w,h);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,msaaDepth);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){gl.deleteFramebuffer(msaaFbo);msaaFbo=null;}}else{gl.deleteFramebuffer(msaaFbo);msaaFbo=null;}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
-function initGL(){gl=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:true});if(!gl)throw new Error('WebGL 2 is needed to run this railway. Open the HTML in Safari, Chrome, Firefox, or Edge with hardware acceleration enabled.');gl.getExtension('EXT_color_buffer_float');houseMoonlight?.dispose();houseMoonlight=createMoonlightProjection(gl);mainProgram=program(VS,FS);shadowProgram=program(SHVS,SHFS);postProgram=program(FULLVS,POSTFS);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);shadowFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);shadowTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);shadowCacheFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);shadowCacheTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowCacheTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);lightVP=mm(ortho(-120,120,-107,107,1,440),lookAt(add(mul(sunDir,235),[0,-8,0]),[0,-8,0]));resize()}
+function initGL(){if(typeof venetianDisposeReflection==='function')venetianDisposeReflection();gl=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:true});if(!gl)throw new Error('WebGL 2 is needed to run this railway. Open the HTML in Safari, Chrome, Firefox, or Edge with hardware acceleration enabled.');gl.getExtension('EXT_color_buffer_float');houseMoonlight?.dispose();houseMoonlight=createMoonlightProjection(gl);mainProgram=program(VS,FS);shadowProgram=program(SHVS,SHFS);postProgram=program(FULLVS,POSTFS);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);shadowFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);shadowTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);shadowCacheFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);shadowCacheTex=createTexture(shadowSize,shadowSize,true);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,shadowCacheTex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);lightVP=mm(ortho(-120,120,-107,107,1,440),lookAt(add(mul(sunDir,235),[0,-8,0]),[0,-8,0]));resize()}
 // A small, generated sign atlas keeps all lettering crisp in the 3D world.
 const atlas=document.createElement('canvas');atlas.width=2048;atlas.height=1024;const actx=atlas.getContext('2d');let atlasX=2,atlasY=2,atlasRow=0;const labels={};
 function label(key,text,w=300,h=70,bg='#234239',fg='#eddfb3',size=30,serif=false){if(atlasX+w+2>2048){atlasX=2;atlasY+=atlasRow+3;atlasRow=0}const x=atlasX,y=atlasY;actx.fillStyle=bg;actx.fillRect(x,y,w,h);actx.strokeStyle=fg+'77';actx.lineWidth=2;actx.strokeRect(x+5,y+5,w-10,h-10);actx.fillStyle=fg;actx.textAlign='center';actx.textBaseline='middle';actx.font=`${serif?'':'600 '}${size}px ${serif?'Georgia':'Arial'}`;let lines=text.split('\n');lines.forEach((t,i)=>actx.fillText(t,x+w/2,y+h/2+(i-(lines.length-1)/2)*size*1.25));labels[key]={u0:x/2048,v0:1-(y+h)/1024,u1:(x+w)/2048,v1:1-y/1024};atlasX+=w+3;atlasRow=Math.max(atlasRow,h);return labels[key]}
@@ -634,7 +659,7 @@ function updateBaseUI(){if(!leadInfo)return;$('speedValue').textContent=Math.rou
 function render(){if(typeof embeddedFrameUpdate==='function')embeddedFrameUpdate();if(!building||!(ghost||gesture?.kind==='move'))releaseTemplatePreview();updateMoonlightHouse();architecturalGlassDraws.length=0;gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.viewport(0,0,shadowSize,shadowSize);gl.useProgram(shadowProgram);um(shadowProgram,'uVP',lightVP);
  if(shadowDirty){gl.bindFramebuffer(gl.FRAMEBUFFER,shadowCacheFbo);gl.clear(gl.DEPTH_BUFFER_BIT);drawHobbyStatic(shadowProgram,true);shadowDirty=false;}
  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,shadowCacheFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,shadowFbo);gl.blitFramebuffer(0,0,shadowSize,shadowSize,0,0,shadowSize,shadowSize,gl.DEPTH_BUFFER_BIT,gl.NEAREST);gl.bindFramebuffer(gl.FRAMEBUFFER,shadowFbo);drawHobbyTrains(shadowProgram);if(building&&gesture?.kind==='move')renderObject(getSelected(),shadowProgram);
- gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);if(typeof briarSetFireLight==='function')briarSetFireLight(hobby.scene,mainProgram);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasNativeTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
+ gl.bindFramebuffer(gl.FRAMEBUFFER,msaaFbo||sceneFbo);gl.viewport(0,0,screenW,screenH);let bg=lerpV([.019,.036,.037],[.014,.024,.04],night);gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(mainProgram);um(mainProgram,'uVP',VP);if(typeof briarSetFireLight==='function')briarSetFireLight(hobby.scene,mainProgram);um(mainProgram,'uLightVP',lightVP);uv3(mainProgram,'uEye',cameraPos);uv3(mainProgram,'uSun',sunDir);uv3(mainProgram,'uHead',transform([0,1.3,1.7],hobbyTrainMatrix()));uv3(mainProgram,'uForward',hobbyHasNativeTrain()?hobbyTrainInfo().f:[0,0,0]);gl.uniform3fv(uniform(mainProgram,'uLamps[0]'),new Float32Array(houseLayoutLights(hobby.room).flat()));uf(mainProgram,'uNight',night);uf(mainProgram,'uTime',clock*(reduceMotion?0:1));gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,shadowTex);gl.uniform1i(uniform(mainProgram,'uShadow'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,atlasTexture);gl.uniform1i(uniform(mainProgram,'uAtlas'),1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,roomAtlasTexture);gl.uniform1i(uniform(mainProgram,'uRoomAtlas'),2);gl.uniform3fv(uniform(mainProgram,'uRoomLights[0]'),new Float32Array(houseRoomLights(hobby.room).flat()));uf(mainProgram,'uRoomLevel',roomLampLevel);uf(mainProgram,'uRain',rainAmount);gl.uniform1i(uniform(mainProgram,'uMoonlightFilm'),4);uf(mainProgram,'uMoonlightReady',houseMoonlight?.bind(4,atlasTexture,2)?1:0);gl.uniform1i(uniform(mainProgram,'uMoonlightNameplate'),5);houseMoonlight?.bindNameplate(5,atlasTexture,2);if(typeof venetianPrepareReflection==='function')venetianPrepareReflection();drawHobbyStatic(mainProgram,false);drawHobbyTrains(mainProgram);if(hobby.room==='valley'&&!(typeof isShopMapActive==='function'&&isShopMapActive()))for(let i=0;i<signalModels.length;i++){let occupied=i===1&&leadInfo.edge===common&&leadInfo.d>tunnelStart-3&&leadInfo.d<tunnelEnd+12;draw(occupied?signalRedMesh:signalGreenMesh,signalModels[i]);}drawArchitecturalGlass();drawMoonlightHouseAir();drawHobbyParticles();
  if(msaaFbo){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,msaaFbo);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,sceneFbo);gl.blitFramebuffer(0,0,screenW,screenH,0,0,screenW,screenH,gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,screenW,screenH);gl.disable(gl.DEPTH_TEST);gl.useProgram(postProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(uniform(postProgram,'uScene'),0);gl.uniform2f(uniform(postProgram,'uResolution'),screenW,screenH);uf(postProgram,'uTime',clock);uf(postProgram,'uNight',night);uf(postProgram,'uMacro',(building||viewMode==='window-left'||viewMode==='window-right'?0:lensAmount)*(viewMode==='cab'?.20:viewMode==='room'?.32:viewMode==='station'?1.1:.65));uf(postProgram,'uFocus',len(sub(cameraPos,cameraTarget)));uf(postProgram,'uNear',cameraNear);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,sceneDepth);gl.uniform1i(uniform(postProgram,'uDepth'),3);gl.bindVertexArray(null);gl.drawArrays(gl.TRIANGLES,0,3);}
 // Movie decoding is limited to a nearby, front-facing screen. Map views keep
 // the static picture, and object transforms follow edits instead of a fixed site.

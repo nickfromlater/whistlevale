@@ -4,7 +4,7 @@ const state=await communityContext();state.context.assert=assert;
 await loadContributionDefinitions(state,await loadCommunity());prepareCommunityGeometry(state);
 const sceneReport=state.run(`(()=>{
  const before=seed,s=getHouseScene('venetian');assert.equal(seed,before,'preserves house random stream');assert.equal(getHouseScene('venetian'),s,'scene cached');
- assert.equal(s.walls.length,4);assert.equal(s.spots.length,9);assert.equal(s.trains.length,1);assert.equal(s.routes.length,1);
+ assert.equal(s.walls.length,4);assert.equal(s.spots.length,10);assert.equal(s.trains.length,1);assert.equal(s.routes.length,1);
  assert.ok(s.mesh.count>350000&&s.mesh.count<550000,'fixed static room budget');
  const moving=s.movingParts.reduce((n,p)=>n+p.mesh.count,0),walls=s.walls.reduce((n,p)=>n+p.mesh.count,0);
  assert.ok(moving<40000,'fixed moving geometry budget');assert.ok(s.mesh.count+moving+walls<620000,'fixed total room budget');
@@ -130,7 +130,7 @@ state.run(`(()=>{
  }finally{disposeMesh=original;}
 })()`);
 const index=await read('index.html'),hobby=await read('src/hobby.js'),map=await read('src/shop-map.js');
-for(const file of['venetian-architecture.js','venetian-life.js','venetian.js']){
+for(const file of['venetian-architecture.js','venetian-life.js','venetian-city.js','venetian.js','venetian-render.js']){
  assert.ok(index.includes(`<script src="src/rooms/${file}"></script>`),'included in normal app and portable script capture');
  assert.ok(index.indexOf(`src/rooms/${file}`)<index.indexOf('src/hobby.js'),'registered before startup');
 }

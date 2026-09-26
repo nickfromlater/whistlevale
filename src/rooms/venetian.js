@@ -5,7 +5,7 @@
 // Native house geometry, materials, stock, camera and lifecycle; no guest renderer.
 const VENETIAN={water:-.65,quay:1.2,rail:1.58,halfWidth:66,halfDepth:46,canalHalf:7.2,canalEnd:48,lane:2.45};
 const VENETIAN_COLORS={stone:'#e4d4b1',paving:'#b2afa1',shadow:'#b5ad98',brick:'#b57968',gold:'#c7a36a',ink:'#284b51',water:'#3faaa4',roof:'#a76550',green:'#73a99a'};
-const VENETIAN_BRIDGES=[{x:-28,width:2.8,covered:false},{x:0,width:5.6,covered:true},{x:36,width:2.6,covered:false}];
+const VENETIAN_BRIDGES=[{x:-28,width:2.8,covered:false},{x:0,width:8.4,covered:true},{x:36,width:2.6,covered:false}];
 function venetianCenter(x){const a=clamp(x,-48,48);return 7*Math.sin(a*.055)*Math.cos(a*PI/96)**2;}
 function venetianWaterBounds(x){
  const beyond=Math.max(0,Math.abs(x)-VENETIAN.canalEnd);
@@ -100,24 +100,15 @@ function venetianBridge(b,bridge){
   for(let i=0;i<18;i++){
    const a=3+i*8.4/18,q=3+(i+1)*8.4/18,y=venetianBridgeHeight((a+q)/2);
    b.box(s*(a+q)/2,y-.09,0,q-a+.015,.18,w+.16,C.stone,24);
-   for(const z of[-D,D])b.cylinder(s*(a+q)/2,y+.47,z,.046,.046,.92,C.stone,24,6);
+   for(const z of[-D,D])b.box(s*(a+q)/2,y+.47,z,.085,.92,.085,C.stone,24);
   }
  }
  b.box(0,4.88,0,6,.17,w+.16,C.stone,24);
  for(const z of[-D,D]){
-  for(let i=0;i<50;i++){const a=-11.4+i*22.8/50,q=-11.4+(i+1)*22.8/50;b.beam([a,venetianBridgeHeight(a)+1.0,z],[q,venetianBridgeHeight(q)+1.0,z],.105,C.stone,24,6);}
-  for(let x=-2.7;x<=2.7;x+=.6)b.cylinder(x,5.43,z,.055,.055,.94,C.stone,24,7);
+  for(const [a,q]of[[-11.4,-3],[-3,3],[3,11.4]])b.beam([a,venetianBridgeHeight(a)+1.0,z],[q,venetianBridgeHeight(q)+1.0,z],.105,C.stone,24,6);
+  for(let x=-2.7;x<=2.7;x+=.6)b.box(x,5.43,z,.10,.94,.10,C.stone,24);
  }
- if(covered){
-  for(const s of[-1,1]){
-   // Two genuinely open arcade galleries flank the central passage.
-   for(const xx of[-2.6,0,2.6]){b.box(xx,6.35,s*(D-.23),.25,2.8,.35,C.stone,24);b.box(xx,7.66,s*(D-.23),.5,.22,.6,C.gold,41);}
-   for(const xx of[-1.3,1.3]){archRing(b,xx,6.66,s*(D-.23),1.12,1.29,.35,C.stone,16);}
-   b.box(0,7.94,s*(D-.23),6,.3,.62,C.stone,24);
-  }
-  gable(b,6.5,w+.9,8.08,1.30,C.roof);
-  for(const s of[-1,1])venetianLantern(b,s*3.6,5.2,0,.58);
- }
+ if(covered)venetianBridgeShops(b,w);
  b.pop();
 }
 function venetianStation(b){
@@ -133,12 +124,12 @@ function venetianStation(b){
 function buildVenetianRoom(scene,b){
  venetianBase(b);venetianTrack(b);
  for(const bridge of VENETIAN_BRIDGES)venetianBridge(b,bridge);
- venetianArchitecture(scene,b);venetianQuays(b);venetianStation(b);venetianBuildLife(scene,b);
+ venetianArchitecture(scene,b);venetianCityEnsemble(b);venetianQuays(b);venetianStation(b);venetianBuildLife(scene,b);
  scene.routes=[VENETIAN_RAIL];scene.trains=[{edge:VENETIAN_RAIL,distance:60,speed:1.04,type:'steam',stock:'coast',cars:3}];
  scene.height=(x,z)=>Math.abs(x)>66||Math.abs(z)>46?FLOOR:venetianIsWater(x,z)?VENETIAN.water:VENETIAN.quay;
  scene.canPlace=()=>false;
  scene.spots=[
-  {name:'La Serenissima',detail:'A little city afloat in a collector’s Venetian salon.',target:[0,6,-2],distance:132,phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.49,yaw:.18},
+  {name:'La Serenissima',detail:'A little city afloat in a collector’s Venetian salon.',target:[0,6,-2],distance:132,phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.55,yaw:-.78},
   {name:'The lantern bridge',detail:'Stone steps, open arcades, and gondolas slipping beneath the Rialto.',target:[0,3.5,0],distance:47,phoneDistance:82,pitch:.43,yaw:.52},
   {name:'The grand canal',detail:'Rose plaster, striped mooring posts and little lives along the water.',target:[-19,4,-2],distance:36,phoneDistance:60,pitch:.28,yaw:-1.18},
   {name:'The basilica & bell tower',detail:'Five copper domes, a working bronze bell and a golden evening piazza.',target:[22,9,-20],distance:67,phoneDistance:106,pitch:.47,yaw:.20},
@@ -146,17 +137,18 @@ function buildVenetianRoom(scene,b){
   {name:'Caffè della Luna',detail:'An espresso under the awning while the lagoon train passes.',target:[-29,2.5,22],distance:49,phoneDistance:79,pitch:.52,yaw:.12},
   {name:'The lagoon railway',detail:'The house’s coastal steam locomotive brings the last visitors home.',target:[-24,2,36],distance:38,phoneDistance:64,pitch:.35,yaw:.28},
   {name:'The collector’s salon',detail:'Gilt moldings, sea-glass chandeliers and a miniature gondola workshop.',target:[0,-1,0],distance:192,phoneDistance:331,pitch:.64,yaw:-.44},
-  {name:'The golden loggia',detail:'Look through the carved stone gallery into the shaded rooms of Palazzo Oro.',target:[-20.6,7.3,-13],distance:28,phoneDistance:52,pitch:.43,yaw:.56}
+  {name:'The golden loggia',detail:'Look through the carved stone gallery into the shaded rooms of Palazzo Oro.',target:[-20.6,7.3,-13],distance:28,phoneDistance:52,pitch:.43,yaw:.56},
+  {name:'The lace palace',detail:'Quatrefoils, open colonnades and pink marble above the water.',target:[17.5,6,-8.5],distance:39,phoneDistance:72,pitch:.27,yaw:-1.22}
  ];
 }
 registerHouseRoom('venetian',{
  name:'The Venetian Salon',layout:'La Serenissima',tag:'THE CITY OF LANTERNS',
  description:'A winding turquoise canal, covered bridges, copper domes and quietly passing gondolas. The lagoon railway circles a Venetian city in miniature.',
- color:'#6fa9a2',ambient:'coast',target:[0,6,-2],distance:132,phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.49,yaw:.18,
+ color:'#6fa9a2',ambient:'coast',target:[0,6,-2],distance:132,phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.55,yaw:-.78,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Venetian miniature and salon, with agent assistance.'}],
  map:{plot:'east-7',scale:.40,footprint:[158,130],focus:[0,4,0]},
  // Fill every shader light slot: entering from another room must not retain its lights.
- lights:[[-34,28,-8],[34,28,-8],[0,28,29],[-68,4,-43],[68,4,-43],[0,26,29]],
- layoutLights:[[0,6.8,0],[-28,4.9,venetianCenter(-28)-8.4],[36,4.9,venetianCenter(36)+8.4],[19,8,-14],[35,23,-24],[-30,5,19],[-39,5,-14],[43,5,14]],
+ lights:[[-34,28,-8],[34,28,-8],[0,28,50],[-68,4,-43],[68,4,-43],[0,26,50]],
+ layoutLights:[[0,8.1,0],[-28,4.9,venetianCenter(-28)-8.4],[36,4.9,venetianCenter(36)+8.4],[19,8,-14],[35,23,-24],[-30,5,19],[-39,5,-14],[43,5,14]],
  build:buildVenetianRoom,shell:venetianShell
 });

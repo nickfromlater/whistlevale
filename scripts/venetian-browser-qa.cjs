@@ -31,13 +31,28 @@ const {execFileSync}=require('node:child_process');
   });
   if(!Object.values(report.motion).every(Boolean))throw new Error('Native boat motion/pause/reduced-motion integration failed');
   await shot('01-arrival');
-  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas'],[8,'10-golden-loggia']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
+  report.reflection=await page.evaluate(()=>{
+   const r=venetianReflection,passes=r?.passes;render();gl.finish();
+   return {allocated:!!r&&!r.failed,width:r?.width,height:r?.height,passes,cached:r?.passes===passes,mirroredEyeRestored:Array.from(gl.getUniform(mainProgram,uniform(mainProgram,'uEye'))).every((v,i)=>Math.abs(v-cameraPos[i])<1e-4),windingRestored:gl.getParameter(gl.FRONT_FACE)===gl.CCW,glError:gl.getError()};
+  });
+  if(!report.reflection.allocated||!report.reflection.cached||!report.reflection.mirroredEyeRestored||!report.reflection.windingRestored||report.reflection.glError)throw new Error('Planar reflection lifecycle/state failed');
+  for(const [i,name]of[[1,'02-bridge'],[3,'03-basilica'],[2,'04-canal'],[4,'05-gondolas'],[8,'10-golden-loggia'],[9,'14-lace-palace']]){await page.evaluate(i=>document.querySelector('#roomPlaces').children[i].click(),i);await shot(name);}
   await page.evaluate(()=>{setView('room',false);setMood('evening',{immediate:true});});await shot('06-lamplight');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('07-night');
   await page.evaluate(()=>{setMood('day',{immediate:true});enterCinema();paused=true;hobby.shot='drift';});await shot('08-gondola-ride');
   await page.evaluate(()=>{hobby.scene.venetian.time=160;clock=12;});await shot('11-return-canal');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('12-lantern-water');
   await page.evaluate(()=>{setMood('day',{immediate:true});hobby.scene.venetian.time=88;});await shot('13-basin-turn');
+  // A/B the same actual scene, camera and clock. The reflection must change
+  // real canvas pixels, not only expose a successful framebuffer allocation.
+  report.reflection.pixelsChanged=await page.evaluate(()=>{
+   const pixels=()=>{const a=new Uint8Array(screenW*screenH*4);gl.readPixels(0,0,screenW,screenH,gl.RGBA,gl.UNSIGNED_BYTE,a);return a;};
+   render();gl.finish();const on=pixels(),original=venetianPrepareReflection;let off;
+   try{venetianPrepareReflection=()=>{uf(mainProgram,'uVenetianReflectionReady',0);};render();gl.finish();off=pixels();}
+   finally{venetianPrepareReflection=original;render();gl.finish();}
+   let changed=0;for(let i=0;i<on.length;i+=4)if(Math.abs(on[i]-off[i])+Math.abs(on[i+1]-off[i+1])+Math.abs(on[i+2]-off[i+2])>8)changed++;return changed;
+  });
+  if(report.reflection.pixelsChanged<150)throw new Error('Reflection is not visibly contributing to the native scene');
   report.cinema=await page.evaluate(()=>{beginCinemaOrbit();const manual=!!cinemaOrbit.manual;resumeCinemaCamera();const automatic=!cinemaOrbit.manual;leaveCinema();return {manual,automatic,exited:!hobby.cinema};});
   if(!report.cinema.manual||!report.cinema.automatic||!report.cinema.exited)throw new Error('Cinema lifecycle failure');
   for(const width of[390,320]){
@@ -52,9 +67,9 @@ const {execFileSync}=require('node:child_process');
   }
   await page.setViewportSize({width:1440,height:1024});
   // Exercise the actual map lifecycle, its derived new plot and return navigation.
-  await page.evaluate(async()=>{await openHouseMap();});
-  report.map=await page.evaluate(()=>({active:shopMap.active,plot:SHOP_HOUSE_LAYOUT.byKey.venetian?.plot,entry:!!SHOP_HOUSE_LAYOUT.byKey.venetian}));
-  if(!report.map.active||!report.map.entry)throw new Error('Venetian room missing from live map');
+  await page.evaluate(async()=>{await openHouseMap();resize();render();gl.finish();});
+  report.map=await page.evaluate(()=>({active:shopMap.active,reflectionReleased:venetianReflection===null,plot:SHOP_HOUSE_LAYOUT.byKey.venetian?.plot,entry:!!SHOP_HOUSE_LAYOUT.byKey.venetian}));
+  if(!report.map.active||!report.map.entry||!report.map.reflectionReleased)throw new Error('Venetian room missing from live map');
   await page.evaluate(()=>{resize();render();gl.finish();});await page.screenshot({path:root+'/09-house-map.png',timeout:150000});
   await page.evaluate(()=>{closeShopMap();});
   report.returned=await page.evaluate(()=>HOBBY_HOUSE.state.room==='venetian'&&!shopMap.active);
