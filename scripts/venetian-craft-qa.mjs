@@ -15,6 +15,17 @@ const report=state.run(`(()=>{
  const rose=new Builder();venetianPiercedRose(rose,0,0,0,.43,1.2,.5,.22);
  const hit=(x,y)=>{for(let i=0;i<rose.data.length;i+=36){const a=rose.data.slice(i,i+3),b=rose.data.slice(i+12,i+15),c=rose.data.slice(i+24,i+27);const den=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1]);if(Math.abs(den)<1e-8)continue;const u=((b[1]-c[1])*(x-c[0])+(c[0]-b[0])*(y-c[1]))/den,v=((c[1]-a[1])*(x-c[0])+(a[0]-c[0])*(y-c[1]))/den;if(u>=0&&v>=0&&u+v<=1)return true;}return false;};
  for(const p of[[0,0],[.30,0],[0,.30]])assert.equal(hit(...p),false,'pierced opening is clear');assert.equal(hit(.86,.20),true,'pierced band retains surrounding masonry');
+ // Every stepped shop must open into the stair aisle, not turn a blank
+ // backing wall towards visitors. Trace through the actual middle of its counter opening.
+ const shopGeometry=new Builder();venetianBridgeShops(shopGeometry,8.4);
+ for(const side of[-1,1])for(const x of[-7,-4.45,4.45,7]){
+  const y=venetianBridgeHeight(x-Math.sign(x)*1.14)+1.55,eye=[x,y,0],direction=[0,0,side*3.19],d=shopGeometry.data;
+  for(let j=0;j<d.length;j+=36){
+   const a=d.slice(j,j+3),b=d.slice(j+12,j+15),c=d.slice(j+24,j+27),e1=sub(b,a),e2=sub(c,a),h=cross(direction,e2),det=dot(e1,h);if(Math.abs(det)<1e-8)continue;
+   const u=dot(sub(eye,a),h)/det;if(u<0||u>1)continue;const q=cross(sub(eye,a),e1),v=dot(direction,q)/det;if(v<0||u+v>1)continue;const t=dot(e2,q)/det;
+   assert.ok(t<0||t>1,'shop counter must face the pedestrian aisle');
+  }
+ }
  // Hands follow the physical oar handle without stretching the two-link
  // arms; the blade both immerses and lifts rather than orbiting above water.
  let low=Infinity,high=-Infinity;
@@ -44,7 +55,7 @@ const report=state.run(`(()=>{
  for(const x of[-50,0,50])for(const z of[-4,0,4]){const p=[x,VENETIAN.water,z],q=transform(p,matrix);assert.ok(len(sub(p,q))<1e-6,'Float32 mirror fixes the water plane');}
  assert.ok(Math.abs(transform([4,9,-3],matrix)[1]-(2*VENETIAN.water-9))<1e-6);
  for(const [w,h,phone]of[[1440,1024,false],[390,844,true],[7680,4320,false],[1,1,true]]){const [x,y]=venetianReflectionSize(w,h,phone);assert.ok(x>0&&y>0&&Math.max(x,y)<=(phone?512:896));assert.ok(x*y*6<=896*896*6,'bounded color/depth payload');}
- return{canalPalazzi:palazzi.length,secondaryHouses:houses.length,landmarks:1,quatrefoilVertices:rose.data.length/12};
+ return{canalPalazzi:palazzi.length,secondaryHouses:houses.length,landmarks:1,openBridgeShops:8,quatrefoilVertices:rose.data.length/12};
 })()`);
 const renderer=await read('src/rooms/venetian-render.js'),railway=await read('src/railway.js');
 assert.match(renderer,/isShopMapActive\(\)/,'live map uses fallback');
