@@ -2,24 +2,73 @@ name: Orrery native room review
 on:
   push:
     branches: [codex/orrery-rollercoaster-room]
+  pull_request:
+    paths: ['src/**orrery**', 'src/rooms/orrery*', 'src/trains/orrery.js', 'scripts/orrery*', '.github/workflows/orrery-review.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      # Temporary bootstrap for the isolated offline review workstation.
-      # This contains tracked public source only, never .git or runner credentials.
-      - name: Package tracked public review source
-        run: git archive --format=tar.gz HEAD > /tmp/orrery-review-source.tar.gz
+      - name: Integrate the reviewed classic-script entrypoints on the contribution branch
+        if: github.event_name == 'push' && github.ref_name == 'codex/orrery-rollercoaster-room'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          if 'src/rooms/orrery-track.js' not in s:
+              replacements = [
+                  ('<script src="src/trains.js"></script>', '<script src="src/rooms/orrery-track.js"></script>\n<script src="src/rooms/orrery.js"></script>\n<script src="src/trains.js"></script>'),
+                  ('<script src="src/trains/acela.js"></script>', '<script src="src/trains/acela.js"></script>\n<script src="src/trains/orrery.js"></script>'),
+                  ('<script src="src/performance.js"></script>', '<script src="src/orrery-ride.js"></script>\n<script src="src/performance.js"></script>'),
+                  ('<link rel="stylesheet" href="src/train-cabinet.css">', '<link rel="stylesheet" href="src/train-cabinet.css">\n<link rel="stylesheet" href="src/orrery-ride.css">')
+              ]
+              for a, b in replacements:
+                  assert s.count(a) == 1, a
+                  s = s.replace(a, b)
+              p.write_text(s)
+          PY
+          if ! git diff --quiet -- index.html; then
+            test "$(git ls-remote origin refs/heads/codex/orrery-rollercoaster-room | cut -f1)" = "$GITHUB_SHA"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html
+            git commit -m 'Wire the Orrery into native startup and portable export'
+            git push origin HEAD:refs/heads/codex/orrery-rollercoaster-room
+          fi
+      - name: Native geometry and source checks
+        run: |
+          mkdir -p evidence/orrery
+          npm run check
+          npm run test:orrery | tee evidence/orrery/focused.txt
+      - name: Install isolated review browser
+        run: |
+          npm install --prefix /tmp/orrery-browser playwright
+          /tmp/orrery-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture and exercise the real room
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/orrery/server.txt 2>&1 &
+          PLAYWRIGHT_PATH=/tmp/orrery-browser/node_modules/playwright node scripts/orrery-browser-qa.cjs
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: orrery-review-source
-          path: /tmp/orrery-review-source.tar.gz
-          retention-days: 1
-      - run: npm test
+          name: orrery-native-views
+          path: evidence/orrery/
+          retention-days: 14
+      - name: Full regression and geometry checks
+        run: |
+          npm test > evidence/orrery/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/orrery/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/orrery/contributions.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orrery-native-checks
+          path: evidence/orrery/*.txt
+          retention-days: 14

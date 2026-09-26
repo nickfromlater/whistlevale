@@ -1,0 +1,16 @@
+.orrery-ticket,.orrery-seat-controls{position:fixed;z-index:12;color:#ecdfbd;background:#203941ee;border:1px solid #d2ba8055;box-shadow:0 8px 32px #0d202e33;backdrop-filter:blur(16px);border-radius:16px;font-family:inherit}
+.orrery-ticket[hidden],.orrery-seat-controls[hidden]{display:none!important}
+.orrery-ticket{right:max(24px,env(safe-area-inset-right));bottom:calc(max(24px,env(safe-area-inset-bottom)) + 83px);width:214px;padding:17px 17px 13px}
+.orrery-eyebrow{display:block;font-size:8px;letter-spacing:.17em;line-height:1.6;color:#c1b990}
+.orrery-ticket button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0;color:#f3e4bf;font:italic 23px Georgia,serif;text-align:left}
+.orrery-ticket button span{font:23px Georgia,serif;color:#9ac4b7}
+#orreryPhase,#orrerySeatPhase{display:block;color:#b3c6c0;font-size:11px;line-height:1.6}
+.orrery-progress{display:block;height:2px;background:#d1bb8022;margin-top:10px;overflow:hidden}.orrery-progress i{display:block;height:100%;width:0;background:#bfab78}
+.orrery-seat-controls{top:max(100px,calc(env(safe-area-inset-top) + 85px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 12px;max-width:calc(100% - 24px);width:max-content}
+.orrery-seat-controls>div{padding:0 12px 0 4px;min-width:120px}
+.orrery-seat-controls button{min-height:44px;padding:8px 12px;border:1px solid #c3ac7944;border-radius:10px;font-size:11px;color:#eadcb8;background:#d7c18e0a;white-space:nowrap}
+.orrery-seat-controls button:last-child{background:#cbb37e;color:#223b3d;border-color:#cbb37e}
+.orrery-ticket button:focus-visible,.orrery-seat-controls button:focus-visible{outline:2px solid #eee1b6;outline-offset:4px}
+.hidden-ui .orrery-ticket,.hidden-ui .orrery-seat-controls{display:none!important}
+@media(max-width:600px){.orrery-ticket{width:184px;right:14px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 75px);padding:12px 14px 10px}.orrery-ticket button{font-size:21px}.orrery-eyebrow{font-size:7px}.orrery-seat-controls{top:max(91px,calc(env(safe-area-inset-top) + 80px));padding:8px;gap:5px;flex-wrap:wrap;justify-content:center;width:344px}.orrery-seat-controls>div{width:100%;text-align:center;padding:0}.orrery-seat-controls button{padding:7px 10px;font-size:10px}.orrery-seat-controls .orrery-eyebrow{display:inline;margin-right:8px}#orrerySeatPhase{display:inline;font-size:10px}}
+@media(max-height:500px){.orrery-ticket{bottom:85px;padding:8px 12px;width:178px}.orrery-ticket .orrery-eyebrow,.orrery-progress{display:none}.orrery-seat-controls{top:76px;padding:5px 8px}.orrery-seat-controls>div{width:auto}}
