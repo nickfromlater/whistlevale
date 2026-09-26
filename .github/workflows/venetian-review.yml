@@ -1,7 +1,7 @@
 name: Venetian room review
 on:
   pull_request:
-    paths: ['src/rooms/venetian*.js', 'scripts/venetian-*.mjs', 'scripts/venetian-*.cjs', '.github/workflows/venetian-review.yml', 'index.html', 'src/railway.js']
+    paths: ['src/rooms/venetian*.js', 'scripts/venetian-*.mjs', 'scripts/venetian-*.cjs', 'docs/rooms/venetian.md', '.github/workflows/venetian-review.yml', 'index.html', 'src/railway.js']
 permissions:
   contents: read
 concurrency:
