@@ -11,7 +11,9 @@ A continuous turquoise canal has shaped masonry banks and rounded turning
 basins. Four gondolas travel a separate closed navigation circuit beneath three
 real open stone arches. The central bridge has stairs, balustrades, two open
 arcades and a terracotta roof. Palazzi have recessed arched windows, shutters,
-stone balconies and flower boxes; alleys retain breathing room. Five ribbed
+stone balconies and flower boxes, with inhabited rear façades as well as the
+canal frontage; alleys retain breathing room. Inlaid piazzas, a hollow carved
+well, striped market stalls and a supported lantern garland complete the streets. Five ribbed
 copper domes, a clocked campanile with an open belfry and a slowly moving bronze
 bell, a compass-inlaid piazza, striped café, mooring posts and timber landings
 reward closer views. The perimeter railway uses the house's existing coastal
@@ -42,7 +44,9 @@ Each of 13 moving entries owns its own mesh. The existing house disposal and
 failed-construction paths release them. A bounded scene clock advances from the
 existing room/map simulation hooks, only while unpaused; reduced motion freezes
 boats, oars, wakes and the bell. Native water motion already observes the house's
-reduced-motion uniform. Leaving a room schedules no independent animation.
+reduced-motion uniform. Leaving a room schedules no independent animation. All six room-light and
+eight layout-light shader slots are set, so earlier rooms cannot leave stale
+lighting state. Authored pedestrians stand on dry paving or the raised platform.
 The canal is conservative about future community placement: `canPlace` rejects
 placements rather than letting imported scenery obstruct navigation.
 
@@ -55,8 +59,8 @@ navigation clearance, finite camera poses, reduced motion, bounded deltas, no
 animation-time geometry allocation, registration order, credits and both normal
 and failed-build mesh disposal. The room is included in the full test sequence.
 
-Initial measured geometry: **488,331** static room/floor/furnishing vertices,
-**25,266** wall vertices, **33,816** moving vertices; **547,413** total, excluding
+Measured geometry after the visual pass: **548,055** static room/floor/furnishing
+vertices, **25,500** wall vertices, **33,816** moving vertices; **607,371** total, excluding
 the shared train stock. The conservative sampled hull envelope clears the bank
 by at least **2.49 units** and the stone intrados by **2.18 units**.
 

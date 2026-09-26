@@ -49,6 +49,16 @@ function venetianPalazzo(b,{x,z,w=8,d=6,h=9,color='#ce9a88',angle=0,variant=0}){
   }
   if(i%2===0)venetianFlowers(b,xx,3.76,d/2+1.04,1.55);
  }
+ // The city is viewed from every side. Rear calle facades have their own
+ // occupied windows instead of exposing blank box backs in the arrival view.
+ b.push(0,0,-d/2-.07,0,PI);
+ for(let i=0;i<bays;i++){
+  const xx=(i-(bays-1)/2)*(w/(bays+.25));
+  for(const yy of[1.8,4.65,...(h>8?[7.4]:[])])venetianWindow(b,xx,yy,0,1.04,1.78,false,(i+variant+Math.floor(yy))%3!==0);
+  for(const side of[-1,1])b.box(xx+side*.74,4.65,.12,.30,1.76,.14,variant%2?'#577b7a':'#698d7b',22);
+ }
+ if(variant%3===0)venetianFlowers(b,0,3.67,.34,1.5);
+ b.pop();
  // Side windows are recessed, too: orbiting does not reveal a blank cardboard facade.
  for(const side of[-1,1]){
   b.push(side*(w/2+.03),0,0,0,side*PI/2);
@@ -161,8 +171,9 @@ function venetianArchitecture(scene,b){
  ];
  for(const [i,p]of P.entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)-11.5,variant:i});
  for(const [i,p]of[{x:-44,w:7.8,h:6.5,color:'#8eafa5'},{x:-33,w:8.4,h:7,color:'#caa28e'},{x:-19,w:7.8,h:6.9,color:'#d0b390'},{x:19,w:8.4,h:7.2,color:'#c69082'},{x:28.8,w:7,h:6.6,color:'#9caf9e'},{x:46,w:7.5,h:7.1,color:'#d0ad83'}].entries())venetianPalazzo(b,{...p,z:venetianCenter(p.x)+12.0,angle:PI,variant:i+1});
- venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
- venetianCompass(b,17.8,-12.1,3.6);venetianCompass(b,6.5,23,5.0);
+ venetianPiazzas(b);venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
+ venetianCompass(b,17.8,-12.1,3.6);venetianCompass(b,6.5,23,5.0);venetianWell(b,6.5,23);
+ venetianMarket(b,39.5,26.5,0);venetianMarket(b,46,30.3,1);
  // Colonnaded garden and cypress silhouettes behind the little city.
  for(const x of[-45,-36,-27,-18,-9]){
   b.box(x,1.5,-29,4.6,.6,4.8,'#bbae95',24);b.cylinder(x,3.1,-29,.17,.13,3.4,'#776c51',2,8);
@@ -209,7 +220,8 @@ function venetianShell(b){
     const xx=(i-(count-1)/2)*spacing,r=spacing*.33;
     // A painted lagoon beyond each recessed arched window, made from native
     // geometry rather than a newly allocated atlas or external image asset.
-    w.box(xx,8.6,.43,r*2,28,.10,'#93b7b0',0);
+    w.quad([xx-r,-7.3,.43],[xx+r,-7.3,.43],[xx+r,15.9,.43],[xx-r,15.9,.43],'#93b7b0',0,[0,0,1]);
+    for(let k=0;k<16;k++){const a=k*PI/16,q=(k+1)*PI/16;w.tri([xx,15.9,.43],[xx+r*Math.cos(a),15.9+r*.93*Math.sin(a),.43],[xx+r*Math.cos(q),15.9+r*.93*Math.sin(q),.43],'#93b7b0',0);}
     w.box(xx,.4,.53,r*2,8.5,.065,'#6d9d99',0);w.box(xx,-4.9,.54,r*2,2.0,.07,'#527d7d',0);
     for(let k=0;k<6;k++){const cx=xx-r+1.4+k*r*.30,h=1.4+hash(k,i)*2.8;w.box(cx,3.25+h/2,.57,r*.3,h,.08,k%2?'#adc2b4':'#a2b9ad',0);}
     venetianArch(w,xx,15.9,.95,r,r*.93,.8,1.0,C.stone);
@@ -238,4 +250,51 @@ function venetianShell(b){
   for(const side of[-1,1])b.box(x+side*8.8,FLOOR+1.9,55,.5,3.8,4.1,C.gold,41);
  }
  return walls;
+}
+
+
+function venetianPiazzas(b){
+ const C=VENETIAN_COLORS;
+ // Low-contrast inlaid paving separates the piazzas and garden from the quay.
+ for(const [cx,cz,w,d]of[[6.5,23,23,20],[19,-12.2,25,9]]){
+  b.box(cx,1.208,cz,w,.015,d,'#c5c7af',24);
+  for(let x=cx-w/2+.8;x<cx+w/2;x+=1.65)for(let z=cz-d/2+.8;z<cz+d/2;z+=1.65){
+   b.push(x,1.221,z,0,PI/4);b.quad([-.49,0,-.49],[-.49,0,.49],[.49,0,.49],[.49,0,-.49],'#e4d7b7',24,[0,1,0]);b.pop();
+  }
+  for(const side of[-1,1]){b.box(cx,1.222,cz+side*d/2,w,.018,.13,C.stone,24);b.box(cx+side*w/2,1.222,cz,.13,.018,d,C.stone,24);}
+ }
+ b.box(-27.5,1.212,-29,47,.020,10,'#93a48a',3);
+ b.box(-27.5,1.235,-32.7,46,.025,1.4,'#d4c5a5',24);
+ // A single suspended garland, supported by its own poles, lights the evening market.
+ const a=[-3,7.6,32],z=[17,7.6,32];
+ for(const p of[a,z]){b.cylinder(p[0],4.43,p[2],.09,.055,6.45,C.ink,41,8);b.sphere(p[0],7.78,p[2],.15,.24,.15,C.gold,41,8,5);}
+ const cable=t=>[mix(a[0],z[0],t),7.6-1.0*Math.sin(PI*t),32];
+ for(let i=0;i<24;i++)b.beam(cable(i/24),cable((i+1)/24),.025,C.ink,41,5);
+ for(let i=0;i<11;i++){const p=cable((i+.5)/11);b.beam(p,[p[0],p[1]-.32,p[2]],.018,C.ink,41,5);b.sphere(p[0],p[1]-.45,p[2],.16,.22,.16,'#edcf9b',6,8,5);}
+}
+function venetianWell(b,x,z){
+ const C=VENETIAN_COLORS;b.push(x,1.235,z);
+ b.cylinder(0,.13,0,1.58,1.58,.26,C.stone,24,24);
+ // A hollow carved well, with an actual inset water surface and iron lifting arch.
+ for(let i=0;i<24;i++){
+  const a=i*TAU/24,q=(i+1)*TAU/24,p=(t,r,y)=>[Math.cos(t)*r,y,Math.sin(t)*r];
+  b.quad(p(a,1.11,.26),p(q,1.11,.26),p(q,1.20,1.26),p(a,1.20,1.26),shade(C.stone,i%3?.96:1.05),24);
+  b.quad(p(a,.84,.35),p(a,.84,1.35),p(q,.84,1.35),p(q,.84,.35),C.shadow,24);
+  b.quad(p(a,1.31,1.35),p(q,1.31,1.35),p(q,.84,1.35),p(a,.84,1.35),C.stone,24,[0,1,0]);
+  b.tri([0,.38,0],p(q,.84,.38),p(a,.84,.38),'#537d78',7);
+ }
+ for(const side of[-1,1])b.beam([side*1.1,1.28,0],[side*1.1,2.55,0],.045,C.ink,41,7);
+ for(let i=0;i<20;i++){const a=i*PI/20,q=(i+1)*PI/20;b.beam([Math.cos(a)*1.1,2.55+Math.sin(a)*.85,0],[Math.cos(q)*1.1,2.55+Math.sin(q)*.85,0],.045,C.ink,41,6);}
+ b.beam([0,3.35,0],[0,1.5,0],.018,C.ink,41,5);b.cylinder(0,1.34,0,.19,.24,.33,'#9f815b',22,10);b.pop();
+}
+function venetianMarket(b,x,z,variant){
+ const C=VENETIAN_COLORS;b.push(x,1.2,z,0,variant?-.18:.08);
+ for(const xx of[-2.1,2.1])for(const zz of[-1.1,1.1])b.cylinder(xx,1.62,zz,.055,.055,3.25,C.ink,41,7);
+ for(let i=0;i<12;i++){const xx=-2.4+i*.4,c=i%2?'#e2d1ad':variant?'#9c6b68':'#749689';b.quad([xx,3.22,-1.38],[xx+.4,3.22,-1.38],[xx+.4,3.55,0],[xx,3.55,0],c,23);b.quad([xx,3.55,0],[xx+.4,3.55,0],[xx+.4,3.22,1.38],[xx,3.22,1.38],c,23);b.box(xx+.2,3.10,1.38,.4,.25,.06,c,23);}
+ b.box(0,1.08,0,4.15,.15,2.2,'#b3926e',22);
+ for(const xx of[-1.4,0,1.4]){
+  b.box(xx,1.26,0,1.26,.20,1.7,'#916e50',22);
+  for(let i=0;i<7;i++){const dx=xx+((i%3)-1)*.30,dz=(Math.floor(i/3)-1)*.40;b.sphere(dx,1.47,dz,.16,.17,.16,variant?'#bc867e':i%2?'#c6aa60':'#8fa77d',0,7,4);}
+ }
+ b.box(0,2.7,1.2,3.2,.40,.075,C.ink,22);hudsonText(b,variant?'FIORI':'MERCATO',0,2.69,1.246,2.8,C.stone);b.pop();
 }

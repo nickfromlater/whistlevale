@@ -1,5 +1,13 @@
 'use strict';
 
+// Authored dry-land and platform positions, also used by the clearance tests.
+const VENETIAN_PEDESTRIANS=[
+ [-36,1.23,28,.4,'#bec7a8'],[-30.7,1.23,30,1.2,'#a8837d'],[-24.7,1.23,30,-1.1,'#879f95'],
+ [-6,1.23,-12,0,'#c0a575'],[12,1.23,-12,.4,'#92aaa5'],[22,1.23,-13,-.6,'#b7897e'],
+ [27,1.23,-15,2,'#c2bb9f'],[32,1.23,-12,.4,'#9ba796'],[5,1.23,22,.9,'#c4a99c'],
+ [-32,1.46,35,0,'#b7bfa6'],[-27,1.46,35,1.3,'#ad9390'],[41,1.23,9,2.3,'#b49a81']
+];
+
 // One bounded scene clock, owned by the existing room and map update loops.
 // Every moving mesh is registered in scene.movingParts for normal disposal.
 function venetianLantern(b,x,y,z,s=1){
@@ -95,7 +103,7 @@ function venetianBuildLife(scene,b){
   for(const dx of[-1.8,1.8])b.cylinder(x+dx,-.33,z-side*.65,.09,.09,1.38,'#6c7563',22,8);
   for(let i=0;i<3;i++)b.box(x,.49+i*.23,z+side*(.7+i*.25),2,.18,.5,C.stone,24);
  }
- for(const [x,z,a,c]of[[-26,20,.4,'#bec7a8'],[-31,28,1.2,'#a8837d'],[-25,28,-1.1,'#879f95'],[-15,-8,0,'#c0a575'],[12,-12,.4,'#92aaa5'],[22,-13,-.6,'#b7897e'],[27,-15,2,'#c2bb9f'],[32,-12,.4,'#9ba796'],[5,22,.9,'#c4a99c'],[-24,33,0,'#b7bfa6'],[-29,33,1.3,'#ad9390'],[42,9,2.3,'#b49a81']])venetianPerson(b,x,1.23,z,a,c);
+ for(const [x,y,z,a,c]of VENETIAN_PEDESTRIANS)venetianPerson(b,x,y,z,a,c);
  for(const x of[-1.1,1.3])venetianPerson(b,x,4.98,0,PI/2,'#b8b9a6');
  scene.population=22;
  // Reflected lantern glints: restrained strips on the water, not a second world

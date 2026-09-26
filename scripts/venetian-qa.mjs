@@ -13,6 +13,8 @@ const sceneReport=state.run(`(()=>{
  assert.ok(s.spots.every(p=>p.phoneDistance>p.distance&&p.target.every(Number.isFinite)));
  assert.ok(validateCredits(HOUSE_ROOMS.venetian.credits).some(c=>c.handle==='nickfromlater'));
  assert.equal(HOUSE_ROOMS.venetian.map.plot,'east-6');assert.equal(HOUSE_ROOMS.venetian.ambient,'coast');
+ assert.equal(houseRoomLights('venetian').length,6,'overwrite every room-light uniform slot');assert.equal(houseLayoutLights('venetian').length,8,'overwrite every miniature-light uniform slot');
+ assert.ok([...houseRoomLights('venetian').flat(),...houseLayoutLights('venetian').flat()].every(Number.isFinite),'finite authored lights');
  assert.equal(s.trains[0].stock,'coast');assert.equal(s.trains[0].type,'steam');
  return {sceneVertices:s.mesh.count,wallVertices:walls,movingVertices:moving,totalVertices:s.mesh.count+walls+moving,viewpoints:s.spots.length};
 })()`);
@@ -32,6 +34,7 @@ const clearanceReport=state.run(`(()=>{
   // Both fixed moving oar extremes remain inside the canal, including turns.
   for(const a of[-.29,.29]){const p=transform(transform([1.56,-.7,.36],mm(trans(.71,.86,-1.62),ry(a))),m);assert.ok(venetianIsWater(p[0],p[2],.20),'oar blade clears bank');}
  }
+ for(const [x,y,z]of VENETIAN_PEDESTRIANS){assert.ok(y>=VENETIAN.quay,'feet are above paving');for(const dx of[-.3,.3])for(const dz of[-.3,.3])assert.ok(!venetianIsWater(x+dx,z+dz),'pedestrians stand wholly on dry land or the station platform');}
  assert.equal(s.height(0,0),VENETIAN.water);assert.equal(s.height(0,44),VENETIAN.quay);assert.equal(s.height(72,0),FLOOR);
  return {railLength:VENETIAN_RAIL.length,canalCircuit:s.venetian.route.length,minimumBankClearance:bank,minimumArchClearance:arch};
 })()`);
