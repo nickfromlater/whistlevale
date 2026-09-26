@@ -8,8 +8,8 @@ const sceneReport=state.run(`(()=>{
  assert.ok(s.mesh.count>350000&&s.mesh.count<550000,'fixed static room budget');
  const moving=s.movingParts.reduce((n,p)=>n+p.mesh.count,0),walls=s.walls.reduce((n,p)=>n+p.mesh.count,0);
  assert.ok(moving<40000,'fixed moving geometry budget');assert.ok(s.mesh.count+moving+walls<620000,'fixed total room budget');
- assert.equal(s.movingParts.length,13,'four independent hull/oar/wake sets and one bell');
- assert.equal(new Set(s.movingParts.map(p=>p.mesh)).size,13,'each part owns a distinct mesh');
+ assert.equal(s.movingParts.length,29,'four hull/oar/wake sets, sixteen arm links and one bell');
+ assert.equal(new Set(s.movingParts.map(p=>p.mesh)).size,29,'each part owns a distinct mesh');
  assert.ok(s.spots.every(p=>p.phoneDistance>p.distance&&p.target.every(Number.isFinite)));
  assert.ok(validateCredits(HOUSE_ROOMS.venetian.credits).some(c=>c.handle==='nickfromlater'));
  assert.equal(HOUSE_ROOMS.venetian.map.plot,'east-7');assert.equal(HOUSE_ROOMS.venetian.ambient,'coast');
@@ -31,8 +31,8 @@ const clearanceReport=state.run(`(()=>{
    const gap=Math.min(p[2]-bounds[0],bounds[1]-p[2]);bank=Math.min(bank,gap);assert.ok(gap>.3,'swept hull clears bank');
    for(const bridge of VENETIAN_BRIDGES)if(Math.abs(p[0]-bridge.x)<bridge.width/2+.02){const u=p[2]-venetianCenter(bridge.x),ceiling=.15+3.75*Math.sqrt(Math.max(0,1-(u/8.65)**2));arch=Math.min(arch,ceiling-p[1]);assert.ok(ceiling-p[1]>.35,'gondolier clears actual stone intrados');}
   }
-  // Both fixed moving oar extremes remain inside the canal, including turns.
-  for(const a of[-.29,.29])for(const vertex of VENETIAN_OAR_BLADE){const p=transform(transform(vertex,mm(trans(.71,.86,-1.62),ry(a))),m);assert.ok(venetianIsWater(p[0],p[2],.20),'every authored oar blade vertex clears bank');}
+  // Power and recovery strokes remain inside the canal, including turns.
+  for(let phase=0;phase<TAU;phase+=TAU/12)for(const vertex of VENETIAN_OAR_BLADE){const p=transform(transform(vertex,venetianOarLocal({venetian:{time:phase/1.25}},0)),m);assert.ok(venetianIsWater(p[0],p[2],.20),'every authored oar blade vertex clears bank throughout the rowing cycle');}
  }
  for(const [x,y,z]of VENETIAN_PEDESTRIANS){assert.ok(y>=VENETIAN.quay,'feet are above paving');for(const dx of[-.3,.3])for(const dz of[-.3,.3])assert.ok(!venetianIsWater(x+dx,z+dz),'pedestrians stand wholly on dry land or the station platform');}
  assert.equal(s.height(0,0),VENETIAN.water);assert.equal(s.height(0,44),VENETIAN.quay);assert.equal(s.height(72,0),FLOOR);
@@ -109,6 +109,13 @@ const motionReport=state.run(`(()=>{
     const u=q.position[2]-venetianCenter(bridge.x),ceiling=.15+3.75*Math.sqrt(Math.max(0,1-(u/8.65)**2));
     assert.ok(ceiling-q.position[1]>.35,'raised ride eye clears the actual arch');
    }
+  }
+  for(let d=0;d<s.venetian.route.length;d+=.35){
+   s.venetian.time=d/.82;const q=venetianCinemaView(s,'side');
+   assert.ok(q.fixed,'taking over the boat view must not attach to the railway train');
+   assert.ok(venetianIsWater(q.position[0],q.position[2],.25),'following eye stays inside the full canal circuit');
+   assert.ok(len(sub(q.position,q.target))>1.5,'following gaze remains well-defined at turns');
+   for(const bridge of VENETIAN_BRIDGES)if(Math.abs(q.position[0]-bridge.x)<bridge.width/2+.02){const u=q.position[2]-venetianCenter(bridge.x),ceiling=.15+3.75*Math.sqrt(Math.max(0,1-(u/8.65)**2));assert.ok(ceiling-q.position[1]>.35,'following eye clears all bridge intrados');}
   }
   s.venetian.time=savedTime;
   assert.equal(venetianCinemaView(s,'tail'),null,'fourth shot delegates to native railway camera');

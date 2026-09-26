@@ -27,12 +27,12 @@ function venetianCanalRoute(){
  curves.push([p(-48,-r),p(-48-k*r,-r),p(-48-r,-k*r),p(-48-r,0)],[p(-48-r,0),p(-48-r,k*r),p(-48-k*r,r),p(-48,r)]);
  return new Edge('The lantern canal navigation circuit',curves);
 }
-function venetianPerson(b,x,y,z,angle=0,shirt='#c5d2b3',seated=false){
+function venetianPerson(b,x,y,z,angle=0,shirt='#c5d2b3',seated=false,arms=true){
  b.push(x,y,z,0,angle);const feet=seated?.30:0;
  if(seated){for(const s of[-1,1]){b.beam([s*.10,.52,0],[s*.10,.45,.28],.075,'#405453',0,7);b.beam([s*.10,.45,.28],[s*.10,.13,.30],.066,'#405453',0,7);}}
  else for(const s of[-1,1])b.beam([s*.10,.53,0],[s*.10,feet,0],.071,'#405453',0,7);
  b.cylinder(0,.77,0,.20,.23,.48,shirt,23,9);b.sphere(0,1.15,0,.145,.19,.15,'#d8af86',0,9,6);
- for(const s of[-1,1])b.beam([s*.23,.93,0],[s*.28,.61,.13],.052,shirt,0,7);
+ if(arms)for(const s of[-1,1])b.beam([s*.23,.93,0],[s*.28,.61,.13],.052,shirt,0,7);
  b.pop();
 }
 function venetianGondola(b,index){
@@ -59,10 +59,9 @@ function venetianGondola(b,index){
  }
  for(let j=0;j<6;j++)b.box(0,.62+j*.083,3.44+j*.012,.060,.032,.26,'#c5c9bb',41);
  b.beam([0,.58,-3.28],[0,.86,-3.47],.035,C.gold,41,7);
- venetianPerson(b,0,.23,-2.03,0,'#e1dac0');
+ venetianPerson(b,0,.23,-2.03,0,'#e1dac0',false,false);
  for(let i=0;i<4;i++)b.box(0,.88+i*.095,-1.825,.38,.035,.014,'#425e62',23);
  b.cylinder(0,1.62,-2.03,.26,.26,.045,'#d1b77f',22,14);b.cylinder(0,1.70,-2.03,.17,.15,.16,'#d9bd84',22,12);b.cylinder(0,1.65,-2.03,.174,.174,.045,'#a96d66',23,12);
- b.beam([.15,1.08,-2.03],[.75,.87,-1.86],.055,'#d8af86',0,7);
  venetianPerson(b,-.12,.05,.57,0,index%2?'#bb9993':'#91a799',true);
  b.cylinder(.58,.55,-1.62,.047,.045,.62,C.gold,41,7);b.beam([.58,.8,-1.62],[.75,.88,-1.62],.035,C.gold,41,6);
 }
@@ -82,6 +81,24 @@ function venetianUpdate(scene,dt){
  scene.venetian.time+=Math.min(dt,.1);
 }
 const VENETIAN_OAR_BLADE=[[1.16,-.58,.18],[1.45,-.74,.08],[1.64,-.80,.17],[1.56,-.82,.38],[1.30,-.66,.40]];
+// The oar enters the water on its power stroke and lifts on recovery. Both
+// hands stay on the same rigid handle, with elbows solved as two-link arms.
+function venetianOarLocal(scene,index){
+ const t=reduceMotion?0:scene.venetian.time,phase=t*1.25+index;
+ return mm(trans(.71,.86,-1.62),mm(ry(Math.sin(phase)*.29),rz(-.035-.11*Math.cos(phase))));
+}
+function venetianRowingArm(scene,index,side){
+ const local=venetianOarLocal(scene,index),shoulder=[side*.23,1.16,-2.03],hand=transform(side<0?[-.49,.245,-.091]:[-.21,.105,-.039],local);
+ const direction=norm(sub(hand,shoulder)),distance=len(sub(hand,shoulder)),upper=.39,lower=.40;
+ const along=(upper*upper-lower*lower+distance*distance)/(2*Math.max(distance,1e-6));
+ const bend=norm(sub([0,-1,-.1],mul(direction,dot(direction,[0,-1,-.1]))));
+ const elbow=add(add(shoulder,mul(direction,along)),mul(bend,Math.sqrt(Math.max(0,upper*upper-along*along))));
+ return {shoulder,elbow,hand,distance,upper,lower};
+}
+function venetianArmMatrix(scene,index,side,forearm){
+ const arm=venetianRowingArm(scene,index,side),a=forearm?arm.elbow:arm.shoulder,q=forearm?arm.hand:arm.elbow,d=sub(q,a);
+ return mm(venetianBoatPose(scene,index).model,mm(basis(a,d),scaling(1,1,len(d))));
+}
 function venetianBuildLife(scene,b){
  const C=VENETIAN_COLORS;
  scene.venetian={time:0,route:venetianCanalRoute()};scene.movingParts=[];
@@ -90,8 +107,9 @@ function venetianBuildLife(scene,b){
  const part=(builder,model)=>scene.movingParts.push({mesh:builder.mesh(),model});
  for(let i=0;i<4;i++){
   const hull=new Builder();venetianGondola(hull,i);part(hull,current=>venetianBoatPose(current,i).model);
-  const oar=new Builder();oar.beam([0,0,0],[1.30,-.64,.24],.025,'#a78d66',22,8);for(let j=1;j<VENETIAN_OAR_BLADE.length-1;j++)oar.tri(VENETIAN_OAR_BLADE[0],VENETIAN_OAR_BLADE[j],VENETIAN_OAR_BLADE[j+1],'#b7986a',22);
-  part(oar,current=>{const pose=venetianBoatPose(current,i),t=reduceMotion?0:current.venetian.time;return mm(pose.model,mm(trans(.71,.86,-1.62),ry(Math.sin(t*1.25+i)*.29)));});
+  const oar=new Builder();oar.beam([-.55,.275,-.102],[1.30,-.64,.24],.025,'#a78d66',22,8);for(let j=1;j<VENETIAN_OAR_BLADE.length-1;j++)oar.tri(VENETIAN_OAR_BLADE[0],VENETIAN_OAR_BLADE[j],VENETIAN_OAR_BLADE[j+1],'#b7986a',22);
+  part(oar,current=>mm(venetianBoatPose(current,i).model,venetianOarLocal(current,i)));
+  for(const side of[-1,1])for(const forearm of[false,true]){const arm=new Builder();arm.beam([0,0,0],[0,0,1],forearm?.051:.065,forearm?'#d8af86':'#e1dac0',forearm?0:23,7);if(forearm)arm.sphere(0,0,1,.065,.065,.13,'#d8af86',0,6,4);part(arm,current=>venetianArmMatrix(current,i,side,forearm));}
   const wake=new Builder();venetianWake(wake);part(wake,current=>{const q=venetianBoatPose(current,i);return basis([q.position[0],VENETIAN.water,q.position[2]],q.f);});
  }
  const bell=new Builder();bell.cylinder(0,-.43,0,.64,.30,.83,'#af8c56',41,20);bell.cylinder(0,-.89,0,.77,.69,.17,C.gold,41,20);bell.sphere(0,-.86,0,.09,.17,.09,'#624e3a',41,8,5);bell.beam([-.8,.08,0],[.8,.08,0],.10,'#6b6650',22,8);
@@ -111,7 +129,7 @@ function venetianBuildLife(scene,b){
  }
  for(const [x,y,z,a,c]of VENETIAN_PEDESTRIANS)venetianPerson(b,x,y,z,a,c);
  for(const x of[-1.1,1.3])venetianPerson(b,x,4.98,0,PI/2,'#b8b9a6');
- scene.population=22;
+ scene.population=26;
 
 }
 function venetianCinemaView(scene,shot){
@@ -123,9 +141,14 @@ function venetianCinemaView(scene,shot){
   // Follow the next stretch of the actual water route. A long tangent points
   // into the stone basin wall when the gondola rounds either turning pool.
   const ahead=circuitAt(scene.venetian.route,pose.distance+6).p;
-  return {position:add(add(add(p,mul(f,.85)),mul(r,.18)),[0,1.65,0]),target:add(ahead,[0,2.1,0]),groundHandled:true,fov:innerWidth<700?.95:.82};
+  return {position:add(add(add(p,mul(f,.85)),mul(r,.18)),[0,1.65,0]),target:add(ahead,[0,2.1,0]),groundHandled:true,fixed:true,fov:innerWidth<700?.95:.82};
  }
- if(shot==='side')return {position:[-19,9,18],target:[0,3,0],groundHandled:true,fov:innerWidth<700?1.1:.8};
- if(shot==='wide')return {position:innerWidth<700?[39,128,209]:[38,73,122],target:[0,5,-2],groundHandled:true,fov:.84};
+ if(shot==='side'){
+  // Travel behind the same boat on the water route, not on a tangent that
+  // would pass through the outside wall at the turning basins.
+  const pose=venetianBoatPose(scene,0),behind=circuitAt(scene.venetian.route,pose.distance-4.6),r=norm([behind.f[2],0,-behind.f[0]]);
+  return {position:add(add(behind.p,mul(r,1.1)),[0,2.25,0]),target:add(add(pose.position,mul(pose.f,.60)),[0,.80,0]),groundHandled:true,fixed:true,fov:innerWidth<700?1.14:1.0};
+ }
+ if(shot==='wide')return {position:innerWidth<700?[39,128,209]:[38,73,122],target:[0,5,-2],groundHandled:true,fixed:true,fov:.84};
  return null; // The fourth shot retains the house's native train-follow camera.
 }

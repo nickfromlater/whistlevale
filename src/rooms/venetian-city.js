@@ -65,7 +65,7 @@ function venetianLacePalace(b){
  for(const y of[2.94,6.22,8.02])b.box(0,y,0,W+.30,.22,D+.25,C.stone,104);
  for(let i=0;i<9;i++){
   const x=(i-4)*pitch;
-  for(const side of[-1,1]){
+  for(const side of[-1,1])if(i===0||side===1){
    b.cylinder(x+side*pitch/2,1.28,D/2,.13,.115,2.40,C.stone,104,8);
    b.box(x+side*pitch/2,2.51,D/2,.38,.18,.40,C.stone,104);
   }
@@ -102,11 +102,21 @@ function venetianBridgeShops(b,width){
    for(const edge of[-d/2,d/2])b.quad([a,venetianBridgeHeight(a)-.06,z+edge],[q,venetianBridgeHeight(q)-.06,z+edge],[q,y,z+edge],[a,y,z+edge],C.stone,104);
    for(const end of[a,q])b.box(end,(y+venetianBridgeHeight(end))*.5-.015,z,.08,Math.max(.03,y-venetianBridgeHeight(end)),d,C.stone,104);
    b.push(x,y,z,0,side<0?PI:0);
-   b.box(0,1.1,0,w,2.2,d,'#d4c6ad',104);
-   b.box(0,1.05,d/2+.024,1.5,1.67,.08,'#38534f',22);
-   for(const xx of[-.51,0,.51])b.box(xx,1.04,d/2+.08,.045,1.65,.05,C.gold,41);
-   b.box(0,1.94,d/2+.11,w*.85,.28,.12,'#886648',22);
-   b.box(0,1.08,-d/2-.04,1.25,1.58,.09,'#726f59',22);
+   // The shopfront is genuinely open. Dark backing, side walls and a
+   // counter give the little wares depth instead of a painted solid door.
+   const left=-w/2,right=w/2,rear=-d/2,front=d/2;
+   b.quad([left,0,rear],[right,0,rear],[right,2.2,rear],[left,2.2,rear],'#575549',22);
+   for(const xx of[left,right])b.quad([xx,0,rear],[xx,0,front],[xx,2.2,front],[xx,2.2,rear],'#d4c6ad',104);
+   b.quad([left,2.2,rear],[right,2.2,rear],[right,2.2,front],[left,2.2,front],C.shadow,104);
+   for(const xx of[-.99,.99])b.box(xx,1.1,front,.25,2.2,.25,C.stone,104);
+   b.box(0,2.03,front,1.8,.34,.27,C.stone,104);
+   b.box(0,.45,front-.24,1.8,.9,.46,'#607c6b',22);b.box(0,.94,front-.20,1.94,.08,.59,'#b49b70',22);
+   for(let j=0;j<3;j++){
+    const xx=-.54+j*.54,h=.20+(j%2)*.13;
+    b.box(xx,1.02+h/2,front-.13,.32,h,.27,[C.brick,'#749d91','#bda364'][j],23);
+    b.box(xx,1.01+h,front-.13,.34,.025,.29,C.stone,24);
+   }
+   b.box(0,1.94,d/2+.16,w*.80,.20,.08,'#886648',22);
    gable(b,w+.19,d+.28,2.28,.44,'#a86f56');
    b.pop();
   }

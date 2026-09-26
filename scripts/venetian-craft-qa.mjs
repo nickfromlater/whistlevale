@@ -15,6 +15,29 @@ const report=state.run(`(()=>{
  const rose=new Builder();venetianPiercedRose(rose,0,0,0,.43,1.2,.5,.22);
  const hit=(x,y)=>{for(let i=0;i<rose.data.length;i+=36){const a=rose.data.slice(i,i+3),b=rose.data.slice(i+12,i+15),c=rose.data.slice(i+24,i+27);const den=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1]);if(Math.abs(den)<1e-8)continue;const u=((b[1]-c[1])*(x-c[0])+(c[0]-b[0])*(y-c[1]))/den,v=((c[1]-a[1])*(x-c[0])+(a[0]-c[0])*(y-c[1]))/den;if(u>=0&&v>=0&&u+v<=1)return true;}return false;};
  for(const p of[[0,0],[.30,0],[0,.30]])assert.equal(hit(...p),false,'pierced opening is clear');assert.equal(hit(.86,.20),true,'pierced band retains surrounding masonry');
+ // Hands follow the physical oar handle without stretching the two-link
+ // arms; the blade both immerses and lifts rather than orbiting above water.
+ let low=Infinity,high=-Infinity;
+ for(let j=0;j<120;j++){
+  const scene={venetian:{time:j*TAU/(120*1.25)}};
+  for(const side of[-1,1]){const arm=venetianRowingArm(scene,0,side);assert.ok(arm.distance<arm.upper+arm.lower&&arm.distance>Math.abs(arm.upper-arm.lower),'hand is within physical reach');assert.ok(Math.abs(len(sub(arm.elbow,arm.shoulder))-arm.upper)<1e-6);assert.ok(Math.abs(len(sub(arm.hand,arm.elbow))-arm.lower)<1e-6);}
+  const tip=transform(VENETIAN_OAR_BLADE[2],venetianOarLocal(scene,0));low=Math.min(low,tip[1]);high=Math.max(high,tip[1]);
+ }
+ assert.ok(low<-.08&&high>.10,'oar blade enters and leaves the waterline');
+ // Trace the authored desktop palace camera through actual world geometry.
+ // Stop short of its own reveals: a foreground bridge roof must not be the view.
+ const camera=getHouseScene('venetian').spots.find(s=>s.name==='The lace palace');
+ const eye=add(camera.target,[Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.distance,Math.sin(camera.pitch)*camera.distance,Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.distance]);
+ const viewGeometry=new Builder();venetianArchitecture({},viewGeometry);venetianCityEnsemble(viewGeometry);for(const bridge of VENETIAN_BRIDGES)venetianBridge(viewGeometry,bridge);
+ const data=viewGeometry.data;
+ for(const target of[[12,5.5,-6.95],[17.5,5.5,-6.95],[23,5.5,-6.95]]){
+  const direction=sub(target,eye);
+  for(let j=0;j<data.length;j+=36){
+   const a=data.slice(j,j+3),b=data.slice(j+12,j+15),c=data.slice(j+24,j+27),e1=sub(b,a),e2=sub(c,a),h=cross(direction,e2),det=dot(e1,h);if(Math.abs(det)<1e-8)continue;
+   const u=dot(sub(eye,a),h)/det;if(u<0||u>1)continue;const q=cross(sub(eye,a),e1),v=dot(direction,q)/det;if(v<0||u+v>1)continue;const t=dot(e2,q)/det;
+   assert.ok(t<=.001||t>.975,'palace view is obscured by foreground geometry');
+  }
+ }
  // Reflection projection fixes every point on the water plane, and mirrors
  // equal distances above/below it. The world geometry itself is never moved.
  const matrix=venetianReflectedVP(I);

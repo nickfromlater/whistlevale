@@ -130,7 +130,7 @@ function buildVenetianRoom(scene,b){
  scene.canPlace=()=>false;
  scene.spots=[
   {name:'La Serenissima',detail:'A little city afloat in a collector’s Venetian salon.',target:[0,6,-2],distance:132,phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.55,yaw:-.78},
-  {name:'The lantern bridge',detail:'Stone steps, open arcades, and gondolas slipping beneath the Rialto.',target:[0,3.5,0],distance:47,phoneDistance:82,pitch:.43,yaw:.52},
+  {name:'The lantern bridge',detail:'Stone steps, open arcades, and gondolas slipping beneath the Rialto.',target:[0,4.1,0],distance:37,phoneDistance:82,phonePitch:.73,phoneYaw:-.40,pitch:.36,yaw:-.38},
   {name:'The grand canal',detail:'Rose plaster, striped mooring posts and little lives along the water.',target:[-19,4,-2],distance:36,phoneDistance:60,pitch:.28,yaw:-1.18},
   {name:'The basilica & bell tower',detail:'Five copper domes, a working bronze bell and a golden evening piazza.',target:[22,9,-20],distance:67,phoneDistance:106,pitch:.47,yaw:.20},
   {name:'The gondolier’s landing',detail:'Black lacquer, crimson velvet and an oar moving with the current.',target:[39,1,3],distance:36,phoneDistance:57,pitch:.43,yaw:1.13},
@@ -138,7 +138,7 @@ function buildVenetianRoom(scene,b){
   {name:'The lagoon railway',detail:'The house’s coastal steam locomotive brings the last visitors home.',target:[-24,2,36],distance:38,phoneDistance:64,pitch:.35,yaw:.28},
   {name:'The collector’s salon',detail:'Gilt moldings, sea-glass chandeliers and a miniature gondola workshop.',target:[0,-1,0],distance:192,phoneDistance:331,pitch:.64,yaw:-.44},
   {name:'The golden loggia',detail:'Look through the carved stone gallery into the shaded rooms of Palazzo Oro.',target:[-20.6,7.3,-13],distance:28,phoneDistance:52,pitch:.43,yaw:.56},
-  {name:'The lace palace',detail:'Quatrefoils, open colonnades and pink marble above the water.',target:[17.5,6,-8.5],distance:39,phoneDistance:72,pitch:.27,yaw:-1.22}
+  {name:'The lace palace',detail:'Quatrefoils, open colonnades and pink marble above the water.',target:[17.5,5.5,-7],distance:24,phoneDistance:72,phonePitch:.65,phoneYaw:-.47,pitch:.15,yaw:-.47}
  ];
 }
 registerHouseRoom('venetian',{

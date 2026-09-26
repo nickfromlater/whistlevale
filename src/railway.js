@@ -370,7 +370,8 @@ void main(){
  }
  // Venetian-only lagoon water. UVs are room-local metres, so the ripple scale
  // stays identical in the entered room and its transformed house-map model.
- // These are stylized bank-colour and practical-light reflections, not SSR.
+ // Entered-room water samples the bounded planar scene capture. The map and
+ // framebuffer-failure path retain inexpensive sky and practical-light fallback.
  if(m==102.){
   vec2 q=vUV,dx=dFdx(q),dy=dFdy(q);vec3 px=dFdx(p),py=dFdy(p);
   float determinant=dx.x*dy.y-dx.y*dy.x;
@@ -386,19 +387,19 @@ void main(){
   if(uVenetianReflectionReady>.5){
    vec4 clip=uVenetianReflectionVP*vec4(p,1.);
    vec2 uv=clip.xy/max(clip.w,.00001)*.5+.5;
-   vec2 distort=swell*.0038*detail;
+   vec2 distort=swell*.0024*detail;
    vec2 edge=min(uv,1.-uv);float valid=smoothstep(0.,.035,min(edge.x,edge.y))*step(.0001,clip.w);
    vec2 sampleUV=clamp(uv+distort,vec2(.002),vec2(.998));
    vec2 blur=uVenetianReflectionTexel*vec2(1.3,2.1);
    vec3 reflected=texture(uVenetianReflection,sampleUV).rgb*.50;
    reflected+=texture(uVenetianReflection,clamp(sampleUV+blur,vec2(.002),vec2(.998))).rgb*.25;
    reflected+=texture(uVenetianReflection,clamp(sampleUV-blur,vec2(.002),vec2(.998))).rgb*.25;
-   lit=mix(lit,reflected,valid*(.26+.62*fres));
+   lit=mix(lit,reflected,valid*(.22+.65*fres));
   }
   float sparkle=pow(max(dot(n,normalize(l+v)),0.),155.);
   lit+=lightColor*sparkle*sh*.43;
   // The reflected point lights break into ribbons across the slow, intersecting
-  // wave trains. Only existing native lights are sampled; no extra framebuffer.
+  // wave trains. These highlights supplement the bounded scene reflection.
   for(int i=0;i<8;i++){
    vec3 delta=uLamps[i]-p;float fall=1./(1.+dot(delta,delta)*.035);
    float glint=pow(max(dot(n,normalize(normalize(delta)+v)),0.),92.);

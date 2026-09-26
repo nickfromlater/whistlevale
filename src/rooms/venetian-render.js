@@ -22,6 +22,7 @@ function venetianPrepareReflection(){
  if(cameraPos[1]<=VENETIAN.water+.08||gl.isContextLost())return;
  const [width,height]=venetianReflectionSize(screenW,screenH,innerWidth<700);
  if(venetianReflection&&(venetianReflection.gl!==gl||venetianReflection.scene!==scene||venetianReflection.width!==width||venetianReflection.height!==height))venetianDisposeReflection();
+ const originalEye=cameraPos,originalTarget=cameraTarget;let ready=false;
  const framebuffer=gl.getParameter(gl.FRAMEBUFFER_BINDING),viewport=gl.getParameter(gl.VIEWPORT),unit=gl.getParameter(gl.ACTIVE_TEXTURE),rb=gl.getParameter(gl.RENDERBUFFER_BINDING),facing=gl.getParameter(gl.FRONT_FACE);
  gl.activeTexture(gl.TEXTURE7);const binding=gl.getParameter(gl.TEXTURE_BINDING_2D);
  try{
@@ -43,17 +44,19 @@ function venetianPrepareReflection(){
    // Never sample the texture while it is attached as the active draw target.
    gl.bindTexture(gl.TEXTURE_2D,null);gl.bindFramebuffer(gl.FRAMEBUFFER,r.framebuffer);gl.viewport(0,0,width,height);
    gl.clearColor(...lerpV([.11,.17,.17],[.006,.013,.026],night),1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-   const reflectedVP=venetianReflectedVP(VP),eye=[cameraPos[0],2*VENETIAN.water-cameraPos[1],cameraPos[2]];
+   const reflectedVP=venetianReflectedVP(VP),eye=[originalEye[0],2*VENETIAN.water-originalEye[1],originalEye[2]];
+   cameraPos=eye;cameraTarget=[originalTarget[0],2*VENETIAN.water-originalTarget[1],originalTarget[2]];
    um(mainProgram,'uVP',reflectedVP);uv3(mainProgram,'uEye',eye);uf(mainProgram,'uVenetianReflectionPass',1);gl.frontFace(facing===gl.CCW?gl.CW:gl.CCW);
    drawHouseRoom(scene,mainProgram,false);drawHouseTrains(scene,mainProgram);drawArchitecturalGlass();
    r.vp=Array.from(VP);r.reflectedVP=reflectedVP;r.time=time;r.night=night;r.level=roomLampLevel;r.train=scene.trains[0]?.distance;r.passes++;
   }
-  gl.bindTexture(gl.TEXTURE_2D,r.texture);um(mainProgram,'uVenetianReflectionVP',r.reflectedVP);
-  gl.uniform2f(uniform(mainProgram,'uVenetianReflectionTexel'),1/width,1/height);uf(mainProgram,'uVenetianReflectionReady',1);
+  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,r.texture);um(mainProgram,'uVenetianReflectionVP',r.reflectedVP);
+  gl.uniform2f(uniform(mainProgram,'uVenetianReflectionTexel'),1/width,1/height);uf(mainProgram,'uVenetianReflectionReady',1);ready=true;
  }finally{
+  cameraPos=originalEye;cameraTarget=originalTarget;
   uf(mainProgram,'uVenetianReflectionPass',0);um(mainProgram,'uVP',VP);uv3(mainProgram,'uEye',cameraPos);
   architecturalGlassDraws.length=0;gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.viewport(...viewport);gl.bindRenderbuffer(gl.RENDERBUFFER,rb);
-  if(!venetianReflection||venetianReflection.failed)gl.bindTexture(gl.TEXTURE_2D,binding);
+  if(!ready){gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,binding);}
   gl.frontFace(facing);gl.activeTexture(unit);gl.depthMask(true);gl.disable(gl.BLEND);
  }
 }

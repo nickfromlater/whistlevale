@@ -53,8 +53,8 @@ const {execFileSync}=require('node:child_process');
    let changed=0;for(let i=0;i<on.length;i+=4)if(Math.abs(on[i]-off[i])+Math.abs(on[i+1]-off[i+1])+Math.abs(on[i+2]-off[i+2])>8)changed++;return changed;
   });
   if(report.reflection.pixelsChanged<150)throw new Error('Reflection is not visibly contributing to the native scene');
-  report.cinema=await page.evaluate(()=>{beginCinemaOrbit();const manual=!!cinemaOrbit.manual;resumeCinemaCamera();const automatic=!cinemaOrbit.manual;leaveCinema();return {manual,automatic,exited:!hobby.cinema};});
-  if(!report.cinema.manual||!report.cinema.automatic||!report.cinema.exited)throw new Error('Cinema lifecycle failure');
+  report.cinema=await page.evaluate(()=>{const target=cameraTarget.slice();beginCinemaOrbit();const fixedAnchor=!!cinemaOrbit.manual?.anchor&&len(sub(target,cinemaOrbit.manual.anchor))<.001,manual=!!cinemaOrbit.manual;resumeCinemaCamera();const automatic=!cinemaOrbit.manual;leaveCinema();return {manual,fixedAnchor,automatic,exited:!hobby.cinema};});
+  if(!report.cinema.manual||!report.cinema.fixedAnchor||!report.cinema.automatic||!report.cinema.exited)throw new Error('Cinema lifecycle failure');
   for(const width of[390,320]){
    await page.setViewportSize({width,height:844});await page.evaluate(()=>{setView('room',false);setMood('day',{immediate:true});});await shot('phone-'+width);
    report.views.at(-1).overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
