@@ -5,7 +5,7 @@ on:
   pull_request:
     paths: ['src/**orrery**', 'src/rooms/orrery*', 'src/trains/orrery.js', 'scripts/orrery*', '.github/workflows/orrery-review.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -15,33 +15,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Integrate the reviewed classic-script entrypoints on the contribution branch
-        if: github.event_name == 'push' && github.ref_name == 'codex/orrery-rollercoaster-room'
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text()
-          if 'src/rooms/orrery-track.js' not in s:
-              replacements = [
-                  ('<script src="src/trains.js"></script>', '<script src="src/rooms/orrery-track.js"></script>\n<script src="src/rooms/orrery.js"></script>\n<script src="src/trains.js"></script>'),
-                  ('<script src="src/trains/acela.js"></script>', '<script src="src/trains/acela.js"></script>\n<script src="src/trains/orrery.js"></script>'),
-                  ('<script src="src/performance.js"></script>', '<script src="src/orrery-ride.js"></script>\n<script src="src/performance.js"></script>'),
-                  ('<link rel="stylesheet" href="src/train-cabinet.css">', '<link rel="stylesheet" href="src/train-cabinet.css">\n<link rel="stylesheet" href="src/orrery-ride.css">')
-              ]
-              for a, b in replacements:
-                  assert s.count(a) == 1, a
-                  s = s.replace(a, b)
-              p.write_text(s)
-          PY
-          if ! git diff --quiet -- index.html; then
-            test "$(git ls-remote origin refs/heads/codex/orrery-rollercoaster-room | cut -f1)" = "$GITHUB_SHA"
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add index.html
-            git commit -m 'Wire the Orrery into native startup and portable export'
-            git push origin HEAD:refs/heads/codex/orrery-rollercoaster-room
-          fi
       - name: Native geometry and source checks
         run: |
           mkdir -p evidence/orrery
