@@ -1,127 +1,161 @@
 # The Venetian Salon · La Serenissima
 
 Open `/?room=venetian`, choose **The Venetian Salon**, or enter **east-7** on
-the live house map. This is an original, compressed Venetian fantasy in a
-collector's salon, not a geographic reconstruction or a historical railway claim.
+the live house map. This is an original, compressed Venetian fantasy inside a
+collector's salon, not a geographic reconstruction or historical railway claim.
 
-## The miniature
+## A city around the canal
 
-A winding lagoon-green canal has shaped masonry banks, cut-stone quays,
-water steps and rounded turning basins. Four gondolas follow a separate closed
-navigation circuit beneath three genuinely open stone arches. The central
-covered bridge retains its stairs, balustrades, open arcades and terracotta roof.
+Eleven individually authored canal palazzi now sit within a connected district
+of eleven smaller calle houses and a new pierced-stone waterfront palace.
+Secondary roofs and occupied street fronts create depth behind the canal rather
+than leaving each tall building alone on the board. The existing basilica,
+campanile, cafe, market arcade, well and piazzas retain their distinct places.
 
-The eleven palazzi are individually authored in `VENETIAN_BLOCKS`. Each has
-three or four complete storeys, recessed glazing, thick arched reveals,
-shutters and projecting cornices. The three piano-nobile loggias are actual
-openings with internal floors, not dark window cards over opaque boxes. Iron
-and stone balconies, hipped tiled roofs, flared chimney pots, corner masonry,
-drainpipes, exposed-brick patches and restrained flower boxes provide detail.
-Three supported timber rooftop terraces change the skyline. A long shaded
-market arcade replaces the earlier row of blank rear blocks.
+The new palace has nine lower colonnade bays, an open pointed-arch upper gallery,
+a band of actual four-lobed openings through thick stone, and a pink/ivory attic
+storey. Floors, benches and tiny figures are visible inside. Its openings are
+geometry, not black window images pasted onto an opaque facade. The ten named
+views include **The lace palace**; triangle-ray tests check three facade
+sightlines from the authored desktop camera. Portrait framing remains a separate
+lengthwise composition, and browser checks project the board corners and tower.
 
-Building setbacks sample the entire curved frontage, including projecting
-balconies and roofs. Building envelopes remain on dry land, separate from one
-another, clear of bridge landings and inside the perimeter railway. The
-basilica's five copper domes, open clock tower and swinging bronze bell,
-inlaid piazzas, carved well, cafe, moorings and market remain part of the city.
-Green-grey piazza stone now contrasts with its pale diamond inlay. Two tiled
-walking promenades and a quieter grey ground plane define the streets without
-changing the ivory architectural trim. Layered cypresses and forked olive
-plantings replace the spherical topiary. Repeated paving uses surface quads,
-not concealed box faces or additional draw calls.
+The main palazzi retain complete three- or four-storey fenestration, recessed
+glazing, thick reveals, projecting cornices, shutters, stone and iron balconies,
+hipped roofs, flared chimneys, drainpipes and exposed-brick accents. Three open
+piano-nobile loggias and three supported rooftop terraces vary the silhouette.
+New plaster and limestone materials add broad restrained weathering; original
+materials in other rooms are unchanged.
 
-Gondolas have a longitudinal curved silver bow ornament with forward-facing
-teeth and tapered oar blades. The prior transverse ladder-like bow and cuboid
-paddle have been removed. Boats retain animated oars, wakes and passengers.
-The perimeter railway uses existing coastal steam stock with the normal
-throttle, pause, train-selection and roof controls, not a new locomotive model.
+The central **Ponte delle Lanterne** is wider and has eight stepped shops, four
+on either side of an open stair aisle. Each shop has a supported masonry wedge,
+real side/back walls, an open counter and small displayed wares beneath its
+individual tiled roof. An open upper portico joins the shop rows. The original
+elliptic arch remains navigable underneath, and both smaller bridges remain.
 
-The surrounding salon retains sea-glass chandeliers, gilt moldings,
-lagoon-window panels, patterned stone, velvet benches and a gondola-builder's
-workbench. Its window scenes are native colored geometry, not photographs.
-Nine named viewpoints include **The golden loggia**, framed through a gap
-between the foreground roofs. Portrait arrival uses a separate lengthwise
-composition, not a cropped desktop camera. Cinema offers the bow-seat gondola
-ride, bridge, panorama and native train-follow shot. The bow-seat gaze follows
-a point on the actual canal route instead of a long straight tangent, so it
-turns inward with the boat at both basins rather than staring into a stone wall.
-The raised eye remains beneath the real arch intrados. The ride is automatic,
-not player-steered; manual controls and automatic-camera restoration remain.
+Cut-stone quays, recessed water stairs, moorings, landings, inlaid piazzas,
+laundry, cypress/olive plantings and authored pedestrians connect the districts.
+Building envelopes are checked against other buildings, bridge landings, the
+canal and the existing perimeter railway. This railway uses coastal steam stock
+with normal throttle, pause, train selection and removable roofs; it is not a
+new locomotive model. The salon has darker blue-green walls, sea-glass
+chandeliers, gilt molding, lagoon-window geometry and the boatbuilding bench.
 
-## Native lagoon material
+## Rowing and camera experience
 
-Material **102** is a Venetian-only branch in the existing house fragment
-shader. Material 7 and other rooms' water remain unchanged. The lagoon has
-room-local UVs, derivative-filtered intersecting waves, grazing-angle sky
-color and broken specular response to the existing practical lights. Soft
-bank-color fields are authored from the actual building manifest. There is
-no additional renderer, texture, uniform, reflection framebuffer or draw pass.
+Four gondolas follow an independent closed water circuit. Their silver bow
+ornaments are curved longitudinal forms rather than transverse ladders. Each
+rower now has two articulated arms whose upper/lower links solve toward two
+points on the actual oar handle. The power stroke dips the tapered blade into
+the water; recovery lifts it clear. The earlier static extra arms are removed.
+Both arm lengths, handle contact and blade clearance are checked throughout the
+stroke and around the entire water circuit. Geometry is cached, not rebuilt
+while rowing.
 
-These are **stylized bank-color and light reflections**, not planar, ray-traced
-or screen-space reflections of the buildings. The old permanently glowing
-rectangles on the surface have been removed. Water animation uses the existing
-house clock and reduced-motion uniform. Local coordinates are scene units,
-not a real-world scale claim.
+**Cinema → Alongside the gondolier** follows behind and slightly beside a boat,
+with the camera's position sampled from the same water route. **The gondola
+ride** retains its bow-seat view. Both eyes stay inside the canal and below the
+real bridge intrados, including at the turning basins. Their look targets and
+the panorama are fixed-world cinema presets, so manual takeover anchors the
+visible boat scene rather than unexpectedly following the unrelated train.
+Native drag, pinch, pause, automatic-camera restoration and exit remain in use.
+The fourth cinema shot retains native train-follow behavior. Boats are automatic,
+not player-steered.
 
-## Ownership and integration
+## Actual native planar reflections
 
-`venetian-architecture.js` and `venetian-life.js` load before the registering
-`venetian.js`. Native lettering, Builder, route sampling, stock, room registry,
-map transforms, camera controls and cache lifecycle remain in use. No browser
-dependencies, imported images, recordings, timers, listeners, network calls
-or persistence formats were added. Portable script collection includes all
-three modules and the existing renderer containing the lagoon material.
+Material **102** now samples a real planar reflection of the native scene.
+`venetian-render.js` redraws the same room, boats, train and architectural glass
+through a camera mirrored about the canal's water plane. Above-water clipping
+and water exclusion prevent recursive reflection; the water shader adds filtered
+ripple distortion, soft sampling and angle-dependent reflection strength.
+These are actual planar scene reflections, not ray tracing or screen-space
+reflections. The house-map view deliberately uses the inexpensive water fallback.
+Material 7 and other rooms' water remain unchanged.
 
-Each of thirteen moving entries owns a distinct mesh. Existing normal and
-failed-build disposal release them. The scene clock advances through the
-existing room/map hooks with bounded time steps only while unpaused. Reduced
-motion freezes boats, oars, wakes and the bell. Leaving the room schedules no
-independent animation. All six room-light and eight layout-light slots are
-authored, preventing stale lighting from previously visited rooms. `canPlace`
-rejects community placement rather than allowing it to obstruct the canal.
+There is one extra offscreen pass and one room-owned framebuffer with RGBA8
+color and DEPTH_COMPONENT16 depth, plus reflection uniforms on the existing
+program. There is no second renderer, new scene graph, duplicated geometry,
+external texture, or additional animation loop. The target uses 55% of the main
+buffer dimensions, capped at **896 pixels on its longest edge**, or **512 on
+phones**. At 1440 × 1024/DPR 1 this is 792 × 563, about **2.55 MiB** for color and
+depth payload. This excludes driver padding and all other renderer resources.
 
-The room uses east-7 so concurrent Orrery work in PR #49 can retain east-6.
-Neither PR depends on the other. Shared startup, cinema, simulation and npm
-entries require preserving both implementations when eventually integrated.
-A combined two-PR build is not certified by this room's checks.
+Unchanged paused views reuse the target. With a steady camera, changing time
+refreshes it at approximately 30 Hz on desktop or 20 Hz on phones; moving the
+camera refreshes immediately, so these are not absolute frame-rate caps. The
+pass restores the main camera, matrices, framebuffer, viewport, winding,
+renderbuffer and active texture unit. It also mirrors the camera used to sort
+architectural glass. Its texture is unbound while being rendered to, avoiding
+read/write feedback.
+
+The target is released on room replacement, resize, normal room departure,
+opening the map and renderer recreation. An incomplete framebuffer leaves the
+water fallback active without allocating again every frame. Injected allocation
+and draw failures exercise cleanup and restoration in focused tests. Physical
+phone timing, thermal load and memory stability still require device evidence;
+this additional pass is not claimed to be free or faster than the old water.
+
+## Ownership, integration and credit
+
+Five room modules load through normal startup/export script discovery:
+`venetian-architecture.js`, `venetian-life.js`, `venetian-city.js`, the registering
+`venetian.js`, and `venetian-render.js`. Native lettering, Builder, route sampling,
+stock, registry, map transforms and camera controls remain in use. No browser
+runtime dependencies, imported artwork, recordings, network calls or persistence
+formats were added. Playwright is isolated review tooling, not a site dependency.
+
+Each of **29 moving entries** owns a distinct mesh: four boats, four oars,
+sixteen articulated arm links, four wakes and one bell. Normal and failed-build
+paths release them. The scene clock advances only through the existing room/map
+simulation hooks with clamped time steps. Pause and reduced motion freeze the
+rowing and boat positions; water motion observes the house's reduced-motion
+uniform. Every room/light uniform slot is authored. `canPlace` rejects community
+placements that might obstruct the canal.
+
+The room occupies east-7 so concurrent Orrery work in PR #49 can retain east-6.
+Preserve both rooms' startup, cinema, simulation and npm hooks when integrating
+both PRs. A combined two-PR build is not certified by this room's tests.
+
+Credit: **nickfromlater**, original miniature and direction with agent assistance.
+Existing house/helper authorship is preserved. Original geometry uses the
+repository's MIT license; no external artwork was imported.
 
 ## Verification and budgets
 
-`npm run test:venetian` checks finite geometry, route closure, sampled swept
-hull and every authored oar-blade vertex at both rotation extremes, actual arch
-clearance, finite camera poses, reduced motion, bounded deltas, allocation-free
-animation, registration, credits and normal/failed-build mesh disposal. The
-ride eye and gaze are sampled over a full circuit, including both turning
-basins; the gaze must remain over water and the raised eye beneath every arch.
+`npm run test:venetian` runs room, district and reflection-lifecycle tests.
+Coverage includes finite geometry, closed routes, sampled hull/blade/arch
+clearances, full-route camera poses, fixed-view manual anchors, all rowing
+phases, paused/reduced motion, no animation-time mesh creation, registration,
+credits and normal/failed-build disposal. District tests check actual pierced
+openings, building envelopes, camera occlusion and reflection projection.
 
-Architecture regressions check every storey for fenestration, actual generated
-roof/balcony envelopes, bridge-landing clearance, true open arcade apertures,
-glazing behind the reveal and all 17,280 water vertices' room-local UVs.
-The 390px and 320px browser checks also project the display corners and bell
-tower to ensure the entire miniature stays inside the portrait viewport.
+Measured geometry: **548,913** static room/floor/furnishing vertices, **25,500**
+wall vertices and **34,188** moving vertices, **608,601** combined, excluding
+shared train stock. Existing static/moving/combined ceilings remain **550,000 /
+40,000 / 620,000**. Redundant roof-seam and straight-handrail geometry was reduced
+rather than increasing the budgets. Sampled minimum hull-to-bank clearance is
+**2.49 scene units**; minimum overhead arch clearance is **2.04** after widening
+the central bridge. These are miniature-scene units, not real engineering data.
 
-Measured geometry: **544,071** static room/floor/furnishing vertices,
-**25,500** wall vertices and **32,700** moving vertices, **602,271** combined,
-excluding shared train stock. Existing ceilings remain **550,000 / 40,000 /
-620,000** for static / moving / combined geometry. Surface inlays and
-open-backed copper dome seams replace unnecessary hidden faces; new detail
-does not rely on increasing budgets. Sampled minimum hull-to-bank clearance
-is **2.49 scene units** and overhead arch clearance is **2.18**.
+The read-only review workflow runs Node 24 checks and native Chromium/SwiftShader
+captures at desktop, 390px and 320px; day, lamplight and night; palace and bridge
+views; cinema/manual-camera and map lifecycles; and a same-camera pixel A/B that
+requires the reflection to visibly affect the rendered image. Separate checks
+run `npm test`, `npm run test:geometry:full` and the contribution JSON report.
+The full geometry comparison checks builder equivalence on the new scene, not
+pixel equality to an earlier artwork revision.
 
-The retained review workflow is read-only. It runs Node 24, isolated
-Playwright/Chromium desktop and portrait checks, day/lamplight/night captures,
-both canal directions, the basin turn and loggia, cinema/manual-camera lifecycle,
-play/pause/reduced motion, live-map entry/return and light-slot restoration.
-Separate checks run `npm test`, the full byte-exact geometry comparison and
-`npm run check:contributions -- --json`. Artifacts record the tested source
-commit, captures and logs; consult the PR for the exact completed runs.
+`node scripts/venetian-experience-qa.cjs` adds actual synthetic mouse/two-finger
+input, normal room departure/return, and the real playable-download path. It
+opens those downloaded bytes as a standalone file with HTTP(S) blocked and
+checks the room, credits, boat motion, reflection and lack of external requests.
+With `VENETIAN_CAPTURE_FILM=1` it also renders 120 real simulation steps into a
+six-second rowing clip. This deterministic film is not a real-time performance
+benchmark. Consult the PR's exact source-specific runs for completed results.
 
-Still separate acceptance checks: physical iPhone performance and gestures,
-long-duration thermal/memory behavior and playback of a downloaded standalone
-export. Software-rendered stills and resized desktop windows are not phone or
-frame-rate evidence. No performance improvement is claimed.
-
-Credit: **nickfromlater**, original scene and direction with agent assistance.
-Existing house/helper authorship is preserved. Original native geometry uses
-the repository's MIT license; no external artwork was imported.
+Artifacts retain source IDs, reports and actual renders for 14 days. Local
+review work belongs under ignored `evidence/`. Physical iPhone gestures/GPU
+performance and long-duration thermal/memory stability remain separate acceptance
+checks. Desktop touch emulation is not physical-phone evidence, and passing
+geometry tests does not establish the owner's visual approval.
