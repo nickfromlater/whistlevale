@@ -25,6 +25,11 @@ balconies and roofs. Building envelopes remain on dry land, separate from one
 another, clear of bridge landings and inside the perimeter railway. The
 basilica's five copper domes, open clock tower and swinging bronze bell,
 inlaid piazzas, carved well, cafe, moorings and market remain part of the city.
+Green-grey piazza stone now contrasts with its pale diamond inlay. Two tiled
+walking promenades and a quieter grey ground plane define the streets without
+changing the ivory architectural trim. Layered cypresses and forked olive
+plantings replace the spherical topiary. Repeated paving uses surface quads,
+not concealed box faces or additional draw calls.
 
 Gondolas have a longitudinal curved silver bow ornament with forward-facing
 teeth and tapered oar blades. The prior transverse ladder-like bow and cuboid
@@ -35,11 +40,14 @@ throttle, pause, train-selection and roof controls, not a new locomotive model.
 The surrounding salon retains sea-glass chandeliers, gilt moldings,
 lagoon-window panels, patterned stone, velvet benches and a gondola-builder's
 workbench. Its window scenes are native colored geometry, not photographs.
-Nine named viewpoints include **The golden loggia**. Portrait arrival uses a
-separate lengthwise composition, not a cropped desktop camera. Cinema offers
-the bow-seat gondola ride, bridge, panorama and native train-follow shot.
-The gondola ride is automatic, not player-steered; normal manual camera
-controls and automatic-camera restoration are preserved.
+Nine named viewpoints include **The golden loggia**, framed through a gap
+between the foreground roofs. Portrait arrival uses a separate lengthwise
+composition, not a cropped desktop camera. Cinema offers the bow-seat gondola
+ride, bridge, panorama and native train-follow shot. The bow-seat gaze follows
+a point on the actual canal route instead of a long straight tangent, so it
+turns inward with the boat at both basins rather than staring into a stone wall.
+The raised eye remains beneath the real arch intrados. The ride is automatic,
+not player-steered; manual controls and automatic-camera restoration remain.
 
 ## Native lagoon material
 
@@ -66,12 +74,12 @@ or persistence formats were added. Portable script collection includes all
 three modules and the existing renderer containing the lagoon material.
 
 Each of thirteen moving entries owns a distinct mesh. Existing normal and
-failed-build disposal release them. The bounded scene clock advances through
-the existing room/map hooks only while unpaused. Reduced motion freezes boats,
-oars, wakes and the bell. Leaving the room schedules no independent animation.
-All six room-light and eight layout-light slots are authored, preventing stale
-lighting from previously visited rooms. `canPlace` rejects community placement
-rather than allowing imported scenery to obstruct the canal.
+failed-build disposal release them. The scene clock advances through the
+existing room/map hooks with bounded time steps only while unpaused. Reduced
+motion freezes boats, oars, wakes and the bell. Leaving the room schedules no
+independent animation. All six room-light and eight layout-light slots are
+authored, preventing stale lighting from previously visited rooms. `canPlace`
+rejects community placement rather than allowing it to obstruct the canal.
 
 The room uses east-7 so concurrent Orrery work in PR #49 can retain east-6.
 Neither PR depends on the other. Shared startup, cinema, simulation and npm
@@ -83,7 +91,9 @@ A combined two-PR build is not certified by this room's checks.
 `npm run test:venetian` checks finite geometry, route closure, sampled swept
 hull and every authored oar-blade vertex at both rotation extremes, actual arch
 clearance, finite camera poses, reduced motion, bounded deltas, allocation-free
-animation, registration, credits and normal/failed-build mesh disposal.
+animation, registration, credits and normal/failed-build mesh disposal. The
+ride eye and gaze are sampled over a full circuit, including both turning
+basins; the gaze must remain over water and the raised eye beneath every arch.
 
 Architecture regressions check every storey for fenestration, actual generated
 roof/balcony envelopes, bridge-landing clearance, true open arcade apertures,
@@ -91,17 +101,17 @@ glazing behind the reveal and all 17,280 water vertices' room-local UVs.
 The 390px and 320px browser checks also project the display corners and bell
 tower to ensure the entire miniature stays inside the portrait viewport.
 
-Measured geometry: **538,875** static room/floor/furnishing vertices,
-**25,500** wall vertices and **32,700** moving vertices, **597,075** combined,
+Measured geometry: **544,071** static room/floor/furnishing vertices,
+**25,500** wall vertices and **32,700** moving vertices, **602,271** combined,
 excluding shared train stock. Existing ceilings remain **550,000 / 40,000 /
-620,000** for static / moving / combined geometry. Coplanar floor inlays and
+620,000** for static / moving / combined geometry. Surface inlays and
 open-backed copper dome seams replace unnecessary hidden faces; new detail
-does not rely on increasing the budgets. Sampled minimum hull-to-bank clearance
+does not rely on increasing budgets. Sampled minimum hull-to-bank clearance
 is **2.49 scene units** and overhead arch clearance is **2.18**.
 
 The retained review workflow is read-only. It runs Node 24, isolated
 Playwright/Chromium desktop and portrait checks, day/lamplight/night captures,
-both canal directions, the new loggia, cinema/manual-camera lifecycle,
+both canal directions, the basin turn and loggia, cinema/manual-camera lifecycle,
 play/pause/reduced motion, live-map entry/return and light-slot restoration.
 Separate checks run `npm test`, the full byte-exact geometry comparison and
 `npm run check:contributions -- --json`. Artifacts record the tested source
