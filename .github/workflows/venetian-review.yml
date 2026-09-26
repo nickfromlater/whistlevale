@@ -1,0 +1,96 @@
+name: Venetian room review
+on:
+  pull_request:
+    paths: ['src/rooms/venetian*.js', 'scripts/venetian-*.mjs', 'scripts/venetian-*.cjs', 'docs/rooms/venetian.md', '.github/workflows/venetian-review.yml', 'index.html', 'package.json', 'src/railway.js', 'src/hobby.js', 'src/shop-map.js']
+permissions:
+  contents: read
+concurrency:
+  group: venetian-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Snapshot tracked source for reproducible native review
+        run: git archive --format=tar.gz --output=/tmp/whistlevale-source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: venetian-source
+          path: /tmp/whistlevale-source.tar.gz
+          retention-days: 1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Focused geometry and motion checks
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          set -o pipefail
+          npm run test:venetian | tee evidence/venetian/focused.txt
+      - name: Isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Actual native room, cinema and map views
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          node scripts/venetian-browser-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-native-views
+          path: evidence/venetian/
+          retention-days: 14
+  experience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Native gestures, room navigation and downloaded standalone playback
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          node scripts/venetian-experience-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-native-experience
+          path: evidence/venetian/
+          retention-days: 14
+  geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Full checks and byte-exact geometry comparison
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          npm test > evidence/venetian/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/venetian/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/venetian/contributions.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-checks
+          path: evidence/venetian/*.txt
+          retention-days: 14
