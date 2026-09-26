@@ -1,9 +1,10 @@
 // Review-only dependency, installed outside the application by the CI workflow.
 const {chromium}=require(process.env.VENETIAN_PLAYWRIGHT||'/tmp/whistlevale-browser/node_modules/playwright');
 const fs=require('node:fs');
+const {execFileSync}=require('node:child_process');
 (async()=>{
  const root='evidence/venetian';fs.mkdirSync(root,{recursive:true});
- const report={source:process.env.GITHUB_SHA||'local',errors:[],console:[],views:[],method:'Actual native WebGL 2 in Chromium/SwiftShader. Held main animation RAF and manually settled cameras for still captures; not a physical-phone or FPS test.'};
+ const report={source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),errors:[],console:[],views:[],method:'Actual native WebGL 2 in Chromium/SwiftShader. Held main animation RAF and manually settled cameras for still captures; not a physical-phone or FPS test.'};
  const save=()=>fs.writeFileSync(root+'/browser-report.json',JSON.stringify(report,null,2));
  const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:1440,height:1024},deviceScaleFactor:1});page.setDefaultTimeout(150000);
@@ -43,6 +44,11 @@ const fs=require('node:fs');
    await page.setViewportSize({width,height:844});await page.evaluate(()=>{setView('room',false);setMood('day',{immediate:true});});await shot('phone-'+width);
    report.views.at(-1).overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
    if(report.views.at(-1).overflow)throw new Error('Phone layout overflows '+width);
+   report.views.at(-1).framing=await page.evaluate(()=>{
+    const points=[[-67.5,1.2,-47.5],[-67.5,1.2,47.5],[67.5,1.2,-47.5],[67.5,1.2,47.5],[37,31.3,-25]].map(project);
+    return {points,contained:points.every(p=>p.visible&&p.x>6&&p.x<innerWidth-6&&p.y>70&&p.y<innerHeight-80)};
+   });
+   if(!report.views.at(-1).framing.contained)throw new Error('Phone camera crops the miniature at '+width);
   }
   await page.setViewportSize({width:1440,height:1024});
   // Exercise the actual map lifecycle, its derived new plot and return navigation.
