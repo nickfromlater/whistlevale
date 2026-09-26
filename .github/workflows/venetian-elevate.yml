@@ -1,0 +1,76 @@
+name: Apply and review Venetian elevation
+on:
+  push:
+    branches: [codex/venetian-canal-room]
+    paths: ['.venetian-elevation/**', '.github/workflows/venetian-elevate.yml']
+permissions:
+  contents: write
+jobs:
+  native-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Apply only the exact locally tested revision
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/venetian-canal-room
+          mkdir -p evidence/venetian
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          root = pathlib.Path.cwd()
+          transport = root / '.venetian-elevation/source.b64'
+          encoded = transport.read_bytes()
+          assert hashlib.sha256(encoded).hexdigest() == '7ce6c06a118048767066de697e94a38339cb2abbcf6724595bc6de9bc46270a4', 'Transport hash mismatch'
+          payload = json.loads(lzma.decompress(base64.b64decode(encoded)))
+          allowed = {'scripts/venetian-browser-qa.cjs', 'scripts/venetian-qa.mjs', 'src/railway.js', 'src/rooms/venetian-architecture.js', 'src/rooms/venetian-life.js', 'src/rooms/venetian.js'}
+          assert set(payload['files']) == allowed, 'Unexpected file set'
+          for name, hashes in payload['files'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == hashes['before'], 'Source conflict: ' + name
+          patch = pathlib.Path('/tmp/venetian-elevation.patch')
+          patch.write_text(payload['patch'])
+          subprocess.run(['git', 'apply', '--check', '--unidiff-zero', str(patch)], check=True)
+          subprocess.run(['git', 'apply', '--unidiff-zero', str(patch)], check=True)
+          for name, hashes in payload['files'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == hashes['after'], 'Result mismatch: ' + name
+          transport.unlink()
+          transport.parent.rmdir()
+          (root / '.github/workflows/venetian-elevate.yml').unlink()
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          PY
+          npm run check
+          npm run test:venetian | tee evidence/venetian/focused.txt
+          test "$(git ls-remote origin refs/heads/codex/venetian-canal-room | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/venetian-browser-qa.cjs scripts/venetian-qa.mjs src/railway.js src/rooms/venetian-architecture.js src/rooms/venetian-life.js src/rooms/venetian.js .venetian-elevation .github/workflows/venetian-elevate.yml
+          git commit -m 'Rebuild Venetian palazzi, open loggias, rooftop terraces and living lagoon water'
+          git push origin HEAD:refs/heads/codex/venetian-canal-room
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+      - name: Install isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Render the actual native room and exercise its controls
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          node scripts/venetian-browser-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-elevation-views
+          path: evidence/venetian/
+          retention-days: 14
+      - name: Full checks and byte-exact geometry comparison
+        run: |
+          npm test > evidence/venetian/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/venetian/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/venetian/contributions.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-elevation-checks
+          path: evidence/venetian/*.txt
+          retention-days: 14
