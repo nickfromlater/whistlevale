@@ -1,0 +1,51 @@
+name: Venetian portrait framing
+on:
+  push:
+    branches: [codex/venetian-canal-room]
+    paths: ['.github/workflows/venetian-framing.yml']
+permissions:
+  contents: write
+jobs:
+  frame:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Apply the exact framing correction
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/venetian-canal-room
+          python3 - <<'PY'
+          import hashlib, pathlib, subprocess
+          files = {'src/rooms/venetian.js': ('5a0175e7338c7399ec4dc565c455e3584ff5513c73f0cf5b3d7eb2af582c8b58', '62fdd5f101677f8f04b68fdcc12050bb3d80548470991bf945108d50edbac8d2'), 'scripts/venetian-browser-qa.cjs': ('419ff86ae4f371d4949d922eec3f1298395d2ad5a8a6f03de7a8fb6e9c152bec', 'bd060af466baab99fd7c964eb80e4ffe7ba0bdba659827e1880738bdbd47ac9e')}
+          for name, hashes in files.items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == hashes[0], 'Source conflict: ' + name
+          p = pathlib.Path('src/rooms/venetian.js')
+          p.write_text(p.read_text().replace('phoneDistance:300,pitch:.49,yaw:.18', 'phoneDistance:360,phonePitch:.90,phoneYaw:1.48,pitch:.49,yaw:.18'))
+          p = pathlib.Path('scripts/venetian-browser-qa.cjs')
+          s = p.read_text().replace("const fs=require('node:fs');", "const fs=require('node:fs');\nconst {execFileSync}=require('node:child_process');")
+          s = s.replace("source:process.env.GITHUB_SHA||'local'", "source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()")
+          a = "   if(report.views.at(-1).overflow)throw new Error('Phone layout overflows '+width);"
+          b = """   if(report.views.at(-1).overflow)throw new Error('Phone layout overflows '+width);
+             report.views.at(-1).framing=await page.evaluate(()=>{
+              const points=[[-67.5,1.2,-47.5],[-67.5,1.2,47.5],[67.5,1.2,-47.5],[67.5,1.2,47.5],[37,31.3,-25]].map(project);
+              return {points,contained:points.every(p=>p.visible&&p.x>6&&p.x<innerWidth-6&&p.y>70&&p.y<innerHeight-80)};
+             });
+             if(!report.views.at(-1).framing.contained)throw new Error('Phone camera crops the miniature at '+width);"""
+          assert a in s
+          p.write_text(s.replace(a,b))
+          for name, hashes in files.items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == hashes[1], 'Result mismatch: ' + name
+          pathlib.Path('.github/workflows/venetian-framing.yml').unlink()
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          PY
+          npm run check
+          npm run test:venetian
+          test "$(git ls-remote origin refs/heads/codex/venetian-canal-room | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/rooms/venetian.js scripts/venetian-browser-qa.cjs .github/workflows/venetian-framing.yml
+          git commit -m 'Frame the full miniature lengthwise on phones and verify its projected bounds'
+          git push origin HEAD:refs/heads/codex/venetian-canal-room
