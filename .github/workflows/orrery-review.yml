@@ -1,7 +1,5 @@
 name: Orrery native room review
 on:
-  push:
-    branches: [codex/orrery-rollercoaster-room]
   pull_request:
     paths: ['src/**orrery**', 'src/rooms/orrery*', 'src/trains/orrery.js', 'scripts/orrery*', '.github/workflows/orrery-review.yml']
 permissions:

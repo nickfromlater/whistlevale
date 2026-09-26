@@ -37,7 +37,7 @@ const orreryHouseTrainMatrix=hobbyTrainMatrix;
 hobbyTrainMatrix=function(){return orreryAvailable()?orreryCarMatrix(hobby.scene.trains[0]):orreryHouseTrainMatrix();};
 const orreryUpdateCamera=updateCamera;
 updateCamera=function(dt){
- if(!orrerySeatActive()){if(orreryRide.mounted&&!orreryAvailable()){orreryRide.mounted=false;orreryReleasePointers();}orreryUpdateCamera(dt);return;}
+ if(!orrerySeatActive()){if(orreryRide.mounted){orreryRide.mounted=false;orreryReleasePointers();}orreryUpdateCamera(dt);return;}
  const pose=orreryRide.moving?orrerySeatPose(hobby.scene.trains[0],orreryRide.yaw,orreryRide.pitch):{position:[-65,29,49],target:[0,13,0],up:[0,1,0]};
  cameraPos=pose.position;cameraTarget=pose.target;cameraNear=orreryRide.moving?.035:.3;
  cameraProjection=perspective((orreryRide.moving?1.28:.95)*orreryRide.zoom,screenW/screenH,cameraNear,500);
@@ -48,7 +48,7 @@ function createOrreryControls(){
  const ticket=document.createElement('section');ticket.id='orreryTicket';ticket.className='orrery-ticket quiet-generated';ticket.hidden=true;ticket.setAttribute('aria-label','Comet rollercoaster');
  ticket.innerHTML='<span class="orrery-eyebrow">PLATFORM ZERO · ADMIT ONE</span><button id="orreryBoard" type="button">Ride the Comet <span aria-hidden="true">↗</span></button><span id="orreryPhase">Boarding</span><span class="orrery-progress" aria-hidden="true"><i id="orreryProgress"></i></span>';
  const seat=document.createElement('section');seat.id='orrerySeat';seat.className='orrery-seat-controls quiet-generated';seat.hidden=true;seat.setAttribute('aria-label','Comet front-seat controls');
- seat.innerHTML='<div><span class="orrery-eyebrow">COMET · FRONT ROW</span><span id="orrerySeatPhase">Platform zero</span></div><button id="orreryMotion" type="button" aria-pressed="false">Moving seat</button><button id="orreryCenter" type="button" aria-label="Recenter the ride camera">Recenter</button><button id="orreryLeave" type="button">Leave seat</button>';
+ seat.innerHTML='<div><span class="orrery-eyebrow">COMET · FRONT ROW</span><span id="orrerySeatPhase">Platform zero</span></div><button id="orreryMotion" type="button">Moving seat</button><button id="orreryCenter" type="button" aria-label="Recenter the ride camera">Recenter</button><button id="orreryLeave" type="button">Leave seat</button>';
  document.body.append(ticket,seat);
  $('orreryBoard').onclick=()=>{setView('cab');closeQuietControls();canvas.focus({preventScroll:true});};
  $('orreryLeave').onclick=orreryLeaveSeat;$('orreryCenter').onclick=orreryResetLook;
@@ -66,7 +66,7 @@ updateUI=function(){
  const train=hobby.scene.trains[0],motion=train.edge.motionAt(train.distance),phase=paused?'Paused':motion.phase;
  $('orreryPhase').textContent=phase;$('orrerySeatPhase').textContent=(orreryRide.moving?'':'Steady overlook · ')+phase;
  $('orreryProgress').style.width=(motion.lap*100).toFixed(2)+'%';
- $('orreryMotion').setAttribute('aria-pressed',String(orreryRide.moving));$('orreryMotion').textContent=orreryRide.moving?'Steady overlook':'Moving seat';$('orreryCenter').hidden=!orreryRide.moving;
+ $('orreryMotion').setAttribute('aria-label',orreryRide.moving?'Switch to a steady overlook':'Switch to the moving seat, which banks and inverts');$('orreryMotion').textContent=orreryRide.moving?'Steady overlook':'Moving seat';$('orreryCenter').hidden=!orreryRide.moving;
  if(active){$('locationTitle').textContent='A little escape from gravity';$('locationDetail').textContent=orreryRide.moving?'Drag or use arrow keys to look. Escape leaves your seat.':'Steady overlook. Moving seat is an optional full-motion, inverting camera.';}
 };
 const orreryOpenMap=openHouseMap;
