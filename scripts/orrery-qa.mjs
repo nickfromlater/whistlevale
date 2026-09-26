@@ -34,7 +34,7 @@ Object.assign(report,state.run(`(()=>{
  assert.equal(s.trains.length,1);assert.equal(s.trains[0].cars,4);assert.equal(s.trains[0].stock,'orrery');assert.equal(s.routes.length,1);assert.equal(s.walls.length,4);assert.equal(s.spots.length,6);
  assert.ok(s.mesh.count<550000,'fixed new-room geometry ceiling');assert.ok(s.walls.reduce((a,w)=>a+w.mesh.count,0)<65000,'shell ceiling');
  assert.ok(s.movingParts[0].mesh.count<4000);assert.ok(s.orrerySupports.length>100,'real structural supports');
- assert.ok(s.spots.every(p=>p.phoneDistance>p.distance));assert.equal(HOUSE_ROOMS.orrery.trainCollection,false);
+ assert.ok(s.spots.every(p=>p.phoneDistance>p.distance));assert.ok(s.spots[2].yaw<0,'lunar loop viewed from the clear west side, not through the planet');assert.equal(HOUSE_ROOMS.orrery.trainCollection,false);
  assert.ok(validateCredits(HOUSE_ROOMS.orrery.credits).some(c=>c.handle==='nickfromlater'));
  // Every accepted support is checked again with a finer sampling interval.
  for(const support of s.orrerySupports){const d=sub(support.b,support.a),dd=dot(d,d);

@@ -48,6 +48,8 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
    await page.setViewportSize({width,height:844});
    await page.evaluate(()=>{setView('room',false);updateCamera(10);updateUI();});
    await capture(`phone-${width}`);
+   const fits=await page.evaluate(()=>[-60,60].every(x=>[-49,49].every(z=>{const p=project([x,0,z]);return p.visible&&p.x>3&&p.x<innerWidth-3;})));
+   assert.ok(fits,`${width}px overview contains the whole miniature's corners`);
    await page.locator('#orreryBoard').click();await capture(`phone-${width}-seat`);
    for(const id of ['orreryMotion','orreryCenter','orreryLeave']){const box=await page.locator('#'+id).boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=width&&box.height>=44);}
    await page.evaluate(()=>{

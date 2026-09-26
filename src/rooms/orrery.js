@@ -153,7 +153,8 @@ function orreryLandscape(b,scene){
 }
 function buildOrreryRoom(scene,b){
  const P=ORRERY;
- orrerySlab(b,126,108,-2.5,5,12,P.wood);orrerySlab(b,126.3,108.3,-.36,.24,12,P.gold,41);orrerySlab(b,125.8,107.8,-.10,.20,12,'#395456',23);
+ // Separate the wood, brass trim and enamel top: no coplanar fan triangles.
+ orrerySlab(b,126,108,-2.8,5,12,P.wood);orrerySlab(b,126.3,108.3,-.36,.24,12,P.gold,41);orrerySlab(b,125.8,107.8,-.10,.20,12,'#395456',23);
  for(const x of [-47,47])for(const z of [-38,38]){b.box(x,(FLOOR-5)/2,z,5,-5-FLOOR,5,P.wood,22);b.box(x,-21.8,z,5.5,1.0,5.5,P.gold,41);}
  for(const z of [-53.6,53.6])b.box(0,-3,z,72,1.8,.2,P.ink,22);
  orreryLetters(b,'COMET',0,-3.65,53.78,1.4);for(const x of [-18,18])orreryStar(b,x,-2.7,53.85,.65,P.gold,41);
@@ -167,9 +168,9 @@ function buildOrreryRoom(scene,b){
  b.cylinder(6,30,-5,.10,.10,7,P.gold,41,10);
  scene.movingParts=[{mesh:mobile.mesh(),model:s=>mm(trans(6,33.5,-5),ry(reduceMotion?0:s.trains[0].distance*.025))}];
  scene.spots=[
-  {name:'The whole constellation',detail:'A clockmaker’s impossible amusement park.',target:[0,12,0],distance:158,phoneDistance:245,yaw:.35,pitch:.50},
+  {name:'The whole constellation',detail:'A clockmaker’s impossible amusement park.',target:[0,12,0],distance:158,phoneDistance:420,yaw:.35,pitch:.50},
   {name:'At the edge of the universe',detail:'The slow climb before the stardrop.',target:[23,28,-24],distance:56,phoneDistance:86,yaw:1.0,pitch:.22},
-  {name:'The lunar loop',detail:'A complete inversion, held inside twin brass orbital trusses.',target:[-37,15,-11],distance:59,phoneDistance:92,yaw:1.40,pitch:.18},
+  {name:'The lunar loop',detail:'A complete inversion, held inside twin brass orbital trusses.',target:[-37,15,-11],distance:50,phoneDistance:100,yaw:-1.03,pitch:.26},
   {name:'A ringed world',detail:'Hand-turned brass, painted cloud belts and an orbiting moon.',target:[6,21,-5],distance:52,phoneDistance:81,yaw:.42,pitch:.3},
   {name:'Platform zero',detail:'Board the Comet. Five open cars, one extraordinary little journey.',target:[-25,9,33],distance:33,phoneDistance:52,yaw:.10,pitch:.28},
   {name:'Under the comet',detail:'The low return sweeps beneath the departure line.',target:[27,6,26],distance:48,phoneDistance:73,yaw:1.0,pitch:.28}
@@ -177,7 +178,7 @@ function buildOrreryRoom(scene,b){
 }
 registerHouseRoom('orrery',{
  name:'The Orrery',layout:'Comet — the celestial coaster',tag:'A LITTLE ESCAPE FROM GRAVITY',description:'A clockmaker’s impossible amusement park. Climb into the stars, fall through a lunar loop, and orbit a ringed world in five tiny open cars.',
- color:'#7eaaa6',ambient:'workshop',target:[0,11,0],distance:163,phoneDistance:257,pitch:.50,yaw:.35,
+ color:'#7eaaa6',ambient:'workshop',target:[0,11,0],distance:163,phoneDistance:420,pitch:.50,yaw:.35,
  trainCollection:false,train:{name:'Comet',number:'01',service:'Platform zero · The Orrery',type:'celestial rollercoaster',power:'electric'},
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original celestial rollercoaster, native miniature geometry, Comet stock and room, with agent assistance. No external assets.'}],
  map:{plot:'east-6',scale:.4,footprint:[158,130],focus:[0,11,0]},
