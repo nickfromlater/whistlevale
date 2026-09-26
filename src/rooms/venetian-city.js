@@ -101,11 +101,18 @@ function venetianBridgeShops(b,width){
    const a=x-w/2,q=x+w/2;
    for(const edge of[-d/2,d/2])b.quad([a,venetianBridgeHeight(a)-.06,z+edge],[q,venetianBridgeHeight(q)-.06,z+edge],[q,y,z+edge],[a,y,z+edge],C.stone,104);
    for(const end of[a,q])b.box(end,(y+venetianBridgeHeight(end))*.5-.015,z,.08,Math.max(.03,y-venetianBridgeHeight(end)),d,C.stone,104);
-   b.push(x,y,z,0,side<0?PI:0);
+   b.push(x,y,z,0,side>0?PI:0);
    // The shopfront is genuinely open. Dark backing, side walls and a
    // counter give the little wares depth instead of a painted solid door.
    const left=-w/2,right=w/2,rear=-d/2,front=d/2;
-   b.quad([left,0,rear],[right,0,rear],[right,2.2,rear],[left,2.2,rear],'#575549',22);
+   b.quad([left,0,rear],[right,0,rear],[right,2.2,rear],[left,2.2,rear],'#c8bba3',104);
+   // The counter faces the pedestrian aisle; the canal elevation has a small
+   // framed rear window instead of an unarticulated dark wall.
+   const pane=(x0,x1,y0,y1,depth,color,material)=>b.quad([x1,y0,depth],[x0,y0,depth],[x0,y1,depth],[x1,y1,depth],color,material,[0,0,-1]);
+   pane(-.37,.37,.95,1.83,rear-.015,'#4d7069',43);
+   for(const xx of[-.41,.41])pane(xx-.05,xx+.05,.90,1.88,rear-.025,C.stone,104);
+   for(const yy of[.91,1.87])pane(-.46,.46,yy-.045,yy+.045,rear-.026,C.stone,104);
+   pane(-.025,.025,.95,1.83,rear-.028,C.stone,104);
    for(const xx of[left,right])b.quad([xx,0,rear],[xx,0,front],[xx,2.2,front],[xx,2.2,rear],'#d4c6ad',104);
    b.quad([left,2.2,rear],[right,2.2,rear],[right,2.2,front],[left,2.2,front],C.shadow,104);
    for(const xx of[-.99,.99])b.box(xx,1.1,front,.25,2.2,.25,C.stone,104);
