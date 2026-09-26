@@ -99,6 +99,18 @@ const motionReport=state.run(`(()=>{
   reduceMotion=true;const still=s.movingParts.map(p=>p.model(s)),frozen=s.venetian.time;venetianUpdate(s,1);assert.equal(s.venetian.time,frozen);
   assert.deepEqual(s.movingParts.map(p=>p.model(s)),still,'boat, oar, wake and bell freeze for reduced motion');reduceMotion=false;
   for(const width of[1440,390,320]){innerWidth=width;for(const shot of['drift','side','wide']){const q=venetianCinemaView(s,shot);assert.ok(q.position.every(Number.isFinite)&&q.target.every(Number.isFinite));assert.equal(q.groundHandled,true);assert.ok(q.fov>.3&&q.fov<1.6);}}
+  const savedTime=s.venetian.time;
+  for(let d=0;d<s.venetian.route.length;d+=.25){
+   s.venetian.time=d/.82;const q=venetianCinemaView(s,'drift');
+   assert.ok(venetianIsWater(q.position[0],q.position[2],.25),'ride eye remains inside the channel');
+   assert.ok(venetianIsWater(q.target[0],q.target[2],.25),'ride gaze follows water through both turning basins');
+   assert.ok(len(sub(q.target,q.position))>2,'ride gaze never collapses at a turn');
+   for(const bridge of VENETIAN_BRIDGES)if(Math.abs(q.position[0]-bridge.x)<bridge.width/2+.02){
+    const u=q.position[2]-venetianCenter(bridge.x),ceiling=.15+3.75*Math.sqrt(Math.max(0,1-(u/8.65)**2));
+    assert.ok(ceiling-q.position[1]>.35,'raised ride eye clears the actual arch');
+   }
+  }
+  s.venetian.time=savedTime;
   assert.equal(venetianCinemaView(s,'tail'),null,'fourth shot delegates to native railway camera');
  }finally{Builder.prototype.mesh=original;reduceMotion=false;innerWidth=1440;}
  assert.deepEqual(s.movingParts.map(p=>p.mesh),meshIDs,'no mesh replacement over 600 simulation ticks');

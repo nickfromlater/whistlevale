@@ -331,13 +331,11 @@ function venetianCompass(b,x,z,r,y=1.23){
 }
 function venetianArchitecture(scene,b){
  for(const block of VENETIAN_BLOCKS)venetianPalazzo(b,venetianBuildingSpec(block));
- venetianPiazzas(b);venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
+ venetianCalli(b);venetianPiazzas(b);venetianBasilica(b);venetianCampanile(b);venetianCafe(b);
  venetianCompass(b,17.8,-12.1,3.6);venetianCompass(b,6.5,23,5.0);venetianWell(b,6.5,23);
  venetianMarket(b,39.5,26.5,0);venetianMarket(b,46,30.3,1);
  venetianFondaco(b);
- for(const [x,z]of[[-53,19],[-51,-23],[51,-26],[52,22],[11,28],[27,25]]){
-  b.cylinder(x,1.58,z,.6,.8,.78,'#ab7d64',24,10);b.sphere(x,2.88,z,1.15,1.45,1.1,'#6d9277',8,10,7);
- }
+ for(const [i,p]of[[-53,19],[-51,-23],[51,-26],[52,22],[11,28],[27,25]].entries())venetianPlanter(b,...p,i<4);
  // One suspended laundry line in an alley; deterministic, not random scatter.
  b.beam([-40,7.5,15],[-37.5,7.1,21],.025,'#968b70',2,5);
  for(let i=0;i<4;i++){const t=(i+.5)/5,p=lerpV([-40,7.5,15],[-37.5,7.1,21],t);b.box(p[0],p[1]-.45,p[2],.8,.95,.055,i%2?'#e6d5b6':'#b29998',23);}
@@ -409,11 +407,40 @@ function venetianShell(b){
 }
 
 
+// Only the two walking promenades receive individual paving. Surface quads
+// keep the repeated stones out of the hidden-face and draw-call budgets.
+function venetianCalli(b){
+ const C=VENETIAN_COLORS;
+ for(const [cx,cz,w]of[[-31,29,45],[33,30,35]]){
+  const nx=Math.ceil(w/1.25),dx=w/nx,y=1.205;
+  for(let i=0;i<nx;i++)for(let j=0;j<4;j++){
+   const x=cx-w/2+i*dx+.025,z=cz-2+j+.025,c=['#b7b7a8','#acb1a5','#c1bdac'][(i+j*2)%3];
+   b.quad([x,y,z],[x,y,z+.95],[x+dx-.05,y,z+.95],[x+dx-.05,y,z],c,24,[0,1,0]);
+  }
+  for(const side of[-1,1]){const z=cz+side*2;b.quad([cx-w/2,y,z-.055],[cx-w/2,y,z+.055],[cx+w/2,y,z+.055],[cx+w/2,y,z-.055],C.stone,24,[0,1,0]);}
+ }
+}
+function venetianPlanter(b,x,z,cypress){
+ b.push(x,VENETIAN.quay,z);
+ b.cylinder(0,.38,0,.60,.80,.76,'#ab7d64',24,10);
+ b.cylinder(0,.77,0,.82,.82,.13,'#bc9274',24,10);
+ b.cylinder(0,.85,0,.72,.72,.025,'#5c6551',3,10);
+ b.beam([0,.85,0],[.06,3.4,0],.095,'#887b5e',2,7);
+ if(cypress){
+  for(const [xx,y,zz,rx,ry,rz,c]of[[0,2.9,0,.78,1.8,.66,'#4f7865'],[.12,4.3,.05,.63,1.55,.57,'#638975'],[.04,5.5,0,.39,1.2,.36,'#70917a']])b.sphere(xx,y,zz,rx,ry,rz,c,8,7,5);
+ }else{
+  for(const [xx,y,zz,rx,ry,rz,c]of[[-.68,2.75,.15,.96,.72,.86,'#779783'],[.64,3.15,.13,1.05,.85,.83,'#8aa18b'],[.05,3.7,-.35,.87,.70,.83,'#718e77']]){
+   b.beam([.03,1.65,0],[xx,y,zz],.07,'#8b7d60',2,6);b.sphere(xx,y,zz,rx,ry,rz,c,8,7,5);
+  }
+ }
+ b.pop();
+}
+
 function venetianPiazzas(b){
  const C=VENETIAN_COLORS;
- // Low-contrast inlaid paving separates the piazzas and garden from the quay.
+ // Green-grey stone gives the pale inlay readable contrast with the streets.
  for(const [cx,cz,w,d]of[[6.5,23,23,20],[19,-12.2,25,9]]){
-  b.box(cx,1.208,cz,w,.015,d,'#c5c7af',24);
+  b.box(cx,1.208,cz,w,.015,d,'#859a91',24);
   for(let x=cx-w/2+.8;x<cx+w/2;x+=1.65)for(let z=cz-d/2+.8;z<cz+d/2;z+=1.65){
    b.push(x,1.221,z,0,PI/4);b.quad([-.49,0,-.49],[-.49,0,.49],[.49,0,.49],[.49,0,-.49],'#e4d7b7',24,[0,1,0]);b.pop();
   }

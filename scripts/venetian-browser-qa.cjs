@@ -35,9 +35,9 @@ const {execFileSync}=require('node:child_process');
   await page.evaluate(()=>{setView('room',false);setMood('evening',{immediate:true});});await shot('06-lamplight');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('07-night');
   await page.evaluate(()=>{setMood('day',{immediate:true});enterCinema();paused=true;hobby.shot='drift';});await shot('08-gondola-ride');
-  await page.evaluate(()=>{hobby.scene.venetian.time=88;clock=12;});await shot('11-return-canal');
+  await page.evaluate(()=>{hobby.scene.venetian.time=160;clock=12;});await shot('11-return-canal');
   await page.evaluate(()=>{setMood('night',{immediate:true});});await shot('12-lantern-water');
-  await page.evaluate(()=>{setMood('day',{immediate:true});});
+  await page.evaluate(()=>{setMood('day',{immediate:true});hobby.scene.venetian.time=88;});await shot('13-basin-turn');
   report.cinema=await page.evaluate(()=>{beginCinemaOrbit();const manual=!!cinemaOrbit.manual;resumeCinemaCamera();const automatic=!cinemaOrbit.manual;leaveCinema();return {manual,automatic,exited:!hobby.cinema};});
   if(!report.cinema.manual||!report.cinema.automatic||!report.cinema.exited)throw new Error('Cinema lifecycle failure');
   for(const width of[390,320]){

@@ -75,7 +75,7 @@ function venetianWake(b){
 function venetianBoatPose(scene,index){
  const v=scene.venetian,d=v.time*.82+index*v.route.length/4+18,q=circuitAt(v.route,d),front=circuitAt(v.route,d+.3),rear=circuitAt(v.route,d-.3);
  const t=reduceMotion?0:v.time,position=add(q.p,[0,Math.sin(t*.9+index)*.023,0]),f=norm(sub(front.p,rear.p));
- return {position,f,model:mm(basis(position,f),rz(Math.sin(t*.67+index)*.012))};
+ return {position,f,distance:d,model:mm(basis(position,f),rz(Math.sin(t*.67+index)*.012))};
 }
 function venetianUpdate(scene,dt){
  if(!scene.venetian||reduceMotion||!Number.isFinite(dt)||dt<=0)return;
@@ -119,8 +119,11 @@ function venetianCinemaView(scene,shot){
  if(shot==='drift'){
   // A real bow-seat ride inside the navigable swept envelope. It fits beneath
   // all three arch intrados; manual orbit still belongs to the house controller.
-  const pose=venetianBoatPose(scene,0),p=pose.position,f=pose.f;
-  return {position:add(add(p,mul(f,.85)),[0,1.35,0]),target:add(add(p,mul(f,13)),[0,1.7,0]),groundHandled:true,fov:innerWidth<700?.95:.82};
+  const pose=venetianBoatPose(scene,0),p=pose.position,f=pose.f,r=[f[2],0,-f[0]];
+  // Follow the next stretch of the actual water route. A long tangent points
+  // into the stone basin wall when the gondola rounds either turning pool.
+  const ahead=circuitAt(scene.venetian.route,pose.distance+6).p;
+  return {position:add(add(add(p,mul(f,.85)),mul(r,.18)),[0,1.65,0]),target:add(ahead,[0,2.1,0]),groundHandled:true,fov:innerWidth<700?.95:.82};
  }
  if(shot==='side')return {position:[-19,9,18],target:[0,3,0],groundHandled:true,fov:innerWidth<700?1.1:.8};
  if(shot==='wide')return {position:innerWidth<700?[39,128,209]:[38,73,122],target:[0,5,-2],groundHandled:true,fov:.84};
