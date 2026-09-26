@@ -25,6 +25,7 @@ jobs:
           retention-days: 7
       - name: Native geometry and source checks
         run: |
+          set -o pipefail
           mkdir -p evidence/orrery
           npm run check
           npm run test:orrery | tee evidence/orrery/focused.txt

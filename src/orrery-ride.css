@@ -9,8 +9,16 @@
 .orrery-seat-controls{top:max(100px,calc(env(safe-area-inset-top) + 85px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 12px;max-width:calc(100% - 24px);width:max-content}
 .orrery-seat-controls>div{padding:0 12px 0 4px;min-width:120px}
 .orrery-seat-controls button{min-height:44px;padding:8px 12px;border:1px solid #c3ac7944;border-radius:10px;font-size:11px;color:#eadcb8;background:#d7c18e0a;white-space:nowrap}
-.orrery-seat-controls button:last-child{background:#cbb37e;color:#223b3d;border-color:#cbb37e}
+.orrery-seat-controls #orreryLeave{background:#cbb37e;color:#223b3d;border-color:#cbb37e}
 .orrery-ticket button:focus-visible,.orrery-seat-controls button:focus-visible{outline:2px solid #eee1b6;outline-offset:4px}
 .hidden-ui .orrery-ticket,.hidden-ui .orrery-seat-controls{display:none!important}
 @media(max-width:600px){.orrery-ticket{width:184px;right:14px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 75px);padding:12px 14px 10px}.orrery-ticket button{font-size:21px}.orrery-eyebrow{font-size:7px}.orrery-seat-controls{top:max(91px,calc(env(safe-area-inset-top) + 80px));padding:8px;gap:5px;flex-wrap:wrap;justify-content:center;width:344px}.orrery-seat-controls>div{width:100%;text-align:center;padding:0}.orrery-seat-controls button{padding:7px 10px;font-size:10px}.orrery-seat-controls .orrery-eyebrow{display:inline;margin-right:8px}#orrerySeatPhase{display:inline;font-size:10px}}
 @media(max-height:500px){.orrery-ticket{bottom:85px;padding:8px 12px;width:178px}.orrery-ticket .orrery-eyebrow,.orrery-progress{display:none}.orrery-seat-controls{top:76px;padding:5px 8px}.orrery-seat-controls>div{width:auto}}
+
+.orrery-ticket-detail{display:block;font-size:10px;line-height:1.5;color:#dbd0ae;margin:0 0 7px}
+#orreryDispatch{background:#cbb37e;color:#223b3d;border-color:#cbb37e}
+.orrery-seat-controls button[hidden]{display:none!important}
+.orrery-seat-controls .orrery-progress{margin-top:5px;height:2px}
+.orrery-announcement{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:600px){.orrery-seat-controls{width:352px}.orrery-seat-controls button{flex:1 1 auto;min-width:60px;padding:7px 8px}.orrery-seat-controls #orreryDispatch{flex-basis:100%;min-height:44px}.orrery-seat-heading .orrery-progress{width:145px;margin:5px auto 0}.orrery-ticket-detail{font-size:9px}}
+@media(max-height:500px){.orrery-seat-controls #orreryDispatch{flex-basis:auto}.orrery-seat-controls{max-width:calc(100% - 24px)}.orrery-ticket-detail{display:none}}

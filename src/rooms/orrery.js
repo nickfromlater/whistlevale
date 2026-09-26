@@ -122,7 +122,6 @@ function orreryStation(b,scene){
  b.box(-24,3.28,36.1,34,6.55,5.9,'#657e77',4);b.box(-24,6.66,36.1,35,.23,6.1,P.cream,4);
  for(let x=-40;x<-7;x+=1.2)b.box(x,6.8,33.45,.7,.055,.24,P.gold,41);
  for(const x of [-39,-8]){b.box(x,10,38.1,.44,6.5,.44,P.gold,41);b.box(x,10,34.1,.30,6.5,.30,P.gold,41);}
- // Curved striped awning; the front edge stays behind the running envelope.
  for(let i=0;i<16;i++){const a=i*PI/16,q=(i+1)*PI/16;const p=(x,t)=>[x,12.2+Math.sin(t)*1.6,36.4+Math.cos(t)*2.7];b.quad(p(-41,a),p(-7,a),p(-7,q),p(-41,q),i%2?P.cream:P.teal,23);}
  b.box(-24,13.4,39.15,23,3.1,.25,P.ink,22);orreryLetters(b,'COMET',-24,12.7,39.34,1.55);
  for(const x of [-37,-32,-27,-22,-17,-12]){b.cylinder(x,11.7,38.8,.16,.16,.23,P.cream,25,8);scenePerson(scene,b,x,6.78,36.6,'stand',PI,1.7);}
@@ -145,14 +144,100 @@ function orreryLandscape(b,scene){
  for(let i=0;i<22;i++){const x=-12+i*2.4,z=50+(i%3)*.6;scenePerson(scene,b,x,.02,z,i%4?'stand':'walk',.3+i*.5,1.6);}
  // Curved lookout with benches: a second scale cue beside the towering rails.
  b.cylinder(45,.2,-6,6,6,.4,'#adac8d',4,40);
- for(let i=0;i<18;i++){const a=i*TAU/18,x=45+Math.cos(a)*5.6,z=-6+Math.sin(a)*5.6;b.beam([x,.4,z],[x,2,z],.05,P.gold,41,5);}
- orreryRing(b,45,2,-6,5.6,.065,P.gold,41,48);for(const x of [42,47]){b.box(x,.9,-6,1,.2,3.5,P.wood,22);for(const z of [-7.2,-4.8])b.box(x,.45,z,.7,.9,.12,P.gold,41);}
+ for(let i=1;i<18;i++){const a=i*TAU/18,x=45+Math.cos(a)*5.6,z=-6+Math.sin(a)*5.6;b.beam([x,.4,z],[x,2,z],.05,P.gold,41,5);}
+ for(let i=0;i<48;i++){const a=.24+i*(TAU-.48)/48,q=.24+(i+1)*(TAU-.48)/48;b.beam([45+Math.cos(a)*5.6,2,-6+Math.sin(a)*5.6],[45+Math.cos(q)*5.6,2,-6+Math.sin(q)*5.6],.065,P.gold,41,5);}for(const x of [42,47]){b.box(x,.9,-6,1,.2,3.5,P.wood,22);for(const z of [-7.2,-4.8])b.box(x,.45,z,.7,.9,.12,P.gold,41);}
  // A sculptural crescent over the meteor garden, mounted on its own pedestal.
  b.cylinder(-51,10,-38,.3,.3,19,P.gold,41,12);b.push(-51,26,-38,0,.25,.05);
  for(let i=0;i<70;i++){const a=PI*.30+i*PI*1.40/70,q=PI*.30+(i+1)*PI*1.40/70,p=t=>[Math.cos(t)*6,Math.sin(t)*6,0],inner=t=>[1.6+Math.cos(t)*5.3,Math.sin(t)*5.3,.12];b.quad(p(a),p(q),inner(q),inner(a),P.cream,25);}b.pop();
 }
-function buildOrreryRoom(scene,b){
+function orreryMovingPart(scene,b,kind,model){
+ // Register every uploaded mesh immediately so partial room failures release it.
+ scene.movingParts.push({kind,mesh:b.mesh(),model});
+}
+function orreryCog(b,r,teeth,color){
+ // An annular, open-spoked wheel with physical teeth, not a textured disk.
+ const hole=r*.72,h=.22,count=teeth*4,point=(i,y,inside=false)=>{const a=i*TAU/count,rr=inside?hole:r+(i%4===1||i%4===2?.16:-.12);return [Math.cos(a)*rr,y,Math.sin(a)*rr];};
+ for(let i=0;i<count;i++){
+  const j=(i+1)%count,a=point(i,h),q=point(j,h),c=point(j,h,true),d=point(i,h,true);
+  b.quad(a,d,c,q,color,41);b.quad(point(i,0),a,q,point(j,0),shade(color,.78),41);
+  b.quad(point(i,0,true),point(j,0,true),c,d,color,41);b.quad(point(i,0),point(j,0),point(j,0,true),point(i,0,true),shade(color,.75),41);
+ }
+ for(let i=0;i<6;i++){const a=i*TAU/6;b.beam([Math.cos(a)*.35,h*.5,Math.sin(a)*.35],[Math.cos(a)*hole,h*.5,Math.sin(a)*hole],.105,color,41,5);}
+ b.cylinder(0,.12,0,.48,.48,.28,color,41,16);b.cylinder(0,.31,0,.17,.17,.13,ORRERY.ink,42,10);
+}
+function orreryClockwork(b,scene){
  const P=ORRERY;
+ // Tooth counts and centers match: the smaller wheels counter-rotate at 30/18.
+ scene.orreryGears=[{x:6,z:-5,r:3.5,teeth:30,ratio:1},{x:.4,z:-5,r:2.1,teeth:18,ratio:-30/18},{x:11.6,z:-5,r:2.1,teeth:18,ratio:-30/18}];
+ for(const [i,g]of scene.orreryGears.entries()){
+  b.cylinder(g.x,2.20,g.z,.37,.37,.50,P.gold,41,12);
+  const cog=new Builder();orreryCog(cog,g.r,g.teeth,i?P.gold:P.teal);
+  orreryMovingPart(scene,cog,'gear',s=>mm(trans(g.x,2.32,g.z),ry((reduceMotion?0:s.trains[0].distance*.12)*g.ratio+(i?PI/g.teeth:0))));
+ }
+ // Three enameled bearings connect the gear train to the planet's spindle.
+ for(const x of [.4,6,11.6]){b.cylinder(x,2.78,-5,.29,.29,.35,P.cream,40,12);b.box(x,2.99,-5,.31,.08,.07,P.ink,42);}
+ // A modelmaker's graduated brass ring makes the mechanism feel calibrated.
+ for(let i=0;i<48;i++){const a=i*TAU/48,r=i%4?13.85:13.48;b.beam([6+Math.cos(a)*r,2.07,-5+Math.sin(a)*r],[6+Math.cos(a)*14.15,2.07,-5+Math.sin(a)*14.15],.022,P.cream,41,4);}
+}
+function orreryDispatchClock(b,scene){
+ const P=ORRERY,x=-4,y=11.6,z=36.9;
+ b.cylinder(x,5.5,z,.15,.15,11,P.gold,41,10);b.cylinder(x,.16,z,.85,.95,.32,P.ink,41,12);
+ b.push(x,y,z,0,PI/2);orreryRing(b,0,0,0,2.5,.12,P.gold,41,48,true);b.pop();
+ b.cylinder(x,y,z,2.42,2.42,.24,P.ink,40,48,PI/2);
+ for(let i=0;i<24;i++){const a=i*TAU/24,r=i%2?2.13:1.94;b.beam([x+Math.sin(a)*r,y+Math.cos(a)*r,z+.17],[x+Math.sin(a)*2.27,y+Math.cos(a)*2.27,z+.17],.035,P.cream,41,5);}
+ orreryLetters(b,'COMET',x,y-.9,z+.2,.38);
+ const hand=new Builder();hand.beam([0,-.4,0],[0,1.8,0],.065,P.coral,41,6);hand.sphere(0,0,0,.16,.16,.10,P.gold,41,10,6);
+ orreryMovingPart(scene,hand,'departure-clock',s=>{const e=s.trains[0].edge,m=e.motionAt(s.trains[0].distance),a=reduceMotion?0:((m.time-e.boarding+e.seconds)%e.seconds)/e.seconds*TAU;return mm(trans(x,y,z+.24),rz(-a));});
+}
+function orreryBoardingGates(b,scene){
+ const P=ORRERY;scene.orreryGates=[];
+ for(let i=0;i<5;i++){
+  const x=-38+ORRERY_ROUTE.track.stop-i*ORRERY_STOCK.spacing-.8,y=6.8,z=33.35;
+  for(const dx of [0,1.6]){b.cylinder(x+dx,y+.58,z,.055,.055,1.16,P.gold,41,7);b.sphere(x+dx,y+1.2,z,.11,.11,.11,P.cream,40,8,5);}
+  const gate=new Builder();gate.beam([0,1.05,0],[1.6,1.05,0],.045,P.gold,41,6);gate.beam([0,.25,0],[1.6,.25,0],.035,P.gold,41,6);
+  for(const dx of [.30,.65,1,1.35])gate.beam([dx,.25,0],[dx,1.05,0],.025,P.gold,41,5);
+  gate.box(.8,.7,.02,.65,.40,.06,P.teal,40);orreryStar(gate,.8,.7,.07,.13,P.cream,41);
+  scene.orreryGates.push({x,y,z,width:1.6});
+  orreryMovingPart(scene,gate,'boarding-gate',s=>{const r=s.trains[0].edge.motionAt(s.trains[0].distance).restraint;return mm(trans(x,y,z),ry(-(reduceMotion?(r>.5?1:0):r)*PI/2));});
+ }
+ // Low bench, luggage and paneled platform fascia stay behind the boarding lane.
+ for(const x of [-35,-29]){b.box(x,7.38,37.65,3.5,.18,.7,P.wood,22);b.box(x,7.92,37.98,3.5,.75,.13,P.teal,22);for(const dx of [-1.3,1.3])b.box(x+dx,7.05,37.65,.10,.50,.6,P.gold,41);}
+ for(let x=-39;x<-8;x+=3.2){b.box(x,3.5,39.1,2.8,4.8,.12,P.ink,22);b.box(x,3.5,39.18,2.35,4.35,.07,'#7a9188',22);}
+ orreryDispatchClock(b,scene);
+}
+function orreryPromenade(b,points,width=2.6){
+ const P=ORRERY;
+ for(let i=0;i<points.length-1;i++){
+  const prev=points[Math.max(0,i-1)],a=points[i],q=points[i+1],next=points[Math.min(points.length-1,i+2)];
+  const sample=t=>{const bez=orreryBezier([a[0],.038,a[1]],[a[0]+(q[0]-prev[0])/6,.038,a[1]+(q[1]-prev[1])/6],[q[0]-(next[0]-a[0])/6,.038,q[1]-(next[1]-a[1])/6],[q[0],.038,q[1]],t);return {p:bez.p,r:norm([-bez.f[2],0,bez.f[0]])};};
+  for(let j=0;j<18;j++){
+   const l=sample(j/18),r=sample((j+1)/18),edge=(s,w,h=0)=>add(add(s.p,mul(s.r,w)),[0,h,0]);
+   b.quad(edge(l,width/2),edge(r,width/2),edge(r,-width/2),edge(l,-width/2),'#aaa98e',4);
+   for(const side of [-1,1]){const hi=Math.max(side*width/2,side*(width/2-.12)),lo=Math.min(side*width/2,side*(width/2-.12));b.quad(edge(l,hi,.007),edge(r,hi,.007),edge(r,lo,.007),edge(l,lo,.007),P.cream,4);}
+  }
+ }
+}
+function orreryPark(b){
+ const P=ORRERY;
+ // One continuous perimeter walk joins kiosk, stair foot and the eastern lookout.
+ orreryPromenade(b,[[-53,29],[-53,38],[-43,48],[-20,49],[8,49],[30,49],[53,35],[55,10],[55,-12],[52,-25]],2.8);
+ orreryPromenade(b,[[55,-6],[51,-6],[48,-6]],2.2);
+ for(let i=0;i<2;i++)b.box(52-i*.7,.085+i*.10,-6,.8,.17+i*.20,2.4,P.cream,4);
+ // An inlaid compass rose fills the quiet space beneath the orbital truss.
+ const x=-15,z=-20,r=5.2;orreryRing(b,x,.055,z,r,.045,P.gold,41,48);
+ for(let i=0;i<8;i++){const a=i*TAU/8,rr=i%2?r*.65:r-.25;
+  b.tri([x,.06,z],[x+Math.cos(a)*rr,.06,z+Math.sin(a)*rr],[x+Math.cos(a-.11)*.6,.06,z+Math.sin(a-.11)*.6],P.cream,41);
+  b.tri([x,.06,z],[x+Math.cos(a+.11)*.6,.06,z+Math.sin(a+.11)*.6],[x+Math.cos(a)*rr,.06,z+Math.sin(a)*rr],P.gold,41);
+ }
+ // Three small planters frame the path without random clutter or track encroachment.
+ for(const [x,z]of[[-34,46],[4,46],[52,20]]){
+  b.cylinder(x,.34,z,1.45,1.6,.65,P.ink,41,16);orreryRing(b,x,.66,z,1.5,.055,P.gold,41,24);
+  for(let i=0;i<7;i++){const a=i*2.4,rr=i?.85:0,xx=x+Math.cos(a)*rr,zz=z+Math.sin(a)*rr;b.sphere(xx,1.15+(i%2)*.16,zz,.48,.55,.48,['#638e79','#87a893','#9db7a0'][i%3],8,7,5);b.sphere(xx,1.72+(i%2)*.16,zz,.1,.13,.10,P.cream,25,6,4);}
+ }
+}
+
+function buildOrreryRoom(scene,b){
+ const P=ORRERY;scene.movingParts=[];
  // Separate the wood, brass trim and enamel top: no coplanar fan triangles.
  orrerySlab(b,126,108,-2.8,5,12,P.wood);orrerySlab(b,126.3,108.3,-.36,.24,12,P.gold,41);orrerySlab(b,125.8,107.8,-.10,.20,12,'#395456',23);
  for(const x of [-47,47])for(const z of [-38,38]){b.box(x,(FLOOR-5)/2,z,5,-5-FLOOR,5,P.wood,22);b.box(x,-21.8,z,5.5,1.0,5.5,P.gold,41);}
@@ -161,19 +246,21 @@ function buildOrreryRoom(scene,b){
  scene.routes=[ORRERY_ROUTE];scene.trains=[{edge:ORRERY_ROUTE,distance:ORRERY_ROUTE.boarding*ORRERY_ROUTE.normalDrive,speed:1,type:'mountain',cars:4,stock:'orrery'}];
  scene.height=(x,z)=>Math.abs(x)<62&&Math.abs(z)<53?0:FLOOR;
  scene.canPlace=()=>false;
- orreryRailway(b,scene);orreryPlanet(b);orreryStation(b,scene);orreryLandscape(b,scene);
+ orreryRailway(b,scene);orreryPlanet(b);orreryStation(b,scene);orreryLandscape(b,scene);orreryPark(b);
  // A mobile moon and its counterweight turn on an actual brass arm. One cached
  // mesh, owned by movingParts; pause freezes it and reduced-motion parks it.
  const mobile=new Builder();mobile.beam([0,0,0],[14,0,0],.08,P.gold,41,6);mobile.sphere(14,0,0,1.55,1.55,1.55,'#d5d1b5',4,18,12);mobile.sphere(-4,0,0,.7,.7,.7,P.gold,41,12,8);mobile.beam([-4,0,0],[0,0,0],.08,P.gold,41,6);
  b.cylinder(6,30,-5,.10,.10,7,P.gold,41,10);
- scene.movingParts=[{mesh:mobile.mesh(),model:s=>mm(trans(6,33.5,-5),ry(reduceMotion?0:s.trains[0].distance*.025))}];
+ orreryMovingPart(scene,mobile,'mobile-moon',s=>mm(trans(6,33.5,-5),ry(reduceMotion?0:s.trains[0].distance*.025)));
+ orreryClockwork(b,scene);orreryBoardingGates(b,scene);
  scene.spots=[
   {name:'The whole constellation',detail:'A clockmaker’s impossible amusement park.',target:[0,12,0],distance:158,phoneDistance:420,yaw:.35,pitch:.50},
   {name:'At the edge of the universe',detail:'The slow climb before the stardrop.',target:[23,28,-24],distance:56,phoneDistance:86,yaw:1.0,pitch:.22},
   {name:'The lunar loop',detail:'A complete inversion, held inside twin brass orbital trusses.',target:[-37,15,-11],distance:50,phoneDistance:100,yaw:-1.03,pitch:.26},
   {name:'A ringed world',detail:'Hand-turned brass, painted cloud belts and an orbiting moon.',target:[6,21,-5],distance:52,phoneDistance:81,yaw:.42,pitch:.3},
   {name:'Platform zero',detail:'Board the Comet. Five open cars, one extraordinary little journey.',target:[-25,9,33],distance:33,phoneDistance:52,yaw:.10,pitch:.28},
-  {name:'Under the comet',detail:'The low return sweeps beneath the departure line.',target:[27,6,26],distance:48,phoneDistance:73,yaw:1.0,pitch:.28}
+  {name:'Under the comet',detail:'The low return sweeps beneath the departure line.',target:[27,6,26],distance:48,phoneDistance:73,yaw:1.0,pitch:.28},
+  {name:'The clockwork heart',detail:'Three open-spoked gears drive the little universe. Watch them counter-rotate.',target:[5,3.3,-5],distance:24,phoneDistance:43,yaw:-.40,pitch:.55}
  ];
 }
 registerHouseRoom('orrery',{

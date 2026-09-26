@@ -69,7 +69,7 @@ function buildOrreryRoute(){
   return {s,time,lap:time/seconds,velocity:(b.s-a.s)/(b.time-a.time),phase:a.s===b.s?'Boarding':sections[q.section].name,restraint:a.s===b.s?smooth(0,.55,boardingTime)*(1-smooth(dwell-.7,dwell-.15,boardingTime)):0};
  }
  const track={length,at,samples,sections,stop};
- const edge={name:'Comet',length:seconds*normalDrive,at:d=>at(motionAt(d).s),motionAt,track,seconds,boarding,normalDrive};
+ const edge={name:'Comet',length:seconds*normalDrive,at:d=>at(motionAt(d).s),motionAt,track,seconds,boarding,dwell,normalDrive};
  return edge;
 }
 const ORRERY_ROUTE=buildOrreryRoute();
