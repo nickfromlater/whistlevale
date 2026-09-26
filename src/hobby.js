@@ -157,7 +157,7 @@ function syncRoomControls(){
  $('buildMode').querySelector('span').textContent=hobby.room==='valley'?'Build your railway':'Build in Alder Valley';
  for(const id of['trainBtn','playBtn','cinemaPause'])$(id).hidden=!railway;
  for(const button of document.querySelectorAll('button[data-camera]'))button.hidden=button.hasAttribute('data-passenger-only')?hobby.room!=='safari':!railway&&!['room','overview','tour'].includes(button.dataset.camera);
- const names=(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
+ const names=(hobby.room==='venetian'?['The gondola ride','The lantern bridge','La Serenissima','The lagoon train']:null)||(typeof embeddedProject==='function'&&embeddedProject(hobby.room)?.cinemaLabels)|| (railway?['Gentle drift','Alongside','Wide landscape','Following behind']:['Gentle drift','Closer view','Wide landscape','Room view']);
  for(const [i,option]of [...$('cinemaShot').options].entries())option.textContent=names[i];
 }
 
@@ -267,7 +267,7 @@ updateSimulation=function(dt){
  // Advance the active locomotive before the shared particle simulation emits.
  if(hobby.room!=='valley'&&hobby.scene&&!paused)for(const train of hobby.scene.trains)train.distance+=dt*train.speed*speed;
  baseHobbySimulation(dt);
- if(hobby.room!=='valley'&&hobby.scene&&!paused){if(hobby.scene.wildlife)safariUpdateWildlife(hobby.scene,dt);if(hobby.scene.dragon)briarUpdateDragon(hobby.scene,dt);}
+ if(hobby.room!=='valley'&&hobby.scene&&!paused){if(hobby.scene.wildlife)safariUpdateWildlife(hobby.scene,dt);if(hobby.scene.dragon)briarUpdateDragon(hobby.scene,dt);if(hobby.scene.venetian)venetianUpdate(hobby.scene,dt);}
 };
 
 function cinemaCamera(dt){
@@ -280,7 +280,7 @@ function cinemaCamera(dt){
  const a=hobby.shotBlend,portrait=innerWidth<700?1.6:1;
  const manual=cinemaOrbit.manual;let target=manual?add(manual.anchor||p,manual.offset):add(add(p,mul(f,-3.0)),[0,1.1,0]);
  let desired=add(add(add(p,mul(f,a.back*portrait)),mul(r,a.side*portrait)),[0,(a.height+hobby.tunnelBlend*13)*portrait,0]);
- const guestShot=!manual&&typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed);
+ const guestShot=!manual&&((hobby.scene?.venetian&&venetianCinemaView(hobby.scene,hobby.shot))||(typeof embeddedCinemaView==='function'&&embeddedCinemaView(hobby.shot,elapsed)));
  if(!manual)cinemaOrbit.preset=guestShot||null;
  if(guestShot){target=guestShot.target;desired=guestShot.position;}
  else if(!hobbyHasTrain()){
