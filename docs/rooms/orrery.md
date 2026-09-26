@@ -147,3 +147,9 @@ sampled geometric regressions, not a real-world engineering safety certificate.
 The browser harness captures both added viewpoints and the actual front-seat
 star passage, then repeats boarding, dispatch, arrival, inversion, narrow-screen,
 map, reduced-motion and offline-export checks on the same production geometry.
+
+The rendered third-pass review also widened the station composition to include
+the admission stair, queue and cupola, reduced the oversized nameboard, and
+brought railings, benches and the ticket/dispatch surfaces down to visitor scale.
+The browser checks assert those station anchors fit both desktop and narrow
+viewports and capture dedicated 390px/320px station views.

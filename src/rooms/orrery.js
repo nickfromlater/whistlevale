@@ -145,12 +145,12 @@ function orreryStation(b,scene){
  for(let x=-40;x<-7;x+=1.2)b.box(x,6.8,33.45,.7,.055,.24,P.gold,41);
  for(const x of [-39,-8]){b.box(x,10,38.1,.44,6.5,.44,P.gold,41);b.box(x,10,34.1,.30,6.5,.30,P.gold,41);}
  for(let i=0;i<16;i++){const a=i*PI/16,q=(i+1)*PI/16;const p=(x,t)=>[x,12.2+Math.sin(t)*1.6,36.4+Math.cos(t)*2.7];b.quad(p(-41,a),p(-7,a),p(-7,q),p(-41,q),i%2?P.cream:P.teal,23);}
- b.box(-24,13.4,39.15,23,3.1,.25,P.ink,22);orreryLetters(b,'COMET',-24,12.7,39.34,1.55);
+ b.box(-24,13.4,39.15,16,1.6,.25,P.ink,22);orreryLetters(b,'COMET',-24,12.9,39.34,1.05);
  for(const x of [-37,-32,-27,-22,-17,-12]){b.cylinder(x,11.7,38.8,.16,.16,.23,P.cream,25,8);scenePerson(scene,b,x,6.78,36.6,'stand',PI,1.7);}
  for(let i=0;i<12;i++)b.box(-44-i*.6,6.45-i*.53,36.1,1.15,.48,4.4,P.cream,4);
  for(const z of [34.1,38.1])b.beam([-43,8,z],[-51,.95,z],.065,P.gold,41,6);
  // Ticket kiosk, scalloped roof and brass clock.
- b.box(-53,2.5,26,5,5,5,P.teal,22);b.box(-53,3.3,28.55,3,1.5,.10,P.ink,0);b.box(-53,2.45,29,4,.22,1.1,P.gold,22);b.cylinder(-53,5.4,26,4,0,2.5,P.cream,23,6);b.sphere(-53,6.82,26,.25,.25,.25,P.gold,41,8,6);
+ b.box(-53,2.5,26,5,5,5,P.teal,22);b.box(-53,1.35,28.55,3,1.5,.10,P.ink,0);b.box(-53,.72,29,4,.22,1.1,P.gold,22);b.cylinder(-53,5.4,26,4,0,2.5,P.cream,23,6);b.sphere(-53,6.82,26,.25,.25,.25,P.gold,41,8,6);
  for(let i=0;i<4;i++){b.cylinder(-53+i*2,1.1,30.8,.06,.06,2.2,P.gold,41,6);if(i<3)b.beam([-53+i*2,1.8,30.8],[-51+i*2,1.8,30.8],.05,P.coral,23,6);}
 }
 function orreryLandscape(b,scene){
@@ -223,7 +223,7 @@ function orreryBoardingGates(b,scene){
   orreryMovingPart(scene,gate,'boarding-gate',s=>{const r=s.trains[0].edge.motionAt(s.trains[0].distance).restraint;return mm(trans(x,y,z),ry(-(reduceMotion?(r>.5?1:0):r)*PI/2));});
  }
  // Low bench, luggage and paneled platform fascia stay behind the boarding lane.
- for(const x of [-35,-29]){b.box(x,7.38,37.65,3.5,.18,.7,P.wood,22);b.box(x,7.92,37.98,3.5,.75,.13,P.teal,22);for(const dx of [-1.3,1.3])b.box(x+dx,7.05,37.65,.10,.50,.6,P.gold,41);}
+ for(const x of [-35,-29]){b.box(x,7.10,37.65,3.5,.18,.7,P.wood,22);b.box(x,7.45,37.98,3.5,.55,.13,P.teal,22);for(const dx of [-1.3,1.3])b.box(x+dx,6.98,37.65,.10,.35,.6,P.gold,41);}
  for(let x=-39;x<-8;x+=3.2){b.box(x,3.5,39.1,2.8,4.8,.12,P.ink,22);b.box(x,3.5,39.18,2.35,4.35,.07,'#7a9188',22);}
  orreryDispatchClock(b,scene);
 }
@@ -280,7 +280,7 @@ function buildOrreryRoom(scene,b){
   {name:'At the edge of the universe',detail:'The slow climb before the stardrop.',target:[23,28,-24],distance:56,phoneDistance:86,yaw:1.0,pitch:.22},
   {name:'The lunar loop',detail:'A complete inversion, held inside twin brass orbital trusses.',target:[-37,15,-11],distance:50,phoneDistance:100,yaw:-1.03,pitch:.26},
   {name:'A ringed world',detail:'Hand-turned brass, painted cloud belts and an orbiting moon.',target:[6,21,-5],distance:52,phoneDistance:81,yaw:.42,pitch:.3},
-  {name:'Platform zero',detail:'Board the Comet. Five open cars, one extraordinary little journey.',target:[-25,9,33],distance:33,phoneDistance:52,yaw:.10,pitch:.28},
+  {name:'Platform zero',detail:'Board the Comet. Five open cars, one extraordinary little journey.',target:[-30,8,36],distance:56,phoneDistance:166,yaw:.18,pitch:.47},
   {name:'Under the comet',detail:'The low return sweeps beneath the departure line.',target:[27,6,26],distance:48,phoneDistance:73,yaw:1.0,pitch:.28},
   {name:'The clockwork heart',detail:'Three open-spoked gears drive the little universe. Watch them counter-rotate.',target:[5,3.3,-5],distance:24,phoneDistance:43,yaw:-.40,pitch:.55},
   {name:'The Stardust Gallery',detail:'A brass-ribbed star passage, lit from within. The Comet slips through its open constellation.',target:scene.orreryTunnelTarget,distance:38,phoneDistance:66,yaw:1.12,pitch:.35},
@@ -340,8 +340,8 @@ function orreryLantern(b,x,y,z,height=3.5){
 }
 function orreryBench(b,x,y,z,angle=0){
  b.push(x,y,z,0,angle);
- for(let i=0;i<4;i++){b.box(0,.60,-.30+i*.20,2.9,.10,.15,ORRERY.wood,22);b.box(0,.93+i*.14,-.39,2.9,.095,.10,ORRERY.teal,22);}
- for(const side of [-1,1]){b.box(side*1.13,.31,0,.12,.58,.66,ORRERY.gold,41);b.beam([side*1.28,.77,-.35],[side*1.28,.77,.34],.045,ORRERY.gold,41,5);b.box(side*1.28,.67,.29,.06,.25,.06,ORRERY.gold,41);}b.pop();
+ for(let i=0;i<4;i++){b.box(0,.30,-.30+i*.20,2.9,.10,.15,ORRERY.wood,22);b.box(0,.49+i*.10,-.39,2.9,.075,.10,ORRERY.teal,22);}
+ for(const side of [-1,1]){b.box(side*1.13,.14,0,.12,.28,.66,ORRERY.gold,41);b.beam([side*1.28,.47,-.35],[side*1.28,.47,.34],.045,ORRERY.gold,41,5);b.box(side*1.28,.40,.29,.06,.18,.06,ORRERY.gold,41);}b.pop();
 }
 function orreryTopiary(b,x,y,z,h=3,variant=0){
  const P=ORRERY;b.cylinder(x,y+.32,z,.65,.76,.64,variant%2?P.coral:P.ink,4,8);b.cylinder(x,y+h*.44,z,.09,.065,h*.8,P.wood,22,6);
@@ -372,8 +372,8 @@ function orreryQueueAndStation(b,scene){
  // the existing western stair. The reverse side of the station stays open.
  b.box(-27,.09,42.15,29,.18,5.8,'#b5b39b',4);
  for(let x=-40;x<-13;x+=1.1)for(let z=39.6;z<45;z+=1.05)if((Math.round(x/1.1)+Math.round(z/1.05))%2===0)b.box(x,.187,z,.98,.014,.94,'#c8c4a7',4);
- orreryFence(b,[[-39,40],[-14,40],[-14,44.65],[-37,44.65]],.20,1.28);
- orreryFence(b,[[-17,41.6],[-38,41.6],[-38,43.1],[-17,43.1]],.20,1.28);
+ orreryFence(b,[[-39,40],[-14,40],[-14,44.65],[-37,44.65]],.20,.78);
+ orreryFence(b,[[-17,41.6],[-38,41.6],[-38,43.1],[-17,43.1]],.20,.78);
  orreryPromenade(b,[[-38,44.9],[-43,44.8],[-48,42],[-52,39],[-51,36]],2.1);
  // Coral enamel and pierced brass break up the long green station facade.
  for(let x=-39;x<=-9;x+=5){
@@ -399,10 +399,10 @@ function orreryQueueAndStation(b,scene){
  for(let i=0;i<20;i++){const a=i*PI/20,q=(i+1)*PI/20;b.beam([Math.cos(a)*3,4.6+Math.sin(a)*1.2,0],[Math.cos(q)*3,4.6+Math.sin(q)*1.2,0],.12,P.gold,41,5);}
  b.box(0,4.65,0,5.8,1.05,.20,P.ink,22);orreryLetters(b,'COMET',0,4.4,.14,.53,P.cream);orreryStar(b,0,6.2,0,.58,P.gold,41);b.pop();
  // Small things with a job: dispatch console, ticket punch, timetable, luggage.
- b.box(-9.2,7.32,37.4,1.8,1.05,1.3,P.ink,22);b.push(-9.2,7.9,37.4,.20);b.box(0,0,0,1.95,.12,1.4,P.gold,41);
+ b.box(-9.2,7.125,37.4,1.8,.65,1.3,P.ink,22);b.push(-9.2,7.48,37.4,.20);b.box(0,0,0,1.95,.12,1.4,P.gold,41);
  for(let i=0;i<3;i++){b.cylinder(-.55+i*.48,.08,0,.14,.14,.04,i===2?P.coral:P.cream,40,10);b.beam([-.55+i*.48,.13,0],[-.50+i*.48,.13,.08],.012,P.ink,41,4);}b.pop();
- for(const x of [-52.9,-52.1]){b.box(x,2.59,29,.46,.11,.36,P.cream,23);b.box(x,2.66,29,.32,.025,.02,P.coral,23);}
- b.box(-54.2,2.65,29,.36,.18,.42,P.ink,41);b.beam([-54.2,2.7,29],[-54.2,3.04,28.92],.04,P.gold,41,5);
+ for(const x of [-52.9,-52.1]){b.box(x,.86,29,.46,.11,.36,P.cream,23);b.box(x,.93,29,.32,.025,.02,P.coral,23);}
+ b.box(-54.2,.92,29,.36,.18,.42,P.ink,41);b.beam([-54.2,.97,29],[-54.2,1.31,28.92],.04,P.gold,41,5);
  orrerySignboard(b,'ADMIT ONE',-56.3,0,31,3.8,-.28);
  orrerySignboard(b,'DEPARTURES',-11.1,6.79,35.6,2.7,PI/2);
  for(const [x,z]of [[-48,40],[-12.5,44.5]])orreryLantern(b,x,0,z,3.4);
@@ -469,7 +469,7 @@ function orreryMoonwatch(b,scene){
  const P=ORRERY,x=-13,z=-42;
  b.push(x,0,z);
  b.cylinder(0,.28,0,8.0,8.0,.56,P.cream,4,8);b.cylinder(0,.66,0,6.5,6.5,.24,P.gold,41,8);
- // Eight masonry piers and recessed window bays surround an open door.
+ // Eight masonry piers and recessed window bays surround a paneled entry.
  for(let i=0;i<8;i++){
   const a=i*TAU/8;b.push(0,0,0,0,a);b.box(-2.14,4,5.18,.50,6.7,.55,P.cream,4);
   if(i!==0){b.box(0,3.8,5.28,3.85,5.8,.40,'#c6c7ae',4);b.box(0,4.5,5.51,2.5,3.6,.08,P.ink,40);b.box(0,4.5,5.58,.07,3.6,.05,P.gold,41);b.box(0,4.5,5.58,2.5,.065,.05,P.gold,41);}
@@ -479,7 +479,7 @@ function orreryMoonwatch(b,scene){
  b.cylinder(0,7.4,0,5.9,5.9,.35,P.ink,41,32);b.push(0,7.6,0);orreryDome(b,5.85,4.3,'#769c8c',32,8,true);b.pop();
  b.cylinder(0,12.2,0,.12,.07,1,P.gold,41,8);orreryStar(b,0,13.2,0,.63,P.gold,41);
  // Balcony and steps stay outside the drop's footprint; the slit is real depth.
- const rail=[];for(let i=0;i<=16;i++){const a=.34+i*(TAU-.68)/16;rail.push([Math.sin(a)*7.35,Math.cos(a)*7.35]);}orreryFence(b,rail,.58,1.25);
+ const rail=[];for(let i=0;i<=16;i++){const a=.34+i*(TAU-.68)/16;rail.push([Math.sin(a)*7.35,Math.cos(a)*7.35]);}orreryFence(b,rail,.58,.80);
  b.cylinder(0,7.22,0,4.8,4.8,.16,P.ink,22,16);b.cylinder(0,3.7,0,.32,.32,7.4,P.gold,41,10);orreryTelescope(b,0,7.3,1.3,0,1.2);
  for(let i=0;i<3;i++)b.box(0,.12+i*.19,8.25-i*.48,2.65,.24+i*.38,.75,P.cream,4);b.pop();
  orreryPromenade(b,[[-44,-29],[-32,-34],[-20,-33],[-13,-33],[-4,-36],[14,-41],[35,-44],[53,-25]],2.6);
@@ -509,7 +509,7 @@ function orreryScenicVisitors(scene,b){
   ['queue',[[-33,.20,42.35,'map',0,1.65],[-30,.20,42.4,'talk',-.6,1.7],[-28.8,.20,42.4,'stand',.8,1.2],[-23,.20,44,'bag',-.4,1.7]]],
   ['ticket',[[-53,0,30,'readStand',PI,1.7],[-55.8,0,33,'talk',.5,1.7],[-54.8,0,33.5,'point',.8,1.15]]],
   ['moon court',[[-48,0,10,'camera',1.2,1.7],[-49,0,12,'point',.8,1.7],[-47.8,0,12.5,'stand',1,1.15]]],
-  ['promenade',[[20,0,49.8,'walk',-1.4,1.7],[23,.20,50,'chair',PI,1.7],[25,0,49.9,'talk',-1.1,1.65]]],
+  ['promenade',[[20,0,49.8,'walk',-1.4,1.7],[23,.05,50,'chair',PI,1.7],[25,0,49.9,'talk',-1.1,1.65]]],
   ['moonwatch',[[-14,.57,-35.8,'map',PI,1.7],[-12,.57,-36,'point',.3,1.6],[-56,0,-27,'work',PI,1.7]]],
   ['lookout',[[46,.4,-8,'camera',-.8,1.65],[43,.4,-6.4,'point',-.8,1.7]]],
   ['gardener',[[55,0,28,'carry',-.6,1.7]]],

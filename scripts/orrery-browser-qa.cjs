@@ -31,6 +31,7 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{setMood('day',{immediate:true,persist:false});});await capture('day');
   for(const [name,index]of [['loop',2],['planet',3],['station',4],['clockwork',6],['stardust-gallery',7],['moonwatch',8]]){
    await page.evaluate(i=>{document.querySelectorAll('#roomPlaces button')[i].click();updateCamera(10);},index);await capture(name);
+   if(name==='station')assert.ok(await page.evaluate(()=>[[-55,0,31],[-55,0,46],[-6,0,31],[-6,0,46],[-24,20.5,36.4]].every(q=>{const p=project(q);return p.visible&&p.x>12&&p.x<innerWidth-12&&p.y>80&&p.y<innerHeight-90;})),'station, admission and cupola fit the authored composition');
   }
   await page.locator('#orreryBoard').click();
   assert.equal(await page.evaluate(()=>orrerySeatActive()),true);
@@ -65,6 +66,9 @@ const out='evidence/orrery';fs.mkdirSync(out,{recursive:true});
   assert.deepEqual(pauseCheck,{frozen:true,advanced:true});report.checks.push('native simulation pause and advance');
   for(const width of [390,320]){
    await page.setViewportSize({width,height:844});
+   await page.evaluate(()=>{document.querySelectorAll('#roomPlaces button')[4].click();updateCamera(10);updateUI();});
+   await capture(`phone-${width}-station`);
+   assert.ok(await page.evaluate(()=>[[-55,0,31],[-55,0,46],[-6,0,31],[-6,0,46],[-24,20.5,36.4]].every(q=>{const p=project(q);return p.visible&&p.x>5&&p.x<innerWidth-5&&p.y>80&&p.y<innerHeight-190;})),'phone station court fits clear of the ticket and controls');
    await page.evaluate(()=>{setView('room',false);updateCamera(10);updateUI();});
    await capture(`phone-${width}`);
    const fits=await page.evaluate(()=>[-60,60].every(x=>[-49,49].every(z=>{const p=project([x,0,z]);return p.visible&&p.x>3&&p.x<innerWidth-3;})));
