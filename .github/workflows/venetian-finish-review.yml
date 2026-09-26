@@ -1,0 +1,146 @@
+name: Venetian complete experience review
+on:
+  push:
+    branches: [codex/venetian-canal-room]
+    paths: ['.venetian-finish/**', '.github/workflows/venetian-finish-review.yml']
+permissions:
+  contents: read
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      source: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Apply the exact locally tested experience revision
+        id: source
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/venetian-canal-room
+          test "$(git rev-parse HEAD^)" = 436df2de2f708899bbff0e2671b89bc5a1a0fb41
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          root = pathlib.Path.cwd()
+          transport = root / '.venetian-finish/patch'
+          encoded = transport.read_bytes()
+          assert hashlib.sha256(encoded).hexdigest() == 'bc7e22fd6580ac5ab863c27d66dd6c24b1dc4177096a56e4482f96f7e4711cd9', 'Transport hash mismatch'
+          payload = json.loads(lzma.decompress(base64.b64decode(encoded)))
+          allowed = {'.github/workflows/venetian-review.yml', 'package.json', 'scripts/venetian-browser-qa.cjs', 'scripts/venetian-craft-qa.mjs', 'scripts/venetian-experience-qa.cjs', 'scripts/venetian-qa.mjs', 'scripts/venetian-reflection-qa.mjs', 'src/hobby.js', 'src/railway.js', 'src/rooms/venetian-city.js', 'src/rooms/venetian-life.js', 'src/rooms/venetian-render.js', 'src/rooms/venetian.js'}
+          assert set(payload['files']) == allowed, 'Unexpected patch path'
+          for name, hashes in payload['files'].items():
+              p = root / name
+              assert (hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None) == hashes['before'], 'Base hash mismatch: ' + name
+          patch = pathlib.Path('/tmp/venetian-finish.patch')
+          patch.write_text(payload['patch'])
+          subprocess.run(['git', 'apply', '--check', '--unidiff-zero', str(patch)], check=True)
+          subprocess.run(['git', 'apply', '--unidiff-zero', str(patch)], check=True)
+          for name, hashes in payload['files'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == hashes['after'], 'Result hash mismatch: ' + name
+          transport.unlink()
+          transport.parent.rmdir()
+          (root / '.github/workflows/venetian-finish-review.yml').unlink()
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          PY
+          npm run check
+          npm run test:venetian
+          test "$(git ls-remote origin refs/heads/codex/venetian-canal-room | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- .github/workflows/venetian-review.yml package.json scripts/venetian-browser-qa.cjs scripts/venetian-craft-qa.mjs scripts/venetian-experience-qa.cjs scripts/venetian-qa.mjs scripts/venetian-reflection-qa.mjs src/hobby.js src/railway.js src/rooms/venetian-city.js src/rooms/venetian-life.js src/rooms/venetian-render.js src/rooms/venetian.js .venetian-finish .github/workflows/venetian-finish-review.yml
+          git commit -m 'Animate articulated gondoliers, open the bridge shops and finish reflection and camera ownership'
+          git push origin HEAD:refs/heads/codex/venetian-canal-room
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  views:
+    needs: apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.apply.outputs.source }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Record source and geometry
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          set -o pipefail
+          npm run test:venetian | tee evidence/venetian/focused.txt
+      - name: Isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Actual native room, reflection, cinema and map
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          node scripts/venetian-browser-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-finished-views
+          path: evidence/venetian/
+          retention-days: 14
+  experience:
+    needs: apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.apply.outputs.source }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Native gestures, offline downloadable house and animated rowing
+        env:
+          VENETIAN_CAPTURE_FILM: '1'
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          node scripts/venetian-experience-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-experience
+          path: evidence/venetian/
+          retention-days: 14
+  checks:
+    needs: apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.apply.outputs.source }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Full suite, full geometry and contribution report
+        run: |
+          mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
+          npm test > evidence/venetian/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/venetian/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/venetian/contributions.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-finished-checks
+          path: evidence/venetian/
+          retention-days: 14
