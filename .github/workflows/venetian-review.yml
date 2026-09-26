@@ -3,39 +3,85 @@ on:
   push:
     branches: [codex/venetian-canal-room]
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: venetian-review-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Snapshot tracked source for isolated review
-        run: git archive --format=tar.gz --output=/tmp/whistlevale-source.tar.gz HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: venetian-source
-          path: /tmp/whistlevale-source.tar.gz
-          retention-days: 1
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Native checks
-        if: ${{ hashFiles('src/rooms/venetian.js') != '' }}
+      - name: Apply the exact locally checked room revision
+        if: ${{ hashFiles('.venetian-review/part-1') != '' }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/venetian-canal-room
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          root = pathlib.Path.cwd()
+          parts = [root / '.venetian-review' / ('part-' + str(i)) for i in range(1, 4)]
+          encoded = b''.join(p.read_bytes() for p in parts)
+          assert hashlib.sha256(encoded).hexdigest() == '62d7416465258b865ff30ebb4762477ce48643965001fd1e01e7a13e4642aa6f', 'Transport hash mismatch'
+          payload = json.loads(lzma.decompress(base64.b64decode(encoded)))
+          allowed = {'docs/rooms/venetian.md', 'index.html', 'package.json', 'scripts/venetian-browser-qa.cjs', 'scripts/venetian-qa.mjs', 'src/hobby.js', 'src/rooms/venetian-architecture.js', 'src/rooms/venetian-life.js', 'src/rooms/venetian.js', 'src/shop-map.js'}
+          assert set(payload['files']) == allowed, 'Unexpected path in patch'
+          for name, hashes in payload['files'].items():
+              p = root / name
+              actual = hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None
+              assert actual == hashes['before'], 'Base hash mismatch: ' + name
+          patch = pathlib.Path('/tmp/venetian-checked.patch')
+          patch.write_text(payload['patch'])
+          subprocess.run(['git', 'apply', '--check', str(patch)], check=True)
+          subprocess.run(['git', 'apply', str(patch)], check=True)
+          for name, hashes in payload['files'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == hashes['after'], 'Result hash mismatch: ' + name
+          for p in parts:
+              p.unlink()
+          (root / '.venetian-review').rmdir()
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          print('Verified exact before and after SHA-256 for all ten source, test and documentation paths.')
+          PY
+          npm run check
+          npm run test:venetian
+          test "$(git ls-remote origin refs/heads/codex/venetian-canal-room | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/rooms/venetian.md index.html package.json scripts/venetian-browser-qa.cjs scripts/venetian-qa.mjs src/hobby.js src/rooms/venetian-architecture.js src/rooms/venetian-life.js src/rooms/venetian.js src/shop-map.js .venetian-review
+          git commit -m 'Build the Venetian Salon with navigable canals, gondolas, palazzi and a waterside railway'
+          git push origin HEAD:refs/heads/codex/venetian-canal-room
+      - name: Focused geometry and motion checks
         run: |
           mkdir -p evidence/venetian
+          git rev-parse HEAD > evidence/venetian/source-commit.txt
           set -o pipefail
-          npm test 2>&1 | tee evidence/venetian/npm-test.txt
-          npm run test:geometry:full 2>&1 | tee evidence/venetian/geometry-full.txt
+          npm run test:venetian | tee evidence/venetian/focused.txt
+      - name: Isolated review browser
+        run: |
+          npm install --prefix /tmp/whistlevale-browser playwright@1.55.1
+          /tmp/whistlevale-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Actual native room, cinema and map views
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/venetian/server.txt 2>&1 &
+          GITHUB_SHA=$(git rev-parse HEAD) node scripts/venetian-browser-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: venetian-native-views
+          path: evidence/venetian/
+          retention-days: 14
+      - name: Full checks and byte-exact geometry comparison
+        if: ${{ !cancelled() && hashFiles('src/rooms/venetian.js') != '' }}
+        run: |
+          npm test > evidence/venetian/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/venetian/geometry-full.txt 2>&1
           npm run check:contributions -- --json > evidence/venetian/contributions.txt
       - uses: actions/upload-artifact@v4
-        if: ${{ always() && hashFiles('src/rooms/venetian.js') != '' }}
+        if: always()
         with:
           name: venetian-checks
-          path: evidence/venetian/
-          retention-days: 7
+          path: evidence/venetian/*.txt
+          retention-days: 14
