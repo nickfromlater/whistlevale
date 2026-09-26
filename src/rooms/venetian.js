@@ -126,9 +126,9 @@ function buildVenetianRoom(scene,b){
  scene.height=(x,z)=>Math.abs(x)>66||Math.abs(z)>46?FLOOR:venetianIsWater(x,z)?VENETIAN.water:VENETIAN.quay;
  scene.canPlace=()=>false;
  scene.spots=[
-  {name:'La Serenissima',detail:'A little city afloat in a collector’s Venetian salon.',target:[0,4,0],distance:160,phoneDistance:280,pitch:.60,yaw:.20},
+  {name:'La Serenissima',detail:'A little city afloat in a collector’s Venetian salon.',target:[0,6,-2],distance:132,phoneDistance:232,pitch:.49,yaw:.18},
   {name:'The lantern bridge',detail:'Stone steps, open arcades, and gondolas slipping beneath the Rialto.',target:[0,3.5,0],distance:47,phoneDistance:82,pitch:.43,yaw:.52},
-  {name:'The grand canal',detail:'Rose plaster, striped mooring posts and little lives along the water.',target:[-25,3,-1],distance:49,phoneDistance:83,pitch:.44,yaw:-.83},
+  {name:'The grand canal',detail:'Rose plaster, striped mooring posts and little lives along the water.',target:[-19,4,-2],distance:36,phoneDistance:60,pitch:.28,yaw:-1.18},
   {name:'The basilica & bell tower',detail:'Five copper domes, a working bronze bell and a golden evening piazza.',target:[22,9,-20],distance:67,phoneDistance:106,pitch:.47,yaw:.20},
   {name:'The gondolier’s landing',detail:'Black lacquer, crimson velvet and an oar moving with the current.',target:[39,1,3],distance:36,phoneDistance:57,pitch:.43,yaw:1.13},
   {name:'Caffè della Luna',detail:'An espresso under the awning while the lagoon train passes.',target:[-29,2.5,22],distance:49,phoneDistance:79,pitch:.52,yaw:.12},
@@ -139,7 +139,7 @@ function buildVenetianRoom(scene,b){
 registerHouseRoom('venetian',{
  name:'The Venetian Salon',layout:'La Serenissima',tag:'THE CITY OF LANTERNS',
  description:'A winding turquoise canal, covered bridges, copper domes and quietly passing gondolas. The lagoon railway circles a Venetian city in miniature.',
- color:'#6fa9a2',ambient:'coast',target:[0,4,0],distance:160,phoneDistance:280,pitch:.60,yaw:.20,
+ color:'#6fa9a2',ambient:'coast',target:[0,6,-2],distance:132,phoneDistance:232,pitch:.49,yaw:.18,
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Venetian miniature and salon, with agent assistance.'}],
  map:{plot:'east-7',scale:.40,footprint:[158,130],focus:[0,4,0]},
  // Fill every shader light slot: entering from another room must not retain its lights.
