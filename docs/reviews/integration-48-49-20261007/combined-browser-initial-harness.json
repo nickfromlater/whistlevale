@@ -1,0 +1,8 @@
+{
+  "source": "dac635c9f9b4a24ec4c8cc91c9b84f96dc902895",
+  "tree": "a46805c1630248b1319a159fdc526a1df0a1e35a",
+  "checks": [],
+  "errors": [],
+  "method": "Chromium 140 / SwiftShader. Both rooms in the same application and actual downloaded portable files. Synthetic input and stepped simulation, not physical iPhone certification.",
+  "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at inspect (/workspace/scratch/7f14dd424d31/whistlevale-integration/evidence/integration-48-49/combined-browser.cjs:27:10)\n    at async /workspace/scratch/7f14dd424d31/whistlevale-integration/evidence/integration-48-49/combined-browser.cjs:50:141"
+}

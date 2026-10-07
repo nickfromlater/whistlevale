@@ -1,0 +1,33 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:geometry:full
+> node scripts/geometry-qa.mjs
+
+PASS: 560 meshes, 13,367,340 vertices, 160,408,080 Float32 attributes are bitwise identical.
+Node CPU timings include byte receipts and validation; use the browser baseline for startup impact.
+┌─────────┬─────────────────────────────┬─────────────┬─────────────┬─────────┐
+│ (index) │ group                       │ referenceMs │ optimizedMs │ speedup │
+├─────────┼─────────────────────────────┼─────────────┼─────────────┼─────────┤
+│ 0       │ 'primitives-and-transforms' │ 1231.4      │ 855.4       │ '1.44x' │
+│ 1       │ 'nearest-track-queries'     │ 126.1       │ 146.7       │ '0.86x' │
+│ 2       │ 'terrain-surface-queries'   │ 170.3       │ 89.4        │ '1.90x' │
+│ 3       │ 'createGround'              │ 5993.1      │ 5960.8      │ '1.01x' │
+│ 4       │ 'valley'                    │ 17115.8     │ 16541.9     │ '1.03x' │
+│ 5       │ 'valley-room'               │ 798.7       │ 512.3       │ '1.56x' │
+│ 6       │ 'valley-people'             │ 1707.5      │ 1021.7      │ '1.67x' │
+│ 7       │ 'train-collection'          │ 1878.5      │ 1252.8      │ '1.50x' │
+│ 8       │ 'selectable-trains'         │ 8328.4      │ 4563.8      │ '1.82x' │
+│ 9       │ 'room-atlas'                │ 1.3         │ 1.3         │ '1.00x' │
+│ 10      │ 'coast'                     │ 4078.7      │ 3011.5      │ '1.35x' │
+│ 11      │ 'alpine'                    │ 4636.3      │ 3307.6      │ '1.40x' │
+│ 12      │ 'studio'                    │ 1447.7      │ 951         │ '1.52x' │
+│ 13      │ 'commons'                   │ 2426.9      │ 1656.8      │ '1.46x' │
+│ 14      │ 'hudson'                    │ 3072.5      │ 1706        │ '1.80x' │
+│ 15      │ 'yamaai'                    │ 81.9        │ 51.2        │ '1.60x' │
+│ 16      │ 'queens'                    │ 656.8       │ 422.4       │ '1.55x' │
+│ 17      │ 'grandhall'                 │ 1285.2      │ 819.7       │ '1.57x' │
+│ 18      │ 'safari'                    │ 7419.8      │ 6360.2      │ '1.17x' │
+│ 19      │ 'briarwatch'                │ 6391.5      │ 4982.5      │ '1.28x' │
+│ 20      │ 'venetian'                  │ 6700.4      │ 5656.1      │ '1.18x' │
+│ 21      │ 'orrery'                    │ 2438.3      │ 1831.9      │ '1.33x' │
+└─────────┴─────────────────────────────┴─────────────┴─────────────┴─────────┘

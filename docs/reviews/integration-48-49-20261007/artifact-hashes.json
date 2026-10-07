@@ -1,0 +1,434 @@
+{
+  "evidence/venetian/08-gondola-ride.png": {
+    "bytes": 1400336,
+    "sha256": "b05854bf6b090b867aacbf9de2780c7ebe047a922440da9401fa2cb2522b9f66"
+  },
+  "evidence/venetian/phone-320-canvas.png": {
+    "bytes": 412339,
+    "sha256": "b3eb6a3ccd62a129a50aa37bc8f8bdca6b3017067ecb1a6fd69431c3ad2f1e88"
+  },
+  "evidence/venetian/18-lion-of-lagoon-canvas.png": {
+    "bytes": 2161736,
+    "sha256": "fcdd0dde7cad8d3957faca7b14616c3e7f7e0d53048b2ef4b2e0802f60797542"
+  },
+  "evidence/venetian/01-arrival.png": {
+    "bytes": 1973012,
+    "sha256": "8c12b891762a4e1d084c404ce8c3ce40063f9b810adb41457b51c8f8cc2c8bd5"
+  },
+  "evidence/venetian/12-lantern-water.png": {
+    "bytes": 1034972,
+    "sha256": "de8a1f9553a8875f3ad0e289a1b3f3a19eb073c87e6797d27dc6c71911500a1e"
+  },
+  "evidence/venetian/06-lamplight-canvas.png": {
+    "bytes": 2684563,
+    "sha256": "88aa850ba4995642da278ed5b5ba12ec79ada1a3fb9e357850f9b5a292b08036"
+  },
+  "evidence/venetian/07-night-canvas.png": {
+    "bytes": 2548012,
+    "sha256": "cc11123b28517b34efe435e5212984c875870f43d088cc9e88c556a57da630c3"
+  },
+  "evidence/venetian/11-return-canal.png": {
+    "bytes": 1125719,
+    "sha256": "80c06849e38f15952aeefaf98a15df8f0215f09fefffc1c9a9ee921e24bff956"
+  },
+  "evidence/venetian/13-basin-turn.png": {
+    "bytes": 988259,
+    "sha256": "82836e1799ca4da9f2cdb36e7216fc223e0dbd928cedf1a64ed3ed3f39e9eb05"
+  },
+  "evidence/venetian/browser-report.json": {
+    "bytes": 15346,
+    "sha256": "71d092ae339052775611ed91f81b884b45a3aeefb21faa94f6c95845b9e56a23"
+  },
+  "evidence/venetian/16-alongside-gondolier.png": {
+    "bytes": 882916,
+    "sha256": "ce88868892a45ca2241f308735e997e4d4b9e8f056c1040ecb8a930485e89b43"
+  },
+  "evidence/venetian/whistlevale-portable.html": {
+    "bytes": 33012792,
+    "sha256": "90154097d3135a646fc5e4b7e05a635f58fd8ba601dd2de60ea80d023c06a317"
+  },
+  "evidence/venetian/17-standalone-night.png": {
+    "bytes": 1147314,
+    "sha256": "ab879656aac3debc26ca1b1b9e1f499665435c6a7c423d4377a24631bdaaeb3c"
+  },
+  "evidence/venetian/10-golden-loggia-canvas.png": {
+    "bytes": 2288207,
+    "sha256": "11b0f8119034da7c77667c751d78fec89310968d817528ecfae7fedd1ff7776c"
+  },
+  "evidence/venetian/05-gondolas.png": {
+    "bytes": 1344763,
+    "sha256": "cbea588ba1d0b07a20a4389fd6751023ebea231d5fc032c10b5f29e92b55e3b5"
+  },
+  "evidence/venetian/14-lace-palace.png": {
+    "bytes": 1288254,
+    "sha256": "beca75238d1d88a384a050ce22fc3b1dd042425b7dd945108b09bf871463159b"
+  },
+  "evidence/venetian/15-palace-evening.png": {
+    "bytes": 923229,
+    "sha256": "583097dcc15a13694b76e111ac714528311a1d1f1ede890d927500e25ad00b55"
+  },
+  "evidence/venetian/phone-390.png": {
+    "bytes": 356160,
+    "sha256": "7b939928eaec4c455acac5235a4fdd3865ea51f8189b802c0dcbd79c169fc0fa"
+  },
+  "evidence/venetian/07-night.png": {
+    "bytes": 1770170,
+    "sha256": "6a0e94791365956bcf44b541a4e342bf5fdd7f488f339cf133ad12fd1cf18281"
+  },
+  "evidence/venetian/03-basilica.png": {
+    "bytes": 1566974,
+    "sha256": "e4597edd945cdce087135af6de6cd19058ca790121b19ca582de208ed62ec26f"
+  },
+  "evidence/venetian/18-lion-of-lagoon.png": {
+    "bytes": 1377381,
+    "sha256": "a9710ef8805d42febbdc865cd4dcccdb7f1698f5595835da60e83cc2b83d3fec"
+  },
+  "evidence/venetian/03-basilica-canvas.png": {
+    "bytes": 2370915,
+    "sha256": "ba30096ce4bc20267a593b7bf8f93e0552cf3abc3fed5ab9ffeb8e1003a6bf95"
+  },
+  "evidence/venetian/02-bridge-canvas.png": {
+    "bytes": 2332315,
+    "sha256": "6de97230ce5f5841151a704476d7e33a1a79568e0c7499e7fa0269117b2df8b5"
+  },
+  "evidence/venetian/02-bridge.png": {
+    "bytes": 1494635,
+    "sha256": "70b22ae57310abf199bef855f0da83e65be33e7eb8cb34a901db833d12fbb20f"
+  },
+  "evidence/venetian/04-canal-canvas.png": {
+    "bytes": 2089937,
+    "sha256": "dd2f024b95a5095c94d53c352ec4f4e7a25dfdee109e499c1a02a5a35e3f023a"
+  },
+  "evidence/venetian/08-gondola-ride-canvas.png": {
+    "bytes": 2206589,
+    "sha256": "dd7fcf1743773b769e0886dcd647d9a69b2e37748be7c14ba5d957a9ff3f5986"
+  },
+  "evidence/venetian/14-lace-palace-canvas.png": {
+    "bytes": 2069619,
+    "sha256": "0dec0936cae23414852e4f2eb749b2906099b96430ea61b681c69d4e40a47045"
+  },
+  "evidence/venetian/09-house-map.png": {
+    "bytes": 933750,
+    "sha256": "23e1e5ba2c5324fefdde2dd28aca69b64aa2971a96faafabe811a2e058142945"
+  },
+  "evidence/venetian/phone-320.png": {
+    "bytes": 300973,
+    "sha256": "b487f6bd7b8dd8e209a9c94eb1fb1cd83d8c8ca272adc3ab1c40d071af576b0f"
+  },
+  "evidence/venetian/11-return-canal-canvas.png": {
+    "bytes": 1841618,
+    "sha256": "7f596c386c041bb172543f62441d69fac86d70f19259a89e02613d67068756a8"
+  },
+  "evidence/venetian/phone-390-canvas.png": {
+    "bytes": 490513,
+    "sha256": "427a6ce0296206f52ca37cc860467bc63022e53e18ecaa0959cb5f37a968e43e"
+  },
+  "evidence/venetian/01-arrival-canvas.png": {
+    "bytes": 2782677,
+    "sha256": "72a2fbb5b6b51f6de1f9093249c49be6aeb412c36a8292635c24f7c61ff0e979"
+  },
+  "evidence/venetian/13-basin-turn-canvas.png": {
+    "bytes": 1662066,
+    "sha256": "394ab78ced772ac6e1d861e8ea038d0b99424c35c20ee02b2a4cdb77fcb4cf94"
+  },
+  "evidence/venetian/12-lantern-water-canvas.png": {
+    "bytes": 1706141,
+    "sha256": "f2d7416c9da15e9f92ce6b95c61477d4d4ab2abc646714341a12ad4963b92742"
+  },
+  "evidence/venetian/04-canal.png": {
+    "bytes": 1347979,
+    "sha256": "26541d418fa1f94670f88fc051a015bfe1a770ff55efebdda6604b5baa4dbccc"
+  },
+  "evidence/venetian/experience-report.json": {
+    "bytes": 876,
+    "sha256": "1da680ad3ae2211202c1b5059a37a8a27fd38090e50b1f5f7bb6decc200a0bfa"
+  },
+  "evidence/venetian/10-golden-loggia.png": {
+    "bytes": 1545680,
+    "sha256": "df339d6533159cd63e4d81debf2021f70d09c4b063bb1c41d1ee8e9369a6e7b6"
+  },
+  "evidence/venetian/05-gondolas-canvas.png": {
+    "bytes": 2070783,
+    "sha256": "44ffbee3c1da966418f8f7a612a96b32fd651522da2c4df47a001e0fa99e945e"
+  },
+  "evidence/venetian/06-lamplight.png": {
+    "bytes": 1890870,
+    "sha256": "e4d2497eaa7dbe6f4559399afe2f0043448cc8b503ab330deb682155d07b9c4b"
+  },
+  "evidence/orrery/arrival-seat-canvas.png": {
+    "bytes": 2081253,
+    "sha256": "d67e33e9c5213681e684d407f6a7f7e525828525201732c9a88e55d7f24bbdb9"
+  },
+  "evidence/orrery/phone-320-canvas.png": {
+    "bytes": 362841,
+    "sha256": "3fbce399d3dbfd0504dcd1588947d8a9936bd1c1461ef68341933632704eca72"
+  },
+  "evidence/orrery/overview-canvas.png": {
+    "bytes": 2346249,
+    "sha256": "63c385ca7c5564c566e32fdb4110763b772a28300c73968c8168e0d212311a9b"
+  },
+  "evidence/orrery/reduced-motion-canvas.png": {
+    "bytes": 506953,
+    "sha256": "3cf4c1f6bf35f3ef2093b794a639fd8c488dfbf4ba7ca45e616c0c8887753d7c"
+  },
+  "evidence/orrery/front-row-inversion-canvas.png": {
+    "bytes": 1860603,
+    "sha256": "e808cfa90a1de7340fdecc3a7dcdc0811f1909a16679c4d6ab2aed9be481f26a"
+  },
+  "evidence/orrery/offline-portable-seat.png": {
+    "bytes": 266701,
+    "sha256": "6323d55baa566a10d3481214cb4a4a0ae34b27842ae6be6472bfcfc6700834ec"
+  },
+  "evidence/orrery/map-canvas.png": {
+    "bytes": 1442302,
+    "sha256": "c7fe4bfe915675e36486f4e1309464b1b27c6d69e96315b7b25b4d9b02dc045d"
+  },
+  "evidence/orrery/arrival-seat.png": {
+    "bytes": 1381259,
+    "sha256": "20fcfc5db1fe750aba59a0f5c31660b4e91d4374ec5b3f4c7461251bf7849ccb"
+  },
+  "evidence/orrery/loop.png": {
+    "bytes": 1875325,
+    "sha256": "4d2f0d55b00aadd782d2d539e2686856865efc7ef987259527f918069b2b5d17"
+  },
+  "evidence/orrery/day.png": {
+    "bytes": 1784057,
+    "sha256": "3feb99bc75353950fbe396e714db33d16ad5448bd460e01768c7a76503beb191"
+  },
+  "evidence/orrery/boarding-seat-canvas.png": {
+    "bytes": 2081055,
+    "sha256": "8a17e8ed29034fe7e1a5f2c7965a8ceb27b70a3af1b250c5d1ebbfd0eb6a06f1"
+  },
+  "evidence/orrery/planet-canvas.png": {
+    "bytes": 2530772,
+    "sha256": "2bb1a09d45a4bfc00a41564674aa67ef7942b48e89e1ada34c3ea04114b36152"
+  },
+  "evidence/orrery/map.png": {
+    "bytes": 819648,
+    "sha256": "3bd2b03173a67ca01dde7122e5e634ebfd0b524c4ae361d66f997ff8d395e6c0"
+  },
+  "evidence/orrery/phone-320-station-canvas.png": {
+    "bytes": 447103,
+    "sha256": "cefc888b96ac033bd35ac347bfe803e5b1a755c3b327fe0117d4a650e4b106ac"
+  },
+  "evidence/orrery/station-canvas.png": {
+    "bytes": 2734429,
+    "sha256": "c552f4f9b1db8ecdde20c1a566de322bf4887b585dfe5aa1ac032f5c687d3979"
+  },
+  "evidence/orrery/browser-report.json": {
+    "bytes": 1929,
+    "sha256": "7d08fa9696abd0541a13f144063ea44eb94468cf961df5ea2f6b175c55c1dccf"
+  },
+  "evidence/orrery/loop-canvas.png": {
+    "bytes": 2776314,
+    "sha256": "28bffb4f6eba5f261c7f9cf4917639c4941a02e67bf49159542d214d2919eebb"
+  },
+  "evidence/orrery/phone-390-station-canvas.png": {
+    "bytes": 540156,
+    "sha256": "75edfd3c0cad433ab0d86ffe9484e3f602d88372fcdb2e2c9a0cc8422d906e84"
+  },
+  "evidence/orrery/phone-320-seat-canvas.png": {
+    "bytes": 415885,
+    "sha256": "d905744e40c1e7614952df8215321a6c7a8aab12457f2b1544c4650eae40adf7"
+  },
+  "evidence/orrery/stardust-gallery.png": {
+    "bytes": 1777754,
+    "sha256": "0337a52be6400fa6a0ebe422157298e3ca59ef0066c0890892431ae6c514318b"
+  },
+  "evidence/orrery/phone-390-seat.png": {
+    "bytes": 333447,
+    "sha256": "4d9ac4cb4111fd75b44d4ca6494461445866953345b11deb6a428828e6b01882"
+  },
+  "evidence/orrery/stardust-gallery-canvas.png": {
+    "bytes": 2670277,
+    "sha256": "11523fbdeeba4df55645b9a6f1d103e21cd6b4e3a8d1c68aee1df1d8ea77ef53"
+  },
+  "evidence/orrery/phone-390.png": {
+    "bytes": 296313,
+    "sha256": "1ddc5cce546d29e81c0b6ab37a752f8cd5caf03efb7cc46a649e593e060a77bd"
+  },
+  "evidence/orrery/front-row-inversion.png": {
+    "bytes": 1165552,
+    "sha256": "a649933339dfe4d325802d4746df64fd56a3a2adf8def67fd88aa3e605c1efe4"
+  },
+  "evidence/orrery/reduced-motion.png": {
+    "bytes": 326388,
+    "sha256": "ef9eb0646fc4a9df19b4c4a9103743f3f67e85febe3cea23d819ec70c0f4a760"
+  },
+  "evidence/orrery/front-row-stardust.png": {
+    "bytes": 1439523,
+    "sha256": "5605cf1eafc14d6ef212fccf13119fedfdc3e0820feda9870ce4e581893db373"
+  },
+  "evidence/orrery/moonwatch-canvas.png": {
+    "bytes": 2270515,
+    "sha256": "fd43d6674020146829cb3795e8fa0029f1c2e4fbc8a26ea11c60eb887013c7cd"
+  },
+  "evidence/orrery/whistlevale.html": {
+    "bytes": 33012883,
+    "sha256": "45c264a87fb9d1a6cde601e691549ff39dad6c1237c13c855241c26754f9a90b"
+  },
+  "evidence/orrery/phone-390-station.png": {
+    "bytes": 351151,
+    "sha256": "f7d054aa631767c45214116bf5e7a3085f7e4d9082ed899240da354b3b0929d4"
+  },
+  "evidence/orrery/phone-320-seat.png": {
+    "bytes": 278349,
+    "sha256": "758f1f2f2f78a902c6a1e73bb8b26aaf7fdca5d9b02ac653850d009269db64f8"
+  },
+  "evidence/orrery/day-canvas.png": {
+    "bytes": 2604883,
+    "sha256": "d0561df4c0be4d07ba9ac8d2ee5864612c0e164f8fe3506d358bf24311d366c1"
+  },
+  "evidence/orrery/front-row.png": {
+    "bytes": 1095260,
+    "sha256": "fa30fb1a4bf7a9198ae54a3d1eda568c4667bad45d4e50572009ea595472f114"
+  },
+  "evidence/orrery/phone-320-station.png": {
+    "bytes": 293260,
+    "sha256": "93927c7f580531d0d94639843343f32bf6e9c6f22aaa4ca8d7c7cca2eb6e7505"
+  },
+  "evidence/orrery/phone-320.png": {
+    "bytes": 249626,
+    "sha256": "9babe0f09afc10e7748c54a0095107aa4693aba60846a38588ec9b4e0f12407f"
+  },
+  "evidence/orrery/offline-portable-seat-canvas.png": {
+    "bytes": 416811,
+    "sha256": "6b37f59a266bd21c82e88b8e65bba49bef4e59a313bcfb8f00b47a03a09cf1ab"
+  },
+  "evidence/orrery/phone-390-canvas.png": {
+    "bytes": 429999,
+    "sha256": "5bd7f9560c0ab274d9f7db6d7d10c43351ab92ee9f408a46766d048714129336"
+  },
+  "evidence/orrery/clockwork-canvas.png": {
+    "bytes": 1932811,
+    "sha256": "8536fcb1af696ebf9cd955d68d49af26ff62db853e2b2b24dd39c83a5adee4b0"
+  },
+  "evidence/orrery/front-row-stardust-canvas.png": {
+    "bytes": 2207795,
+    "sha256": "16c9923e2f0e83f6c08f792485a820531ccedf887752ac90dfd738324e50c059"
+  },
+  "evidence/orrery/moonwatch.png": {
+    "bytes": 1475561,
+    "sha256": "9af2ff3471b64539431c23982612567936a4c08c68618c979b4b4dbf9a8f3621"
+  },
+  "evidence/orrery/boarding-seat.png": {
+    "bytes": 1378712,
+    "sha256": "02c935732b9b19d75055e8e7896528dcb2fcc23e52a71f08d610000a69280934"
+  },
+  "evidence/orrery/front-row-canvas.png": {
+    "bytes": 1689773,
+    "sha256": "02b469167693828c753096203e3197feac4cad223681b87aa67f2850619cef4d"
+  },
+  "evidence/orrery/overview.png": {
+    "bytes": 1566701,
+    "sha256": "46380f6d674849f9b378bcf3ab99d6bd648bc3e8312ec5a47b16fc250b7d6888"
+  },
+  "evidence/orrery/clockwork.png": {
+    "bytes": 1194662,
+    "sha256": "f27038a19e75003bdc35abad60afd22e56d6c944aa3a2fd10745571093b8333c"
+  },
+  "evidence/orrery/planet.png": {
+    "bytes": 1709613,
+    "sha256": "6f6f05f26a6a6325a4425e7019f245960147bda925db825b6da55d7b08c5e7e9"
+  },
+  "evidence/orrery/phone-390-seat-canvas.png": {
+    "bytes": 506472,
+    "sha256": "d8d196b26e251ef67d2730f0862669bb33968b7d66ee57c41e42e182d920dd80"
+  },
+  "evidence/orrery/station.png": {
+    "bytes": 1749336,
+    "sha256": "30b9eb2ee9cb69f8154f186f75bd5b683869462b72e75a94bccdd5fb3db31c98"
+  },
+  "evidence/integration-48-49/browser-results.json": {
+    "bytes": 544,
+    "sha256": "277d4e9f526c1c4f707f5ec6c56602bdad9cbd4d5b75bdb606489626ac9141ea"
+  },
+  "evidence/integration-48-49/npm-test-concurrent-timeout.log": {
+    "bytes": 22011,
+    "sha256": "a6b9f69295ce065139093c99f7d1d990715adca5fde17ad68cdad9713994195a"
+  },
+  "evidence/integration-48-49/combined-source-map.png": {
+    "bytes": 421696,
+    "sha256": "e742cc2707adcc9fd3e50bd7b1c43ef820a7042f4084cbeef26410a15940abe0"
+  },
+  "evidence/integration-48-49/source-manifest.json": {
+    "bytes": 486,
+    "sha256": "542748a614659a07d63766a5bcff96b4d812b53b8f247737691c5ade48364d73"
+  },
+  "evidence/integration-48-49/venetian-export-map.png": {
+    "bytes": 421694,
+    "sha256": "2f88e84427953a2cf9ded2d55dad585c78e4fb7ef307835d74ab560c86205625"
+  },
+  "evidence/integration-48-49/browser-server.log": {
+    "bytes": 40771,
+    "sha256": "b0cc9de58ec4047df8d5bc1db92d5a98201a5781349e21d9203f2579e5d646aa"
+  },
+  "evidence/integration-48-49/combined-browser-report.json": {
+    "bytes": 3662,
+    "sha256": "bb19e22ebc3242daa55756f9d9943653743a2dd46f1028f7b64fe151c50ecf1f"
+  },
+  "evidence/integration-48-49/combined-browser-initial-harness.json": {
+    "bytes": 694,
+    "sha256": "dd54f1283ec487817b157aa65426b631b0ad111e1929c3f8e680ef4bd8b7f95e"
+  },
+  "evidence/integration-48-49/venetian-browser.log": {
+    "bytes": 353,
+    "sha256": "d5d9429cac09c0f3259692cb9642efed98d42fc47257d5586e887e8c7105833b"
+  },
+  "evidence/integration-48-49/orrery-export-map.png": {
+    "bytes": 421694,
+    "sha256": "2f88e84427953a2cf9ded2d55dad585c78e4fb7ef307835d74ab560c86205625"
+  },
+  "evidence/integration-48-49/geometry-full.log": {
+    "bytes": 3194,
+    "sha256": "92e9299a9b699d8fcce8565d60fe45638157f53f078108c60c3feb981b502b4e"
+  },
+  "evidence/integration-48-49/server.log": {
+    "bytes": 35,
+    "sha256": "1e55de2311c79ca2bab372ca7f842625542a3ad132340f9334710b1601097501"
+  },
+  "evidence/integration-48-49/npm-test.log": {
+    "bytes": 39773,
+    "sha256": "54850db92899097369db5ae97cf1d4d62269ad78cc1b6891b28929b36553383b"
+  },
+  "evidence/integration-48-49/venetian-experience.log": {
+    "bytes": 125,
+    "sha256": "39b5666bd4510ee80273cd237fbf63680cde38241df15cb2a2b7c7ad8df6e2ca"
+  },
+  "evidence/integration-48-49/combined-browser.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "evidence/integration-48-49/browser-results-initial.json": {
+    "bytes": 543,
+    "sha256": "28373c8a39aff12d81fc2dc6940c8d0f2c0055cf549094400dcd8c3ebf6a0822"
+  },
+  "evidence/integration-48-49/contributions.log": {
+    "bytes": 2686,
+    "sha256": "542dd289620db24e11d6f5c49cdc84674861b91fb6fd17031ac413a184452379"
+  },
+  "evidence/integration-48-49/combined-browser-initial-harness.log": {
+    "bytes": 472,
+    "sha256": "554141427567922d3055f5b61c1fdf524dcb2811a828d1c6bbb52c72e090f21b"
+  },
+  "evidence/integration-48-49/npm-test-result.json": {
+    "bytes": 104,
+    "sha256": "7315c61afbf02e2c502c30b6eeed8b0cc43fd96b5b8212d9167e523d08057f7b"
+  },
+  "evidence/integration-48-49/combined-server.log": {
+    "bytes": 5810,
+    "sha256": "2bf88933cb56fa8f152ff5500d1a3bf35ebf35eb9331d32710cb80750439830f"
+  },
+  "evidence/integration-48-49/orrery-browser.log": {
+    "bytes": 479,
+    "sha256": "4773a8822245bb918d4dc20181a1fa9d484f911bb7c2585dfcbf1c1b4be3b3e2"
+  },
+  "evidence/integration-48-49/combined-browser.cjs": {
+    "bytes": 5457,
+    "sha256": "2844ce818725157a3d7e6cf34d2f8ebc8a24dbf8bb089565edb24017b9679893"
+  },
+  "evidence/integration-48-49/contributions.json": {
+    "bytes": 2503,
+    "sha256": "d6f160e81de7365b27a19ae6c456cd0e787bbb84f7bbbcb04ad375120c781055"
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "venetian-browser",
+    "script": "scripts/venetian-browser-qa.cjs",
+    "exitCode": 0,
+    "seconds": 159.55
+  },
+  {
+    "name": "venetian-experience",
+    "script": "scripts/venetian-experience-qa.cjs",
+    "exitCode": 0,
+    "seconds": 41.89
+  },
+  {
+    "name": "orrery-browser",
+    "script": "scripts/orrery-browser-qa.cjs",
+    "exitCode": 0,
+    "seconds": 122.34
+  },
+  {
+    "name": "combined-browser",
+    "script": "evidence/integration-48-49/combined-browser.cjs",
+    "exitCode": 0,
+    "seconds": 122.63
+  }
+]

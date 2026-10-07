@@ -1,0 +1,56 @@
+{
+  "checks": [
+    "full native-simulation circuit, every hero section, station arrival, open gates, replay and no global pause",
+    "ticket enters a waiting front seat and explicit dispatch starts a complete trip",
+    "actual inverted front-seat pose and native render",
+    "keyboard look/recenter/exit",
+    "focus restored to ticket",
+    "native simulation pause and advance",
+    "390px ticket, seat, 44px controls, synthetic pinch/cancel and exit",
+    "320px ticket, seat, 44px controls, synthetic pinch/cancel and exit",
+    "direct viewpoint change releases the seat and reboarding saves the new view",
+    "reduced motion defaults to truly fixed overlook",
+    "removing the OS motion preference does not silently start an inverting camera",
+    "native live house map opens",
+    "room navigation hides controls and does not duplicate them",
+    {
+      "nativeMovingFrames": 5,
+      "nativeTravel": 0.1855741999999907
+    },
+    "actual downloaded standalone HTML reopened offline: one control set, fresh trip, working dispatch, native motion and all mechanisms",
+    "no uncaught browser errors"
+  ],
+  "screenshots": [
+    "overview",
+    "day",
+    "loop",
+    "planet",
+    "station",
+    "clockwork",
+    "stardust-gallery",
+    "moonwatch",
+    "boarding-seat",
+    "arrival-seat",
+    "front-row",
+    "front-row-stardust",
+    "front-row-inversion",
+    "phone-390-station",
+    "phone-390",
+    "phone-390-seat",
+    "phone-320-station",
+    "phone-320",
+    "phone-320-seat",
+    "reduced-motion",
+    "map",
+    "offline-portable-seat"
+  ],
+  "method": "Native WebGL/SwiftShader; animation RAF held for stills, actual render() and gl.finish(), with separate native motion check. Not physical-device or FPS evidence.",
+  "scene": {
+    "vertices": 540609,
+    "room": "orrery",
+    "routeLength": 647.6955682777767,
+    "seconds": 94.27623386189624,
+    "renderer": "WebKit WebGL"
+  },
+  "errors": []
+}

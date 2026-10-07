@@ -1,0 +1,719 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test
+> npm run check && npm run test:analytics && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:glazing && npm run test:memory && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:guests && npm run test:hall && npm run test:moonlight && npm run test:map && npm run test:cinema && npm run test:trains && npm run test:hudson && npm run test:queens && npm run test:safari && npm run test:briarwatch && npm run test:venetian && npm run test:orrery && npm run build
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 check
+> node scripts/check.mjs
+
+Source syntax and referenced assets verified. 0/19 optional recordings present.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:analytics
+> node scripts/analytics-qa.mjs && node scripts/analytics-integration-qa.mjs
+
+Analytics QA passed: shared snapshots, coalescing, generic Hall actions, URL filtering, production/privacy/portable gates, visible cumulative time, map and transition exclusion, BFCache/sleep, per-room first use, input noninterference, hard cap and failed delivery.
+Analytics integration QA passed: actual house startup/deep links/map entry, Hall readiness/gallery/map/context loss/copy, finite panel/cabinet/keyboard hooks, and missing-tracker safety.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 check:contributions
+> node scripts/community-check.mjs
+
+Contribution checks passed: 11 works, 3 editable pieces, 9 credited trains, 1 layouts, 4 placed scenes.
+┌─────────┬─────────────────────────────┬───────────┬───────────┬────────────────┬──────────┬────────────────┬────────────────┐
+│ (index) │ id                          │ room      │ placement │ builder        │ vertices │ measuredRadius │ declaredRadius │
+├─────────┼─────────────────────────────┼───────────┼───────────┼────────────────┼──────────┼────────────────┼────────────────┤
+│ 0       │ 'harbor-life'               │ 'coast'   │ 0         │ 'harbor'       │ 24207    │ 1.1762         │ 1.2            │
+│ 1       │ 'ferry-luggage'             │ 'coast'   │ 0         │ 'porter'       │ 8004     │ 0.9194         │ 1              │
+│ 2       │ 'lakeside-trail'            │ 'alpine'  │ 0         │ 'mapParty'     │ 9246     │ 0.9328         │ 0.95           │
+│ 3       │ 'alpine-reading'            │ 'alpine'  │ 0         │ 'reading'      │ 7872     │ 0.9653         │ 1.15           │
+│ 4       │ 'saturday-workshop'         │ 'studio'  │ 0         │ 'atelier'      │ 11811    │ 0.8124         │ 1              │
+│ 5       │ 'meadow-reading'            │ 'studio'  │ 0         │ 'reading'      │ 7872     │ 0.9653         │ 1.15           │
+│ 6       │ 'willowbank-pottery'        │ 'commons' │ 0         │ 'willowbank'   │ 20040    │ 4.929          │ 5.3            │
+│ 7       │ 'wintergarden-station'      │ 'commons' │ 0         │ 'wintergarden' │ 146313   │ 10.1641        │ 10.26          │
+│ 8       │ 'meridian-hill-observatory' │ 'commons' │ 0         │ 'meridian'     │ 38844    │ 5.8336         │ 5.9            │
+└─────────┴─────────────────────────────┴───────────┴───────────┴────────────────┴──────────┴────────────────┴────────────────┘
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:contributions
+> node scripts/community-qa.mjs && node scripts/community-scene-qa.mjs && node scripts/meridian-commons-qa.mjs
+
+Contribution QA passed: bounded metadata, safe profiles, credit round trips, grouped artwork locations and public/file/blob links to actual railway placements.
+Commons base geometry: 299,340 vertices; three cottage sites verified.
+┌─────────┬──────────────┬────────────┬──────────┐
+│ (index) │ room         │ placements │ vertices │
+├─────────┼──────────────┼────────────┼──────────┤
+│ 0       │ 'coast'      │ 2          │ 32211    │
+│ 1       │ 'alpine'     │ 2          │ 17286    │
+│ 2       │ 'studio'     │ 2          │ 20019    │
+│ 3       │ 'commons'    │ 3          │ 205197   │
+│ 4       │ 'hudson'     │ 0          │ 0        │
+│ 5       │ 'yamaai'     │ 0          │ 0        │
+│ 6       │ 'queens'     │ 0          │ 0        │
+│ 7       │ 'grandhall'  │ 0          │ 0        │
+│ 8       │ 'safari'     │ 0          │ 0        │
+│ 9       │ 'briarwatch' │ 0          │ 0        │
+│ 10      │ 'venetian'   │ 0          │ 0        │
+│ 11      │ 'orrery'     │ 0          │ 0        │
+│ 12      │ 'qa-gallery' │ 1          │ 2964     │
+└─────────┴──────────────┴────────────┴──────────┘
+Community scene QA passed: every registered annex, visible placements, finite geometry, all miniature builders and per-room budgets.
+Meridian Commons QA passed: {"id":"meridian-hill-observatory","at":[-15,14],"angle":-0.16,"scale":1,"vertices":38844,"measuredRadius":5.833590298770393,"declaredRadius":5.9,"foundationSamples":360,"minGround":0.9349195748727394,"maxGround":0.9611964703373344,"foundationBottom":0.6609499175831672,"foundationTop":0.9809499175831673,"baselineVertices":166353,"commonsVertices":205197}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:audio
+> node scripts/audio-qa.mjs
+
+Audio QA passed: loop joins, equal-power score scheduling, cleanup, category routing, live whistle volume, pause, electric/steam exhibits, mute, and embedded-asset recovery.
+Playlist QA passed: cinema-only automatic music, per-room cues, lazy start, one score automation owner, room-change continuity, bounded fallback, retry, and pinned playback.
+Yamaai audio QA passed: day/night score, pinned overrides, silent entry, late voice cancellation and room-only conductor suppression.
+Optional audio QA passed: null/empty catalogs, zero missing-file probes, procedural fallback, truthful empty shelf, embedded precedence, partial catalog loading/fallback, and export asset selection.
+Lossless delivery audio QA passed: identical retained loop samples, shared buffer identity, versioned playback, dev fallback, embedded precedence, and portable arrival inclusion.
+Selected stock audio QA passed: power-aware steam, bounded horn voices, train-category routing, mute and voice disposal.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:hosted-audio
+> node scripts/hosted-audio-qa.mjs
+
+Hosted audio QA passed: offline builds, exact immutable sources, local reuse and preservation, manifest/origin limits, hash and size verification, redirects, deadlines, three-download concurrency, staged cleanup and publication rollback. No external requests.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:delivery
+> node scripts/delivery-qa.mjs
+
+Portable analytics QA passed: house and Hall source/fingerprinted/absolute/runtime/inline trackers removed before fetch, private-query isolation, and offline cached-Hall cleanup with public scripts and credits preserved.
+Portable Hall QA passed: every deferred source embedded inertly, explicit online/offline activation, source identity and credits, offline repacking and file/blob entry, return context, script-safe embedding and incomplete-export rejection.
+Delivery QA passed: source-only and 2-recording builds, main/Hall public references, byte identity, deterministic fingerprints, isolated CSS/audio/shared-Hall invalidation, complete manifests, no unversioned duplicates, and fresh HTML cache policy.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:geometry
+> node scripts/geometry-qa.mjs --quick
+
+PASS: 2 meshes, 448,965 vertices, 5,387,580 Float32 attributes are bitwise identical.
+Node CPU timings include byte receipts and validation; use the browser baseline for startup impact.
+┌─────────┬─────────────────────────────┬─────────────┬─────────────┬─────────┐
+│ (index) │ group                       │ referenceMs │ optimizedMs │ speedup │
+├─────────┼─────────────────────────────┼─────────────┼─────────────┼─────────┤
+│ 0       │ 'primitives-and-transforms' │ 997         │ 848.2       │ '1.18x' │
+│ 1       │ 'nearest-track-queries'     │ 122.4       │ 146.9       │ '0.83x' │
+│ 2       │ 'terrain-surface-queries'   │ 166         │ 97.2        │ '1.71x' │
+└─────────┴─────────────────────────────┴─────────────┴─────────────┴─────────┘
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:glazing
+> node scripts/glazing-qa.mjs
+
+Architectural glazing QA passed: original opaque bytes, split counts, no opaque shadows, captured map transforms, cached far-to-near triangle order, blend/depth recovery, and full GPU ownership cleanup.
+Celestial transparency QA passed: bounded alpha batches, opaque worlds, no hard effect shadows, complete cleanup.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:memory
+> node scripts/memory-qa.mjs
+
+Memory QA passed: exact GPU reconstruction, no-op fallback, seams/signed zero, original CPU precision, one lazy editor preview, indexed/glass editing, complete cleanup, both renderers. {"emittedVertices":266610,"unsharedGpuBytes":12797280,"sharedGpuBytes":7216680,"cpuTemplateBytes":25594560}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:lighting
+> node scripts/lighting-qa.mjs
+
+Lighting verified: local 07:00/19:00 boundaries, timezone conversion, auto/manual persistence, throttle saves, legacy preferences, preset brightness, tab return and clock lifecycle.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:startup
+> node scripts/startup-qa.mjs
+
+Contribution invitation verified: visible on every new page, page-only dismissal, legacy/blocked storage, focus, modified links and Hall navigation.
+House startup verified: delayed tail scripts finish before startup; controls, Cinema, CTA, map and cabinet initialize once for loading and parsed documents.
+Startup verified: one saved-world build with a valid factory cache; identical saved state and random sequence; pristine reset/meadow/undo/import; invalid, stale, missing, blocked and embedded-storage fallbacks.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:rooms
+> node scripts/rooms-qa.mjs
+
+Room QA passed: 6 registered rooms, fifth/sixth-room expansion, finite transforms, aligned floors, nonoverlap, map metadata, default/custom shells, cache replacement and disposal, malformed-train rejection and cleanup, failed-build recovery, and train stock fallback. 42,966 connector vertices.
+Room site QA passed: replacement, stable placement, nonoverlap, distant claims, invalid IDs and conflicting claims.
+Central Hall QA passed: authored scale, aligned floors, 20-room expansion, nonoverlap, stable bays and 250809 preview vertices (45612 architecture + 205197 opted-in previews; 559938 total reviewed exhibit vertices).
+New Hall contribution QA passed: unloaded Hall-only source leaves a small map plaque; explicit preview renders 1860 native vertices with surface contact, bay bounds and 252669 total preview vertices within separate budgets.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:guests
+> node scripts/guest-qa.mjs
+
+Guest QA passed: 1,350 camera/depth equivalence samples, exact compact native depth copies, wall cutaways, credit surfaces, nonoverlapping lazy atlas art, lettered plaque face, deferred entry, load cancellation, map teardown, stale completion cleanup and portable fallback.
+Guest photograph QA passed: both canvases composited with artist, source and licence retained.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:hall
+> node scripts/grandhall-qa.mjs && node scripts/hall-scene-qa.mjs && node scripts/hall-glass-qa.mjs && node scripts/hall-residency-qa.mjs && node scripts/hall-navigation-qa.mjs && node scripts/meridian-observatory-qa.mjs && node scripts/meridian-celestial-qa.mjs && node scripts/night-post-qa.mjs && node scripts/codex-reset-qa.mjs
+
+Deferred contribution QA passed: Hall-only source absent from index, native geometry and credit, eager-source deduplication, source allowlist and preview/railway loading requirements.
+┌─────────┬─────────────────────────────┬─────────┬──────────┬────────┬────────┬────────────┐
+│ (index) │ id                          │ bay     │ vertices │ radius │ height │ baseOffset │
+├─────────┼─────────────────────────────┼─────────┼──────────┼────────┼────────┼────────────┤
+│ 0       │ 'willowbank-pottery'        │ 'GH-08' │ 20040    │ 1.3801 │ 1.3395 │ -0         │
+│ 1       │ 'meridian-hill-observatory' │ 'AR-03' │ 38844    │ 0.875  │ 2.178  │ -0         │
+│ 2       │ 'wintergarden-station'      │ 'LW-07' │ 146313   │ 2.3152 │ 2.335  │ -0         │
+│ 3       │ 'the-night-post'            │ 'LW-01' │ 59757    │ 2.3363 │ 2.3584 │ -0         │
+│ 4       │ 'codex-usage-reset'         │ 'CC-03' │ 26880    │ 0.78   │ 1.042  │ -0         │
+│ 5       │ 'moonlight-drive-in'        │ 'LW-04' │ 268104   │ 1.9295 │ 1.3805 │ -0         │
+└─────────┴─────────────────────────────┴─────────┴──────────┴────────┴────────┴────────────┘
+Hall exhibit allowance: 559938 / 600000 vertices (40062 available).
+Hall QA passed: 7 galleries, 112 unique bays, 6 credited native exhibits, display bounds, shared agent prompts and rejected incompatible conversion.
+┌─────────┬────────────────┬──────────┬─────────┬───────┐
+│ (index) │ gallery        │ vertices │ records │ glass │
+├─────────┼────────────────┼──────────┼─────────┼───────┤
+│ 0       │ 'grand'        │ 93630    │ 9       │ 372   │
+│ 1       │ 'steam'        │ 49248    │ 8       │ 240   │
+│ 2       │ 'worlds'       │ 30690    │ 8       │ 90    │
+│ 3       │ 'conservatory' │ 59853    │ 10      │ 864   │
+│ 4       │ 'architecture' │ 27132    │ 8       │ 66    │
+│ 5       │ 'curiosity'    │ 52275    │ 8       │ 834   │
+│ 6       │ 'workshop'     │ 33222    │ 6       │ 0     │
+└─────────┴────────────────┴──────────┴─────────┴───────┘
+Entered Hall geometry passed: 346,050 vertices, 57 batches, finite architecture, distinct galleries, translucent cases and connected portals.
+Entered Hall residency geometry passed: independent gallery builds, identical reconstruction, owned half-links and stable portal controls.
+Entered Hall construction passed: recessed window openings, bounded outlook crops and closed barrel-vault ends.
+Entered Hall exhibits passed: every native model, real material adapter, measured surface contact, height clearance and validated credits.
+Entered Hall picking passed: all 112 rotated bay surfaces and empty-space rejection.
+Hall glass QA passed: actual front/rear indexed draw order, stationary reuse, transformed record order, visibility, opaque path and owned-buffer disposal.
+Hall residency QA passed: 1,200 inactive-aware exhibits, 120 galleries, three resident GPU groups, disposal/revisit, superseded navigation, retries, and 100 deduplicated source loads at concurrency two.
+Hall catalogue capacity QA passed: 112 bays, 7 galleries, desktop/phone group caps and one 600000-vertex aggregate exhibit allowance (27.47 MiB of vertex buffers).
+Hall navigation QA passed: persistent failure notices, destination/neighbor retries, Escape and superseded visits, cold walking destinations and portable map returns.
+Meridian Observatory QA passed: {"id":"meridian-hill-observatory","bay":"AR-03","vertices":38844,"vertexBufferMiB":1.77813720703125,"width":1.3632000037155385,"depth":1.2731999465242638,"height":2.178000086545944}
+Meridian ambience QA passed: {"vertices":6660,"materials":{"41":648,"78":756,"79":2934,"80":12,"81":2304,"82":6},"phases":126,"bounds":[[-4.02,4.02],[8.482999999999999,14.22],[-2.52,1.4575696974992751]]}
+Night Post Blender source and Hall QA passed: {"vertices":59757,"vertexBufferMiB":2.7354583740234375,"bounds":[[-1.9722493770040685,1.9722508939657988],[-6.6757201988565384e-9,2.358433469725859],[-1.3107501477251315,1.371999931919933]],"glass":180,"lamps":2532}
+Reset Engine geometry: {"bay":"CC-03","vertices":26880,"vertexBufferMiB":1.23046875,"radius":0.780001090582224,"height":1.0419999525845047}
+Reset Engine interaction passed: full sequence, repeat-input guard, replay, polite announcement, reduced motion, modal pause, navigation cleanup, bounded drawing, and behind-camera hiding.
+Reset context-loss integration passed: immediate cleanup without another frame and inert retained controls.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:moonlight
+> node scripts/moonlight-model-qa.mjs && node scripts/moonlight-valley-qa.mjs && node scripts/moonlight-media-qa.mjs && node scripts/moonlight-click-qa.mjs
+
+Moonlight model QA passed: {"renderers":[{"renderer":"house","vertices":268104,"landscapeVertices":266610,"beamVertices":18,"nameplateVertices":6,"people":25,"bounds":[[-15.285601862548688,15.060000000000002],[-1.1799999475479126,13.200000381469726],[-14.560000000000002,14.570500420033932]],"displayHeight":1.3804800392627719,"displayMargin":0.10623213347571037,"vertexBufferMiB":12.2728271484375},{"renderer":"hall","vertices":268104,"landscapeVertices":266610,"beamVertices":18,"nameplateVertices":6,"people":25,"bounds":[[-15.285601862548688,15.060000000000002],[-1.1799999475479126,13.200000381469726],[-14.560000000000002,14.570500420033932]],"displayHeight":1.3804800392627719,"displayMargin":0.10623213347571037,"vertexBufferMiB":12.2728271484375}],"hallVertices":559938,"hallAllowance":600000}
+Moonlight Valley QA passed: {"id":"moonlight-drive-in","at":[-2.5,17],"angle":0,"scale":0.95,"nativeScale":0.32,"vertices":266610,"trackClearance":1.4874999999999927,"streetClearance":1.5129611637461235,"lakeClearance":4.325385529457949,"laneVertices":1176,"laneTrackClearance":8.356715508561747,"foundationSamples":560,"minGround":0.5832096218425284,"maxGround":0.7105137587673833,"removed":[{"type":"pine","at":[-0.8633972560055554,16.779211837705226]},{"type":"oak","at":[-3.4504733653739095,14.981673841970043]},{"type":"pine","at":[-2.095323803834617,15.185194137180225]},{"type":"oak","at":[-2.1409180951304734,17.172061108332123]},{"type":"oak","at":[-3.598718862980604,21.05301542705856]},{"type":"oak","at":[1.2067719269543886,17.004939595190805]},{"type":"pine","at":[-4.663739205338061,15.407495186151934]},{"type":"pine","at":[-0.2747892364859581,13.489228923758489]},{"type":"oak","at":[0.8957508988678455,18.087644640868525]},{"type":"pine","at":[-3.20644200919196,17.679067307710646]},{"type":"autumn","at":[1.4632225055247545,21.02562861624174]},{"type":"pine","at":[-3.5386100132018328,13.942634817911312]},{"type":"oak","at":[-2.4464031169191003,13.744113421859218]},{"type":"pine","at":[-1.7890105936676264,18.952588512701915]},{"type":"pine","at":[-2.385644663590938,20.004843946080655]},{"type":"oak","at":[-1.6547701596282423,18.04687212053686]},{"type":"pine","at":[-3.4978520735166967,15.582222771830857]},{"type":"pine","at":[-3.303235257975757,20.95727522098459]},{"type":"autumn","at":[0.6682121329940856,14.340285046957433]},{"type":"oak","at":[-4.552799895871431,21.221857357677074]},{"type":"pine","at":[1.0801754221320152,20.11679980172776]},{"type":"oak","at":[1.3328658719547093,21.103856486454603]},{"type":"pine","at":[-5.340735732577741,20.657269321242346]},{"type":"pine","at":[1.0282692331820726,14.36836411538534]},{"type":"pine","at":[1.0741841183044016,14.666278635151684]},{"type":"pine","at":[-5.508863279595971,12.80022824029438]},{"type":"pine","at":[-5.444537843577564,19.897770473593845]},{"type":"autumn","at":[-3.5,12]}],"view":{"name":"Moonlight Drive-In","contribution":"moonlight-drive-in","placement":0,"detail":"Made by nickfromlater.","target":[-2.5,2.0103525025095017,17],"distance":20,"phoneDistance":26,"pitch":0.5,"yaw":0.42}}
+Local MP4 range, suffix, HEAD and invalid-range responses passed.
+Moonlight media: lazy programme playback, Unicode nameplates, local privacy, frame uploads, pause/reduced motion, disposal, GL state, original bytes and portable Hall passed.
+Moonlight click QA passed: actual picking and edited desktop/phone framing, gesture and mode exclusions, occlusion, double-click preservation, programme lifecycle, cinema exit and booth focus.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:map
+> node scripts/shop-map-qa.mjs
+
+Shop map QA passed: cancelled/failed/warm loading, mid-load registration and active revision reload, camera return and entry projection, scoped drawing/audio and exception cleanup, all-room simulation, pause, pointer drag/pinch/cancel, Escape, and reduced-motion cinema entry.
+Future-room map QA passed: projected plot picking, selection, prompt dispatch, no fake room or scene activation.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:cinema
+> node scripts/cinema-qa.mjs
+
+Cinema QA passed: drag, tap threshold, pinch/release, wheel, keyboard, moving train anchor, pause/audio preservation, auto return and focus, capture cleanup, lifecycle restoration and finite phone cameras.
+Guest cinema QA passed: model anchors, a followed guest locomotive, house interpolation, manual override, automatic return and original railway controls preserved.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:trains
+> node scripts/train-cabinet-qa.mjs && node scripts/steam-qa.mjs
+
+┌─────────┬───────────────┬──────────┐
+│ (index) │ train         │ vertices │
+├─────────┼───────────────┼──────────┤
+│ 0       │ 'Nightingale' │ 232140   │
+│ 1       │ 'Tern'        │ 84420    │
+│ 2       │ 'Wren'        │ 85056    │
+│ 3       │ 'Meridian'    │ 239196   │
+│ 4       │ 'Cinder'      │ 53436    │
+│ 5       │ 'Kingfisher'  │ 47964    │
+│ 6       │ 'Bergwald'    │ 41424    │
+│ 7       │ 'Juniper'     │ 46932    │
+│ 8       │ 'Acela'       │ 63360    │
+└─────────┴───────────────┴──────────┘
+Train collection QA passed: 27 finite livery models, atlas bounds, working wheels and roofs, room isolation, shared mesh ownership/disposal, failure recovery, state preservation, persistence, and portable selection precedence.
+Cabinet preview QA passed: finite phone/formation cameras, idle-frame coalescing, opt-in motion, pinch/drag/cancel, hidden/closed suspension, and GPU/listener cleanup.
+Portable portrait QA passed: all 9 images retain their exact bytes; offline repacking uses the embedded copies.
+Steam: active chimney, four headings, whistle position, fixed world-space trail and immutable rendering pass.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:hudson
+> node scripts/hudson-qa.mjs
+
+{
+  "roomVertices": 661599,
+  "wallVertices": 65832,
+  "buildings": 22,
+  "population": 38,
+  "viewpoints": 9,
+  "trainVertices": 63360,
+  "minimumBuildingClearance": 1.3999999999999986,
+  "minimumMastClearance": 1.2497943245668135,
+  "minimumWalkingClearance": 0.4600000000000044,
+  "bridgeCollectorClearance": 3.0649999618530273,
+  "shedCollectorMargin": 0.3939999885559078,
+  "groundedMasts": 56,
+  "supportedVaultColumns": 22,
+  "shellTop": 44,
+  "towerTop": 39.45500107109547,
+  "glazingVertices": 612,
+  "routeLengths": [
+    291.4085619068246,
+    276.32684952545804
+  ]
+}
+Hudson QA passed: fixed mesh budget, closed parallel circuits, building/mast clearance, Acela defaults, eight-vehicle formation, open station portals, headhouse/platform/vault/ferry bearings, all catenary shoes grounded, bounded footprint, river-bridge collector clearance, walkers, full suspension, cutaways, attribution, cache ownership and failed-build recovery.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:queens
+> node scripts/queens-scores-qa.mjs && node scripts/queens-qa.mjs
+
+Queens scores: verified scheduled fixture, five-set/point/tiebreak formatting, exact match identity, stale/offline data, refresh, visibility, cancellation and disposal PASS
+Model geometry MiB: 33.45328903198242
+{
+  "queens": "PASS",
+  "native": {
+    "vertices": 94173,
+    "walls": [
+      {
+        "which": "back",
+        "count": 19548
+      },
+      {
+        "which": "left",
+        "count": 35616
+      },
+      {
+        "which": "right",
+        "count": 22944
+      },
+      {
+        "which": "front",
+        "count": 19806
+      }
+    ],
+    "min": [
+      -79,
+      -24.469999313354492,
+      -65
+    ],
+    "max": [
+      79,
+      17.429999947547913,
+      65
+    ],
+    "spots": 6,
+    "trains": 0
+  },
+  "model": {
+    "seats": 8198,
+    "spectators": 6441,
+    "meshes": 603,
+    "instances": 47209,
+    "geometryMiB": 33.45328903198242,
+    "bounds": {
+      "min": [
+        -104.5,
+        -5.369999885559082,
+        -88.5
+      ],
+      "max": [
+        104.5,
+        33.79999997615814,
+        88.5
+      ]
+    }
+  },
+  "cameraSamples": 480,
+  "seatSamples": 51,
+  "racquetContacts": 88,
+  "netCrossings": 88,
+  "rallyVariations": 12,
+  "railSamples": 2400,
+  "shellSamples": 1536,
+  "roofSamples": 100
+}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:safari
+> node scripts/safari-qa.mjs && node scripts/safari-passenger-qa.mjs && node scripts/safari-giraffe-qa.mjs && node scripts/safari-behavior-qa.mjs && node scripts/safari-companions-qa.mjs
+
+{
+  "room": "safari",
+  "sceneVertices": 589512,
+  "wallVertices": [
+    14094,
+    32898,
+    39828,
+    3726
+  ],
+  "trees": 20,
+  "routeLength": 258.67838540686586,
+  "stationClearances": {
+    "gate": 6.306617540142552,
+    "ridge": 3.74
+  },
+  "maxGrade": 0.09298415833203841,
+  "minimumTerrainClearance": 0.2714588250679295,
+  "stockVertices": 14784,
+  "lodgeVertices": 158544,
+  "lodgeRailClearance": 8.095906933949541,
+  "lodgeTerrainClearance": 1.2278920666589954,
+  "treeVertices": 65400,
+  "minimumTreeClearance": 2.2430023304923172
+}
+Safari room, terrain, beam clearance, stock isolation and disposal verified.
+{
+  "poseSamples": 14,
+  "bodyGlazingVertices": 288,
+  "roofGlazingVertices": 48,
+  "inputLifecycle": true,
+  "listenersStableAcrossEntries": true
+}
+{
+  "sceneVertices": 589512,
+  "sharedVertices": 52317,
+  "indexedVertices": 16289,
+  "bones": 18,
+  "sharedBufferBytes": 1512388,
+  "drawCallsPerPass": 3,
+  "sampledSeconds": 260,
+  "worst": {
+    "time": 157.25,
+    "animal": 0,
+    "foot": 2,
+    "gap": 0.17973104373428495
+  },
+  "minHoofGap": -0.025713370921253587,
+  "maxHoofGap": 0.17973104373428495,
+  "minRail": 10.176622465141957,
+  "minBank": 18.988666726206837,
+  "minWalk": 5.379799281890501
+}
+Skinned source, weights, roaming clearance, shared passes, reduced motion and GPU disposal verified.
+[
+  {
+    "states": {
+      "walking": 1440,
+      "settling": 66,
+      "browsing": 348,
+      "departing": 66
+    },
+    "minNose": 0.0876773754977801,
+    "maxNose": 0.11498353455112507,
+    "maxStep": 0.059881820658271044,
+    "maxBodyStep": 0.01355776200595957,
+    "worst": {
+      "time": 26.199999999999793,
+      "foot": 3,
+      "behavior": "walking",
+      "gait": 8.142292564907041
+    },
+    "distance": 8.171146331133441,
+    "walkingSeconds": 20.733333333333437,
+    "initialGait": 8.990389269988023e-8,
+    "finalGait": 10.611878442025258,
+    "secondsPerStride": 1.9537854322640953
+  },
+  {
+    "states": {
+      "walking": 1441,
+      "settling": 65,
+      "browsing": 348,
+      "departing": 66
+    },
+    "minNose": 0.08051123393192544,
+    "maxNose": 0.10496655520549557,
+    "maxStep": 0.05771989015432269,
+    "maxBodyStep": 0.012381707304910948,
+    "worst": {
+      "time": 21.316666666666737,
+      "foot": 3,
+      "behavior": "walking",
+      "gait": 11.151825428357277
+    },
+    "distance": 8.16140666467099,
+    "walkingSeconds": 20.71666666666677,
+    "initialGait": 0.3078513583230602,
+    "finalGait": 18.216894196159092,
+    "secondsPerStride": 1.1567712944937032
+  },
+  {
+    "states": {
+      "walking": 1441,
+      "settling": 66,
+      "browsing": 347,
+      "departing": 66
+    },
+    "minNose": 0.07673613015643944,
+    "maxNose": 0.10582407164766083,
+    "maxStep": 0.059211940357211064,
+    "maxBodyStep": 0.011968531228822207,
+    "worst": {
+      "time": 17.56666666666695,
+      "foot": 3,
+      "behavior": "walking",
+      "gait": 4.1461984778138525
+    },
+    "distance": 8.164205134844678,
+    "walkingSeconds": 20.71666666666677,
+    "initialGait": 0.5506260946066207,
+    "finalGait": 11.723536347571011,
+    "secondsPerStride": 1.8541871542528712
+  }
+]
+Giraffe walking cadence, feeding contact, stopped browsing and smooth hoof release verified.
+{
+  "sharedVertices": 95994,
+  "drawCallsPerPass": 3,
+  "animals": [
+    {
+      "species": "zebra",
+      "states": {
+        "walking": 3480,
+        "grazing": 1800
+      },
+      "travel": 23.18495453739626,
+      "maxStep": 0.011316446724219423,
+      "minRailLowerBound": 5,
+      "minBank": 16.070251637967587,
+      "minWalk": 3.7875083815268398,
+      "minGround": -0.01161562551100015,
+      "maxFootGap": 0.10719156129113727,
+      "minFootGap": -0.01161562551100015,
+      "minFeedingGap": 0.0038039321083465083,
+      "maxFeedingGap": 0.11698956913395908
+    },
+    {
+      "species": "zebra",
+      "states": {
+        "grazing": 2070,
+        "walking": 3210
+      },
+      "travel": 16.11963992981366,
+      "maxStep": 0.009055426728973854,
+      "minRailLowerBound": 5,
+      "minBank": 11.468689009730646,
+      "minWalk": 6.044129957090635,
+      "minGround": -0.010459458728984461,
+      "maxFootGap": 0.09881023132361222,
+      "minFootGap": -0.010459458728984461,
+      "minFeedingGap": 0.0283986033018524,
+      "maxFeedingGap": 0.08326394842630547
+    },
+    {
+      "species": "elephant",
+      "states": {
+        "walking": 3600,
+        "foraging": 1680
+      },
+      "travel": 13.658699819244095,
+      "maxStep": 0.006623612569767479,
+      "minRailLowerBound": 2.557543427607987,
+      "minBank": 9.435951612764192,
+      "minWalk": 2.4666649560570817,
+      "minGround": -0.023660236163414394,
+      "maxFootGap": 0.11314055522711108,
+      "minFootGap": -0.023660236163414394,
+      "minFeedingGap": 0.20308012365531958,
+      "maxFeedingGap": 0.514858300245402
+    }
+  ]
+}
+Companion animation, terrain contact, clearances, shared render passes and disposal verified.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:briarwatch
+> node scripts/briarwatch-qa.mjs && node scripts/briarwatch-dragon-qa.mjs
+
+{
+  "room": "briarwatch",
+  "sceneVertices": 890385,
+  "wallVertices": [
+    24504,
+    3468,
+    3468,
+    8076
+  ],
+  "movingVertices": 5592,
+  "viewpoints": 12,
+  "buildings": 8,
+  "trees": 56,
+  "routeLength": 508.1992575318244,
+  "maxGrade": 0.054963902827196674,
+  "minimumTrackTerrainClearance": 0.22832690032338165,
+  "heroTrees": 7,
+  "adaptiveTrackSegments": 400,
+  "maximumTrackSurfaceDeviation": 0.024534584076855027,
+  "estateTernVertices": {
+    "loco": 29088,
+    "cab": 28764,
+    "wheels": 10512,
+    "coach": 9684,
+    "tail": 11676,
+    "roof": 828
+  },
+  "minimumTreeRailClearance": 1.6447863829978893,
+  "sceneryEnvelopeTriangleChecks": 61711,
+  "minimumSpringBedClearance": 0.5796080374235755,
+  "estateParallaxDepth": 3.550964893797169,
+  "estateClearPaneVertices": 132,
+  "galleryWallVertexCeiling": 40000,
+  "galleryDetails": [
+    {
+      "name": "briarGalleryClock",
+      "vertices": 3078
+    },
+    {
+      "name": "briarGalleryCurtains",
+      "vertices": 1464
+    },
+    {
+      "name": "briarGalleryLantern",
+      "vertices": 804
+    },
+    {
+      "name": "briarGalleryBookcase",
+      "vertices": 1824
+    },
+    {
+      "name": "briarGalleryDrafting",
+      "vertices": 744
+    },
+    {
+      "name": "briarGalleryCompass",
+      "vertices": 336
+    }
+  ],
+  "galleryParquetVertices": 36,
+  "galleryWallVertices": 39516,
+  "galleryCeilingCoves": [
+    {
+      "width": 156,
+      "vertices": 348
+    },
+    {
+      "width": 128,
+      "vertices": 324
+    }
+  ],
+  "galleryUpholsteredBenches": [
+    {
+      "x": -24,
+      "vertices": 768
+    },
+    {
+      "x": 24,
+      "vertices": 768
+    }
+  ],
+  "ownedMeshesReleased": 10
+}
+Briarwatch native geometry, clearances, open architecture, train circuit, mechanism, credits and map registration verified.
+{
+  "bones": 38,
+  "drawPalettes": [
+    24,
+    24,
+    15
+  ],
+  "expandedVertices": 41604,
+  "contact": {
+    "min": 0.008998608461631363,
+    "max": 0.009006305682461857,
+    "drift": 0.000001707554902977002
+  },
+  "performance": {
+    "cycleSeconds": 120,
+    "ignitionsInFourMinutes": 2,
+    "inhaleRise": 0.11271214485168457,
+    "quietBreathingTravel": 0.04549980163574219
+  },
+  "surfaceSampleSeconds": 0.5,
+  "poseSampleHz": 60,
+  "envelope": {
+    "min": 35.10245146070898,
+    "max": 43.642160156538736
+  }
+}
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:venetian
+> node scripts/venetian-qa.mjs && node scripts/venetian-craft-qa.mjs && node scripts/venetian-reflection-qa.mjs
+
+Venetian native room: geometry, route, swept clearances, animation, ownership, cameras and integration passed.
+{
+  "scene": {
+    "sceneVertices": 547947,
+    "wallVertices": 25500,
+    "movingVertices": 34188,
+    "totalVertices": 607635,
+    "viewpoints": 11
+  },
+  "clearances": {
+    "railLength": 378.84046825514764,
+    "canalCircuit": 211.11269359772336,
+    "minimumBankClearance": 2.492425439594066,
+    "minimumArchClearance": 2.0448975819499475
+  },
+  "motion": {
+    "ticks": 600,
+    "ownedParts": 29
+  },
+  "architecture": {
+    "palazzi": 11,
+    "openLoggias": 3,
+    "roofTerraces": 3,
+    "waterVertices": 17280
+  }
+}
+Venetian craft: district envelopes, real tracery openings and bounded reflection projection passed.
+{
+  "canalPalazzi": 11,
+  "secondaryHouses": 11,
+  "landmarks": 1,
+  "openBridgeShops": 8,
+  "monumentVertices": 10770,
+  "pavingVertices": 2892,
+  "quatrefoilVertices": 648
+}
+Venetian reflection: bounded allocation, reuse, mirrored camera, map/resize/scene disposal, failure fallback and complete host-state recovery passed.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 test:orrery
+> node scripts/orrery-qa.mjs && node scripts/orrery-ride-qa.mjs && node scripts/orrery-scenery-qa.mjs
+
+{
+  "physicalRouteLength": 647.6955682777765,
+  "nominalLapSeconds": 94.27623386189623,
+  "minimumNonlocalTrackSeparation": 4.483992088273348,
+  "sceneVertices": 540609,
+  "wallVertices": [
+    24090,
+    8328,
+    8328,
+    3726
+  ],
+  "supports": 172,
+  "mobileVertices": 2016,
+  "mechanismVertices": 14994,
+  "stockVertices": 10932,
+  "exerciseDrawCalls": 12150
+}
+Orrery route, frame, clearance, timetable, geometry, stock and ownership checks passed.
+Orrery trip QA passed: waiting, dispatch interlock, one full lap, arrival, replay, pause, focus, cancel/map/room/cinema, two-pointer input, reduced motion and stable listeners.
+{
+  "rails": {
+    "segments": 734,
+    "maximumError": 0.007474775469662889
+  },
+  "scenicVertices": 202473,
+  "poses": 1851,
+  "candidates": 764680,
+  "clearanceConflicts": 0
+}
+Orrery scenery, rail tessellation and baked-triangle ride-clearance checks passed.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> whistlevale@0.1.0 build
+> node scripts/build.mjs
+
+Whistlevale: 140 public files built in dist/, with 0 optional recordings. App assets are content-versioned; original bytes preserved.

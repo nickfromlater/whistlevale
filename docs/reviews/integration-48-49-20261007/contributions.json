@@ -1,0 +1,124 @@
+{
+  "ok": true,
+  "works": 11,
+  "workshopPieces": 3,
+  "trains": [
+    "nightingale",
+    "tern",
+    "wren",
+    "meridian",
+    "cinder",
+    "kingfisher",
+    "bergwald",
+    "juniper",
+    "acela"
+  ],
+  "layouts": [
+    "contributions/layouts/starter/starter.railway.json"
+  ],
+  "scenes": [
+    {
+      "room": "coast",
+      "placements": 2,
+      "vertices": 32211
+    },
+    {
+      "room": "alpine",
+      "placements": 2,
+      "vertices": 17286
+    },
+    {
+      "room": "studio",
+      "placements": 2,
+      "vertices": 20019
+    },
+    {
+      "room": "commons",
+      "placements": 3,
+      "vertices": 205197
+    }
+  ],
+  "models": [
+    {
+      "id": "harbor-life",
+      "room": "coast",
+      "placement": 0,
+      "builder": "harbor",
+      "vertices": 24207,
+      "measuredRadius": 1.1762,
+      "declaredRadius": 1.2
+    },
+    {
+      "id": "ferry-luggage",
+      "room": "coast",
+      "placement": 0,
+      "builder": "porter",
+      "vertices": 8004,
+      "measuredRadius": 0.9194,
+      "declaredRadius": 1
+    },
+    {
+      "id": "lakeside-trail",
+      "room": "alpine",
+      "placement": 0,
+      "builder": "mapParty",
+      "vertices": 9246,
+      "measuredRadius": 0.9328,
+      "declaredRadius": 0.95
+    },
+    {
+      "id": "alpine-reading",
+      "room": "alpine",
+      "placement": 0,
+      "builder": "reading",
+      "vertices": 7872,
+      "measuredRadius": 0.9653,
+      "declaredRadius": 1.15
+    },
+    {
+      "id": "saturday-workshop",
+      "room": "studio",
+      "placement": 0,
+      "builder": "atelier",
+      "vertices": 11811,
+      "measuredRadius": 0.8124,
+      "declaredRadius": 1
+    },
+    {
+      "id": "meadow-reading",
+      "room": "studio",
+      "placement": 0,
+      "builder": "reading",
+      "vertices": 7872,
+      "measuredRadius": 0.9653,
+      "declaredRadius": 1.15
+    },
+    {
+      "id": "willowbank-pottery",
+      "room": "commons",
+      "placement": 0,
+      "builder": "willowbank",
+      "vertices": 20040,
+      "measuredRadius": 4.929,
+      "declaredRadius": 5.3
+    },
+    {
+      "id": "wintergarden-station",
+      "room": "commons",
+      "placement": 0,
+      "builder": "wintergarden",
+      "vertices": 146313,
+      "measuredRadius": 10.1641,
+      "declaredRadius": 10.26
+    },
+    {
+      "id": "meridian-hill-observatory",
+      "room": "commons",
+      "placement": 0,
+      "builder": "meridian",
+      "vertices": 38844,
+      "measuredRadius": 5.8336,
+      "declaredRadius": 5.9
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "source": "dac635c9f9b4a24ec4c8cc91c9b84f96dc902895",
+  "errors": [],
+  "console": [],
+  "method": "Actual Chromium/SwiftShader. Synthetic mouse/touch tests, downloaded standalone playback, and a deterministically stepped in-engine movie. Not physical-phone or real-time frame-rate evidence.",
+  "mouse": {
+    "manual": true,
+    "fixedAnchor": true,
+    "paused": true,
+    "cinema": true,
+    "released": true
+  },
+  "touch": {
+    "zoomed": true,
+    "finite": true,
+    "released": true,
+    "paused": true,
+    "cinema": true
+  },
+  "crossRoom": {
+    "released": true,
+    "coast": true,
+    "glError": 0,
+    "restored": true
+  },
+  "portable": {
+    "room": "venetian",
+    "views": 11,
+    "parts": 29,
+    "reflection": true,
+    "boatsAdvanced": true,
+    "credit": true,
+    "glError": 0,
+    "bytes": 33012792,
+    "networkRequests": []
+  },
+  "finalGL": 0
+}

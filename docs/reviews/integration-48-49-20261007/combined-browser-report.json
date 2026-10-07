@@ -1,0 +1,162 @@
+{
+  "source": "dac635c9f9b4a24ec4c8cc91c9b84f96dc902895",
+  "tree": "a46805c1630248b1319a159fdc526a1df0a1e35a",
+  "checks": [
+    {
+      "label": "combined-source",
+      "registration": {
+        "venetian": "east-7",
+        "orrery": "east-6",
+        "venetianModules": 5,
+        "orreryControls": 1
+      },
+      "venice": {
+        "advanced": true,
+        "reflection": true,
+        "parts": 29,
+        "glError": 0
+      },
+      "ride": {
+        "moving": true,
+        "state": "riding",
+        "parts": 12,
+        "glError": 0
+      },
+      "map": {
+        "active": true,
+        "plots": [
+          "east-7",
+          "east-6"
+        ],
+        "before": {
+          "v": 0.1,
+          "vt": 61.1596,
+          "ot": 20.720207489128356
+        },
+        "after": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "stopped": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "reflectionReleased": true,
+        "tripReleased": true,
+        "glError": 0
+      },
+      "restored": {
+        "reflection": true,
+        "ticketHidden": true,
+        "glError": 0
+      }
+    },
+    {
+      "label": "venetian-export",
+      "registration": {
+        "venetian": "east-7",
+        "orrery": "east-6",
+        "venetianModules": 0,
+        "orreryControls": 1
+      },
+      "venice": {
+        "advanced": true,
+        "reflection": true,
+        "parts": 29,
+        "glError": 0
+      },
+      "ride": {
+        "moving": true,
+        "state": "riding",
+        "parts": 12,
+        "glError": 0
+      },
+      "map": {
+        "active": true,
+        "plots": [
+          "east-7",
+          "east-6"
+        ],
+        "before": {
+          "v": 0.1,
+          "vt": 61.1596,
+          "ot": 20.720207489128356
+        },
+        "after": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "stopped": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "reflectionReleased": true,
+        "tripReleased": true,
+        "glError": 0
+      },
+      "restored": {
+        "reflection": true,
+        "ticketHidden": true,
+        "glError": 0
+      }
+    },
+    {
+      "label": "orrery-export",
+      "registration": {
+        "venetian": "east-7",
+        "orrery": "east-6",
+        "venetianModules": 0,
+        "orreryControls": 1
+      },
+      "venice": {
+        "advanced": true,
+        "reflection": true,
+        "parts": 29,
+        "glError": 0
+      },
+      "ride": {
+        "moving": true,
+        "state": "riding",
+        "parts": 12,
+        "glError": 0
+      },
+      "map": {
+        "active": true,
+        "plots": [
+          "east-7",
+          "east-6"
+        ],
+        "before": {
+          "v": 0.1,
+          "vt": 61.1596,
+          "ot": 20.720207489128356
+        },
+        "after": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "stopped": {
+          "v": 0.2,
+          "vt": 62.317119999999996,
+          "ot": 21.833207489128355
+        },
+        "reflectionReleased": true,
+        "tripReleased": true,
+        "glError": 0
+      },
+      "restored": {
+        "reflection": true,
+        "ticketHidden": true,
+        "glError": 0
+      }
+    }
+  ],
+  "errors": [],
+  "method": "Chromium 140 / SwiftShader. Both rooms in the same application and actual downloaded portable files. Synthetic input and stepped simulation, not physical iPhone certification.",
+  "passed": true
+}

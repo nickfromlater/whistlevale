@@ -1,0 +1,713 @@
+{
+  "source": "dac635c9f9b4a24ec4c8cc91c9b84f96dc902895",
+  "errors": [],
+  "console": [],
+  "views": [
+    {
+      "name": "01-arrival",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -79.14230949611137,
+          74.99471421884702,
+          78.00140159698046
+        ],
+        "target": [
+          0,
+          6,
+          -2
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "02-bridge",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -12.844301698947346,
+          17.13414663117833,
+          32.15796845982907
+        ],
+        "target": [
+          0,
+          4.1000000000000005,
+          -1.1499044528587131e-18
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "03-basilica",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          33.8675274366489,
+          39.34338112039757,
+          38.54435083526578
+        ],
+        "target": [
+          21.999999999999996,
+          8.999999999999998,
+          -19.999999999999996
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "04-canal",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -50.989514914704294,
+          13.948803348308097,
+          11.179235465633218
+        ],
+        "target": [
+          -18.999999999999996,
+          4.000000000000001,
+          -2.0000000000000004
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "05-gondolas",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          68.59486933441782,
+          16.007348887451585,
+          16.961489478169607
+        ],
+        "target": [
+          38.99999999999999,
+          1.0000000000000002,
+          2.9999999999999996
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "10-golden-loggia",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -7.080758302916986,
+          18.972382468017898,
+          8.56352456014926
+        ],
+        "target": [
+          -20.599999999999998,
+          7.299999999999999,
+          -12.999999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "14-lace-palace",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          6.752779346158927,
+          9.086515179366383,
+          14.157366496939696
+        ],
+        "target": [
+          17.499999999999996,
+          5.500000000000001,
+          -7.000000000000001
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "18-lion-of-lagoon",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          0.36203383619709767,
+          10.772160534198122,
+          32.51508891500715
+        ],
+        "target": [
+          9.200000000000001,
+          4.6000000000000005,
+          18.099999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "06-lamplight",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -79.14230949611135,
+          74.99471421884701,
+          78.00140159698044
+        ],
+        "target": [
+          5.289560483150087e-18,
+          5.999999999999999,
+          -1.9999999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "07-night",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": null,
+        "cam": [
+          -79.14230949611135,
+          74.99471421884701,
+          78.00140159698044
+        ],
+        "target": [
+          3.041244576619884e-36,
+          5.999999999999999,
+          -1.9999999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "08-gondola-ride",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": true,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 28,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          -27.835625442221094,
+          1.1225623179619912,
+          -0.29099143898309293
+        ],
+        "target": [
+          -22.676798548410652,
+          1.4650388873488311,
+          -1.152904946579836
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "11-return-canal",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": true,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 28,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          4.060684187574134,
+          1.0038433689822905,
+          -0.7276436829528479
+        ],
+        "target": [
+          -0.667164049780363,
+          1.4650000003334571,
+          -2.7061012887825964
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "12-lantern-water",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": true,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 28,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          4.09741363919919,
+          1.0037066609447738,
+          -0.7281464996629312
+        ],
+        "target": [
+          -0.6669753185048652,
+          1.4650000000000032,
+          -2.706114607346645
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "13-basin-turn",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": true,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 28,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          41.0985349076102,
+          1.0008982132991766,
+          2.54340835774229
+        ],
+        "target": [
+          46.301307768193,
+          1.4650000000000014,
+          2.4658526887386403
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      }
+    },
+    {
+      "name": "phone-390",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          222.85780566278572,
+          287.997687465894,
+          18.290458818271286
+        ],
+        "target": [
+          2.662103998791348e-17,
+          5.999999999999999,
+          -1.9999999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      },
+      "overflow": false,
+      "framing": {
+        "points": [
+          {
+            "x": 282.2117051731731,
+            "y": 304.2749303284899,
+            "visible": true
+          },
+          {
+            "x": 70.0463581735297,
+            "y": 317.924012124278,
+            "visible": true
+          },
+          {
+            "x": 338.921919187493,
+            "y": 568.6527988293683,
+            "visible": true
+          },
+          {
+            "x": 72.15686507019852,
+            "y": 590.3106373636722,
+            "visible": true
+          },
+          {
+            "x": 269.8581886981026,
+            "y": 454.7920547952087,
+            "visible": true
+          }
+        ],
+        "contained": true
+      }
+    },
+    {
+      "name": "phone-320",
+      "state": {
+        "room": "venetian",
+        "ready": true,
+        "cinema": false,
+        "shot": "drift",
+        "paused": true,
+        "throttle": 42,
+        "population": 26,
+        "walking": 0,
+        "roomsLoaded": [
+          "venetian"
+        ],
+        "audio": {
+          "loaded": true,
+          "on": true,
+          "buffers": [],
+          "failed": [],
+          "context": "running",
+          "music": 0.4,
+          "ambience": 0.47,
+          "train": 0.42
+        },
+        "cam": [
+          222.85780566278572,
+          287.997687465894,
+          18.290458818271286
+        ],
+        "target": [
+          1.5305826210915784e-35,
+          5.999999999999999,
+          -1.9999999999999998
+        ],
+        "train": [
+          15.787669333333303,
+          1.58,
+          39
+        ],
+        "sceneTriangles": 182649,
+        "frame": 0
+      },
+      "overflow": false,
+      "framing": {
+        "points": [
+          {
+            "x": 247.2117162667908,
+            "y": 304.2749303284899,
+            "visible": true
+          },
+          {
+            "x": 35.046343545631444,
+            "y": 317.924012124278,
+            "visible": true
+          },
+          {
+            "x": 303.92193598913514,
+            "y": 568.6527988293683,
+            "visible": true
+          },
+          {
+            "x": 37.15684951143987,
+            "y": 590.3106373636722,
+            "visible": true
+          },
+          {
+            "x": 234.85819741222247,
+            "y": 454.7920547952087,
+            "visible": true
+          }
+        ],
+        "contained": true
+      }
+    }
+  ],
+  "method": "Actual native WebGL 2 in Chromium/SwiftShader. Held main animation RAF and manually settled cameras for still captures; not a physical-phone or FPS test.",
+  "motion": {
+    "playing": true,
+    "advanced": true,
+    "stopped": true,
+    "frozen": true,
+    "reduced": true
+  },
+  "reflection": {
+    "allocated": true,
+    "width": 792,
+    "height": 563,
+    "passes": 1,
+    "cached": true,
+    "mirroredEyeRestored": true,
+    "windingRestored": true,
+    "glError": 0,
+    "pixelsChanged": 327190
+  },
+  "cinema": {
+    "manual": true,
+    "fixedAnchor": true,
+    "automatic": true,
+    "exited": true
+  },
+  "map": {
+    "active": true,
+    "reflectionReleased": true,
+    "entry": true
+  },
+  "returned": true,
+  "lights": {
+    "roomSlots": 6,
+    "layoutSlots": 8,
+    "lastSlot": [
+      0,
+      26,
+      50
+    ],
+    "correct": true,
+    "glError": 0
+  },
+  "renderer": {
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "renderer": "WebKit WebGL"
+  }
+}

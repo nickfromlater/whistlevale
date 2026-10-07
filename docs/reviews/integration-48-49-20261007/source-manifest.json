@@ -1,0 +1,12 @@
+{
+  "main": "21bca3bbe5ea509596619053b76eb7c4bc6fe6e5",
+  "pr48": "5d78b0998f6bdc0d3f9618f8c876461921504cea",
+  "pr49": "ccddd87bb39e3bfe61d0972f0a21e2842b6f36f9",
+  "combined": "dac635c9f9b4a24ec4c8cc91c9b84f96dc902895",
+  "tree": "a46805c1630248b1319a159fdc526a1df0a1e35a",
+  "resolutions": [
+    "index.html: retain five Venetian modules and all Orrery startup tags",
+    "package.json: retain both focused scripts and full npm test entries"
+  ],
+  "productChangesBeyondUnion": []
+}
