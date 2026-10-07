@@ -27,7 +27,7 @@
     "contribute": "node scripts/contribute.mjs",
     "check:contributions": "node scripts/community-check.mjs",
     "test:contributions": "node scripts/community-qa.mjs && node scripts/community-scene-qa.mjs && node scripts/meridian-commons-qa.mjs",
-    "test": "npm run check && npm run test:analytics && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:glazing && npm run test:memory && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:guests && npm run test:hall && npm run test:moonlight && npm run test:map && npm run test:cinema && npm run test:trains && npm run test:hudson && npm run test:queens && npm run test:safari && npm run test:briarwatch && npm run test:venetian && npm run build",
+    "test": "npm run check && npm run test:analytics && npm run check:contributions && npm run test:contributions && npm run test:audio && npm run test:hosted-audio && npm run test:delivery && npm run test:geometry && npm run test:glazing && npm run test:memory && npm run test:lighting && npm run test:startup && npm run test:rooms && npm run test:guests && npm run test:hall && npm run test:moonlight && npm run test:map && npm run test:cinema && npm run test:trains && npm run test:hudson && npm run test:queens && npm run test:safari && npm run test:briarwatch && npm run test:venetian && npm run test:orrery && npm run build",
     "bay": "node scripts/bay.mjs",
     "grandhall:align": "node scripts/grandhall-align.mjs",
     "test:moonlight": "node scripts/moonlight-model-qa.mjs && node scripts/moonlight-valley-qa.mjs && node scripts/moonlight-media-qa.mjs && node scripts/moonlight-click-qa.mjs",
@@ -35,7 +35,8 @@
     "test:queens": "node scripts/queens-scores-qa.mjs && node scripts/queens-qa.mjs",
     "test:safari": "node scripts/safari-qa.mjs && node scripts/safari-passenger-qa.mjs && node scripts/safari-giraffe-qa.mjs && node scripts/safari-behavior-qa.mjs && node scripts/safari-companions-qa.mjs",
     "test:briarwatch": "node scripts/briarwatch-qa.mjs && node scripts/briarwatch-dragon-qa.mjs",
-    "test:venetian": "node scripts/venetian-qa.mjs && node scripts/venetian-craft-qa.mjs && node scripts/venetian-reflection-qa.mjs"
+    "test:venetian": "node scripts/venetian-qa.mjs && node scripts/venetian-craft-qa.mjs && node scripts/venetian-reflection-qa.mjs",
+    "test:orrery": "node scripts/orrery-qa.mjs && node scripts/orrery-ride-qa.mjs && node scripts/orrery-scenery-qa.mjs"
   },
   "license": "MIT",
   "engines": {

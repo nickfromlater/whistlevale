@@ -1,0 +1,56 @@
+name: Orrery native room review
+on:
+  pull_request:
+    paths: ['src/**orrery**', 'src/rooms/orrery*', 'src/trains/orrery.js', 'scripts/orrery*', '.github/workflows/orrery-review.yml']
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Preserve the exact tracked review source
+        run: |
+          mkdir -p /tmp/orrery-source
+          git archive --format=tar.gz HEAD > /tmp/orrery-source/source.tar.gz
+          git rev-parse HEAD > /tmp/orrery-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orrery-review-source
+          path: /tmp/orrery-source/
+          retention-days: 7
+      - name: Native geometry and source checks
+        run: |
+          set -o pipefail
+          mkdir -p evidence/orrery
+          npm run check
+          npm run test:orrery | tee evidence/orrery/focused.txt
+      - name: Install isolated review browser
+        run: |
+          npm install --prefix /tmp/orrery-browser playwright
+          /tmp/orrery-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture and exercise the real room
+        run: |
+          python3 scripts/serve.py --port 4175 > evidence/orrery/server.txt 2>&1 &
+          PLAYWRIGHT_PATH=/tmp/orrery-browser/node_modules/playwright node scripts/orrery-browser-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orrery-native-views
+          path: evidence/orrery/
+          retention-days: 14
+      - name: Full regression and geometry checks
+        run: |
+          npm test > evidence/orrery/npm-test.txt 2>&1
+          npm run test:geometry:full > evidence/orrery/geometry-full.txt 2>&1
+          npm run check:contributions -- --json > evidence/orrery/contributions.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orrery-native-checks
+          path: evidence/orrery/*.txt
+          retention-days: 14
