@@ -71,23 +71,23 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.quad([cx-.45,.55,cz+.585],[cx+.15,.55,cz+.585],[cx+.10,.85,cz+.585],[cx-.50,.85,cz+.585],pink,0);
  // Monorail: elevated spine with real pylons, rail cap and a stopped car,
  // plus parked/flying hovercar above the market.
- const beamY=2.33,beamZ=-1.15;
+ const beamY=2.33,beamZ=-1.30;
  b.beam([-5.35,beamY,beamZ],[5.15,beamY,beamZ],.11,steelDark,41,6);
  b.box(-.10,2.48,beamZ,10.5,.06,.05,steel,41);
- for(const px of[-4.9,-.5,2.0,3.65]){
+ for(const px of[-4.9,-.5,2.0,3.7]){
   b.box(px,1.16,beamZ,.26,2.32,.26,steelDark,41);
   b.box(px,2.41,beamZ,.40,.10,.40,'#6f7873',41);}
  b.box(5.16,2.33,beamZ,.06,.30,.34,steelDark,41);
  b.box(-5.36,2.33,beamZ,.06,.30,.34,steelDark,41);
- const carx=1.55;
- b.box(carx,2.06,beamZ,1.62,.44,.78,'#a29f92',0);
- for(const yy of[1.92,2.14])b.box(carx,yy,beamZ,1.44,.13,.80,steelDark,23);
- for(const cxx of[carx-.55,carx+.55])b.box(cxx,2.48,beamZ,.30,.13,.84,steelDark,23);
- b.box(carx,2.20,beamZ-.40,1.30,.20,.04,glass,6);
- b.box(carx,2.20,beamZ+.40,1.30,.20,.04,glass,6);
- b.tri([carx+.81,2.28,beamZ-.40],[carx+.81,2.28,beamZ+.40],[carx+1.08,2.02,beamZ],'#b0ada0',0);
- b.tri([carx+.81,1.84,beamZ-.40],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.40],'#8e8b80',0);
- b.box(carx+1.09,1.93,beamZ,.02,.07,.38,white,10);
+ const carx=2.9;
+ b.box(carx,2.06,beamZ,1.62,.44,.62,'#a29f92',0);
+ for(const yy of[1.92,2.14])b.box(carx,yy,beamZ,1.44,.13,.64,steelDark,23);
+ for(const cxx of[carx-.55,carx+.55])b.box(cxx,2.48,beamZ,.30,.13,.60,steelDark,23);
+ b.box(carx,2.20,beamZ-.30,1.30,.20,.04,glass,6);
+ b.box(carx,2.20,beamZ+.30,1.30,.20,.04,glass,6);
+ b.tri([carx+.81,2.28,beamZ-.30],[carx+.81,2.28,beamZ+.30],[carx+1.08,2.02,beamZ],'#b0ada0',0);
+ b.tri([carx+.81,1.84,beamZ-.30],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.30],'#8e8b80',0);
+ b.box(carx+1.09,1.93,beamZ,.02,.07,.30,white,10);
  // Hovercar: wedged spinner hull, glazing and engine glow, banking slightly.
  b.push(3.3,3.15,.48,0,-.32);
  b.box(0,0,0,1.05,.22,.46,'#b3b8ae',0);
