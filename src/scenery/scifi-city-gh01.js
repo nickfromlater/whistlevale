@@ -69,11 +69,11 @@ function scifiCityGH01(b,x,y,z,angle=0){
  // Graffiti wall: spray slashes, a tagged ring and dashes face the aisle.
  b.box(1.72,.80,.98,1.05,1.60,.30,'#5a534a',4);
  b.quad([1.25,.50,1.14],[1.62,.50,1.14],[2.32,1.28,1.14],[1.95,1.28,1.14],pink,0);
- ringZ(b,1.78,1.38,1.145,.12,.17,.03,cyan,0,10);
+ ringZ(b,1.78,1.38,1.16,.12,.17,.03,cyan,0,10);
  for(let i=0;i<3;i++)b.quad([1.30+i*.16,.32,1.14],[1.42+i*.16,.32,1.14],[1.44+i*.16,.42,1.14],[1.32+i*.16,.42,1.14],lime,0);
  // Spray tags on tower A's street side and tower C's front.
  b.quad([ax-1.02,.70,.30],[ax-1.02,1.62,-.55],[ax-1.02,1.24,-.70],[ax-1.02,.32,-.62],amber,0);
- b.quad([cx-.45,.55,cz+.585],[cx+.15,.55,cz+.585],[cx+.10,.85,cz+.585],[cx-.50,.85,cz+.585],pink,0);
+ b.quad([cx-.45,.55,cz+.535],[cx+.15,.55,cz+.535],[cx+.10,.85,cz+.535],[cx-.50,.85,cz+.535],pink,0);
  // Monorail: elevated spine with real pylons, rail cap and a stopped car,
  // plus parked/flying hovercar above the market.
  const beamY=2.33,beamZ=-1.30;
@@ -103,6 +103,24 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.box(-.555,-.01,0,.03,.09,.26,amber,10);
  b.pop();
  // Street props: lamppost, bollards and a holo pole with floating rings.
+ // Frontage neon: storefront tubes and door, tower B entrance recess,
+ // a marquee bar on tower C and a kerb edge strip along the front.
+ for(const tx of[.42,1.68])b.box(tx,.93,.225,.04,1.50,.04,cyan,10);
+ b.box(1.05,.58,.225,.36,.90,.05,shadow,23);
+ b.box(bx,1.00,.955,.55,1.75,.04,shadow,23);
+ for(const dx of[-.30,.30])b.box(bx+dx,1.00,.965,.045,1.80,.045,cyan,10);
+ b.box(bx,.155,.985,.62,.05,.04,amber,10);
+ b.box(-4.50,1.10,.95,.90,.10,.04,panel,41);
+ b.box(-4.50,1.10,.985,.80,.07,.02,amber,10);
+ b.box(0,.09,1.34,9.0,.035,.015,pink,10);
+ // Parked street taxi near the front kerb.
+ b.push(2.9,0,.88,0,.15);
+ b.box(0,.27,0,1.05,.26,.44,'#8a6b4a',0);
+ b.box(-.05,.48,0,.55,.22,.36,glass,6);
+ for(const wx of[.32,-.32])for(const wz of[.20,-.20])b.cylinder(wx,.13,wz,.13,.13,.07,shadow,23,8,PI/2);
+ b.box(.545,.27,0,.02,.07,.26,white,10);
+ b.box(-.545,.27,0,.02,.06,.24,amber,10);
+ b.pop();
  b.cylinder(-3.95,1.06,1.02,.035,.03,2.10,steelDark,41,6);
  b.box(-3.95,2.14,.92,.10,.07,.30,panel,23);
  b.box(-3.95,2.14,.77,.09,.05,.05,amber,10);
