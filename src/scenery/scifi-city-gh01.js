@@ -113,10 +113,10 @@ function scifiCityGH01(b,x,y,z,angle=0){
  const dust=(p,rx,ry,color,phase)=>{for(const i of[0,1,2,0,2,3]){
   const x=[[-1,-1],[1,-1],[1,1],[-1,1]][i];
   b.vertex([p[0]+x[0]*rx,p[1]+x[1]*ry,p[2]],[0,0,1],color,79,[phase*4+x[0]+1,x[1]+1]);}};
- for(let i=0;i<12;i++){
-  const a=hash(i,71)*TAU,r=.28+hash(i,72)*.48;
-  dust([-4.55+Math.sin(a)*r,2.70+hash(i,73)*.36,.40+Math.cos(a)*r*.72],
-   .016+hash(i,74)*.022,.012+hash(i,75)*.017,
+ for(let i=0;i<18;i++){
+  const a=hash(i,71)*TAU,r=.26+hash(i,72)*.52;
+  dust([-4.55+Math.sin(a)*r,2.70+hash(i,73)*.38,.40+Math.cos(a)*r*.72],
+   .024+hash(i,74)*.034,.016+hash(i,75)*.026,
    ['#a99f8c','#b3ab97','#8f887a'][i%3],200+i);}
  // Street props: lamppost, bollards and a holo pole with floating rings.
  // Frontage neon: storefront tubes and door, tower B entrance recess,
