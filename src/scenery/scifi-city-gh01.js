@@ -93,8 +93,8 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.tri([carx+.81,1.84,beamZ-.30],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.30],'#8e8b80',0);
  b.box(carx+1.09,1.93,beamZ,.02,.07,.30,white,10);
  // Hovercars: wedged spinner hulls, glazing and engine glow, banking.
- const spinner=(sx,sy,sz,hyaw,glow)=>{b.push(sx,sy,sz,0,hyaw);
-  b.box(0,0,0,1.05,.22,.46,'#b3b8ae',0);
+ const spinner=(sx,sy,sz,hyaw,hull,glow)=>{b.push(sx,sy,sz,0,hyaw);
+  b.box(0,0,0,1.05,.22,.46,hull,0);
   b.tri([.52,.11,.23],[.52,.11,-.23],[.80,-.02,0],'#c6cbc2',0);
   b.tri([.52,-.11,.23],[.52,-.11,-.23],[.80,-.02,0],'#8e948a',0);
   b.box(.08,.15,0,.46,.12,.34,glass,6);
@@ -102,8 +102,8 @@ function scifiCityGH01(b,x,y,z,angle=0){
   for(const s of[-.10,.10])b.cylinder(-.42,-.14,s,.045,.035,.12,glow,10,6);
   b.box(-.555,-.01,0,.03,.09,.26,amber,10);
   b.pop();};
- spinner(3.3,3.15,.48,-.32,pink);
- spinner(-3.7,4.05,.35,.42,cyan);
+ spinner(3.3,3.15,.48,-.32,'#b3b8ae',pink);
+ spinner(-3.7,4.05,.35,-.85,'#464c56',pink);
  // Street props: lamppost, bollards and a holo pole with floating rings.
  // Frontage neon: storefront tubes and door, tower B entrance recess,
  // a marquee bar on tower C and a kerb edge strip along the front.
