@@ -34,6 +34,11 @@ function scifiCityGH01(b,x,y,z,angle=0){
   b.box(bx,yy,bz+.67,1.0,.28,.045,glass,6);b.box(bx,yy,bz-.67,1.0,.28,.045,glass,6);
   b.box(bx-.75,yy,bz,.045,.28,1.0,glass,6);b.box(bx+.75,yy,bz,.045,.28,1.0,glass,6);}
  b.box(bx,4.02,bz-.04,1.0,.44,.88,'#454b45',4);
+ // Blade neon sign bridging the tower A/B canyon on wall brackets.
+ for(const ay of[1.50,2.95])b.box(-1.21,ay,.62,.13,.05,.30,steelDark,41);
+ b.box(-1.30,2.20,.62,.05,2.50,.40,steelDark,41);
+ for(const [k,cc]of[[0,pink],[1,cyan],[2,amber],[3,lime]])
+  b.box(-1.30,1.28+k*.56,.62,.07,.46,.36,cc,10);
  b.cylinder(bx-.30,4.4,bz-.04,.20,.16,.34,roofMetal,41,8);
  b.sphere(bx-.30,4.62,bz-.04,.17,.10,.17,steelDark,41,8,5);
  b.box(bx,4.62,bz+.42,1.0,.78,.08,steelDark,41);
