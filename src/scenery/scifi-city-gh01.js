@@ -20,27 +20,25 @@ function scifiCityGH01(b,x,y,z,angle=0){
  for(let i=0;i<5;i++){const yy=.60+i*.52;
   b.box(ax,yy,az+.84,1.5,.30,.05,glass,6);b.box(ax,yy,az-.84,1.5,.30,.05,glass,6);
   b.box(ax-1.0,yy,az,.08,.30,1.2,glass,6);b.box(ax+1.0,yy,az,.08,.30,1.2,glass,6);}
- b.box(ax+.10,3.55,az,1.5,.5,1.35,'#414741',4);
+ b.box(ax+.10,3.40,az,1.5,.80,1.35,'#414741',4);
  b.box(ax+.10,4.6,az,1.1,1.6,1.0,'#464d46',4);
  for(let i=0;i<3;i++){const yy=4.05+i*.55;
   b.box(ax+.10,yy,az+.52,.72,.26,.04,glass,6);b.box(ax+.10,yy,az-.52,.72,.26,.04,glass,6);}
  b.box(ax+.10,5.47,az,1.2,.14,1.08,steel,41);
  b.cylinder(ax+.10,5.86,az,.030,.012,.55,steel,41,6);
  b.sphere(ax+.10,6.13,az,.030,.030,.030,amber,10,6,4);
- b.beam([ax-.85,5.5,az],[ax-.85,4.6,az+.62],.02,steelDark,41,4);
- b.beam([ax-.85,4.6,az+.62],[ax+.10,4.62,az+.56],.016,rust,41,4);
  // Core tower B: slab body with a rooftop billboard and setback crown.
  const bx=-.42,bz=.28;
  b.box(bx,1.9,bz,1.45,3.8,1.3,'#51584f',4);
  for(let i=0;i<7;i++){const yy=.55+i*.50;
   b.box(bx,yy,bz+.67,1.0,.28,.045,glass,6);b.box(bx,yy,bz-.67,1.0,.28,.045,glass,6);
   b.box(bx-.75,yy,bz,.045,.28,1.0,glass,6);b.box(bx+.75,yy,bz,.045,.28,1.0,glass,6);}
- b.box(bx,4.02,bz-.04,1.0,.42,.88,'#454b45',4);
+ b.box(bx,4.02,bz-.04,1.0,.44,.88,'#454b45',4);
  b.cylinder(bx-.30,4.4,bz-.04,.20,.16,.34,roofMetal,41,8);
  b.sphere(bx-.30,4.62,bz-.04,.17,.10,.17,steelDark,41,8,5);
- b.box(bx,4.62,bz+.72,1.0,.78,.08,steelDark,41);
- b.box(bx,4.62,bz+.745,.84,.62,.02,pink,10);
- b.box(bx,4.62,bz+.76,.84,.05,.02,white,10);
+ b.box(bx,4.62,bz+.42,1.0,.78,.08,steelDark,41);
+ b.box(bx,4.62,bz+.445,.84,.62,.02,pink,10);
+ b.box(bx,4.62,bz+.452,.84,.05,.02,white,10);
  // Core tower C: low corner block with a rooftop water tank.
  const cx=-4.55,cz=.40;
  b.box(cx,1.3,cz,1.3,2.6,1.05,'#565c53',4);
