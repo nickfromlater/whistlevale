@@ -44,14 +44,22 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.box(bx,4.62,bz+.42,1.0,.78,.08,steelDark,41);
  b.box(bx,4.62,bz+.445,.84,.62,.02,pink,10);
  b.box(bx,4.62,bz+.452,.84,.05,.02,white,10);
- // Core tower C: low corner block with a rooftop water tank.
+ // Core tower C: low corner block crowned by an elevator pad with approach
+ // lights, hazard stripes and the tower C landing site.
  const cx=-4.55,cz=.40;
  b.box(cx,1.3,cz,1.3,2.6,1.05,'#565c53',4);
  for(let i=0;i<4;i++){const yy=.45+i*.62;
   b.box(cx,yy,cz+.55,.85,.26,.045,glass,6);b.box(cx,yy,cz-.55,.85,.26,.045,glass,6);}
- b.cylinder(cx,2.81,cz,.34,.30,.42,rust,22,10);
- b.cylinder(cx,3.045,cz,.36,.31,.05,steelDark,41,10);
- b.box(cx+.12,3.10,cz+.05,.10,.06,.10,steel,41);
+ b.box(cx,2.63,cz,1.34,.06,1.09,'#3f453f',41);
+ ringZ(b,cx,2.672,cz,.28,.34,.015,'#e8e4d8',0,18);
+ b.box(cx-.09,2.681,cz,.035,.012,.30,'#e8e4d8',0);
+ b.box(cx+.09,2.681,cz,.035,.012,.30,'#e8e4d8',0);
+ b.box(cx,2.681,cz,.22,.012,.035,'#e8e4d8',0);
+ for(let i=0;i<10;i++){const a=i*TAU/10,sx=cx+Math.sin(a)*.55,sz=cz+Math.cos(a)*.39;
+  b.box(sx,2.676,sz,.10,.014,.10,i%2?'#d8b23a':shadow,0);}
+ for(const [pxx,pzz]of[[-.55,-.40],[.55,-.40],[.55,.40],[-.55,.40]]){
+  b.box(cx+pxx,2.81,cz+pzz,.05,.30,.05,steelDark,41);
+  b.box(cx+pxx,2.985,cz+pzz,.08,.05,.08,amber,10);}
  // Micro-district: scattered low blocks, alleys and one graffiti wall.
  b.box(1.05,.95,-.42,1.55,1.9,1.25,'#535a53',4);
  for(let i=0;i<3;i++){const yy=.42+i*.55;
@@ -92,8 +100,9 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.tri([carx+.81,2.28,beamZ-.30],[carx+.81,2.28,beamZ+.30],[carx+1.08,2.02,beamZ],'#b0ada0',0);
  b.tri([carx+.81,1.84,beamZ-.30],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.30],'#8e8b80',0);
  b.box(carx+1.09,1.93,beamZ,.02,.07,.30,white,10);
- // Hovercars: wedged spinner hulls, glazing and engine glow, banking.
- const spinner=(sx,sy,sz,hyaw,hull,glow)=>{b.push(sx,sy,sz,0,hyaw);
+ // Hovercars: wedged spinner hulls, glazing and engine glow. A landing
+ // spinner extends its gear, hovers level and lights the pad below.
+ const spinner=(sx,sy,sz,hyaw,hull,glow,gear=false)=>{b.push(sx,sy,sz,0,hyaw);
   b.box(0,0,0,1.05,.22,.46,hull,0);
   b.tri([.52,.11,.23],[.52,.11,-.23],[.80,-.02,0],'#c6cbc2',0);
   b.tri([.52,-.11,.23],[.52,-.11,-.23],[.80,-.02,0],'#8e948a',0);
@@ -101,9 +110,14 @@ function scifiCityGH01(b,x,y,z,angle=0){
   for(const s of[-1,1])b.quad([-.32,.11,s*.23],[-.02,.11,s*.23],[-.02,.04,s*.40],[-.32,.04,s*.40],'#2c302c',23);
   for(const s of[-.10,.10])b.cylinder(-.42,-.14,s,.045,.035,.12,glow,10,6);
   b.box(-.555,-.01,0,.03,.09,.26,amber,10);
+  if(gear){
+   for(const [gx,gzz]of[[-.38,-.16],[-.38,.16],[.40,-.16],[.40,.16]]){
+    b.box(gx,-.26,gzz,.05,.30,.05,steelDark,41);
+    b.box(gx,-.425,gzz,.12,.045,.12,steelDark,41);}
+   for(const s of[-.10,.10])b.cylinder(-.42,-.255,s,.03,.10,.29,glow,10,6);}
   b.pop();};
  spinner(3.3,3.15,.48,-.32,'#b3b8ae',pink);
- spinner(-3.7,4.05,.35,-.85,'#464c56',pink);
+ spinner(-4.55,3.09,.40,0,'#464c56',pink,true);
  // Street props: lamppost, bollards and a holo pole with floating rings.
  // Frontage neon: storefront tubes and door, tower B entrance recess,
  // a marquee bar on tower C and a kerb edge strip along the front.

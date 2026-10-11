@@ -36,7 +36,7 @@ const GRAND_HALL_EXHIBITS=[{
   {name:'Sonur11',note:'Original city design and vehicles.'},
   {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
  ],
- story:'An after-hours city block. Towering core buildings crowd the frontages while a scattered market district and a graffiti wall grow toward the far kerb; the monorail stops over the alley and hovercars bank above the stalls. Inspired by the neon streets of Cyberpunk 2077 and Blade Runner.',
+ story:'An after-hours city block. Towering core buildings crowd the frontages while a scattered market district and a graffiti wall grow toward the far kerb; the monorail stops over the alley and hovercars bank above the stalls and a police spinner settles onto the rooftop landing pad with its gear down. Inspired by the neon streets of Cyberpunk 2077 and Blade Runner.',
  view:{target:[-.4,2.6,.1],distance:19,yaw:-.30,pitch:.46},
  builder:'scifiCity',scale:.26,source:'src/scenery/scifi-city-gh01.js'
 },{
