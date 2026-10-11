@@ -44,10 +44,9 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.box(cx,1.3,cz,1.3,2.6,1.05,'#565c53',4);
  for(let i=0;i<4;i++){const yy=.45+i*.62;
   b.box(cx,yy,cz+.55,.85,.26,.045,glass,6);b.box(cx,yy,cz-.55,.85,.26,.045,glass,6);}
- for(const [lx,lz]of[[-.35,-.28],[.35,-.28],[.35,.28],[-.35,.28]])
-  b.box(cx+lx,2.72,cz+lz,.05,.24,.05,steelDark,41);
- b.cylinder(cx,3.05,cz,.22,.17,.42,rust,22,8);
- b.cylinder(cx,3.29,cz,.24,.19,.05,steelDark,41,8);
+ b.cylinder(cx,2.81,cz,.34,.30,.42,rust,22,10);
+ b.cylinder(cx,3.045,cz,.36,.31,.05,steelDark,41,10);
+ b.box(cx+.12,3.10,cz+.05,.10,.06,.10,steel,41);
  // Micro-district: scattered low blocks, alleys and one graffiti wall.
  b.box(1.05,.95,-.42,1.55,1.9,1.25,'#535a53',4);
  for(let i=0;i<3;i++){const yy=.42+i*.55;
