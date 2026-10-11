@@ -80,11 +80,10 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.box(5.16,2.33,beamZ,.06,.30,.34,steelDark,41);
  b.box(-5.36,2.33,beamZ,.06,.30,.34,steelDark,41);
  const carx=2.9;
- b.box(carx,2.06,beamZ,1.62,.44,.62,'#a29f92',0);
- for(const yy of[1.92,2.14])b.box(carx,yy,beamZ,1.44,.13,.64,steelDark,23);
- for(const cxx of[carx-.55,carx+.55])b.box(cxx,2.48,beamZ,.30,.13,.60,steelDark,23);
- b.box(carx,2.20,beamZ-.30,1.30,.20,.04,glass,6);
- b.box(carx,2.20,beamZ+.30,1.30,.20,.04,glass,6);
+ b.box(carx,2.06,beamZ,1.62,.44,.60,'#a29f92',0);
+ b.box(carx,1.93,beamZ,1.44,.12,.66,steelDark,23);
+ b.box(carx,2.21,beamZ,1.30,.16,.66,glass,6);
+ for(const cxx of[carx-.55,carx+.55])b.box(cxx,2.48,beamZ,.30,.13,.64,steelDark,23);
  b.tri([carx+.81,2.28,beamZ-.30],[carx+.81,2.28,beamZ+.30],[carx+1.08,2.02,beamZ],'#b0ada0',0);
  b.tri([carx+.81,1.84,beamZ-.30],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.30],'#8e8b80',0);
  b.box(carx+1.09,1.93,beamZ,.02,.07,.30,white,10);
