@@ -92,16 +92,18 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.tri([carx+.81,2.28,beamZ-.30],[carx+.81,2.28,beamZ+.30],[carx+1.08,2.02,beamZ],'#b0ada0',0);
  b.tri([carx+.81,1.84,beamZ-.30],[carx+1.08,2.02,beamZ],[carx+.81,1.84,beamZ+.30],'#8e8b80',0);
  b.box(carx+1.09,1.93,beamZ,.02,.07,.30,white,10);
- // Hovercar: wedged spinner hull, glazing and engine glow, banking slightly.
- b.push(3.3,3.15,.48,0,-.32);
- b.box(0,0,0,1.05,.22,.46,'#b3b8ae',0);
- b.tri([.52,.11,.23],[.52,.11,-.23],[.80,-.02,0],'#c6cbc2',0);
- b.tri([.52,-.11,.23],[.52,-.11,-.23],[.80,-.02,0],'#8e948a',0);
- b.box(.08,.15,0,.46,.12,.34,glass,6);
- for(const s of[-1,1])b.quad([-.32,.11,s*.23],[-.02,.11,s*.23],[-.02,.04,s*.40],[-.32,.04,s*.40],'#2c302c',23);
- for(const s of[-.10,.10])b.cylinder(-.42,-.14,s,.045,.035,.12,pink,10,6);
- b.box(-.555,-.01,0,.03,.09,.26,amber,10);
- b.pop();
+ // Hovercars: wedged spinner hulls, glazing and engine glow, banking.
+ const spinner=(sx,sy,sz,hyaw,glow)=>{b.push(sx,sy,sz,0,hyaw);
+  b.box(0,0,0,1.05,.22,.46,'#b3b8ae',0);
+  b.tri([.52,.11,.23],[.52,.11,-.23],[.80,-.02,0],'#c6cbc2',0);
+  b.tri([.52,-.11,.23],[.52,-.11,-.23],[.80,-.02,0],'#8e948a',0);
+  b.box(.08,.15,0,.46,.12,.34,glass,6);
+  for(const s of[-1,1])b.quad([-.32,.11,s*.23],[-.02,.11,s*.23],[-.02,.04,s*.40],[-.32,.04,s*.40],'#2c302c',23);
+  for(const s of[-.10,.10])b.cylinder(-.42,-.14,s,.045,.035,.12,glow,10,6);
+  b.box(-.555,-.01,0,.03,.09,.26,amber,10);
+  b.pop();};
+ spinner(3.3,3.15,.48,-.32,pink);
+ spinner(-3.7,4.05,.35,.42,cyan);
  // Street props: lamppost, bollards and a holo pole with floating rings.
  // Frontage neon: storefront tubes and door, tower B entrance recess,
  // a marquee bar on tower C and a kerb edge strip along the front.
@@ -113,14 +115,6 @@ function scifiCityGH01(b,x,y,z,angle=0){
  b.box(-4.50,1.10,.95,.90,.10,.04,panel,41);
  b.box(-4.50,1.10,.985,.80,.07,.02,amber,10);
  b.box(0,.09,1.34,9.0,.035,.015,pink,10);
- // Parked street taxi near the front kerb.
- b.push(2.9,0,.88,0,.15);
- b.box(0,.27,0,1.05,.26,.44,'#8a6b4a',0);
- b.box(-.05,.48,0,.55,.22,.36,glass,6);
- for(const wx of[.32,-.32])for(const wz of[.20,-.20])b.cylinder(wx,.13,wz,.13,.13,.07,shadow,23,8,PI/2);
- b.box(.545,.27,0,.02,.07,.26,white,10);
- b.box(-.545,.27,0,.02,.06,.24,amber,10);
- b.pop();
  b.cylinder(-3.95,1.06,1.02,.035,.03,2.10,steelDark,41,6);
  b.box(-3.95,2.14,.92,.10,.07,.30,panel,23);
  b.box(-3.95,2.14,.77,.09,.05,.05,amber,10);
