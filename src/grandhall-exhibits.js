@@ -31,6 +31,15 @@ const GRAND_HALL_EXHIBITS=[{
  view:{target:[-1,4.4,.8],distance:24,yaw:.48,pitch:.35},
  builder:'wintergarden',scale:.205,source:'src/scenery/wintergarden.js',mapPreview:true
 },{
+ bay:'GH-01',id:'neonside-city',title:'Neonside City',
+ credits:[
+  {name:'Sonur11',note:'Original city design and vehicles.'},
+  {name:'Whistlevale contributors',note:'Shared native geometry primitives.'}
+ ],
+ story:'An after-hours city block. Towering core buildings crowd the frontages while a scattered market district and a graffiti wall grow toward the far kerb; the monorail stops over the alley and hovercars bank above the stalls and a police spinner settles onto the rooftop landing pad, its wash stirring the dust. Inspired by the neon streets of Cyberpunk 2077 and Blade Runner.',
+ view:{target:[-.4,2.6,.1],distance:19,yaw:-.30,pitch:.46},
+ builder:'scifiCity',scale:.26,source:'src/scenery/scifi-city-gh01.js'
+},{
  bay:'LW-01',id:'the-night-post',title:'The Night Post',
  credits:[{name:'nickfromlater',platform:'github',handle:'nickfromlater',note:'Original Blender miniature, created with Codex assistance.'}],
  story:'Letters to places without addresses. Under a blue-glass vault, letters descend from the dead-letter office through a spiral chute, cancelling press and dispatch belt to a waiting postal train. Beyond the brass gates: an autumn footbridge, a lunar observatory, and a cottage kitchen where one letter has finally arrived. Yesterday. The Moon. Home Again.',
@@ -95,7 +104,7 @@ function grandHallRailwayLocations(exhibit){
  return result;
 }
 function grandHallBuildExhibit(name,b){
- const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args),codexReset:(...args)=>codexResetEngine(...args),moonlight:(...args)=>moonlightDriveIn(...args)};
+ const builders={willowbank:(...args)=>willowbankPottery(...args),meridian:(...args)=>meridianObservatory(...args),wintergarden:(...args)=>wintergardenStation(...args),nightPost:(...args)=>nightPost(...args),codexReset:(...args)=>codexResetEngine(...args),moonlight:(...args)=>moonlightDriveIn(...args),scifiCity:(...args)=>scifiCityGH01(...args)};
  const build=builders[name];if(!build)throw new Error('Unknown reviewed Hall builder: '+name);
  return build(b,0,0,0);
 }
