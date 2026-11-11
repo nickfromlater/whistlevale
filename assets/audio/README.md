@@ -70,10 +70,11 @@ selects it in Yamaai by day and night, while pinned tracks and the existing mixe
 remain available. A source checkout without it falls back to the house score.
 No recording is fetched from ElevenLabs by the browser or build.
 
-The new master is published on the reviewed Yamaai preview. Its manifest entry
-has an explicit HTTPS `origin`, allowing Git builds to retrieve it before the
-production site carries it. All other recordings still use
-`WHISTLEVALE_AUDIO_ORIGIN`. A per-record origin uses the same exact immutable
+The master was first published on the reviewed Yamaai preview, and its manifest
+entry carried a temporary HTTPS `origin` so Git builds could retrieve it before
+the production site did. Production now serves the exact file and Vercel has
+removed that preview, so the entry uses `WHISTLEVALE_AUDIO_ORIGIN` like every
+other recording. A per-record origin uses the same exact immutable
 path, byte limit, checksum, timeout and no-redirect rules as the main collection;
 source-only builds remain offline. No playback request goes to another host:
 each build packages its own copy.
