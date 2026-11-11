@@ -49,6 +49,8 @@ const builtHTML=html.replace(/<script id="audioCatalog">[\s\S]*?<\/script>/,()=>
 await writeFile(path.join(out,'index.html'),builtHTML);
 const hall=(await readFile(path.join(root,'grandhall.html'),'utf8')).replace(communitySlot,()=>'<script id="communityCatalog">window.HOUSE_COMMUNITY='+scriptJSON(community)+';</script>');
 await writeFile(path.join(out,'grandhall.html'),hall.replace(/\b(src|href)=(["'])([^"']+)\2/g,(attribute,name,quote,url)=>manifest.has(url)?`${name}=${quote}${manifest.get(url)}${quote}`:attribute));
+// Crawler files are served unversioned from the site root; a fixture without them still builds.
+for(const name of ['robots.txt','sitemap.xml']){const data=await readFile(path.join(root,name)).catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(data)await writeFile(path.join(out,name),data);}
 const walk=async dir=>(await Promise.all((await readdir(dir,{withFileTypes:true})).map(async p=>p.isDirectory()?walk(path.join(dir,p.name)):path.join(dir,p.name)))).flat();
 const files=await walk(out);
 if(files.some(f=>path.basename(f).startsWith('.')))throw new Error('A private file reached the public build.');
